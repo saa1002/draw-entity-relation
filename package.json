@@ -21,7 +21,7 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "BROWSER=none react-scripts start",
+    "start": "react-scripts start",
     "build": "GENERATE_SOURCEMAP=false react-scripts build",
     "test": "vitest --exclude \"**/tests/e2e\"",
     "test:e2e": "npx playwright test",
