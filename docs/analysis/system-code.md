@@ -50,4 +50,47 @@ La sincronización entre el modelo interno y la vista gráfica es impulsada por 
 
 ---
 
-Esta estructura modular del sistema proporciona claridad en la separación de responsabilidades, facilitando tanto el mantenimiento como la futura extensión del sistema.
+## Nuevas Funciones y Archivos Revisados
+
+### **Barra de Herramientas**
+
+Una de las funcionalidades claves del sistema heredado es la **barra de herramientas**. Se han identificado las siguientes clases que gestionan su comportamiento:
+
+1. **`initToolbar.js`**: Este archivo es responsable de crear y configurar la barra de herramientas, donde se añaden los íconos para las entidades y relaciones. Permite al usuario arrastrar y soltar elementos en el diagrama. Además, se configura el gráfico para permitir nuevas conexiones entre los elementos.
+   - **Funciones Principales**:
+     - Configuración inicial de la barra de herramientas.
+     - Añadir elementos de la barra de herramientas mediante la función **`addVertex`**.
+     - Gestionar la visibilidad y habilitación de los íconos de la barra de herramientas según el estado de la selección.
+
+2. **`addToolbarItem.js`**: Define cómo se agrega un ícono a la barra de herramientas y gestiona la creación de nuevos elementos en el diagrama (entidades o relaciones).
+   - **Funciones Principales**:
+     - Generación de un nuevo **vértice** en el gráfico (entidad o relación) cuando un ícono es arrastrado y soltado sobre el canvas.
+     - Asignación de un nombre único a cada nuevo elemento utilizando la función **`generateUniqueName`**.
+     - Actualización del modelo de datos (**`diagramRef`**) con los nuevos elementos creados.
+
+3. **`configureToolbar.js`**: Aunque está vacío en el código actual, se espera que se utilice para configurar la disposición o los comportamientos adicionales de los elementos dentro de la barra de herramientas.
+
+### **Manejo de Estilos**
+
+Los estilos gráficos de los elementos en el diagrama se gestionan a través de las siguientes funciones:
+
+1. **`getStyleByKey.js`**: Permite extraer el valor de una propiedad específica de una cadena de estilos.
+   - **Funciones Principales**:
+     - Convierte una cadena de estilos en un objeto clave-valor.
+     - Extrae dinámicamente valores de estilo a partir de una clave especificada.
+
+2. **`getStyleStringByObj.js`**: Convierte un objeto de estilos (clave-valor) en una cadena de texto en formato CSS.
+   - **Funciones Principales**:
+     - Convierte un objeto de estilos en un formato adecuado para **mxGraph**.
+     - Omite propiedades como `"perimeter"`, que no son necesarias en la representación del estilo de los elementos.
+
+---
+
+### **Estructura Modular y Organización del Código**
+
+La estructura modular del sistema proporciona claridad en la separación de responsabilidades. La lógica relacionada con la barra de herramientas, la configuración del entorno gráfico, y la gestión de estilos están organizadas en módulos separados, lo que facilita tanto el mantenimiento como la futura extensión del sistema.
+
+---
+
+Este enfoque modular también permite que, al analizar el código heredado, se pueda identificar fácilmente qué funcionalidades y comportamientos están siendo gestionados en cada archivo, sin necesidad de profundizar demasiado en detalles no relevantes para la extensión futura del proyecto.
+
