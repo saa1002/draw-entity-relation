@@ -86,11 +86,66 @@ Los estilos gráficos de los elementos en el diagrama se gestionan a través de 
 
 ---
 
-### **Estructura Modular y Organización del Código**
+### **Validación del Modelo**
 
-La estructura modular del sistema proporciona claridad en la separación de responsabilidades. La lógica relacionada con la barra de herramientas, la configuración del entorno gráfico, y la gestión de estilos están organizadas en módulos separados, lo que facilita tanto el mantenimiento como la futura extensión del sistema.
+El sistema incorpora una capa de validación que verifica la coherencia estructural del diagrama antes de permitir su exportación o transformación a SQL.
+
+1. **`validation.js`**
+   - Contiene la función principal **`validateGraph`**, encargada de analizar el modelo interno.
+   - Devuelve un objeto de diagnóstico con indicadores booleanos que reflejan el cumplimiento de distintas reglas.
+
+   - **Reglas evaluadas**:
+     - El diagrama no debe estar vacío.
+     - No deben existir nombres repetidos entre entidades y relaciones.
+     - No deben repetirse nombres de atributos dentro de una misma entidad.
+     - Toda entidad debe poseer al menos un atributo.
+     - Toda entidad debe tener definida una clave primaria.
+     - Las relaciones deben estar correctamente conectadas.
+     - Las cardinalidades deben pertenecer a un conjunto válido predefinido.
+
+La validación no modifica el modelo ni el grafo, sino que proporciona información que la interfaz utiliza para mostrar mensajes al usuario.
 
 ---
 
-Este enfoque modular también permite que, al analizar el código heredado, se pueda identificar fácilmente qué funcionalidades y comportamientos están siendo gestionados en cada archivo, sin necesidad de profundizar demasiado en detalles no relevantes para la extensión futura del proyecto.
+### **Generación de SQL**
+
+El sistema permite transformar el modelo ER en un esquema relacional representado como script SQL.
+
+1. **`sql.js`**
+   - Implementa la función **`generateSQL`**, encargada de producir el script SQL final.
+   - Utiliza funciones auxiliares para convertir entidades y relaciones en estructuras intermedias equivalentes a tablas.
+
+   - **Proceso general**:
+     - Análisis de entidades y relaciones del modelo.
+     - Determinación del tipo de relación según cardinalidades (1:1, 1:N, N:M).
+     - Generación de claves primarias y foráneas según el tipo de relación.
+     - Creación de tablas intermedias en el caso de relaciones N:M.
+     - Construcción final del script SQL con sentencias `CREATE TABLE` y restricciones de clave foránea.
+
+Este módulo consume directamente el modelo interno del editor, lo que garantiza coherencia entre la representación gráfica del diagrama y su traducción al modelo relacional.
+
+---
+
+### **Importación y Exportación de Diagramas**
+
+El sistema soporta la persistencia del diagrama mediante archivos JSON.
+
+- **Exportación JSON**:
+  - Serializa el modelo interno en formato JSON.
+  - Permite descargar el diagrama para su reutilización posterior.
+
+- **Importación JSON**:
+  - Permite cargar un archivo JSON previamente exportado.
+  - Valida el contenido antes de reconstruir el grafo gráfico.
+  - Restablece el modelo interno y sincroniza nuevamente la vista.
+
+Este mecanismo complementa el almacenamiento local y facilita la reutilización y portabilidad de los diagramas creados.
+
+---
+
+### **Estructura Modular y Organización del Código**
+
+La estructura modular del sistema proporciona claridad en la separación de responsabilidades. La lógica relacionada con la barra de herramientas, la configuración del entorno gráfico, la validación, la generación de SQL y la gestión de estilos están organizadas en módulos separados, lo que facilita tanto el mantenimiento como la extensión futura del sistema.
+
+Este enfoque modular permite identificar de forma clara qué funcionalidades están siendo gestionadas en cada archivo, facilitando el análisis del sistema heredado y proporcionando una base sólida para su comprensión completa.
 
