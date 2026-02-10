@@ -149,3 +149,5 @@ La estructura modular del sistema proporciona claridad en la separación de resp
 
 Este enfoque modular permite identificar de forma clara qué funcionalidades están siendo gestionadas en cada archivo, facilitando el análisis del sistema heredado y proporcionando una base sólida para su comprensión completa.
 
+---
+
