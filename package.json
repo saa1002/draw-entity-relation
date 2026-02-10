@@ -21,8 +21,8 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "BROWSER=none react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
     "test": "vitest --exclude \"**/tests/e2e\"",
     "test:e2e": "npx playwright test",
     "test:coverage": "vitest --exclude \"**/tests/e2e\" --coverage",
@@ -47,6 +47,7 @@
     "@playwright/test": "^1.44.0",
     "@types/node": "^20.12.12",
     "@vitest/coverage-v8": "^2.0.0",
+    "biome": "^0.3.3",
     "lefthook": "1.6.11",
     "vitest": "2.0.0"
   }
