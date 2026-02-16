@@ -14,13 +14,12 @@ import {
     Select,
 } from "@mui/material";
 import { default as MxGraph } from "mxgraph";
-import { mxConstants, mxPoint } from "mxgraph-js";
 import toast, { Toaster } from "react-hot-toast";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
 
-const { mxGraph, mxEvent } = MxGraph();
+const { mxGraph, mxEvent, mxConstants, mxPoint } = MxGraph();
 
 export default function App(props) {
     // Define a style with labelPosition set to ALIGN_RIGHT, additional right spacing

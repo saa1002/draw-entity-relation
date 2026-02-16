@@ -13,7 +13,6 @@
     "@fontsource/roboto": "^5.0.13",
     "@mui/material": "^5.15.19",
     "mxgraph": "4.1.0",
-    "mxgraph-js": "1.0.1",
     "react": "^17.0.0 || ^18.0.0",
     "react-color": "2.18.0",
     "react-dom": "^17.0.0 || ^18.0.0",
