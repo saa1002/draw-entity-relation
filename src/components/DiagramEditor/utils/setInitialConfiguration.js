@@ -3,7 +3,6 @@ import initToolbar from "./initToolbar";
 
 const { mxClient, mxEdgeHandler, mxRubberband, mxUtils } = MxGraph();
 
-
 export default function setInitialConfiguration(graph, diagramRef, toolbarRef) {
     if (!mxClient.isBrowserSupported()) {
         // Displays an error message if the browser is not supported.
