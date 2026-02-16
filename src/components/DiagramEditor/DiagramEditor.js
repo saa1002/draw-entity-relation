@@ -227,7 +227,6 @@ export default function App(props) {
 
             setInitialConfiguration(graph, diagramRef, toolbarRef);
 
-            graph.getModel().endUpdate();
             graph.getSelectionModel().addListener(mxEvent.CHANGE, onSelected);
 
             graph.stylesheet.styles.defaultEdge.endArrow = ""; // NOTE: Edges are not directed
