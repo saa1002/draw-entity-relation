@@ -896,6 +896,8 @@ export default function App(props) {
         React.useEffect(() => {
             if (side1 !== "" && side2 !== "") {
                 setAcceptDisabled(false);
+            } else {
+                setAcceptDisabled(true);
             }
         }, [side1, side2]);
 
