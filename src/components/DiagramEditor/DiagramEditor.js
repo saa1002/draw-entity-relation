@@ -252,7 +252,7 @@ export default function App(props) {
             return () => {
                 graph
                 .getSelectionModel()
-                .removeListener(mxEvent.CHANGE,onSelected);   
+                .removeListener(mxEvent.CHANGE, onSelected);   
             };
         }
     }, [graph, onSelected]);
