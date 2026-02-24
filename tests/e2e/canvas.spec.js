@@ -94,7 +94,7 @@ test('mxGraph transaction level stays balanced (updateLevel === 0)', async ({ pa
     await expect(await getUpdateLevel()).toBe(0);
 });
 
-test('reconfigure relationship: Accept disabled/enabled in both configurations (issue 8)', async ({ page }) => {
+test('reconfigure relationship: Accept disabled/enabled in both configurations', async ({ page }) => {
     await page.goto('/');
 
     const canvas = page.locator('svg');
