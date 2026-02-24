@@ -250,7 +250,9 @@ export default function App(props) {
             recreateGraphFromLocalStorage();
 
             return () => {
-                graph.getSelectionModel().removeListener(mxEvent.CHANGE,onSelected);   
+                graph
+                .getSelectionModel()
+                .removeListener(mxEvent.CHANGE,onSelected);   
             };
         }
     }, [graph, onSelected]);
