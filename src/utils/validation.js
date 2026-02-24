@@ -177,7 +177,7 @@ export function entitiesWithMoreThanOnePK(graph) {
 export function nmRelationsWithPK(graph) {
     for (const relation of graph.relations) {
         // Check if the relation is of type N:M
-        if (relation.canHaveAttributes) {
+        if (relation.canHoldAttributes) {
             for (const attribute of relation.attributes) {
                 // If any attribute has key set to true, return true
                 if (attribute.key) {

@@ -146,7 +146,7 @@ describe("Relations", () => {
     });
 });
 
-describe("mxGraph dependency is unified (no mxgraph-js)", () => {
+describe("Architecture", () => {
     test("mxgraph-js is not present in package.json nor imported in src/", () => {
         const root = process.cwd();
 
