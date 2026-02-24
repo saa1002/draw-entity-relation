@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { readFileSync } from 'fs'
-import { resolve } from 'path'
+import { readFileSync, fs } from 'fs'
+import { resolve, path } from 'path'
+import fs from "fs";
+import path from "path";
 import { 
     repeatedAttributesInEntity, 
     repeatedEntities, 
@@ -141,5 +143,37 @@ describe("Relations", () => {
         graph.relations.at(1).side2 = initializedSide2;
         expect(cardinalitiesNotValid(graph)).toBe(true);
         expect(validateGraph(graph).noNotValidCardinalities).toBe(false)
+    });
+});
+
+describe("mxGraph dependency is unified (no mxgraph-js)", () => {
+    test("mxgraph-js is not present in package.json nor imported in src/", () => {
+        const root = process.cwd();
+
+        // 1) package.json must not declare mxgraph-js
+        const pkgPath = path.join(root, "package.json");
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+        const deps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
+
+        expect(deps["mxgraph-js"]).toBeUndefined();
+
+        // 2) src/ must not contain mxgraph-js imports/requires
+        const srcDir = path.join(root, "src");
+        const offenders = [];
+
+        const walk = (dir) => {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+            const p = path.join(dir, entry.name);
+            if (entry.isDirectory()) walk(p);
+            else if (/\.(js|jsx|ts|tsx)$/.test(entry.name)) {
+            const raw = fs.readFileSync(p, "utf-8");
+            if (raw.includes("mxgraph-js")) offenders.push(path.relative(root, p));
+            }
+        }
+        };
+
+        walk(srcDir);
+
+        expect(offenders).toEqual([]);
     });
 });
