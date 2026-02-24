@@ -155,3 +155,44 @@ test('reconfigure relationship: Accept disabled/enabled in both configurations',
     // After reconfiguration, there should still be two cardinalities (old ones removed and recreated)
     await expect(page.getByText('X:X', { exact: true })).toHaveCount(2);
 });
+
+test('relation configuration persists after accept and survives reload', async ({ page }) => {
+    await page.goto('/');
+
+    const canvas = page.locator('svg');
+    const entidadIcono = page.locator('img[src="images/rectangle.png"]');
+    const relacionIcono = page.locator('img[src="images/rhombus.png"]');
+
+    // 1) Create 2 entities + 1 relationship
+    await entidadIcono.dragTo(canvas);
+    await entidadIcono.dragTo(canvas);
+    await relacionIcono.dragTo(canvas);
+
+    // 2) Open relation configuration modal
+    await page.getByText('Relación', { exact: true }).click();
+    await page.getByRole('button', { name: 'Configurar relación' }).click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText('Configurar relación')).toBeVisible();
+
+    // 3) Configure both sides and accept (use the same pattern as the working Issue 8 test)
+    await dialog.locator('#side1').click();
+    await page.getByRole('option', { name: 'Entidad', exact: true }).click();
+
+    await dialog.locator('#side2').click();
+    await page.getByRole('option', { name: 'Entidad 1', exact: true }).click();
+
+    const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
+    await expect(acceptBtn).toBeEnabled();
+    await acceptBtn.click();
+    await expect(dialog).toBeHidden();
+
+    // Sanity check before reload: two cardinality labels exist
+    await expect(page.getByText('X:X', { exact: true })).toHaveCount(2);
+
+    // 4) Reload immediately (no moving elements)
+    await page.reload();
+
+    // 5) After reload, configuration must still exist
+    await expect(page.getByText('X:X', { exact: true })).toHaveCount(2);
+});
