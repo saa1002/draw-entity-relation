@@ -225,6 +225,12 @@ export default function App(props) {
                 return this.isCellsSelectable() && !this.isCellLocked(cell);
             };
 
+            // Expose mxGraph instance only for Playwright E2E
+            if (typeof window !== "undefined" && window.__PW__) {
+            window.__DEBUG_GRAPH__ = graph;
+            }
+            
+            
             setInitialConfiguration(graph, diagramRef, toolbarRef);
 
             graph.getSelectionModel().addListener(mxEvent.CHANGE, onSelected);
