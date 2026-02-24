@@ -230,7 +230,6 @@ export default function App(props) {
             window.__DEBUG_GRAPH__ = graph;
             }
             
-            
             setInitialConfiguration(graph, diagramRef, toolbarRef);
 
             graph.getSelectionModel().addListener(mxEvent.CHANGE, onSelected);
