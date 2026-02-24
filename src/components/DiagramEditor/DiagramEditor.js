@@ -250,7 +250,7 @@ export default function App(props) {
             recreateGraphFromLocalStorage();
 
             return () => {
-                graph.getModel().removeListener(mxEvent.CHANGE, onSelected);
+                graph.getSelectionModel().removeListener(mxEvent.CHANGE,onSelected);   
             };
         }
     }, [graph, onSelected]);
@@ -884,7 +884,7 @@ export default function App(props) {
             graph.orderCells(true, [edge1, edge2]); // Move the new edges to the back
 
             saveToLocalStorage();
-            
+
             setOpen(false);
             setSide1("");
             setSide2("");
