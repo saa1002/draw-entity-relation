@@ -229,7 +229,7 @@ export default function App(props) {
             if (typeof window !== "undefined" && window.__PW__) {
                 window.__DEBUG_GRAPH__ = graph;
             }
-            
+
             setInitialConfiguration(graph, diagramRef, toolbarRef);
 
             graph.getSelectionModel().addListener(mxEvent.CHANGE, onSelected);
@@ -883,6 +883,8 @@ export default function App(props) {
             }
             graph.orderCells(true, [edge1, edge2]); // Move the new edges to the back
 
+            saveToLocalStorage();
+            
             setOpen(false);
             setSide1("");
             setSide2("");
