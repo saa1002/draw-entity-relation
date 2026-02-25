@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { readFileSync, fs } from 'fs'
-import { resolve, path } from 'path'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
 import fs from "fs";
 import path from "path";
 import { 
@@ -10,7 +10,8 @@ import {
     relationsUnconnected,
     validateGraph, 
     cardinalitiesNotValid,
-    notNMRelationsWithAttributes
+    notNMRelationsWithAttributes,
+    accessCell
 } from "../../src/utils/validation"
 
 let graph;
