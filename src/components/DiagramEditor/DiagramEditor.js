@@ -78,7 +78,10 @@ export default function App(props) {
     function accessCell(idMx) {
         return graph.model.cells[idMx];
     }
-
+    const getSelectedEntityData = () =>
+        diagramRef.current.entities.find(
+            (entity) => entity.idMx === selected?.id,
+    );
     const saveToLocalStorage = () => {
         const diagramData = JSON.stringify(diagramRef.current);
         localStorage.setItem("diagramData", diagramData);
@@ -114,8 +117,30 @@ export default function App(props) {
         relations: (diagramData?.relations || []).map(normalizeRelation),
     });    
 
-        const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
+    const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
     const WEAK_ENTITY_DECORATOR_OFFSET = 4;
+
+    const isWeakEntityDecoratorCell = (cell) =>
+        !!cell?.id && String(cell.id).endsWith(WEAK_ENTITY_DECORATOR_SUFFIX);
+
+    const syncWeakEntityDecorator = (entityCell) => {
+        if (!entityCell) return;
+
+        const decorator = accessCell(getWeakEntityDecoratorId(entityCell.id));
+        if (!decorator || !decorator.geometry || !entityCell.geometry) return;
+
+        decorator.geometry.x =
+            entityCell.geometry.x - WEAK_ENTITY_DECORATOR_OFFSET;
+        decorator.geometry.y =
+            entityCell.geometry.y - WEAK_ENTITY_DECORATOR_OFFSET;
+        decorator.geometry.width =
+            entityCell.geometry.width + WEAK_ENTITY_DECORATOR_OFFSET * 2;
+        decorator.geometry.height =
+            entityCell.geometry.height + WEAK_ENTITY_DECORATOR_OFFSET * 2;
+
+        graph.refresh(decorator);
+        graph.orderCells(true, [decorator]);
+    };    
 
     const getWeakEntityDecoratorId = (entityId) =>
         `${entityId}${WEAK_ENTITY_DECORATOR_SUFFIX}`;
@@ -132,7 +157,24 @@ export default function App(props) {
             "shape=rectangle;weakEntityDecoratorStyle",
         );
     };
+    const ensureWeakEntityDecorator = (entityCell, entityData) => {
+        const existingDecorator = accessCell(getWeakEntityDecoratorId(entityCell.id));
 
+        if (existingDecorator) {
+            syncWeakEntityDecorator(entityCell);
+            return;
+        }
+
+        createWeakEntityDecorator(entityData);
+        syncWeakEntityDecorator(entityCell);
+    };
+
+    const removeWeakEntityDecorator = (entityId) => {
+        const decorator = accessCell(getWeakEntityDecoratorId(entityId));
+        if (decorator) {
+            graph.removeCells([decorator]);
+        }
+    };
     const recreateGraphFromLocalStorage = () => {
         const getAttributeStyle = (attribute) => {
             if (attribute.partialKey) {
@@ -413,6 +455,11 @@ export default function App(props) {
             accessCell(attribute.cell.at(0)).geometry.y =
                 selected.geometry.y + attribute.offsetY;
         });
+
+        if(selectedEntityDiag?.weak) {
+            syncWeakEntityDecorator(selected);
+        }
+
         refreshGraph();
     };
 
@@ -476,9 +523,32 @@ export default function App(props) {
         }
     };
 
+    const ToggleWeakEntityButton = () => {
+        const isEntity =
+            selected?.style?.includes("shape=rectangle") &&
+            !isWeakEntityDecoratorCell(selected);
+
+        const selectedEntityDiag = getSelectedEntityData();
+
+        if (isEntity && selectedEntityDiag) {
+            return (
+                <button
+                    type="button"
+                    className="button-toolbar-action"
+                    onClick={toggleWeakEntity}
+                >
+                    {selectedEntityDiag.weak
+                        ? "Quitar entidad débil"
+                        : "Marcar como entidad débil"}
+                </button>
+            );
+        }
+    };
+    
     const onCellsMoved = (_evt) => {
         if (selected) {
-            if (selected?.style?.includes("shape=rectangle")) {
+            if (selected?.style?.includes("shape=rectangle") && 
+            !isWeakEntityDecoratorCell(selected)) {
                 handleEntityMove(selected);
             } else if (selected?.style?.includes("shape=rhombus")) {
                 handleRelationMove(selected);
