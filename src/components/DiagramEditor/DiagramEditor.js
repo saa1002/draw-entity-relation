@@ -44,7 +44,6 @@ export default function App(props) {
     weakEntityDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
-    weakEntityDecoratorStyle[mxConstants.STYLE_DELETABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
 
     const partialKeyAttrStyle = {};
@@ -348,7 +347,10 @@ export default function App(props) {
                 if (this.model.isEdge(cell)) {
                     return false;
                 }
-
+                
+                if (isWeakEntityDecoratorCell(cell)) {
+                    return false;
+                }
                 // Default behavior for other cells
                 return this.isCellsSelectable() && !this.isCellLocked(cell);
             };
@@ -522,29 +524,31 @@ export default function App(props) {
             }
         }
     };
+    const toggleWeakEntity = () => {
+        if (!selected) return;
+        if (!selected?.style?.includes("shape=rectangle")) return;
+        if (isWeakEntityDecoratorCell(selected)) return;
 
-    const ToggleWeakEntityButton = () => {
-        const isEntity =
-            selected?.style?.includes("shape=rectangle") &&
-            !isWeakEntityDecoratorCell(selected);
+        const entity = getSelectedEntityData();
+        if (!entity) return;
 
-        const selectedEntityDiag = getSelectedEntityData();
+        entity.weak = !entity.weak;
 
-        if (isEntity && selectedEntityDiag) {
-            return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={toggleWeakEntity}
-                >
-                    {selectedEntityDiag.weak
-                        ? "Quitar entidad débil"
-                        : "Marcar como entidad débil"}
-                </button>
-            );
+        if (entity.weak) {
+            ensureWeakEntityDecorator(selected, entity);
+            toast.success("Entidad marcada como débil");
+        } else {
+            entity.ownerEntityId = null;
+            entity.identifyingRelationId = null;
+            removeWeakEntityDecorator(entity.idMx);
+            toast.success("Entidad marcada como fuerte");
         }
+
+        refreshGraph();
+        updateDiagramData();
+        setRefreshDiagram((prevState) => !prevState);
     };
-    
+
     const onCellsMoved = (_evt) => {
         if (selected) {
             if (selected?.style?.includes("shape=rectangle") && 
@@ -585,7 +589,8 @@ export default function App(props) {
     const addAttribute = () => {
         let selectedDiag;
         let isRelation = false;
-        if (selected?.style?.includes("shape=rectangle")) {
+        if (selected?.style?.includes("shape=rectangle") &&
+            !isWeakEntityDecoratorCell(selected)) {
             selectedDiag = diagramRef.current.entities.find(
                 (entity) => entity.idMx === selected.id,
             );
@@ -797,7 +802,8 @@ export default function App(props) {
         );
 
     const AddAttributeButton = () => {
-        if (selected?.style?.includes("shape=rectangle")) {
+        if (selected?.style?.includes("shape=rectangle") && 
+            !isWeakEntityDecoratorCell(selected)) {
             return (
                 <button
                     type="button"
@@ -830,7 +836,8 @@ export default function App(props) {
     };
 
     const ToggleAttributesButton = () => {
-        const isEntity = selected?.style?.includes("shape=rectangle");
+        const isEntity = selected?.style?.includes("shape=rectangle") &&
+            !isWeakEntityDecoratorCell(selected);
         const isRelationNM =
             selected?.style?.includes("shape=rhombus") &&
             diagramRef.current.relations.find(
@@ -908,6 +915,28 @@ export default function App(props) {
                     onClick={toggleAttrKey}
                 >
                     Convertir en clave
+                </button>
+            );
+        }
+    };
+
+    const ToggleWeakEntityButton = () => {
+        const isEntity =
+            selected?.style?.includes("shape=rectangle") &&
+            !isWeakEntityDecoratorCell(selected);
+
+        const selectedEntityDiag = getSelectedEntityData();
+
+        if (isEntity && selectedEntityDiag) {
+            return (
+                <button
+                    type="button"
+                    className="button-toolbar-action"
+                    onClick={toggleWeakEntity}
+                >
+                    {selectedEntityDiag.weak
+                        ? "Quitar entidad débil"
+                        : "Marcar como entidad débil"}
                 </button>
             );
         }
@@ -1359,7 +1388,8 @@ export default function App(props) {
     };
 
     const DeleteEntityButton = () => {
-        const isEntity = selected?.style?.includes("shape=rectangle");
+        const isEntity = selected?.style?.includes("shape=rectangle") && 
+            !isWeakEntityDecoratorCell(selected);
         function deleteEntity() {
             // Find the entity in diagramRef.current.entities
             const entityIndex = diagramRef.current.entities.findIndex(
@@ -1374,7 +1404,9 @@ export default function App(props) {
 
                 // Find the corresponding cell in graph.model.cells
                 const cell = accessCell(entity.idMx);
-
+                const weakDecorator = entity.weak
+                    ? accessCell(getWeakEntityDecoratorId(entity.idMx))
+                    : null;
                 if (cell) {
                     // Collect the attribute cells to delete
                     const attributeCells = entity.attributes.flatMap((attr) => {
@@ -1382,8 +1414,11 @@ export default function App(props) {
                     });
 
                     // Remove the entity's cell and its attributes from the graph
-                    graph.removeCells([cell, ...attributeCells]);
-
+                    graph.removeCells(
+                        weakDecorator
+                            ? [weakDecorator, cell, ...attributeCells]
+                            : [cell, ...attributeCells],
+                    );
                     // Check and remove relations involving this entity
                     diagramRef.current.relations.forEach((relation, index) => {
                         if (
@@ -2013,6 +2048,7 @@ export default function App(props) {
                 <div>{RelationAddAttributeButton()}</div>
                 <div>{ToggleAttributesButton()}</div>
                 <div>{ToggleAttrKeyButton()}</div>
+                <div>{ToggleWeakEntityButton()}</div>
 
                 <div>{RelationConfigurationButton()}</div>
                 <div>{RelationCardinalitiesButton()}</div>
