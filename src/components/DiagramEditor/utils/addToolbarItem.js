@@ -65,7 +65,7 @@ export default function addToolbarItem(
         vertex.geometry.y = y;
 
         graph.addCell(vertex);
-        graph.setSelectionCell(vertex);
+
         if (addEntityToDiagram) {
             diagramRef.current.entities.push({
                 idMx: vertex.id,
@@ -101,6 +101,8 @@ export default function addToolbarItem(
                 attributes: [],
             });
         }
+
+        graph.setSelectionCell(vertex);
     };
 
     // Creates the image which is used as the drag icon (preview)

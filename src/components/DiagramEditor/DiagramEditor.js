@@ -47,7 +47,8 @@ export default function App(props) {
     weakEntityDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
 
     const partialKeyAttrStyle = {};
-    partialKeyAttrStyle[mxConstants.STYLE_FONTSTYLE] = mxConstants.FONT_UNDERLINE;
+    partialKeyAttrStyle[mxConstants.STYLE_DASHED] = 1;
+    partialKeyAttrStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
 
     const containerRef = React.useRef(null);
     const toolbarRef = React.useRef(null);
@@ -81,6 +82,24 @@ export default function App(props) {
         diagramRef.current.entities.find(
             (entity) => entity.idMx === selected?.id,
     );
+    
+    const getSelectedEntityAttributeData = () => {
+        for (const entity of diagramRef.current.entities) {
+            const attribute = entity.attributes.find(
+                (attr) => attr.idMx === selected?.id,
+            );
+
+            if (attribute) {
+                return {
+                    entity,
+                    attribute,
+                };
+            }
+        }
+
+        return null;
+    };
+
     const saveToLocalStorage = () => {
         const diagramData = JSON.stringify(diagramRef.current);
         localStorage.setItem("diagramData", diagramData);
@@ -114,7 +133,9 @@ export default function App(props) {
     const normalizeDiagramData = (diagramData) => ({
         entities: (diagramData?.entities || []).map(normalizeEntity),
         relations: (diagramData?.relations || []).map(normalizeRelation),
-    });    
+    });
+
+    const getAttributeSize = () => 16;
 
     const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
     const WEAK_ENTITY_DECORATOR_OFFSET = 4;
@@ -175,17 +196,6 @@ export default function App(props) {
         }
     };
     const recreateGraphFromLocalStorage = () => {
-        const getAttributeStyle = (attribute) => {
-            if (attribute.partialKey) {
-                return "shape=ellipse;rightLabelStyle;notResizeableStyle;transparentColor;partialKeyAttrStyle";
-            }
-
-            if (attribute.key) {
-                return "shape=ellipse;rightLabelStyle;notResizeableStyle;transparentColor;keyAttrStyle";
-            }
-
-            return "shape=ellipse;rightLabelStyle;notResizeableStyle;transparentColor;";
-        };
 
         const getRelationStyle = (relation) => {
             const baseStyle =
@@ -206,9 +216,9 @@ export default function App(props) {
                 attribute.name,
                 attribute.position.x,
                 attribute.position.y,
-                10,
-                10,
-                getAttributeStyle(attribute),
+                getAttributeSize(),
+                getAttributeSize(),
+                getAttributeStyleString(attribute),
             );
             edge = graph.insertEdge(
                 source,
@@ -347,7 +357,7 @@ export default function App(props) {
                 if (this.model.isEdge(cell)) {
                     return false;
                 }
-                
+
                 if (isWeakEntityDecoratorCell(cell)) {
                     return false;
                 }
@@ -445,6 +455,21 @@ export default function App(props) {
         const view = graph.getView(graphView);
         view.refresh();
     };
+    
+    const getAttributeStyleString = (attribute) => {
+        const baseStyle =
+            "shape=ellipse;rightLabelStyle;notResizeableStyle;transparentColor";
+
+        if (attribute?.partialKey) {
+            return `${baseStyle};partialKeyAttrStyle`;
+        }
+
+        if (attribute?.key) {
+            return `${baseStyle};keyAttrStyle`;
+        }
+
+        return `${baseStyle};`;
+    };
 
     const handleEntityMove = (selected) => {
         const selectedEntityDiag = diagramRef.current.entities.find(
@@ -523,30 +548,6 @@ export default function App(props) {
                     selected.geometry.y - parentEntity.position.y;
             }
         }
-    };
-    const toggleWeakEntity = () => {
-        if (!selected) return;
-        if (!selected?.style?.includes("shape=rectangle")) return;
-        if (isWeakEntityDecoratorCell(selected)) return;
-
-        const entity = getSelectedEntityData();
-        if (!entity) return;
-
-        entity.weak = !entity.weak;
-
-        if (entity.weak) {
-            ensureWeakEntityDecorator(selected, entity);
-            toast.success("Entidad marcada como débil");
-        } else {
-            entity.ownerEntityId = null;
-            entity.identifyingRelationId = null;
-            removeWeakEntityDecorator(entity.idMx);
-            toast.success("Entidad marcada como fuerte");
-        }
-
-        refreshGraph();
-        updateDiagramData();
-        setRefreshDiagram((prevState) => !prevState);
     };
 
     const onCellsMoved = (_evt) => {
@@ -642,6 +643,10 @@ export default function App(props) {
             baseAttributeName,
             existingAttributes,
         );
+        const newAttributeData = {
+            key: addPrimaryAttrRef.current && !isRelation,
+            partialKey: false,
+        };
 
         const target = graph.insertVertex(
             null,
@@ -649,11 +654,9 @@ export default function App(props) {
             uniqueAttributeName, // Unique attribute name as placeholder
             newX,
             newY,
-            10,
-            10,
-            `shape=ellipse;rightLabelStyle;notResizeableStyle;transparentColor;${
-                addPrimaryAttrRef.current && !isRelation ? "keyAttrStyle" : ""
-            }`,
+            getAttributeSize(),
+            getAttributeSize(),
+            getAttributeStyleString(newAttributeData),
         );
 
         graph.insertEdge(selected, null, null, source, target);
@@ -754,21 +757,16 @@ export default function App(props) {
             .attributes.forEach((attribute) => {
                 cellsToDelete.push(accessCell(attribute.cell.at(0)));
                 cellsToDelete.push(accessCell(attribute.cell.at(1)));
-                const originalString = accessCell(attribute.cell.at(0)).style;
                 if (attribute.idMx === selected.id) {
                     attribute.key = true;
-                    attribute.value = "Clave";
-                    const modifiedString = `${originalString}keyAttrStyle`;
-                    accessCell(attribute.cell.at(0)).style = modifiedString;
+                    attribute.partialKey = false;
                 } else {
                     attribute.key = false;
-                    const stringWithoutKeyAttrStyle = originalString.replace(
-                        /keyAttrStyle(;|$)/,
-                        "",
-                    );
-                    accessCell(attribute.cell.at(0)).style =
-                        stringWithoutKeyAttrStyle;
                 }
+                graph.getModel().setStyle(
+                    accessCell(attribute.cell.at(0)),
+                    getAttributeStyleString(attribute),
+                );
                 cellsToRecreate.push(accessCell(attribute.cell.at(0)));
                 cellsToRecreate.push(accessCell(attribute.cell.at(1)));
             });
@@ -778,6 +776,62 @@ export default function App(props) {
         graph.orderCells(true, cellsToRecreate);
 
         // This triggers a rerender
+        setRefreshDiagram((prevState) => !prevState);
+    };
+
+    const toggleWeakEntity = () => {
+        if (!selected) return;
+        if (!selected?.style?.includes("shape=rectangle")) return;
+        if (isWeakEntityDecoratorCell(selected)) return;
+
+        const entity = getSelectedEntityData();
+        if (!entity) return;
+
+        entity.weak = !entity.weak;
+
+        if (entity.weak) {
+            ensureWeakEntityDecorator(selected, entity);
+            toast.success("Entidad marcada como débil");
+        } else {
+            entity.ownerEntityId = null;
+            entity.identifyingRelationId = null;
+            removeWeakEntityDecorator(entity.idMx);
+            toast.success("Entidad marcada como fuerte");
+        }
+
+        refreshGraph();
+        updateDiagramData();
+        setRefreshDiagram((prevState) => !prevState);
+    };
+
+    const togglePartialKey = () => {
+        if (!selected) return;
+        if (!selected?.style?.includes("shape=ellipse")) return;
+
+        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        if (!selectedEntityAttribute) return;
+
+        const { attribute } = selectedEntityAttribute;
+
+        attribute.partialKey = !attribute.partialKey;
+
+        if (attribute.partialKey) {
+            attribute.key = false;
+            toast.success("Atributo marcado como clave parcial");
+        } else {
+            toast.success("Clave parcial eliminada");
+        }
+
+        const attributeCell = accessCell(attribute.idMx);
+        if (attributeCell) {
+            graph.getModel().setStyle(
+                attributeCell,
+                getAttributeStyleString(attribute),
+            );
+        }
+
+        refreshGraph();
+        updateDiagramData();
         setRefreshDiagram((prevState) => !prevState);
     };
 
@@ -918,6 +972,33 @@ export default function App(props) {
                 </button>
             );
         }
+    };
+
+    const TogglePartialKeyButton = () => {
+        const isAttribute = selected?.style?.includes("shape=ellipse");
+        const selectedEntityAttribute = getSelectedEntityAttributeData();
+
+        if (!isAttribute || !selectedEntityAttribute) {
+            return;
+        }
+
+        const { attribute } = selectedEntityAttribute;
+
+        if (attribute.key) {
+            return;
+        }
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={togglePartialKey}
+            >
+                {attribute.partialKey
+                    ? "Quitar clave parcial"
+                    : "Convertir en clave parcial"}
+            </button>
+        );
     };
 
     const ToggleWeakEntityButton = () => {
@@ -2048,6 +2129,7 @@ export default function App(props) {
                 <div>{RelationAddAttributeButton()}</div>
                 <div>{ToggleAttributesButton()}</div>
                 <div>{ToggleAttrKeyButton()}</div>
+                <div>{TogglePartialKeyButton()}</div>
                 <div>{ToggleWeakEntityButton()}</div>
 
                 <div>{RelationConfigurationButton()}</div>
