@@ -60,7 +60,7 @@ export default function App(props) {
     });
     const [selected, setSelected] = React.useState(null);
     const [entityWithAttributesHidden, setEntityWithAttributesHidden] =
-        React.useState({});
+        React.useState(null);
 
     const [refreshDiagram, setRefreshDiagram] = React.useState(false);
     const addPrimaryAttrRef = React.useRef(null);
@@ -709,15 +709,15 @@ export default function App(props) {
                   ({ idMx }) => idMx === selected.id,
               );
         selectedEntity.attributes.forEach(({ cell }) => {
-            graph.getModel().setVisible(accessCell(cell.at(0)), false);
-            graph.getModel().setVisible(accessCell(cell.at(1)), false);
+            accessCell(cell.at(0)).setVisible(false);
+            accessCell(cell.at(1)).setVisible(false);
         });
-        refreshGraph();
 
-        setEntityWithAttributesHidden((prev) => ({
-            ...prev,
-            [selected.id]: true,
-        }));
+        const updatedAttributesHidden = { ...entityWithAttributesHidden };
+        updatedAttributesHidden[selected.id] = true;
+        setEntityWithAttributesHidden(updatedAttributesHidden);
+
+        refreshGraph();
     };
 
     const showAttributes = (isRelationNM) => {
@@ -729,15 +729,15 @@ export default function App(props) {
                   ({ idMx }) => idMx === selected.id,
               );
         selectedEntity.attributes.forEach(({ cell }) => {
-            graph.getModel().setVisible(accessCell(cell.at(0)), true);
-            graph.getModel().setVisible(accessCell(cell.at(1)), true);
+            accessCell(cell.at(0)).setVisible(true);
+            accessCell(cell.at(1)).setVisible(true);
         });
-        refreshGraph();
 
-        setEntityWithAttributesHidden((prev) => ({
-            ...prev,
-            [selected.id]: false,
-        }));
+        const updatedAttributesHidden = { ...entityWithAttributesHidden };
+        updatedAttributesHidden[selected.id] = false;
+        setEntityWithAttributesHidden(updatedAttributesHidden);
+
+        refreshGraph();
     };
 
     const toggleAttrKey = () => {
@@ -901,6 +901,16 @@ export default function App(props) {
             )?.canHoldAttributes;
 
         if (isEntity || isRelationNM) {
+            if (
+                entityWithAttributesHidden &&
+                !entityWithAttributesHidden.hasOwnProperty(selected.id)
+            ) {
+                const updatedAttributesHidden = {
+                    ...entityWithAttributesHidden,
+                };
+                updatedAttributesHidden[selected.id] = false;
+                setEntityWithAttributesHidden(updatedAttributesHidden);
+            }
             const attributesHidden = entityWithAttributesHidden?.[selected.id];
 
             if (attributesHidden !== true) {
