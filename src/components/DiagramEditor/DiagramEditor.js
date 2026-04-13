@@ -501,6 +501,7 @@ export default function App(props) {
                         y: target.geometry.y,
                     },
                     key: addPrimaryAttrRef.current,
+                    partialKey: false,
                     cell: [target.id, String(+target.id + 1)],
                     offsetX: target.geometry.x - selected.geometry.x,
                     offsetY: target.geometry.y - selected.geometry.y,

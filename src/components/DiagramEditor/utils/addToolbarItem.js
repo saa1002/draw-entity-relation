@@ -71,6 +71,9 @@ export default function addToolbarItem(
                 idMx: vertex.id,
                 name: vertex.value,
                 position: { x: vertex.geometry.x, y: vertex.geometry.y },
+                weak: false,
+                ownerEntityId: null,
+                identifyingRelationId: null,
                 attributes: [],
             });
         }
@@ -94,6 +97,7 @@ export default function addToolbarItem(
                     entity: { idMx: "" },
                 },
                 canHoldAttributes: false,
+                isIdentifying: false,
                 attributes: [],
             });
         }
