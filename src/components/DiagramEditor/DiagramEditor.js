@@ -37,6 +37,19 @@ export default function App(props) {
     const transparentColor = {};
     transparentColor[mxConstants.STYLE_FILLCOLOR] = "transparent";
 
+    const weakEntityDecoratorStyle = {};
+    weakEntityDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
+    weakEntityDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = "#6482B9";
+    weakEntityDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 1;
+    weakEntityDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
+    weakEntityDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
+    weakEntityDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
+    weakEntityDecoratorStyle[mxConstants.STYLE_DELETABLE] = 0;
+    weakEntityDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
+
+    const partialKeyAttrStyle = {};
+    partialKeyAttrStyle[mxConstants.STYLE_FONTSTYLE] = mxConstants.FONT_UNDERLINE;
+
     const containerRef = React.useRef(null);
     const toolbarRef = React.useRef(null);
 
@@ -71,7 +84,77 @@ export default function App(props) {
         localStorage.setItem("diagramData", diagramData);
     };
 
+    const normalizeAttribute = (attribute) => ({
+        ...attribute,
+        key: attribute.key ?? false,
+        partialKey: attribute.partialKey ?? false,
+    });
+
+    const normalizeEntity = (entity) => ({
+        ...entity,
+        weak: entity.weak ?? false,
+        ownerEntityId: entity.ownerEntityId ?? null,
+        identifyingRelationId: entity.identifyingRelationId ?? null,
+        attributes: (entity.attributes || []).map(normalizeAttribute),
+    });
+
+    const normalizeRelationAttribute = (attribute) => ({
+        ...attribute,
+        partialKey: attribute.partialKey ?? false,
+    });
+
+    const normalizeRelation = (relation) => ({
+        ...relation,
+        isIdentifying: relation.isIdentifying ?? false,
+        attributes: (relation.attributes || []).map(normalizeRelationAttribute),
+    });
+
+    const normalizeDiagramData = (diagramData) => ({
+        entities: (diagramData?.entities || []).map(normalizeEntity),
+        relations: (diagramData?.relations || []).map(normalizeRelation),
+    });    
+
+        const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
+    const WEAK_ENTITY_DECORATOR_OFFSET = 4;
+
+    const getWeakEntityDecoratorId = (entityId) =>
+        `${entityId}${WEAK_ENTITY_DECORATOR_SUFFIX}`;
+
+    const createWeakEntityDecorator = (entity) => {
+        return graph.insertVertex(
+            null,
+            getWeakEntityDecoratorId(entity.idMx),
+            "",
+            entity.position.x - WEAK_ENTITY_DECORATOR_OFFSET,
+            entity.position.y - WEAK_ENTITY_DECORATOR_OFFSET,
+            100 + WEAK_ENTITY_DECORATOR_OFFSET * 2,
+            40 + WEAK_ENTITY_DECORATOR_OFFSET * 2,
+            "shape=rectangle;weakEntityDecoratorStyle",
+        );
+    };
+
     const recreateGraphFromLocalStorage = () => {
+        const getAttributeStyle = (attribute) => {
+            if (attribute.partialKey) {
+                return "shape=ellipse;rightLabelStyle;notResizeableStyle;transparentColor;partialKeyAttrStyle";
+            }
+
+            if (attribute.key) {
+                return "shape=ellipse;rightLabelStyle;notResizeableStyle;transparentColor;keyAttrStyle";
+            }
+
+            return "shape=ellipse;rightLabelStyle;notResizeableStyle;transparentColor;";
+        };
+
+        const getRelationStyle = (relation) => {
+            const baseStyle =
+                ";shape=rhombus;verticalAlign=middle;align=center;fillColor=#C3D9FF;strokeColor=#6482B9;fontColor=#774400";
+
+            return relation.isIdentifying
+                ? `${baseStyle};strokeWidth=3;dashed=1`
+                : baseStyle;
+        };
+
         const recreateAttribute = (attribute, source) => {
             let target;
             let edge;
@@ -84,9 +167,7 @@ export default function App(props) {
                 attribute.position.y,
                 10,
                 10,
-                `shape=ellipse;rightLabelStyle;notResizeableStyle;transparentColor;${
-                    attribute.key ? "keyAttrStyle" : ""
-                }`,
+                getAttributeStyle(attribute),
             );
             edge = graph.insertEdge(
                 source,
@@ -98,6 +179,11 @@ export default function App(props) {
             graph.orderCells(true, [edge]); // Move front the selected entity so the new vertex aren't on top
         };
         const recreateEntity = (entity) => {
+            if (entity.weak) {
+                const decorator = createWeakEntityDecorator(entity);
+                graph.orderCells(true, [decorator]); // Move front the selected entity so the new vertex aren't on top
+            }
+
             const source = graph.insertVertex(
                 null,
                 entity.idMx,
@@ -122,7 +208,7 @@ export default function App(props) {
                 relation.position.y,
                 100,
                 40,
-                ";shape=rhombus;verticalAlign=middle;align=center;fillColor=#C3D9FF;strokeColor=#6482B9;fontColor=#774400",
+                getRelationStyle(relation),
             );
             for (const attribute of relation.attributes) {
                 recreateAttribute(attribute, source);
@@ -196,7 +282,7 @@ export default function App(props) {
         // Recreate the graph
         if (localStorage.getItem("diagramData")) {
             const savedData = JSON.parse(localStorage.getItem("diagramData"));
-            diagramRef.current = savedData; // Deep clone the saved data
+            diagramRef.current = normalizeDiagramData(savedData); // Deep clone the saved data
 
             for (const entity of diagramRef.current.entities) {
                 recreateEntity(entity);
@@ -240,6 +326,15 @@ export default function App(props) {
                 .putCellStyle("rightLabelStyle", rightLabelStyle);
 
             graph.getStylesheet().putCellStyle("keyAttrStyle", keyAttrStyle);
+            graph
+                .getStylesheet()
+                .putCellStyle("partialKeyAttrStyle", partialKeyAttrStyle);
+            graph
+                .getStylesheet()
+                .putCellStyle(
+                    "weakEntityDecoratorStyle",
+                    weakEntityDecoratorStyle,
+                );
             graph
                 .getStylesheet()
                 .putCellStyle("notResizeableStyle", notResizeableStyle);
@@ -517,6 +612,7 @@ export default function App(props) {
                         x: target.geometry.x,
                         y: target.geometry.y,
                     },
+                    partialKey: false,
                     cell: [target.id, String(+target.id + 1)],
                     offsetX: target.geometry.x - selected.geometry.x,
                     offsetY: target.geometry.y - selected.geometry.y,
