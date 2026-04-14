@@ -18,6 +18,21 @@ import toast, { Toaster } from "react-hot-toast";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
+import {
+    ENTITY_WIDTH,
+    ENTITY_HEIGHT,
+    RELATION_WIDTH,
+    RELATION_HEIGHT,
+    ER_STROKE,
+    ER_FILL,
+    ER_FONT,
+    ER_FONT_FAMILY,
+    ER_FONT_SIZE,
+    getAttributeDimensions,
+    getEntityStyleString,
+    getRelationStyleString,
+    getCardinalityStyleString,
+} from "./utils/diagramStyles";
 
 const { mxGraph, mxEvent, mxConstants, mxPoint } = MxGraph();
 
@@ -98,67 +113,6 @@ export default function App(props) {
         const diagramData = JSON.stringify(diagramRef.current);
         localStorage.setItem("diagramData", diagramData);
     };
-
-    const getAttributeDimensions = (label = "") => {
-        const text = String(label ?? "");
-        return {
-            width: Math.max(
-                ATTRIBUTE_MIN_WIDTH,
-                text.length * ATTRIBUTE_CHAR_WIDTH + ATTRIBUTE_HORIZONTAL_PADDING,
-            ),
-            height: ATTRIBUTE_HEIGHT,
-        };
-    
-    };
-    
-    const getEntityStyleString = () =>
-        [
-            "shape=rectangle",
-            "rounded=0",
-            `fillColor=${ER_FILL}`,
-            `strokeColor=${ER_STROKE}`,
-            "strokeWidth=1",
-            "align=center",
-            "verticalAlign=middle",
-            `fontColor=${ER_FONT}`,
-            `fontFamily=${ER_FONT_FAMILY}`,
-            `fontSize=${ER_FONT_SIZE}`,
-            "spacing=0",
-            "whiteSpace=wrap",
-            "overflow=hidden",
-        ].join(";");
-
-    const getRelationStyleString = (relation) => {
-        const baseStyle = [
-            "shape=rhombus",
-            `fillColor=${ER_FILL}`,
-            `strokeColor=${ER_STROKE}`,
-            "strokeWidth=1",
-            "align=center",
-            "verticalAlign=middle",
-            `fontColor=${ER_FONT}`,
-            `fontFamily=${ER_FONT_FAMILY}`,
-            `fontSize=${ER_FONT_SIZE}`,
-            "spacing=0",
-            "whiteSpace=wrap",
-            "overflow=hidden",
-        ].join(";");
-
-        return relation?.isIdentifying
-            ? `${baseStyle};dashed=1;strokeWidth=2`
-            : baseStyle;
-    };
-
-    const getCardinalityStyleString = () =>
-        [
-            "fontSize=16",
-            `fontColor=${ER_FONT}`,
-            `fontFamily=${ER_FONT_FAMILY}`,
-            "fillColor=none",
-            "strokeColor=none",
-            "rounded=0",
-            "spacing=0",
-        ].join(";");
 
     const getAttributeStyleString = (attribute) => {
         const baseStyle = [
