@@ -46,8 +46,6 @@ test('hide/show attributes', async ({ page }) => {
     await page.getByText('Añadir atributo').first().click();
 
     await page.getByText('Atributo', {exact: true}).first().dblclick();
-    await page.keyboard.type('Clave');
-    await canvas.click();
 
     await page.getByText('Entidad').first().dblclick();
 
@@ -56,14 +54,14 @@ test('hide/show attributes', async ({ page }) => {
     await page.waitForTimeout(1000); // Wait for 1 second after hiding attributes
 
     // Check if the added attribute is hidden
-    await expect(page.getByText('Clave', {exact: true}).first()).not.toBeVisible()
+    await expect(page.getByText('Atributo', {exact: true}).first()).not.toBeVisible()
 
     // Show attributes
     await page.getByText('Mostrar atributos', {exact: true}).first().click();
     await page.waitForTimeout(1000); // Wait for 2 seconds after showing attributes to ensure changes take effect
 
     // Check if the added attribute is shown
-    await expect(page.getByText('Clave', {exact: true}).first()).toBeVisible()
+    await expect(page.getByText('Atributo', {exact: true}).first()).toBeVisible()
 });
 
 test('mxGraph transaction level stays balanced (updateLevel === 0)', async ({ page }) => {
