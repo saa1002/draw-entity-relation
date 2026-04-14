@@ -22,10 +22,12 @@ import { setInitialConfiguration } from "./utils";
 const { mxGraph, mxEvent, mxConstants, mxPoint } = MxGraph();
 
 export default function App(props) {
-    // Define a style with labelPosition set to ALIGN_RIGHT, additional right spacing
-    const rightLabelStyle = {};
-    rightLabelStyle[mxConstants.STYLE_LABEL_POSITION] = mxConstants.ALIGN_RIGHT;
-    rightLabelStyle[mxConstants.STYLE_SPACING_RIGHT] = -40; // Adjust this value to control the extra space to the right
+
+    const ATTRIBUTE_MIN_WIDTH = 70;
+    const ATTRIBUTE_HEIGHT = 34;
+    const ATTRIBUTE_HORIZONTAL_PADDING = 24;
+    const ATTRIBUTE_CHAR_WIDTH = 7;
+
     // Apply font underline to the key attribute label text
     const keyAttrStyle = {};
     keyAttrStyle[mxConstants.STYLE_FONTSTYLE] = mxConstants.FONT_UNDERLINE;
@@ -33,9 +35,6 @@ export default function App(props) {
     // Define a style that makes a cell non-resizable and non-movable
     const notResizeableStyle = {};
     notResizeableStyle[mxConstants.STYLE_RESIZABLE] = 0; // Makes the cell non-resizable
-
-    const transparentColor = {};
-    transparentColor[mxConstants.STYLE_FILLCOLOR] = "transparent";
 
     const weakEntityDecoratorStyle = {};
     weakEntityDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
@@ -105,6 +104,16 @@ export default function App(props) {
         localStorage.setItem("diagramData", diagramData);
     };
 
+    const getAttributeDimensions = (label = "") => {
+        const text = String(label ?? "");
+        return {
+            width: Math.max(
+                ATTRIBUTE_MIN_WIDTH,
+                text.length * ATTRIBUTE_CHAR_WIDTH + ATTRIBUTE_HORIZONTAL_PADDING,
+            ),
+            height: ATTRIBUTE_HEIGHT,
+        };
+    };
     const normalizeAttribute = (attribute) => ({
         ...attribute,
         key: attribute.key ?? false,
@@ -209,6 +218,7 @@ export default function App(props) {
         const recreateAttribute = (attribute, source) => {
             let target;
             let edge;
+            const { width, height } = getAttributeDimensions(attribute.name);
             // Recreate attribute
             target = graph.insertVertex(
                 null,
@@ -216,8 +226,8 @@ export default function App(props) {
                 attribute.name,
                 attribute.position.x,
                 attribute.position.y,
-                getAttributeSize(),
-                getAttributeSize(),
+                width,
+                height,
                 getAttributeStyleString(attribute),
             );
             edge = graph.insertEdge(
@@ -375,9 +385,6 @@ export default function App(props) {
             graph.getSelectionModel().addListener(mxEvent.CHANGE, onSelected);
 
             graph.stylesheet.styles.defaultEdge.endArrow = ""; // NOTE: Edges are not directed
-            graph
-                .getStylesheet()
-                .putCellStyle("rightLabelStyle", rightLabelStyle);
 
             graph.getStylesheet().putCellStyle("keyAttrStyle", keyAttrStyle);
             graph
@@ -392,12 +399,27 @@ export default function App(props) {
             graph
                 .getStylesheet()
                 .putCellStyle("notResizeableStyle", notResizeableStyle);
-            graph
-                .getStylesheet()
-                .putCellStyle("transparentColor", transparentColor);
+                    const originalCellLabelChanged = graph.cellLabelChanged;
 
+            graph.cellLabelChanged = function (cell, newValue, autoSize) {
+                originalCellLabelChanged.apply(this, arguments);
+
+                if (cell?.style?.includes("shape=ellipse")) {
+                    const { width, height } = getAttributeDimensions(newValue);
+
+                    this.getModel().beginUpdate();
+                    try {
+                        cell.geometry.width = width;
+                        cell.geometry.height = height;
+                    } finally {
+                        this.getModel().endUpdate();
+                    }
+
+                    this.refresh(cell);
+                }
+            };
             recreateGraphFromLocalStorage();
-
+            
             return () => {
                 graph
                 .getSelectionModel()
@@ -457,8 +479,22 @@ export default function App(props) {
     };
     
     const getAttributeStyleString = (attribute) => {
-        const baseStyle =
-            "shape=ellipse;rightLabelStyle;notResizeableStyle;transparentColor";
+        const baseStyle = [
+            "shape=ellipse",
+            "perimeter=ellipsePerimeter",
+            "align=center",
+            "verticalAlign=middle",
+            "spacing=0",
+            "whiteSpace=wrap",
+            "overflow=hidden",
+            "resizable=0",
+            "fillColor=#ffffff",
+            "strokeColor=#000000",
+            "strokeWidth=1",
+            "fontColor=#000000",
+            "fontSize=14",
+            "fontFamily=Times New Roman",
+        ].join(";");
 
         if (attribute?.partialKey) {
             return `${baseStyle};partialKeyAttrStyle`;
@@ -468,7 +504,7 @@ export default function App(props) {
             return `${baseStyle};keyAttrStyle`;
         }
 
-        return `${baseStyle};`;
+        return baseStyle;
     };
 
     const handleEntityMove = (selected) => {
@@ -648,14 +684,16 @@ export default function App(props) {
             partialKey: false,
         };
 
+        const { width, height } = getAttributeDimensions(uniqueAttributeName);
+
         const target = graph.insertVertex(
             null,
             null,
             uniqueAttributeName, // Unique attribute name as placeholder
             newX,
             newY,
-            getAttributeSize(),
-            getAttributeSize(),
+            width,
+            height,
             getAttributeStyleString(newAttributeData),
         );
 
