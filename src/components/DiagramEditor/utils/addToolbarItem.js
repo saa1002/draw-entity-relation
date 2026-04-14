@@ -1,4 +1,8 @@
 import { default as MxGraph } from "mxgraph";
+import {
+    getEntityDimensions,
+    getRelationDimensions,
+} from "./diagramStyles";
 
 const { mxEvent, mxUtils } = MxGraph();
 
@@ -61,6 +65,16 @@ export default function addToolbarItem(
         // Set the vertex value to the unique name
         vertex.value = uniqueName;
 
+        if (addEntityToDiagram) {
+            const { width, height } = getEntityDimensions(uniqueName);
+            vertex.geometry.width = width;
+            vertex.geometry.height = height;
+        } else if (addRelationToDiagram) {
+            const { width, height } = getRelationDimensions(uniqueName);
+            vertex.geometry.width = width;
+            vertex.geometry.height = height;
+        }
+        
         vertex.geometry.x = x;
         vertex.geometry.y = y;
 

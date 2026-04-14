@@ -19,16 +19,14 @@ import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
 import {
-    ENTITY_WIDTH,
-    ENTITY_HEIGHT,
-    RELATION_WIDTH,
-    RELATION_HEIGHT,
     ER_STROKE,
     ER_FILL,
     ER_FONT,
     ER_FONT_FAMILY,
     ER_FONT_SIZE,
     getAttributeDimensions,
+    getEntityDimensions,
+    getRelationDimensions,
     getEntityStyleString,
     getRelationStyleString,
     getCardinalityStyleString,
@@ -202,14 +200,15 @@ export default function App(props) {
         `${entityId}${WEAK_ENTITY_DECORATOR_SUFFIX}`;
 
     const createWeakEntityDecorator = (entity) => {
+        const { width, height } = getEntityDimensions(entity.name);
         return graph.insertVertex(
             null,
             getWeakEntityDecoratorId(entity.idMx),
             "",
             entity.position.x - WEAK_ENTITY_DECORATOR_OFFSET,
             entity.position.y - WEAK_ENTITY_DECORATOR_OFFSET,
-            ENTITY_WIDTH + WEAK_ENTITY_DECORATOR_OFFSET * 2,
-            ENTITY_HEIGHT + WEAK_ENTITY_DECORATOR_OFFSET * 2,
+            width + WEAK_ENTITY_DECORATOR_OFFSET * 2,
+            height + WEAK_ENTITY_DECORATOR_OFFSET * 2,
             "shape=rectangle;weakEntityDecoratorStyle",
         );
     };
@@ -263,14 +262,16 @@ export default function App(props) {
                 graph.orderCells(true, [decorator]); // Move front the selected entity so the new vertex aren't on top
             }
 
+            const { width, height } = getEntityDimensions(entity.name);
+
             const source = graph.insertVertex(
                 null,
                 entity.idMx,
                 entity.name,
                 entity.position.x,
                 entity.position.y,
-                ENTITY_WIDTH,
-                ENTITY_HEIGHT,
+                width,
+                height,
                 getEntityStyleString(),
             );
             for (const attribute of entity.attributes) {
@@ -279,14 +280,17 @@ export default function App(props) {
         };
 
         const recreateRelation = (relation) => {
+
+            const { width, height } = getRelationDimensions(relation.name);
+
             const source = graph.insertVertex(
                 null,
                 relation.idMx,
                 relation.name,
                 relation.position.x,
                 relation.position.y,
-                RELATION_WIDTH,
-                RELATION_HEIGHT,
+                width,
+                height,
                 getRelationStyleString(relation),
             );
             for (const attribute of relation.attributes) {
@@ -422,19 +426,39 @@ export default function App(props) {
             graph.cellLabelChanged = function (cell, newValue, autoSize) {
                 originalCellLabelChanged.apply(this, arguments);
 
-                if (cell?.style?.includes("shape=ellipse")) {
-                    const { width, height } = getAttributeDimensions(newValue);
+                if (!cell?.style) return;
 
-                    this.getModel().beginUpdate();
-                    try {
+                this.getModel().beginUpdate();
+                try {
+                    if (cell.style.includes("shape=ellipse")) {
+                        const { width, height } = getAttributeDimensions(newValue);
                         cell.geometry.width = width;
                         cell.geometry.height = height;
-                    } finally {
-                        this.getModel().endUpdate();
-                    }
+                    } else if (
+                        cell.style.includes("shape=rectangle") &&
+                        !isWeakEntityDecoratorCell(cell)
+                    ) {
+                        const { width, height } = getEntityDimensions(newValue);
+                        cell.geometry.width = width;
+                        cell.geometry.height = height;
 
-                    this.refresh(cell);
+                        const entityData = diagramRef.current.entities.find(
+                            (entity) => entity.idMx === cell.id,
+                        );
+
+                        if (entityData?.weak) {
+                            syncWeakEntityDecorator(cell);
+                        }
+                    } else if (cell.style.includes("shape=rhombus")) {
+                        const { width, height } = getRelationDimensions(newValue);
+                        cell.geometry.width = width;
+                        cell.geometry.height = height;
+                    }
+                } finally {
+                    this.getModel().endUpdate();
                 }
+
+                this.refresh(cell);
             };
             recreateGraphFromLocalStorage();
             
