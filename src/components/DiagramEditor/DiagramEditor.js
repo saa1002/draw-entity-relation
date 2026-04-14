@@ -23,10 +23,22 @@ const { mxGraph, mxEvent, mxConstants, mxPoint } = MxGraph();
 
 export default function App(props) {
 
+    const ENTITY_WIDTH = 120;
+    const ENTITY_HEIGHT = 42;
+
+    const RELATION_WIDTH = 90;
+    const RELATION_HEIGHT = 46;
+
     const ATTRIBUTE_MIN_WIDTH = 70;
     const ATTRIBUTE_HEIGHT = 34;
     const ATTRIBUTE_HORIZONTAL_PADDING = 24;
     const ATTRIBUTE_CHAR_WIDTH = 7;
+
+    const ER_STROKE = "#6b6b6b";
+    const ER_FILL = "#ffffff";
+    const ER_FONT = "#000000";
+    const ER_FONT_FAMILY = "Times New Roman";
+    const ER_FONT_SIZE = 16;
 
     // Apply font underline to the key attribute label text
     const keyAttrStyle = {};
@@ -38,7 +50,7 @@ export default function App(props) {
 
     const weakEntityDecoratorStyle = {};
     weakEntityDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
-    weakEntityDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = "#6482B9";
+    weakEntityDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = "#6b6b6b";
     weakEntityDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 1;
     weakEntityDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
@@ -113,7 +125,87 @@ export default function App(props) {
             ),
             height: ATTRIBUTE_HEIGHT,
         };
+    
     };
+    
+    const getEntityStyleString = () =>
+        [
+            "shape=rectangle",
+            "rounded=0",
+            `fillColor=${ER_FILL}`,
+            `strokeColor=${ER_STROKE}`,
+            "strokeWidth=1",
+            "align=center",
+            "verticalAlign=middle",
+            `fontColor=${ER_FONT}`,
+            `fontFamily=${ER_FONT_FAMILY}`,
+            `fontSize=${ER_FONT_SIZE}`,
+            "spacing=0",
+            "whiteSpace=wrap",
+            "overflow=hidden",
+        ].join(";");
+
+    const getRelationStyleString = (relation) => {
+        const baseStyle = [
+            "shape=rhombus",
+            `fillColor=${ER_FILL}`,
+            `strokeColor=${ER_STROKE}`,
+            "strokeWidth=1",
+            "align=center",
+            "verticalAlign=middle",
+            `fontColor=${ER_FONT}`,
+            `fontFamily=${ER_FONT_FAMILY}`,
+            `fontSize=${ER_FONT_SIZE}`,
+            "spacing=0",
+            "whiteSpace=wrap",
+            "overflow=hidden",
+        ].join(";");
+
+        return relation?.isIdentifying
+            ? `${baseStyle};dashed=1;strokeWidth=2`
+            : baseStyle;
+    };
+
+    const getCardinalityStyleString = () =>
+        [
+            "fontSize=16",
+            `fontColor=${ER_FONT}`,
+            `fontFamily=${ER_FONT_FAMILY}`,
+            "fillColor=none",
+            "strokeColor=none",
+            "rounded=0",
+            "spacing=0",
+        ].join(";");
+
+    const getAttributeStyleString = (attribute) => {
+        const baseStyle = [
+            "shape=ellipse",
+            "perimeter=ellipsePerimeter",
+            "align=center",
+            "verticalAlign=middle",
+            "spacing=0",
+            "whiteSpace=wrap",
+            "overflow=hidden",
+            "resizable=0",
+            `fillColor=${ER_FILL}`,
+            `strokeColor=${ER_STROKE}`,
+            "strokeWidth=1",
+            `fontColor=${ER_FONT}`,
+            `fontSize=${ER_FONT_SIZE}`,
+            `fontFamily=${ER_FONT_FAMILY}`,
+        ].join(";");
+
+        if (attribute?.partialKey) {
+            return `${baseStyle};partialKeyAttrStyle`;
+        }
+
+        if (attribute?.key) {
+            return `${baseStyle};keyAttrStyle`;
+        }
+
+        return baseStyle;
+    };
+
     const normalizeAttribute = (attribute) => ({
         ...attribute,
         key: attribute.key ?? false,
@@ -144,10 +236,8 @@ export default function App(props) {
         relations: (diagramData?.relations || []).map(normalizeRelation),
     });
 
-    const getAttributeSize = () => 16;
-
     const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
-    const WEAK_ENTITY_DECORATOR_OFFSET = 4;
+    const WEAK_ENTITY_DECORATOR_OFFSET = 3;
 
     const isWeakEntityDecoratorCell = (cell) =>
         !!cell?.id && String(cell.id).endsWith(WEAK_ENTITY_DECORATOR_SUFFIX);
@@ -181,8 +271,8 @@ export default function App(props) {
             "",
             entity.position.x - WEAK_ENTITY_DECORATOR_OFFSET,
             entity.position.y - WEAK_ENTITY_DECORATOR_OFFSET,
-            100 + WEAK_ENTITY_DECORATOR_OFFSET * 2,
-            40 + WEAK_ENTITY_DECORATOR_OFFSET * 2,
+            ENTITY_WIDTH + WEAK_ENTITY_DECORATOR_OFFSET * 2,
+            ENTITY_HEIGHT + WEAK_ENTITY_DECORATOR_OFFSET * 2,
             "shape=rectangle;weakEntityDecoratorStyle",
         );
     };
@@ -205,15 +295,6 @@ export default function App(props) {
         }
     };
     const recreateGraphFromLocalStorage = () => {
-
-        const getRelationStyle = (relation) => {
-            const baseStyle =
-                ";shape=rhombus;verticalAlign=middle;align=center;fillColor=#C3D9FF;strokeColor=#6482B9;fontColor=#774400";
-
-            return relation.isIdentifying
-                ? `${baseStyle};strokeWidth=3;dashed=1`
-                : baseStyle;
-        };
 
         const recreateAttribute = (attribute, source) => {
             let target;
@@ -251,9 +332,9 @@ export default function App(props) {
                 entity.name,
                 entity.position.x,
                 entity.position.y,
-                100,
-                40,
-                ";shape=rectangle;verticalAlign=middle;align=center;fillColor=#C3D9FF;strokeColor=#6482B9;fontColor=#774400",
+                ENTITY_WIDTH,
+                ENTITY_HEIGHT,
+                getEntityStyleString(),
             );
             for (const attribute of entity.attributes) {
                 recreateAttribute(attribute, source);
@@ -267,9 +348,9 @@ export default function App(props) {
                 relation.name,
                 relation.position.x,
                 relation.position.y,
-                100,
-                40,
-                getRelationStyle(relation),
+                RELATION_WIDTH,
+                RELATION_HEIGHT,
+                getRelationStyleString(relation),
             );
             for (const attribute of relation.attributes) {
                 recreateAttribute(attribute, source);
@@ -303,7 +384,7 @@ export default function App(props) {
                     0,
                     1,
                     1,
-                    "fontSize=12;fontColor=#000000;fillColor=#ffffff;strokeColor=none;rounded=1;arcSize=25;strokeWidth=3;",
+                    getCardinalityStyleString(),
                     true,
                 );
                 const cardinality2 = graph.insertVertex(
@@ -316,7 +397,7 @@ export default function App(props) {
                     0,
                     1,
                     1,
-                    "fontSize=12;fontColor=#000000;fillColor=#ffffff;strokeColor=none;rounded=1;arcSize=25;strokeWidth=3;",
+                    getCardinalityStyleString(),
                     true,
                 );
                 graph.updateCellSize(cardinality1);
@@ -423,7 +504,8 @@ export default function App(props) {
             return () => {
                 graph
                 .getSelectionModel()
-                .removeListener(mxEvent.CHANGE, onSelected);   
+                .removeListener(mxEvent.CHANGE, onSelected);
+                graph.cellLabelChanged = originalCellLabelChanged;   
             };
         }
     }, [graph, onSelected]);
@@ -476,35 +558,6 @@ export default function App(props) {
         const graphView = graph.getDefaultParent();
         const view = graph.getView(graphView);
         view.refresh();
-    };
-    
-    const getAttributeStyleString = (attribute) => {
-        const baseStyle = [
-            "shape=ellipse",
-            "perimeter=ellipsePerimeter",
-            "align=center",
-            "verticalAlign=middle",
-            "spacing=0",
-            "whiteSpace=wrap",
-            "overflow=hidden",
-            "resizable=0",
-            "fillColor=#ffffff",
-            "strokeColor=#000000",
-            "strokeWidth=1",
-            "fontColor=#000000",
-            "fontSize=14",
-            "fontFamily=Times New Roman",
-        ].join(";");
-
-        if (attribute?.partialKey) {
-            return `${baseStyle};partialKeyAttrStyle`;
-        }
-
-        if (attribute?.key) {
-            return `${baseStyle};keyAttrStyle`;
-        }
-
-        return baseStyle;
     };
 
     const handleEntityMove = (selected) => {
@@ -1160,7 +1213,7 @@ export default function App(props) {
                 0,
                 1,
                 1,
-                "fontSize=12;fontColor=#000000;fillColor=#ffffff;strokeColor=none;rounded=1;arcSize=25;strokeWidth=3;",
+                getCardinalityStyleString(),
                 true,
             );
             const cardinality2 = graph.insertVertex(
@@ -1171,7 +1224,7 @@ export default function App(props) {
                 0,
                 1,
                 1,
-                "fontSize=12;fontColor=#000000;fillColor=#ffffff;strokeColor=none;rounded=1;arcSize=25;strokeWidth=3;",
+                getCardinalityStyleString(),
                 true,
             );
             graph.updateCellSize(cardinality1);
