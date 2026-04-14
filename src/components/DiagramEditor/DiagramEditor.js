@@ -23,23 +23,6 @@ const { mxGraph, mxEvent, mxConstants, mxPoint } = MxGraph();
 
 export default function App(props) {
 
-    const ENTITY_WIDTH = 120;
-    const ENTITY_HEIGHT = 42;
-
-    const RELATION_WIDTH = 90;
-    const RELATION_HEIGHT = 46;
-
-    const ATTRIBUTE_MIN_WIDTH = 70;
-    const ATTRIBUTE_HEIGHT = 34;
-    const ATTRIBUTE_HORIZONTAL_PADDING = 24;
-    const ATTRIBUTE_CHAR_WIDTH = 7;
-
-    const ER_STROKE = "#6b6b6b";
-    const ER_FILL = "#ffffff";
-    const ER_FONT = "#000000";
-    const ER_FONT_FAMILY = "Times New Roman";
-    const ER_FONT_SIZE = 16;
-
     // Apply font underline to the key attribute label text
     const keyAttrStyle = {};
     keyAttrStyle[mxConstants.STYLE_FONTSTYLE] = mxConstants.FONT_UNDERLINE;
