@@ -1,18 +1,18 @@
-    export const ENTITY_WIDTH = 120;
-    export const ENTITY_HEIGHT = 42;
+    const ENTITY_WIDTH = 120;
+    const ENTITY_HEIGHT = 42;
 
-    export const RELATION_WIDTH = 90;
-    export const RELATION_HEIGHT = 46;
+    const RELATION_WIDTH = 90;
+    const RELATION_HEIGHT = 46;
 
-    export const ATTRIBUTE_WIDTH = 70;
-    export const ATTRIBUTE_HEIGHT = 34;
+    const ATTRIBUTE_WIDTH = 70;
+    const ATTRIBUTE_HEIGHT = 34;
 
-    export const ENTITY_HORIZONTAL_PADDING = 28;
-    export const RELATION_HORIZONTAL_PADDING = 24;
-    export const ATTRIBUTE_HORIZONTAL_PADDING = 24;
+    const ENTITY_HORIZONTAL_PADDING = 28;
+    const RELATION_HORIZONTAL_PADDING = 24;
+    const ATTRIBUTE_HORIZONTAL_PADDING = 24;
 
-    export const NODE_CHAR_WIDTH = 8;
-    export const ATTRIBUTE_CHAR_WIDTH = 7;
+    const NODE_CHAR_WIDTH = 8;
+    const ATTRIBUTE_CHAR_WIDTH = 7;
 
     export const ER_STROKE = "#6b6b6b";
     export const ER_FILL = "#ffffff";
