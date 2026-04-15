@@ -145,6 +145,9 @@ export default function App(props) {
         ...attribute,
         key: attribute.key ?? false,
         partialKey: attribute.partialKey ?? false,
+        cell: Array.isArray(attribute.cell)
+            ? [attribute.cell[0] ?? attribute.idMx, attribute.cell[1] ?? null]
+            : [attribute.idMx, null],
     });
 
     const normalizeEntity = (entity) => ({
@@ -158,6 +161,9 @@ export default function App(props) {
     const normalizeRelationAttribute = (attribute) => ({
         ...attribute,
         partialKey: attribute.partialKey ?? false,
+        cell: Array.isArray(attribute.cell)
+            ? [attribute.cell[0] ?? attribute.idMx, attribute.cell[1] ?? null]
+            : [attribute.idMx, null],
     });
 
     const normalizeRelation = (relation) => ({
@@ -257,6 +263,9 @@ export default function App(props) {
                 source,
                 target,
             );
+
+            attribute.cell = [target.id, edge.id];
+
             graph.orderCells(true, [edge]); // Move front the selected entity so the new vertex aren't on top
         };
         const recreateEntity = (entity) => {
@@ -478,13 +487,23 @@ export default function App(props) {
         if (entity.attributes) {
             entity.attributes.forEach((attr) => {
                 if (graph.model.cells.hasOwnProperty(attr.idMx)) {
-                    const cellDataAttr = accessCell(attr.idMx);
-                    const storedEdgeId = attr?.cell?.[1];
-                    const cellEdgeAttr = storedEdgeId ? accessCell(storedEdgeId) : null;
+                const cellDataAttr = accessCell(attr.idMx);
 
-                    if (!cellDataAttr || !cellEdgeAttr) {
-                        return;
-                    }
+                let cellEdgeAttr = null;
+                const storedEdgeId = attr?.cell?.[1];
+
+                if (storedEdgeId) {
+                    cellEdgeAttr = accessCell(storedEdgeId);
+                }
+
+                if (!cellEdgeAttr && cellDataAttr) {
+                    const connectedEdges = graph.getEdges(cellDataAttr) || [];
+                    cellEdgeAttr = connectedEdges[0] ?? null;
+                }
+
+                if (!cellDataAttr || !cellEdgeAttr) {
+                    return;
+                }
 
                     attr.name = cellDataAttr.value;
                     attr.position.x = cellDataAttr.geometry.x;
@@ -718,7 +737,7 @@ export default function App(props) {
             getAttributeStyleString(newAttributeData),
         );
 
-        graph.insertEdge(selected, null, null, source, target);
+        const edge = graph.insertEdge(selected, null, null, source, target);
         graph.orderCells(false); // Move front the selected entity so the new vertex aren't on top
 
         if (!isRelation) {
@@ -734,7 +753,7 @@ export default function App(props) {
                     },
                     key: addPrimaryAttrRef.current,
                     partialKey: false,
-                    cell: [target.id, String(+target.id + 1)],
+                    cell: [target.id, edge.id],                    
                     offsetX: target.geometry.x - selected.geometry.x,
                     offsetY: target.geometry.y - selected.geometry.y,
                 });
@@ -750,7 +769,7 @@ export default function App(props) {
                         y: target.geometry.y,
                     },
                     partialKey: false,
-                    cell: [target.id, String(+target.id + 1)],
+                    cell: [target.id, edge.id],
                     offsetX: target.geometry.x - selected.geometry.x,
                     offsetY: target.geometry.y - selected.geometry.y,
                 });
