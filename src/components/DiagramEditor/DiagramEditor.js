@@ -247,9 +247,12 @@ export default function App(props) {
                 height,
                 getAttributeStyleString(attribute),
             );
+
+            const storedEdgeId = attribute.cell?.at(1) ?? null;
+
             edge = graph.insertEdge(
                 source,
-                String(+target.id + 1),
+                storedEdgeId,
                 null,
                 source,
                 target,
@@ -476,8 +479,12 @@ export default function App(props) {
             entity.attributes.forEach((attr) => {
                 if (graph.model.cells.hasOwnProperty(attr.idMx)) {
                     const cellDataAttr = accessCell(attr.idMx);
-                    const numEdgeIdMx = +attr.idMx + 1;
-                    const cellEdgeAttr = accessCell(numEdgeIdMx);
+                    const storedEdgeId = attr?.cell?.[1];
+                    const cellEdgeAttr = storedEdgeId ? accessCell(storedEdgeId) : null;
+
+                    if (!cellDataAttr || !cellEdgeAttr) {
+                        return;
+                    }
 
                     attr.name = cellDataAttr.value;
                     attr.position.x = cellDataAttr.geometry.x;
