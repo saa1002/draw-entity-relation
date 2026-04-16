@@ -107,6 +107,11 @@ export default function App(props) {
         return null;
     };
 
+    const getSelectedRelationData = () =>
+        diagramRef.current.relations.find(
+            (relation) => relation.idMx === selected?.id,
+    );
+
     const saveToLocalStorage = () => {
         const diagramData = JSON.stringify(diagramRef.current);
         localStorage.setItem("diagramData", diagramData);
@@ -236,6 +241,8 @@ export default function App(props) {
             graph.removeCells([decorator]);
         }
     };
+
+
     const recreateGraphFromLocalStorage = () => {
 
         const recreateAttribute = (attribute, source) => {
@@ -915,6 +922,102 @@ export default function App(props) {
         setRefreshDiagram((prevState) => !prevState);
     };
 
+    const toggleIdentifyingRelation = () => {
+        if (!selected) return;
+        if (!selected?.style?.includes("shape=rhombus")) return;
+
+        const relation = getSelectedRelationData();
+        if (!relation) return;
+
+        const side1Entity = diagramRef.current.entities.find(
+            (entity) => entity.idMx === relation.side1.entity.idMx,
+        );
+        const side2Entity = diagramRef.current.entities.find(
+            (entity) => entity.idMx === relation.side2.entity.idMx,
+        );
+
+        if (!relation.isIdentifying) {
+            if (!side1Entity || !side2Entity) {
+                toast.error(
+                    "Configura primero los dos lados de la relación.",
+                );
+                return;
+            }
+
+            const weakEntities = [side1Entity, side2Entity].filter(
+                (entity) => entity?.weak,
+            );
+
+            if (weakEntities.length !== 1) {
+                toast.error(
+                    "Una relación identificadora debe conectar exactamente una entidad débil y una fuerte.",
+                );
+                return;
+            }
+
+            const weakEntity = weakEntities[0];
+            const ownerEntity =
+                weakEntity.idMx === side1Entity.idMx ? side2Entity : side1Entity;
+
+            if (!ownerEntity || ownerEntity.weak) {
+                toast.error(
+                    "La entidad propietaria de una relación identificadora debe ser fuerte.",
+                );
+                return;
+            }
+
+            if (
+                weakEntity.identifyingRelationId &&
+                weakEntity.identifyingRelationId !== relation.idMx
+            ) {
+                const previousRelation = diagramRef.current.relations.find(
+                    (item) => item.idMx === weakEntity.identifyingRelationId,
+                );
+
+                if (previousRelation) {
+                    previousRelation.isIdentifying = false;
+
+                    const previousRelationCell = accessCell(previousRelation.idMx);
+                    if (previousRelationCell) {
+                        graph.getModel().setStyle(
+                            previousRelationCell,
+                            getRelationStyleString(previousRelation),
+                        );
+                    }
+                }
+            }
+
+            relation.isIdentifying = true;
+            weakEntity.identifyingRelationId = relation.idMx;
+            weakEntity.ownerEntityId = ownerEntity.idMx;
+
+            toast.success("Relación marcada como identificadora");
+        } else {
+            relation.isIdentifying = false;
+
+            diagramRef.current.entities.forEach((entity) => {
+                if (entity.identifyingRelationId === relation.idMx) {
+                    entity.identifyingRelationId = null;
+                    entity.ownerEntityId = null;
+                }
+            });
+
+            toast.success("Relación identificadora eliminada");
+        }
+
+        const relationCell = accessCell(relation.idMx);
+        if (relationCell) {
+            graph.getModel().setStyle(
+                relationCell,
+                getRelationStyleString(relation),
+            );
+        }
+
+        refreshGraph();
+        updateDiagramData();
+        setRefreshDiagram((prevState) => !prevState);
+    };
+
     const MoveBackAndFrontButtons = () =>
         selected && (
             <React.Fragment>
@@ -1098,6 +1201,25 @@ export default function App(props) {
                     {selectedEntityDiag.weak
                         ? "Quitar entidad débil"
                         : "Marcar como entidad débil"}
+                </button>
+            );
+        }
+    };
+
+    const ToggleIdentifyingRelationButton = () => {
+        const isRelation = selected?.style?.includes("shape=rhombus");
+        const selectedRelationDiag = getSelectedRelationData();
+
+        if (isRelation && selectedRelationDiag) {
+            return (
+                <button
+                    type="button"
+                    className="button-toolbar-action"
+                    onClick={toggleIdentifyingRelation}
+                >
+                    {selectedRelationDiag.isIdentifying
+                        ? "Quitar relación identificadora"
+                        : "Marcar como identificadora"}
                 </button>
             );
         }
@@ -2211,6 +2333,7 @@ export default function App(props) {
                 <div>{ToggleAttrKeyButton()}</div>
                 <div>{TogglePartialKeyButton()}</div>
                 <div>{ToggleWeakEntityButton()}</div>
+                <div>{ToggleIdentifyingRelationButton()}</div>
 
                 <div>{RelationConfigurationButton()}</div>
                 <div>{RelationCardinalitiesButton()}</div>
