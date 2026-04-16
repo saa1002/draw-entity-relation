@@ -880,8 +880,7 @@ export default function App(props) {
             ensureWeakEntityDecorator(selected, entity);
             toast.success("Entidad marcada como débil");
         } else {
-            entity.ownerEntityId = null;
-            entity.identifyingRelationId = null;
+            clearIdentifyingRelationSemantics(entity.identifyingRelationId);
             removeWeakEntityDecorator(entity.idMx);
             toast.success("Entidad marcada como fuerte");
         }
@@ -993,15 +992,7 @@ export default function App(props) {
 
             toast.success("Relación marcada como identificadora");
         } else {
-            relation.isIdentifying = false;
-
-            diagramRef.current.entities.forEach((entity) => {
-                if (entity.identifyingRelationId === relation.idMx) {
-                    entity.identifyingRelationId = null;
-                    entity.ownerEntityId = null;
-                }
-            });
-
+            clearIdentifyingRelationSemantics(relation.idMx);
             toast.success("Relación identificadora eliminada");
         }
 
@@ -1018,6 +1009,32 @@ export default function App(props) {
         setRefreshDiagram((prevState) => !prevState);
     };
 
+    const clearIdentifyingRelationSemantics = (relationId) => {
+        if (!relationId) return;
+
+        const relation = diagramRef.current.relations.find(
+            (item) => item.idMx === relationId,
+        );
+
+        if (relation) {
+            relation.isIdentifying = false;
+
+            const relationCell = accessCell(relation.idMx);
+            if (relationCell) {
+                graph.getModel().setStyle(
+                    relationCell,
+                    getRelationStyleString(relation),
+                );
+            }
+        }
+
+        diagramRef.current.entities.forEach((entity) => {
+            if (entity.identifyingRelationId === relationId) {
+                entity.identifyingRelationId = null;
+                entity.ownerEntityId = null;
+            }
+        });
+    };
     const MoveBackAndFrontButtons = () =>
         selected && (
             <React.Fragment>
@@ -1243,6 +1260,10 @@ export default function App(props) {
             const relation = diagramRef.current.relations.find(
                 (relation) => relation.idMx === source.id,
             );
+
+            if (relation.isIdentifying) {
+                clearIdentifyingRelationSemantics(relation.idMx);
+            }
 
             if (relation.side1.idMx !== "" && relation.side2.idMx !== "") {
                 // Find the previous edges
@@ -1708,6 +1729,9 @@ export default function App(props) {
                             relation.side1.entity.idMx === entity.idMx ||
                             relation.side2.entity.idMx === entity.idMx
                         ) {
+                            
+                            clearIdentifyingRelationSemantics(relation.idMx);
+
                             // Find the corresponding cells in graph.model.cells for the relation
                             const side1Cell = accessCell(relation.side1.cell);
                             const side2Cell = accessCell(relation.side2.cell);
@@ -1885,6 +1909,8 @@ export default function App(props) {
 
             if (relationIndex !== -1) {
                 const relation = diagramRef.current.relations[relationIndex];
+
+                clearIdentifyingRelationSemantics(relation.idMx);
 
                 // Remove the relation from diagramRef.current.relations
                 diagramRef.current.relations.splice(relationIndex, 1);
