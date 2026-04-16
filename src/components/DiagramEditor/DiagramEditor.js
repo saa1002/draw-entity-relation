@@ -53,6 +53,7 @@ export default function App(props) {
     weakEntityDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
 
+
     const identifyingRelationDecoratorStyle = {};
     identifyingRelationDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
     identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
@@ -86,7 +87,7 @@ export default function App(props) {
             if (props.onSelected) {
                 props.onSelected(evt);
             }
-            setSelected(evt.cells[0]);
+            setSelected(evt.cells?.[0] ?? null);
         },
         [props],
     );
@@ -192,9 +193,9 @@ export default function App(props) {
     });
 
     const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
-    const WEAK_ENTITY_DECORATOR_OFFSET = 5;
+    const WEAK_ENTITY_DECORATOR_OFFSET = 4;
     const IDENTIFYING_RELATION_DECORATOR_SUFFIX = "__identifying_decorator";
-    const IDENTIFYING_RELATION_DECORATOR_OFFSET = 5;
+    const IDENTIFYING_RELATION_DECORATOR_OFFSET = 4;
     const IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX = "__identifying_weak_edge_decorator";
     const IDENTIFYING_RELATION_EDGE_DECORATOR_OFFSET = 14;
 
@@ -208,16 +209,20 @@ export default function App(props) {
         if (!decorator || !decorator.geometry || !entityCell.geometry) return;
 
         decorator.geometry.x =
-            entityCell.geometry.x - WEAK_ENTITY_DECORATOR_OFFSET;
+            entityCell.geometry.x + WEAK_ENTITY_DECORATOR_OFFSET;
         decorator.geometry.y =
-            entityCell.geometry.y - WEAK_ENTITY_DECORATOR_OFFSET;
-        decorator.geometry.width =
-            entityCell.geometry.width + WEAK_ENTITY_DECORATOR_OFFSET * 2;
-        decorator.geometry.height =
-            entityCell.geometry.height + WEAK_ENTITY_DECORATOR_OFFSET * 2;
+            entityCell.geometry.y + WEAK_ENTITY_DECORATOR_OFFSET;
+        decorator.geometry.width = Math.max(
+            1,
+            entityCell.geometry.width - WEAK_ENTITY_DECORATOR_OFFSET * 2,
+        );
+        decorator.geometry.height = Math.max(
+            1,
+            entityCell.geometry.height - WEAK_ENTITY_DECORATOR_OFFSET * 2,
+        );
 
         graph.refresh(decorator);
-        graph.orderCells(true, [decorator]);
+        graph.orderCells(false, [decorator]);
     };    
 
     const getWeakEntityDecoratorId = (entityId) =>
@@ -229,10 +234,10 @@ export default function App(props) {
             null,
             getWeakEntityDecoratorId(entity.idMx),
             "",
-            entity.position.x - WEAK_ENTITY_DECORATOR_OFFSET,
-            entity.position.y - WEAK_ENTITY_DECORATOR_OFFSET,
-            width + WEAK_ENTITY_DECORATOR_OFFSET * 2,
-            height + WEAK_ENTITY_DECORATOR_OFFSET * 2,
+            entity.position.x + WEAK_ENTITY_DECORATOR_OFFSET,
+            entity.position.y + WEAK_ENTITY_DECORATOR_OFFSET,
+            Math.max(1, width - WEAK_ENTITY_DECORATOR_OFFSET * 2),
+            Math.max(1, height - WEAK_ENTITY_DECORATOR_OFFSET * 2),
             "weakEntityDecoratorStyle;shape=rectangle",
         );
     };
@@ -268,18 +273,22 @@ export default function App(props) {
         if (!decorator || !decorator.geometry || !relationCell.geometry) return;
 
         decorator.geometry.x =
-            relationCell.geometry.x - IDENTIFYING_RELATION_DECORATOR_OFFSET;
+            relationCell.geometry.x + IDENTIFYING_RELATION_DECORATOR_OFFSET;
         decorator.geometry.y =
-            relationCell.geometry.y - IDENTIFYING_RELATION_DECORATOR_OFFSET;
-        decorator.geometry.width =
-            relationCell.geometry.width +
-            IDENTIFYING_RELATION_DECORATOR_OFFSET * 2;
-        decorator.geometry.height =
-            relationCell.geometry.height +
-            IDENTIFYING_RELATION_DECORATOR_OFFSET * 2;
+            relationCell.geometry.y + IDENTIFYING_RELATION_DECORATOR_OFFSET;
+        decorator.geometry.width = Math.max(
+            1,
+            relationCell.geometry.width -
+                IDENTIFYING_RELATION_DECORATOR_OFFSET * 2,
+        );
+        decorator.geometry.height = Math.max(
+            1,
+            relationCell.geometry.height -
+                IDENTIFYING_RELATION_DECORATOR_OFFSET * 2,
+        );
 
         graph.refresh(decorator);
-        graph.orderCells(true, [decorator]);
+        graph.orderCells(false, [decorator]);
     };
 
     const getIdentifyingRelationDecoratorId = (relationId) =>
@@ -291,10 +300,10 @@ export default function App(props) {
             null,
             getIdentifyingRelationDecoratorId(relation.idMx),
             "",
-            relation.position.x - IDENTIFYING_RELATION_DECORATOR_OFFSET,
-            relation.position.y - IDENTIFYING_RELATION_DECORATOR_OFFSET,
-            width + IDENTIFYING_RELATION_DECORATOR_OFFSET * 2,
-            height + IDENTIFYING_RELATION_DECORATOR_OFFSET * 2,
+            relation.position.x + IDENTIFYING_RELATION_DECORATOR_OFFSET,
+            relation.position.y + IDENTIFYING_RELATION_DECORATOR_OFFSET,
+            Math.max(1, width - IDENTIFYING_RELATION_DECORATOR_OFFSET * 2),
+            Math.max(1, height - IDENTIFYING_RELATION_DECORATOR_OFFSET * 2),
             "identifyingRelationDecoratorStyle;shape=rhombus",
         );
     };
@@ -404,6 +413,7 @@ export default function App(props) {
                 "movable=0",
                 "resizable=0",
                 "rounded=0",
+                "pointerEvents=0",
             ].join(";"),
         );
 
@@ -502,11 +512,6 @@ export default function App(props) {
             graph.orderCells(true, [edge]); // Move front the selected entity so the new vertex aren't on top
         };
         const recreateEntity = (entity) => {
-            if (entity.weak) {
-                const decorator = createWeakEntityDecorator(entity);
-                graph.orderCells(true, [decorator]); // Move front the selected entity so the new vertex aren't on top
-            }
-
             const { width, height } = getEntityDimensions(entity.name);
 
             const source = graph.insertVertex(
@@ -519,6 +524,12 @@ export default function App(props) {
                 height,
                 getEntityStyleString(),
             );
+
+            if (entity.weak) {
+                const decorator = createWeakEntityDecorator(entity);
+                graph.orderCells(false, [decorator]); // Move front the selected entity so the new vertex aren't on top
+            }
+            
             for (const attribute of entity.attributes) {
                 recreateAttribute(attribute, source);
             }
@@ -527,11 +538,6 @@ export default function App(props) {
         const recreateRelation = (relation) => {
 
             const { width, height } = getRelationDimensions(relation.name);
-
-            if (relation.isIdentifying) {
-                const decorator = createIdentifyingRelationDecorator(relation);
-                graph.orderCells(true, [decorator]);
-            }
 
             const source = graph.insertVertex(
                 null,
@@ -545,7 +551,7 @@ export default function App(props) {
             );
 
             if (relation.isIdentifying) {
-                syncIdentifyingRelationDecorator(source);
+                syncIdentifyingRelationDecorator(source, relation);
                 ensureIdentifyingRelationEdgeDecorator(source, relation);
             }
 
@@ -684,7 +690,8 @@ export default function App(props) {
             graph
                 .getStylesheet()
                 .putCellStyle("notResizeableStyle", notResizeableStyle);
-                    const originalCellLabelChanged = graph.cellLabelChanged;
+            
+            const originalCellLabelChanged = graph.cellLabelChanged;
 
             graph.cellLabelChanged = function (cell, newValue, autoSize) {
                 originalCellLabelChanged.apply(this, arguments);
@@ -744,13 +751,55 @@ export default function App(props) {
 
                 this.refresh(cell);
             };
+
+            const getUnderlyingInteractiveCell = (cell) => {
+                if (!cell?.id) return cell;
+
+                const id = String(cell.id);
+
+                if (id.endsWith(WEAK_ENTITY_DECORATOR_SUFFIX)) {
+                    return accessCell(id.slice(0, -WEAK_ENTITY_DECORATOR_SUFFIX.length));
+                }
+
+                if (id.endsWith(IDENTIFYING_RELATION_DECORATOR_SUFFIX)) {
+                    return accessCell(
+                        id.slice(0, -IDENTIFYING_RELATION_DECORATOR_SUFFIX.length),
+                    );
+                }
+
+                if (id.endsWith(IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX)) {
+                    return accessCell(
+                        id.slice(0, -IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX.length),
+                    );
+                }
+
+                return cell;
+            };
+
+            const originalGetCellForEvent = graph.getCellForEvent;
+
+            graph.getCellForEvent = function (evt) {
+                const cell = originalGetCellForEvent.call(this, evt);
+                return getUnderlyingInteractiveCell(cell);
+            };
+            
+            const originalGetInitialCellForEvent =
+                graph.graphHandler.getInitialCellForEvent;
+
+            graph.graphHandler.getInitialCellForEvent = function (me) {
+                const cell = originalGetInitialCellForEvent.call(this, me);
+                return getUnderlyingInteractiveCell(cell);
+            };
+
             recreateGraphFromLocalStorage();
             
             return () => {
                 graph
                 .getSelectionModel()
                 .removeListener(mxEvent.CHANGE, onSelected);
-                graph.cellLabelChanged = originalCellLabelChanged;   
+                graph.cellLabelChanged = originalCellLabelChanged;
+                graph.getCellForEvent = originalGetCellForEvent;
+                graph.graphHandler.getInitialCellForEvent = originalGetInitialCellForEvent;   
             };
         }
     }, [graph, onSelected]);
