@@ -197,7 +197,7 @@ export default function App(props) {
     const IDENTIFYING_RELATION_DECORATOR_SUFFIX = "__identifying_decorator";
     const IDENTIFYING_RELATION_DECORATOR_OFFSET = 4;
     const IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX = "__identifying_weak_edge_decorator";
-    const IDENTIFYING_RELATION_EDGE_DECORATOR_OFFSET = 14;
+    const IDENTIFYING_RELATION_EDGE_PARALLEL_GAP = 8;
 
     const isWeakEntityDecoratorCell = (cell) =>
         !!cell?.id && String(cell.id).endsWith(WEAK_ENTITY_DECORATOR_SUFFIX);
@@ -368,42 +368,68 @@ export default function App(props) {
             (entity) => entity.identifyingRelationId === relation?.idMx,
         ) ?? null;
 
-    const getParallelEdgeControlPoint = (sourceCell, targetCell) => {
-        if (!sourceCell?.geometry || !targetCell?.geometry) return null;
+    const getWeakSideOfIdentifyingRelation = (relationData) => {
+        const weakEntity = getWeakEntityForIdentifyingRelation(relationData);
+        if (!weakEntity) return null;
 
-        const x1 = sourceCell.geometry.x + sourceCell.geometry.width / 2;
-        const y1 = sourceCell.geometry.y + sourceCell.geometry.height / 2;
-        const x2 = targetCell.geometry.x + targetCell.geometry.width / 2;
-        const y2 = targetCell.geometry.y + targetCell.geometry.height / 2;
+        if (relationData?.side1?.entity?.idMx === weakEntity.idMx) {
+            return relationData.side1;
+        }
 
-        const midX = (x1 + x2) / 2;
-        const midY = (y1 + y2) / 2;
+        if (relationData?.side2?.entity?.idMx === weakEntity.idMx) {
+            return relationData.side2;
+        }
 
-        const dx = x2 - x1;
-        const dy = y2 - y1;
+        return null;
+    };
+
+    const getParallelTerminalPointsFromMainEdge = (mainEdge) => {
+        if (!mainEdge) return null;
+
+        graph.view.validate();
+
+        const state = graph.view.getState(mainEdge);
+        const absolutePoints = state?.absolutePoints?.filter(Boolean);
+
+        if (!absolutePoints || absolutePoints.length < 2) return null;
+
+        const start = absolutePoints[0];
+        const end = absolutePoints[absolutePoints.length - 1];
+
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
         const length = Math.hypot(dx, dy) || 1;
 
         const normalX = -dy / length;
         const normalY = dx / length;
 
-        return new mxPoint(
-            midX + normalX * IDENTIFYING_RELATION_EDGE_DECORATOR_OFFSET,
-            midY + normalY * IDENTIFYING_RELATION_EDGE_DECORATOR_OFFSET,
-        );
+        return {
+            source: new mxPoint(
+                start.x + normalX * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
+                start.y + normalY * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
+            ),
+            target: new mxPoint(
+                end.x + normalX * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
+                end.y + normalY * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
+            ),
+        };
     };
 
     const createIdentifyingRelationEdgeDecorator = (relationCell, relationData) => {
-        const weakEntity = getWeakEntityForIdentifyingRelation(relationData);
-        const weakEntityCell = accessCell(weakEntity?.idMx);
+        const weakSide = getWeakSideOfIdentifyingRelation(relationData);        
+        const mainEdge = accessCell(weakSide?.edgeId);
 
-        if (!relationCell || !weakEntityCell) return null;
+        if (!mainEdge) return null;
+
+        const parallelPoints = getParallelTerminalPointsFromMainEdge(mainEdge);
+        if (!parallelPoints) return null;
 
         const edge = graph.insertEdge(
             null,
             getIdentifyingRelationEdgeDecoratorId(relationData.idMx),
             null,
-            relationCell,
-            weakEntityCell,
+            null,
+            null,
             [
                 `strokeColor=${ER_STROKE}`,
                 "strokeWidth=2",
@@ -414,6 +440,7 @@ export default function App(props) {
                 "resizable=0",
                 "rounded=0",
                 "pointerEvents=0",
+                "edgeStyle=none",
             ].join(";"),
         );
 
@@ -421,8 +448,10 @@ export default function App(props) {
             edge.geometry = new mxGeometry();
         }
 
-        edge.geometry.relative = true;
-        edge.geometry.points = [getParallelEdgeControlPoint(relationCell, weakEntityCell)];
+        edge.geometry.relative = false;
+        edge.geometry.points = null;
+        edge.geometry.setTerminalPoint(parallelPoints.source, true);
+        edge.geometry.setTerminalPoint(parallelPoints.target, false);
 
         graph.orderCells(true, [edge]);
         return edge;
@@ -432,24 +461,27 @@ export default function App(props) {
         const edge = accessCell(
             getIdentifyingRelationEdgeDecoratorId(relationData.idMx),
         );
-        const weakEntity = getWeakEntityForIdentifyingRelation(relationData);
-        const weakEntityCell = accessCell(weakEntity?.idMx);
+        const weakSide = getWeakSideOfIdentifyingRelation(relationData);
+        const mainEdge = accessCell(weakSide?.edgeId);
 
-        if (!edge || !relationCell || !weakEntityCell) return;
+        if (!edge || !mainEdge) return;
+
+        const parallelPoints = getParallelTerminalPointsFromMainEdge(mainEdge);
+        if (!parallelPoints) return;
 
         graph.getModel().beginUpdate();
         try {
-            graph.getModel().setTerminal(edge, relationCell, true);
-            graph.getModel().setTerminal(edge, weakEntityCell, false);
+            graph.getModel().setTerminal(edge, null, true);
+            graph.getModel().setTerminal(edge, null, false);
 
             if (!edge.geometry) {
                 edge.geometry = new mxGeometry();
             }
 
-            edge.geometry.relative = true;
-            edge.geometry.points = [
-                getParallelEdgeControlPoint(relationCell, weakEntityCell),
-            ];
+            edge.geometry.relative = false;
+            edge.geometry.points = null;
+            edge.geometry.setTerminalPoint(parallelPoints.source, true);
+            edge.geometry.setTerminalPoint(parallelPoints.target, false);
         } finally {
             graph.getModel().endUpdate();
         }
@@ -552,7 +584,6 @@ export default function App(props) {
 
             if (relation.isIdentifying) {
                 ensureIdentifyingRelationDecorator(source, relation);
-                ensureIdentifyingRelationEdgeDecorator(source, relation);
             }
 
             for (const attribute of relation.attributes) {
@@ -619,6 +650,9 @@ export default function App(props) {
                         edge1.geometry.points = [new mxPoint(x2, y1)];
                         edge2.geometry.points = [new mxPoint(x1, y2)];
                     }
+                }
+                if (relation.isIdentifying) {
+                    ensureIdentifyingRelationEdgeDecorator(source, relation);
                 }
                 graph.orderCells(true, [edge1, edge2]); // Move front the selected entity so the new vertex aren't on top
             }
