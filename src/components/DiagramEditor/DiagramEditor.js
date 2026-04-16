@@ -46,8 +46,8 @@ export default function App(props) {
 
     const weakEntityDecoratorStyle = {};
     weakEntityDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
-    weakEntityDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = "#6b6b6b";
-    weakEntityDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 1;
+    weakEntityDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
+    weakEntityDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
     weakEntityDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
@@ -55,8 +55,8 @@ export default function App(props) {
 
     const identifyingRelationDecoratorStyle = {};
     identifyingRelationDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = "#6b6b6b";
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 1;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
     identifyingRelationDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
     identifyingRelationDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
     identifyingRelationDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
@@ -192,9 +192,9 @@ export default function App(props) {
     });
 
     const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
-    const WEAK_ENTITY_DECORATOR_OFFSET = 3;
+    const WEAK_ENTITY_DECORATOR_OFFSET = 5;
     const IDENTIFYING_RELATION_DECORATOR_SUFFIX = "__identifying_decorator";
-    const IDENTIFYING_RELATION_DECORATOR_OFFSET = 3;
+    const IDENTIFYING_RELATION_DECORATOR_OFFSET = 5;
 
     const isWeakEntityDecoratorCell = (cell) =>
         !!cell?.id && String(cell.id).endsWith(WEAK_ENTITY_DECORATOR_SUFFIX);
