@@ -551,7 +551,7 @@ export default function App(props) {
             );
 
             if (relation.isIdentifying) {
-                syncIdentifyingRelationDecorator(source, relation);
+                ensureIdentifyingRelationDecorator(source, relation);
                 ensureIdentifyingRelationEdgeDecorator(source, relation);
             }
 
@@ -669,7 +669,10 @@ export default function App(props) {
 
             graph.getSelectionModel().addListener(mxEvent.CHANGE, onSelected);
 
-            graph.stylesheet.styles.defaultEdge.endArrow = ""; // NOTE: Edges are not directed
+            const defaultEdgeStyle = graph.getStylesheet().getDefaultEdgeStyle();
+            defaultEdgeStyle[mxConstants.STYLE_ENDARROW] = "";
+            defaultEdgeStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
+            defaultEdgeStyle[mxConstants.STYLE_FONTCOLOR] = ER_FONT;
 
             graph.getStylesheet().putCellStyle("keyAttrStyle", keyAttrStyle);
             graph
