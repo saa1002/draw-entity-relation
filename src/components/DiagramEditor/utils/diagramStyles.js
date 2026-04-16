@@ -88,7 +88,7 @@
         ].join(";");
 
         return relation?.isIdentifying
-            ? `${baseStyle};dashed=1;strokeWidth=2`
+            ? `${baseStyle};strokeWidth=1`
             : baseStyle;
     };
 
