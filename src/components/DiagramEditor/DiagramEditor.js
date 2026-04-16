@@ -53,6 +53,15 @@ export default function App(props) {
     weakEntityDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
 
+    const identifyingRelationDecoratorStyle = {};
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = "#6b6b6b";
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 1;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
+
     const partialKeyAttrStyle = {};
     partialKeyAttrStyle[mxConstants.STYLE_DASHED] = 1;
     partialKeyAttrStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
@@ -184,6 +193,8 @@ export default function App(props) {
 
     const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
     const WEAK_ENTITY_DECORATOR_OFFSET = 3;
+    const IDENTIFYING_RELATION_DECORATOR_SUFFIX = "__identifying_decorator";
+    const IDENTIFYING_RELATION_DECORATOR_OFFSET = 3;
 
     const isWeakEntityDecoratorCell = (cell) =>
         !!cell?.id && String(cell.id).endsWith(WEAK_ENTITY_DECORATOR_SUFFIX);
@@ -242,6 +253,97 @@ export default function App(props) {
         }
     };
 
+    const isIdentifyingRelationDecoratorCell = (cell) =>
+        !!cell?.id &&
+        String(cell.id).endsWith(IDENTIFYING_RELATION_DECORATOR_SUFFIX);
+
+    const syncIdentifyingRelationDecorator = (relationCell) => {
+        if (!relationCell) return;
+
+        const decorator = accessCell(
+            getIdentifyingRelationDecoratorId(relationCell.id),
+        );
+        if (!decorator || !decorator.geometry || !relationCell.geometry) return;
+
+        decorator.geometry.x =
+            relationCell.geometry.x - IDENTIFYING_RELATION_DECORATOR_OFFSET;
+        decorator.geometry.y =
+            relationCell.geometry.y - IDENTIFYING_RELATION_DECORATOR_OFFSET;
+        decorator.geometry.width =
+            relationCell.geometry.width +
+            IDENTIFYING_RELATION_DECORATOR_OFFSET * 2;
+        decorator.geometry.height =
+            relationCell.geometry.height +
+            IDENTIFYING_RELATION_DECORATOR_OFFSET * 2;
+
+        graph.refresh(decorator);
+        graph.orderCells(true, [decorator]);
+    };
+
+    const getIdentifyingRelationDecoratorId = (relationId) =>
+        `${relationId}${IDENTIFYING_RELATION_DECORATOR_SUFFIX}`;
+
+    const createIdentifyingRelationDecorator = (relation) => {
+        const { width, height } = getRelationDimensions(relation.name);
+        return graph.insertVertex(
+            null,
+            getIdentifyingRelationDecoratorId(relation.idMx),
+            "",
+            relation.position.x - IDENTIFYING_RELATION_DECORATOR_OFFSET,
+            relation.position.y - IDENTIFYING_RELATION_DECORATOR_OFFSET,
+            width + IDENTIFYING_RELATION_DECORATOR_OFFSET * 2,
+            height + IDENTIFYING_RELATION_DECORATOR_OFFSET * 2,
+            "shape=rhombus;identifyingRelationDecoratorStyle",
+        );
+    };
+    const ensureIdentifyingRelationDecorator = (relationCell, relationData) => {
+        const existingDecorator = accessCell(
+            getIdentifyingRelationDecoratorId(relationCell.id),
+        );
+
+        if (existingDecorator) {
+            syncIdentifyingRelationDecorator(relationCell);
+            return;
+        }
+
+        createIdentifyingRelationDecorator(relationData);
+        syncIdentifyingRelationDecorator(relationCell);
+    };
+
+    const removeIdentifyingRelationDecorator = (relationId) => {
+        const decorator = accessCell(getIdentifyingRelationDecoratorId(relationId));
+        if (decorator) {
+            graph.removeCells([decorator]);
+        }
+    };
+
+    const clearIdentifyingRelationSemantics = (relationId) => {
+        if (!relationId) return;
+
+        const relation = diagramRef.current.relations.find(
+            (item) => item.idMx === relationId,
+        );
+
+        if (relation) {
+            relation.isIdentifying = false;
+            removeIdentifyingRelationDecorator(relation.idMx);
+
+            const relationCell = accessCell(relation.idMx);
+            if (relationCell) {
+                graph.getModel().setStyle(
+                    relationCell,
+                    getRelationStyleString(relation),
+                );
+            }
+        }
+
+        diagramRef.current.entities.forEach((entity) => {
+            if (entity.identifyingRelationId === relationId) {
+                entity.identifyingRelationId = null;
+                entity.ownerEntityId = null;
+            }
+        });
+    };
 
     const recreateGraphFromLocalStorage = () => {
 
@@ -302,6 +404,11 @@ export default function App(props) {
 
             const { width, height } = getRelationDimensions(relation.name);
 
+            if (relation.isIdentifying) {
+                const decorator = createIdentifyingRelationDecorator(relation);
+                graph.orderCells(true, [decorator]);
+            }
+
             const source = graph.insertVertex(
                 null,
                 relation.idMx,
@@ -312,6 +419,11 @@ export default function App(props) {
                 height,
                 getRelationStyleString(relation),
             );
+
+            if (relation.isIdentifying) {
+                syncIdentifyingRelationDecorator(source);
+            }
+
             for (const attribute of relation.attributes) {
                 recreateAttribute(attribute, source);
             }
@@ -409,7 +521,10 @@ export default function App(props) {
                     return false;
                 }
 
-                if (isWeakEntityDecoratorCell(cell)) {
+                if (
+                    isWeakEntityDecoratorCell(cell) ||
+                    isIdentifyingRelationDecoratorCell(cell)
+                ) {
                     return false;
                 }
                 // Default behavior for other cells
@@ -436,6 +551,12 @@ export default function App(props) {
                 .putCellStyle(
                     "weakEntityDecoratorStyle",
                     weakEntityDecoratorStyle,
+                );
+            graph
+                .getStylesheet()
+                .putCellStyle(
+                    "identifyingRelationDecoratorStyle",
+                    identifyingRelationDecoratorStyle,
                 );
             graph
                 .getStylesheet()
@@ -468,10 +589,20 @@ export default function App(props) {
                         if (entityData?.weak) {
                             syncWeakEntityDecorator(cell);
                         }
-                    } else if (cell.style.includes("shape=rhombus")) {
+                    } else if (
+                        cell.style.includes("shape=rhombus") &&
+                        !isIdentifyingRelationDecoratorCell(cell)
+                    ) {
                         const { width, height } = getRelationDimensions(newValue);
                         cell.geometry.width = width;
                         cell.geometry.height = height;
+                        const relationData = diagramRef.current.relations.find(
+                                (relation) => relation.idMx === cell.id,
+                        );
+
+                        if (relationData?.isIdentifying) {
+                            syncIdentifyingRelationDecorator(cell);
+                        }
                     }
                 } finally {
                     this.getModel().endUpdate();
@@ -605,6 +736,9 @@ export default function App(props) {
             edge1.geometry.points = [new mxPoint(x2, y1)];
             edge2.geometry.points = [new mxPoint(x1, y2)];
         }
+        if (selectedRelationDiag?.isIdentifying) {
+            syncIdentifyingRelationDecorator(selected);
+        }
     };
 
     const handleAttributeMove = (selected) => {
@@ -638,7 +772,10 @@ export default function App(props) {
             if (selected?.style?.includes("shape=rectangle") && 
             !isWeakEntityDecoratorCell(selected)) {
                 handleEntityMove(selected);
-            } else if (selected?.style?.includes("shape=rhombus")) {
+            } else if (
+                selected?.style?.includes("shape=rhombus") &&
+                !isIdentifyingRelationDecoratorCell(selected)
+            ) {
                 handleRelationMove(selected);
             } else if (selected?.style?.includes("shape=ellipse")) {
                 handleAttributeMove(selected);
@@ -923,6 +1060,7 @@ export default function App(props) {
 
     const toggleIdentifyingRelation = () => {
         if (!selected) return;
+        if (isIdentifyingRelationDecoratorCell(selected)) return;
         if (!selected?.style?.includes("shape=rhombus")) return;
 
         const relation = getSelectedRelationData();
@@ -969,26 +1107,16 @@ export default function App(props) {
                 weakEntity.identifyingRelationId &&
                 weakEntity.identifyingRelationId !== relation.idMx
             ) {
-                const previousRelation = diagramRef.current.relations.find(
-                    (item) => item.idMx === weakEntity.identifyingRelationId,
-                );
-
-                if (previousRelation) {
-                    previousRelation.isIdentifying = false;
-
-                    const previousRelationCell = accessCell(previousRelation.idMx);
-                    if (previousRelationCell) {
-                        graph.getModel().setStyle(
-                            previousRelationCell,
-                            getRelationStyleString(previousRelation),
-                        );
-                    }
-                }
+                clearIdentifyingRelationSemantics(
+                    weakEntity.identifyingRelationId,
+                );                
             }
 
             relation.isIdentifying = true;
             weakEntity.identifyingRelationId = relation.idMx;
             weakEntity.ownerEntityId = ownerEntity.idMx;
+
+            ensureIdentifyingRelationDecorator(selected, relation);
 
             toast.success("Relación marcada como identificadora");
         } else {
@@ -1009,32 +1137,6 @@ export default function App(props) {
         setRefreshDiagram((prevState) => !prevState);
     };
 
-    const clearIdentifyingRelationSemantics = (relationId) => {
-        if (!relationId) return;
-
-        const relation = diagramRef.current.relations.find(
-            (item) => item.idMx === relationId,
-        );
-
-        if (relation) {
-            relation.isIdentifying = false;
-
-            const relationCell = accessCell(relation.idMx);
-            if (relationCell) {
-                graph.getModel().setStyle(
-                    relationCell,
-                    getRelationStyleString(relation),
-                );
-            }
-        }
-
-        diagramRef.current.entities.forEach((entity) => {
-            if (entity.identifyingRelationId === relationId) {
-                entity.identifyingRelationId = null;
-                entity.ownerEntityId = null;
-            }
-        });
-    };
     const MoveBackAndFrontButtons = () =>
         selected && (
             <React.Fragment>
