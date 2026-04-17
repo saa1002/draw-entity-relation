@@ -138,7 +138,7 @@ CREATE TABLE Entidad_1 (
   Atributo_Relacion VARCHAR(40)
 );
 
-ALTER TABLE Entidad_1 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad;
+ALTER TABLE Entidad_1 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad(Atributo);
 `;
         // Custom matcher to ignore whitespace differences
         expect(sql.replace(/\s+/g, '')).toBe(expectedSQL.replace(/\s+/g, ''));
@@ -157,7 +157,7 @@ CREATE TABLE Entidad (
   Atributo_Relacion VARCHAR(40) UNIQUE NOT NULL
 );
 
-ALTER TABLE Entidad ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad_1;
+ALTER TABLE Entidad ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad_1(Atributo);
 `;
         // Custom matcher to ignore whitespace differences
         expect(sql.replace(/\s+/g, '')).toBe(expectedSQL.replace(/\s+/g, ''));
@@ -181,8 +181,8 @@ CREATE TABLE Relacion (
   PRIMARY KEY (Atributo_Relacion_1, Atributo_Relacion_2)
 );
 
-ALTER TABLE Relacion ADD CONSTRAINT FK_Atributo_Relacion_1 FOREIGN KEY (Atributo_Relacion_1) REFERENCES Entidad;
-ALTER TABLE Relacion ADD CONSTRAINT FK_Atributo_Relacion_2 FOREIGN KEY (Atributo_Relacion_2) REFERENCES Entidad_1;
+ALTER TABLE Relacion ADD CONSTRAINT FK_Atributo_Relacion_1 FOREIGN KEY (Atributo_Relacion_1) REFERENCES Entidad(Atributo);
+ALTER TABLE Relacion ADD CONSTRAINT FK_Atributo_Relacion_2 FOREIGN KEY (Atributo_Relacion_2) REFERENCES Entidad_1(Atributo);
 `;
 
         // Custom matcher to ignore whitespace differences
@@ -208,7 +208,7 @@ CREATE TABLE Entidad (
   Atributo VARCHAR(40) PRIMARY KEY
 );
 
-ALTER TABLE Entidad_2 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad_1;
+ALTER TABLE Entidad_2 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad_1(Atributo);
 `;
 
         // Custom matcher to ignore whitespace differences

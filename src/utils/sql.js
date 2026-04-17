@@ -122,6 +122,7 @@ export function process1NRelation(relation) {
                         key: false,
                         notnull: notnull,
                         foreign_key: oneSide.entity.name,
+                        foreign_key_column: attr.name,
                     };
                 }),
         ],
@@ -218,6 +219,7 @@ export function process11Relation(relation) {
             notnull: notnull,
             unique: true,
             foreign_key: primaryKeySide.entity.name,
+            foreign_key_column: foreignKeyAttribute.name,
         });
     }
 
@@ -285,11 +287,13 @@ export function processNMRelation(relation) {
             name: `${primaryKeyAttributeSide1.name}_${relation.name}_1`,
             key: true,
             foreign_key: side1Entity.name,
+            foreign_key_column: primaryKeyAttributeSide1.name,
         },
         {
             name: `${primaryKeyAttributeSide2.name}_${relation.name}_2`,
             key: true,
             foreign_key: side2Entity.name,
+            foreign_key_column: primaryKeyAttributeSide2.name,
         },
         ...attributes.map((attr) => ({
             name: attr.name,
@@ -354,15 +358,21 @@ const createForeignKeySQL = (table) => {
     const foreignKeys = table.attributes
         .filter((attr) => attr.foreign_key)
         .map(
-            (attr) =>
-                `ALTER TABLE ${normalizeIdentifier(
-                    table.name,
-                )} ADD CONSTRAINT FK_${normalizeIdentifier(
-                    attr.name,
-                )} FOREIGN KEY (${normalizeIdentifier(
-                    attr.name,
-                )}) REFERENCES ${normalizeIdentifier(attr.foreign_key)};`,
-        )
+            (attr) =>{
+
+            const referencedTable = normalizeIdentifier(attr.foreign_key);
+            const referencedColumn = attr.foreign_key_column
+                ? `(${normalizeIdentifier(attr.foreign_key_column)})`
+                : "";
+
+            return `ALTER TABLE ${normalizeIdentifier(
+                table.name,
+            )} ADD CONSTRAINT FK_${normalizeIdentifier(
+                attr.name,
+            )} FOREIGN KEY (${normalizeIdentifier(
+                attr.name,
+            )}) REFERENCES ${referencedTable}${referencedColumn};`;                
+        })
         .join("\n");
 
     return foreignKeys;
