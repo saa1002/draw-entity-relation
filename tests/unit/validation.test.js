@@ -145,6 +145,17 @@ describe("Relations", () => {
         expect(cardinalitiesNotValid(graph)).toBe(true);
         expect(validateGraph(graph).noNotValidCardinalities).toBe(false)
     });
+
+    test("A fully mandatory 1:1 relation should be valid", () => {
+        graph.relations.at(1).side1.cardinality = "1:1";
+        graph.relations.at(1).side2.cardinality = "1:1";
+
+        const diagnostics = validateGraph(graph);
+
+        expect(cardinalitiesNotValid(graph)).toBe(false);
+        expect(diagnostics.noNotValidCardinalities).toBe(true);
+        expect(diagnostics.isValid).toBe(true);
+    });
 });
 
 describe("Architecture", () => {
