@@ -316,14 +316,18 @@ const getSQLType = (attribute) => {
     return "VARCHAR(40)";
 };
 
-const sanitizeName = (name) => {
-    return name.replace(/\s+/g, "_");
+const normalizeIdentifier = (name) => {
+    return name
+        .split("")
+        .map((char) => accentMap[char] || char)
+        .join("")
+        .replace(/\s+/g, "_");
 };
 
 const createTableSQL = (table) => {
     const columns = table.attributes
         .map((attr) => {
-            let columnDef = `${sanitizeName(attr.name)} ${getSQLType(attr)}`;
+            let columnDef = `${normalizeIdentifier(attr.name)} ${getSQLType(attr)}`;
             if (attr.key && !attr.foreign_key) columnDef += " PRIMARY KEY";
             if (attr.unique) columnDef += " UNIQUE";
             if (attr.notnull) columnDef += " NOT NULL";
@@ -334,14 +338,14 @@ const createTableSQL = (table) => {
     // Check for composite primary key
     const compositePrimaryKey = table.attributes
         .filter((attr) => attr.key && attr.foreign_key)
-        .map((attr) => sanitizeName(attr.name))
+        .map((attr) => normalizeIdentifier(attr.name))
         .join(", ");
 
     const primaryKeyClause = compositePrimaryKey
         ? `, \n  PRIMARY KEY (${compositePrimaryKey})`
         : "";
 
-    return `CREATE TABLE ${sanitizeName(
+    return `CREATE TABLE ${normalizeIdentifier(
         table.name,
     )} (\n  ${columns}${primaryKeyClause}\n);`;
 };
@@ -351,13 +355,13 @@ const createForeignKeySQL = (table) => {
         .filter((attr) => attr.foreign_key)
         .map(
             (attr) =>
-                `ALTER TABLE ${sanitizeName(
+                `ALTER TABLE ${normalizeIdentifier(
                     table.name,
-                )} ADD CONSTRAINT FK_${sanitizeName(
+                )} ADD CONSTRAINT FK_${normalizeIdentifier(
                     attr.name,
-                )} FOREIGN KEY (${sanitizeName(
+                )} FOREIGN KEY (${normalizeIdentifier(
                     attr.name,
-                )}) REFERENCES ${sanitizeName(attr.foreign_key)};`,
+                )}) REFERENCES ${normalizeIdentifier(attr.foreign_key)};`,
         )
         .join("\n");
 
@@ -433,13 +437,6 @@ const accentMap = {
     // Add more mappings if needed
 };
 
-const removeAccents = (str) => {
-    return str
-        .split("")
-        .map((char) => accentMap[char] || char)
-        .join("");
-};
-
 // Generate SQL
 export function generateSQL(graph) {
     const tables = filterTables(graph);
@@ -479,15 +476,15 @@ export function generateSQL(graph) {
             }
         }
     }
-
+    
     for (const table of tableMap.values()) {
-        table.name = removeAccents(table.name);
-        // Iterate over tables. Remove the accents, check for repeated attributes with the
-        // same name. Change the name of the repeated items so that there is no repetition
+        table.name = normalizeIdentifier(table.name);
+
         const attributeNames = new Set();
         table.attributes.forEach((attr) => {
-            let baseName = removeAccents(attr.name);
+            let baseName = normalizeIdentifier(attr.name);
             let uniqueName = baseName;
+
             if (attributeNames.has(uniqueName)) {
                 let counter = 1;
                 uniqueName = `${baseName}_${counter}`;
@@ -496,6 +493,7 @@ export function generateSQL(graph) {
                     uniqueName = `${baseName}_${counter}`;
                 }
             }
+
             attr.name = uniqueName;
             attributeNames.add(uniqueName);
         });
