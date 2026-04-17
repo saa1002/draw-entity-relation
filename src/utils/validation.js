@@ -238,11 +238,6 @@ export function cardinalitiesNotValid(graph) {
         ) {
             return true; // Found an invalid cardinality
         }
-
-        // Check if both cardinalities are 1:1
-        if (side1Cardinality === "1:1" && side2Cardinality === "1:1") {
-            return true; // Both cardinalities are 1:1, which is invalid
-        }
     }
     return false; // All cardinalities are valid
 }
