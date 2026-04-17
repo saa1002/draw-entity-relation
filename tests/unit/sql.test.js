@@ -223,4 +223,12 @@ ALTER TABLE Entidad_2 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_
         expect(sql).toContain("CREATE TABLE Pais");
         expect(sql).toContain("REFERENCES Pais");
     });
+
+    test("Foreign key constraints should reference the target primary key column", () => {
+        const sql = generateSQL(oneNGraph);
+
+        expect(sql).toContain(
+            "FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad(Atributo)"
+        );
+    });
 });
