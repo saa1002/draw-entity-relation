@@ -214,4 +214,13 @@ ALTER TABLE Entidad_2 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_
         // Custom matcher to ignore whitespace differences
         expect(sql.replace(/\s+/g, '')).toBe(expectedSQL.replace(/\s+/g, ''));
     });
+    test("Foreign key references should use normalized table names", () => {
+        oneNGraph.entities.at(0).name = "País";
+        oneNGraph.entities.at(1).name = "Ciudad";
+
+        const sql = generateSQL(oneNGraph);
+
+        expect(sql).toContain("CREATE TABLE Pais");
+        expect(sql).toContain("REFERENCES Pais");
+    });
 });
