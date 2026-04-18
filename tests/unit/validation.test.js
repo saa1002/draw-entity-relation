@@ -13,6 +13,7 @@ import {
     notNMRelationsWithAttributes,
     weakEntitiesWithoutPartialKey,
     strongEntitiesWithPartialKey,
+    weakEntitiesWithoutIdentifyingRelation,
 } from "../../src/utils/validation"
 
 let graph;
@@ -171,7 +172,7 @@ describe("Weak entities", () => {
         expect(weakEntitiesWithoutPartialKey(graph)).toBe(true);
         expect(validateGraph(graph).noWeakEntitiesWithoutPartialKey).toBe(false);
     });
-    
+
     test("a strong entity cannot have partial key", () => {
         const strongEntity = graph.entities.at(0);
 
@@ -180,7 +181,33 @@ describe("Weak entities", () => {
 
         expect(strongEntitiesWithPartialKey(graph)).toBe(true);
         expect(validateGraph(graph).noStrongEntitiesWithPartialKey).toBe(false);
-    });    
+    });
+
+    test("a weak entity must have an identifying relation", () => {
+        const weakEntity = graph.entities.at(0);
+
+        weakEntity.weak = true;
+        weakEntity.identifyingRelationId = null;
+
+        expect(weakEntitiesWithoutIdentifyingRelation(graph)).toBe(true);
+        expect(
+            validateGraph(graph).noWeakEntitiesWithoutIdentifyingRelation
+        ).toBe(false);
+    });
+
+    test("a weak entity cannot reference a non-identifying relation", () => {
+        const weakEntity = graph.entities.at(0);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        weakEntity.identifyingRelationId = relation.idMx;
+        relation.isIdentifying = false;
+
+        expect(weakEntitiesWithoutIdentifyingRelation(graph)).toBe(true);
+        expect(
+            validateGraph(graph).noWeakEntitiesWithoutIdentifyingRelation
+        ).toBe(false);
+    });
 });
 
 describe("Architecture", () => {
