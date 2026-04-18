@@ -12,6 +12,7 @@ export function validateGraph(graph) {
         noStrongEntitiesWithPartialKey: true,
         noWeakEntitiesWithoutIdentifyingRelation: true,
         noInvalidIdentifyingRelations: true,
+        noInconsistentWeakEntityOwnership: true,
         notEmpty: true,
         isValid: true,
     };
@@ -90,11 +91,23 @@ export function validateGraph(graph) {
         diagnostics.isValid = false;
     }
 
+    if (inconsistentWeakEntityOwnership(graph)) {
+        diagnostics.noInconsistentWeakEntityOwnership = false;
+        diagnostics.isValid = false;
+    }
+
     return diagnostics;
 }
 
 function getEntityById(graph, entityId) {
     return graph.entities.find((entity) => entity.idMx === entityId) ?? null;
+}
+
+function relationConnectsEntity(relation, entityId) {
+    return (
+        relation?.side1?.entity?.idMx === entityId ||
+        relation?.side2?.entity?.idMx === entityId
+    );
 }
 
 // This function check for repeated entity name, relations
@@ -350,6 +363,44 @@ export function identifyingRelationsNotValid(graph) {
         ).length;
 
         if (weakCount !== 1 || strongCount !== 1) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function inconsistentWeakEntityOwnership(graph) {
+    for (const entity of graph.entities) {
+        if (!entity.weak) continue;
+
+        const relation = graph.relations.find(
+            (rel) => rel.idMx === entity.identifyingRelationId,
+        );
+
+        if (!relation) {
+            return true;
+        }
+
+        if (!relationConnectsEntity(relation, entity.idMx)) {
+            return true;
+        }
+
+        const side1Id = relation?.side1?.entity?.idMx;
+        const side2Id = relation?.side2?.entity?.idMx;
+        const ownerId = side1Id === entity.idMx ? side2Id : side1Id;
+
+        if (!ownerId) {
+            return true;
+        }
+
+        if (entity.ownerEntityId !== ownerId) {
+            return true;
+        }
+
+        const ownerEntity = getEntityById(graph, ownerId);
+
+        if (!ownerEntity || ownerEntity.weak) {
             return true;
         }
     }

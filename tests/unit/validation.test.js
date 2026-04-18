@@ -16,6 +16,7 @@ import {
     strongEntitiesWithPartialKey,
     weakEntitiesWithoutIdentifyingRelation,
     identifyingRelationsNotValid,
+    inconsistentWeakEntityOwnership,
 } from "../../src/utils/validation"
 
 let graph;
@@ -248,6 +249,58 @@ describe("Weak entities", () => {
 
         expect(entitiesWithoutPK(graph)).toBe(false);
         expect(validateGraph(graph).noEntitiesWithoutPK).toBe(true);
+    });
+    test("a weak entity must be connected to its identifying relation", () => {
+        const weakEntity = graph.entities.at(0);
+        const ownerEntity = graph.entities.at(1);
+        const relation = graph.relations.at(1);
+
+        weakEntity.weak = true;
+        weakEntity.identifyingRelationId = relation.idMx;
+        weakEntity.ownerEntityId = ownerEntity.idMx;
+        relation.isIdentifying = true;
+
+        // La relación 1 en el fixture conecta a Entidad 2 consigo misma,
+        // así que no conecta realmente a weakEntity.
+        expect(inconsistentWeakEntityOwnership(graph)).toBe(true);
+        expect(validateGraph(graph).noInconsistentWeakEntityOwnership).toBe(false);
+    });
+
+    test("a weak entity owner must match the strong entity on the other side", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        weakEntity.identifyingRelationId = relation.idMx;
+        weakEntity.ownerEntityId = graph.entities.at(2).idMx; // owner incorrecto
+
+        expect(inconsistentWeakEntityOwnership(graph)).toBe(true);
+        expect(validateGraph(graph).noInconsistentWeakEntityOwnership).toBe(false);
+    });
+
+    test("a weak entity with consistent owner and identifying relation should pass ownership validation", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        weakEntity.identifyingRelationId = relation.idMx;
+        weakEntity.ownerEntityId = strongEntity.idMx;
+
+        expect(inconsistentWeakEntityOwnership(graph)).toBe(false);
     });    
 });
 
