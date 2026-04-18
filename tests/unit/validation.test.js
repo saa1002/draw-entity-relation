@@ -14,6 +14,7 @@ import {
     weakEntitiesWithoutPartialKey,
     strongEntitiesWithPartialKey,
     weakEntitiesWithoutIdentifyingRelation,
+    identifyingRelationsNotValid,
 } from "../../src/utils/validation"
 
 let graph;
@@ -207,6 +208,33 @@ describe("Weak entities", () => {
         expect(
             validateGraph(graph).noWeakEntitiesWithoutIdentifyingRelation
         ).toBe(false);
+    });
+
+    test("an identifying relation must connect exactly one weak entity and one strong entity", () => {
+        const entity1 = graph.entities.at(0);
+        const entity2 = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        entity1.weak = false;
+        entity2.weak = false;
+        relation.isIdentifying = true;
+
+        expect(identifyingRelationsNotValid(graph)).toBe(true);
+        expect(validateGraph(graph).noInvalidIdentifyingRelations).toBe(false);
+    });
+
+    test("an identifying relation connecting one weak and one strong entity should be valid", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        expect(identifyingRelationsNotValid(graph)).toBe(false);
     });
 });
 

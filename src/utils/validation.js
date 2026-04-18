@@ -11,6 +11,7 @@ export function validateGraph(graph) {
         noWeakEntitiesWithoutPartialKey: true,
         noStrongEntitiesWithPartialKey: true,
         noWeakEntitiesWithoutIdentifyingRelation: true,
+        noInvalidIdentifyingRelations: true,
         notEmpty: true,
         isValid: true,
     };
@@ -84,7 +85,16 @@ export function validateGraph(graph) {
         diagnostics.isValid = false;
     }
 
+    if (identifyingRelationsNotValid(graph)) {
+        diagnostics.noInvalidIdentifyingRelations = false;
+        diagnostics.isValid = false;
+    }
+
     return diagnostics;
+}
+
+function getEntityById(graph, entityId) {
+    return graph.entities.find((entity) => entity.idMx === entityId) ?? null;
 }
 
 // This function check for repeated entity name, relations
@@ -305,6 +315,40 @@ export function weakEntitiesWithoutIdentifyingRelation(graph) {
         );
 
         if (!relation || relation.isIdentifying !== true) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function identifyingRelationsNotValid(graph) {
+    for (const relation of graph.relations) {
+        if (!relation.isIdentifying) continue;
+
+        const side1EntityId = relation.side1?.entity?.idMx;
+        const side2EntityId = relation.side2?.entity?.idMx;
+
+        if (!side1EntityId || !side2EntityId) {
+            return true;
+        }
+
+        const entity1 = getEntityById(graph, side1EntityId);
+        const entity2 = getEntityById(graph, side2EntityId);
+
+        if (!entity1 || !entity2) {
+            return true;
+        }
+
+        const weakCount = [entity1, entity2].filter(
+            (entity) => entity.weak === true,
+        ).length;
+
+        const strongCount = [entity1, entity2].filter(
+            (entity) => entity.weak !== true,
+        ).length;
+
+        if (weakCount !== 1 || strongCount !== 1) {
             return true;
         }
     }
