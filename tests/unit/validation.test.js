@@ -11,7 +11,7 @@ import {
     validateGraph, 
     cardinalitiesNotValid,
     notNMRelationsWithAttributes,
-    accessCell
+    weakEntitiesWithoutPartialKey,
 } from "../../src/utils/validation"
 
 let graph;
@@ -155,6 +155,20 @@ describe("Relations", () => {
         expect(cardinalitiesNotValid(graph)).toBe(false);
         expect(diagnostics.noNotValidCardinalities).toBe(true);
         expect(diagnostics.isValid).toBe(true);
+    });
+});
+
+describe("Weak entities", () => {
+    test("a weak entity must have at least one partial key", () => {
+        const weakEntity = graph.entities.at(0);
+
+        weakEntity.weak = true;
+        weakEntity.attributes.forEach((attribute) => {
+            attribute.partialKey = false;
+        });
+
+        expect(weakEntitiesWithoutPartialKey(graph)).toBe(true);
+        expect(validateGraph(graph).noWeakEntitiesWithoutPartialKey).toBe(false);
     });
 });
 

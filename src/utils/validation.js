@@ -8,6 +8,7 @@ export function validateGraph(graph) {
         noNMRelationsWithPK: true,
         noUnconnectedRelations: true,
         noNotValidCardinalities: true,
+        noWeakEntitiesWithoutPartialKey: true,
         notEmpty: true,
         isValid: true,
     };
@@ -65,6 +66,11 @@ export function validateGraph(graph) {
         diagnostics.noNotValidCardinalities = false;
         diagnostics.isValid = false;
     }
+
+    if (weakEntitiesWithoutPartialKey(graph)) {
+        diagnostics.noWeakEntitiesWithoutPartialKey = false;
+        diagnostics.isValid = false;
+    }    
 
     return diagnostics;
 }
@@ -240,4 +246,20 @@ export function cardinalitiesNotValid(graph) {
         }
     }
     return false; // All cardinalities are valid
+}
+
+export function weakEntitiesWithoutPartialKey(graph) {
+    for (const entity of graph.entities) {
+        if (!entity.weak) continue;
+
+        const hasPartialKey = entity.attributes?.some(
+            (attribute) => attribute.partialKey,
+        );
+
+        if (!hasPartialKey) {
+            return true;
+        }
+    }
+
+    return false;
 }
