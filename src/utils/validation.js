@@ -166,6 +166,7 @@ export function repeatedAttributesInEntity(graph) {
 export function entitiesWithoutPK(graph) {
     // Check entities
     for (const entity of graph.entities) {
+        if (entity.weak) continue;
         let hasPrimaryKey = false;
         for (const attribute of entity.attributes) {
             // Check if there is at least one attribute with key set to true

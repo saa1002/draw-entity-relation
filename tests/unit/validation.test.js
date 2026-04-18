@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import { 
     repeatedAttributesInEntity, 
+    entitiesWithoutPK,
     repeatedEntities, 
     entitiesWithoutAttributes,
     relationsUnconnected,
@@ -236,6 +237,18 @@ describe("Weak entities", () => {
 
         expect(identifyingRelationsNotValid(graph)).toBe(false);
     });
+
+    test("a weak entity without primary key can still be valid at PK level", () => {
+        const weakEntity = graph.entities.at(0);
+
+        weakEntity.weak = true;
+        weakEntity.attributes.forEach((attribute) => {
+            attribute.key = false;
+        });
+
+        expect(entitiesWithoutPK(graph)).toBe(false);
+        expect(validateGraph(graph).noEntitiesWithoutPK).toBe(true);
+    });    
 });
 
 describe("Architecture", () => {
