@@ -12,6 +12,7 @@ import {
     cardinalitiesNotValid,
     notNMRelationsWithAttributes,
     weakEntitiesWithoutPartialKey,
+    strongEntitiesWithPartialKey,
 } from "../../src/utils/validation"
 
 let graph;
@@ -170,6 +171,16 @@ describe("Weak entities", () => {
         expect(weakEntitiesWithoutPartialKey(graph)).toBe(true);
         expect(validateGraph(graph).noWeakEntitiesWithoutPartialKey).toBe(false);
     });
+    
+    test("a strong entity cannot have partial key", () => {
+        const strongEntity = graph.entities.at(0);
+
+        strongEntity.weak = false;
+        strongEntity.attributes.at(0).partialKey = true;
+
+        expect(strongEntitiesWithPartialKey(graph)).toBe(true);
+        expect(validateGraph(graph).noStrongEntitiesWithPartialKey).toBe(false);
+    });    
 });
 
 describe("Architecture", () => {
