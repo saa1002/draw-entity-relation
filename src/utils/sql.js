@@ -64,6 +64,9 @@ export function filterTables(graph) {
 
     // Process relations first
     for (const relation of graph.relations) {
+        if (relation.isIdentifying) {
+            continue;
+        }
         tables.push(processRelation(relation));
     }
 
@@ -75,6 +78,18 @@ export function filterTables(graph) {
     }
 
     return tables;
+}
+
+function buildEntityTable(entity) {
+    return {
+        name: entity.name,
+        attributes: entity.attributes.map((attr) => ({
+            name: attr.name,
+            key: attr.key ?? false,
+            notnull: false,
+            unique: false,
+        })),
+    };
 }
 
 export function process1NRelation(relation) {
@@ -329,25 +344,26 @@ export const normalizeIdentifier = (name) => {
 };
 
 const createTableSQL = (table) => {
+    const primaryKeyAttributes = table.attributes.filter((attr) => attr.key);
+    const primaryKeyColumns = primaryKeyAttributes.map((attr) =>
+        normalizeIdentifier(attr.name),
+    );
+
     const columns = table.attributes
         .map((attr) => {
             let columnDef = `${normalizeIdentifier(attr.name)} ${getSQLType(attr)}`;
-            if (attr.key && !attr.foreign_key) columnDef += " PRIMARY KEY";
+            if (primaryKeyColumns.length === 1 && attr.key) {
+                columnDef += " PRIMARY KEY";
+            }
             if (attr.unique) columnDef += " UNIQUE";
             if (attr.notnull) columnDef += " NOT NULL";
             return columnDef;
         })
         .join(",\n  ");
 
-    // Check for composite primary key
-    const compositePrimaryKey = table.attributes
-        .filter((attr) => attr.key && attr.foreign_key)
-        .map((attr) => normalizeIdentifier(attr.name))
-        .join(", ");
-
-    const primaryKeyClause = compositePrimaryKey
-        ? `, \n  PRIMARY KEY (${compositePrimaryKey})`
-        : "";
+    const primaryKeyClause = primaryKeyColumns.length > 1
+            ? `, \n  PRIMARY KEY (${primaryKeyColumns.join(", ")})`
+            : "";
 
     return `CREATE TABLE ${normalizeIdentifier(
         table.name,
@@ -447,11 +463,76 @@ const accentMap = {
     // Add more mappings if needed
 };
 
+function applyWeakEntitySemantics(tableMap, graph) {
+    for (const entity of graph.entities) {
+        if (!entity.weak) continue;
+
+        const ownerEntity = graph.entities.find(
+            (candidate) => candidate.idMx === entity.ownerEntityId,
+        );
+
+        if (!ownerEntity) continue;
+
+        let weakTable = tableMap.get(entity.name);
+
+        if (!weakTable) {
+            weakTable = buildEntityTable(entity);
+            tableMap.set(entity.name, weakTable);
+        }
+
+        // En entidades débiles, solo la clave parcial forma parte
+        // de la clave propia de la entidad.
+        weakTable.attributes = weakTable.attributes.map((attr) => {
+            const sourceAttribute = entity.attributes.find(
+                (candidate) => candidate.name === attr.name,
+            );
+
+            if (!sourceAttribute) {
+                return attr;
+            }
+
+            return {
+                ...attr,
+                key: sourceAttribute.partialKey === true,
+                notnull:
+                    sourceAttribute.partialKey === true
+                        ? true
+                        : (attr.notnull ?? false),
+            };
+        });
+
+        const ownerPrimaryKeys = ownerEntity.attributes.filter(
+            (attr) => attr.key === true,
+        );
+
+        for (const ownerPrimaryKey of ownerPrimaryKeys) {
+            const foreignKeyName = `${ownerPrimaryKey.name}_${ownerEntity.name}`;
+
+            const alreadyExists = weakTable.attributes.some(
+                (attr) => attr.name === foreignKeyName,
+            );
+
+            if (alreadyExists) continue;
+
+            weakTable.attributes.push({
+                name: foreignKeyName,
+                key: true,
+                notnull: true,
+                unique: false,
+                foreign_key: ownerEntity.name,
+                foreign_key_column: ownerPrimaryKey.name,
+            });
+        }
+    }
+}
+
 // Generate SQL
 export function generateSQL(graph) {
     const tables = filterTables(graph);
     const tableMap = new Map(); // Track processed tables and their attributes
 
+    applyWeakEntitySemantics(tableMap, graph);
+    
     for (const table of tables) {
         let processedTablesArray;
         switch (table.type) {
