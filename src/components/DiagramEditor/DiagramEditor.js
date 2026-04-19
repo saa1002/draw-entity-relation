@@ -2313,6 +2313,10 @@ export default function App(props) {
                     messages.push("Hay entidades sin atributos.");
                 if (!diagnostics.noEntitiesWithoutPK)
                     messages.push("Hay entidades sin clave primaria.");
+                if (!diagnostics.noAttributesInNonNMRelations)
+                    messages.push(
+                        "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado."
+                    );
                 if (!diagnostics.noUnconnectedRelations)
                     messages.push("Hay relaciones desconectadas.");
                 if (!diagnostics.noNotValidCardinalities)
@@ -2423,6 +2427,10 @@ export default function App(props) {
                     messages.push("Hay entidades sin atributos.");
                 if (!diagnostics.noEntitiesWithoutPK)
                     messages.push("Hay entidades sin clave primaria.");
+                if (!diagnostics.noAttributesInNonNMRelations)
+                    messages.push(
+                        "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
+                    );
                 if (!diagnostics.noUnconnectedRelations)
                     messages.push("Hay relaciones desconectadas.");
                 if (!diagnostics.noNotValidCardinalities)
@@ -2548,6 +2556,10 @@ export default function App(props) {
                         if (!diagnostics.noNMRelationsWithPK)
                             messages.push(
                                 "Hay relaciones N-M con clave primaria.",
+                            );
+                        if (!diagnostics.noAttributesInNonNMRelations)
+                            messages.push(
+                                "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
                             );
                         if (!diagnostics.noUnconnectedRelations)
                             messages.push("Hay relaciones desconectadas.");

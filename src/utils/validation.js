@@ -7,6 +7,7 @@ export function validateGraph(graph) {
         noEntitiesWithMoreThanOnePK: true,
         noNMRelationsWithPK: true,
         noUnconnectedRelations: true,
+        noAttributesInNonNMRelations: true,
         noNotValidCardinalities: true,
         noWeakEntitiesWithoutPartialKey: true,
         noStrongEntitiesWithPartialKey: true,
@@ -56,6 +57,11 @@ export function validateGraph(graph) {
     // Check for NM relations with a primary key
     if (nmRelationsWithPK(graph)) {
         diagnostics.noNMRelationsWithPK = false;
+        diagnostics.isValid = false;
+    }
+
+    if (notNMRelationsWithAttributes(graph)) {
+        diagnostics.noAttributesInNonNMRelations = false;
         diagnostics.isValid = false;
     }
 
