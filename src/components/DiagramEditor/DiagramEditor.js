@@ -1195,44 +1195,42 @@ export default function App(props) {
     };
 
     const toggleAttrKey = () => {
-        let entityIndexToUpdate;
-        const cellsToDelete = [];
-        const cellsToRecreate = [];
+        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        if (!selectedEntityAttribute) return;
 
-        diagramRef.current.entities.find((entity, index) => {
-            entity.attributes.forEach((attribute) => {
-                if (attribute.idMx === selected.id) {
-                    entityIndexToUpdate = index;
-                    return true;
-                }
-            });
-        });
+        const { entity, attribute: selectedAttribute } = selectedEntityAttribute;
 
-        diagramRef.current.entities
-            .at(entityIndexToUpdate)
-            .attributes.forEach((attribute) => {
-                cellsToDelete.push(accessCell(attribute.cell.at(0)));
-                cellsToDelete.push(accessCell(attribute.cell.at(1)));
-                if (attribute.idMx === selected.id) {
-                    attribute.key = true;
+        const shouldSetAsKey = !selectedAttribute.key;
+
+        entity.attributes.forEach((attribute) => {
+            if (attribute.idMx === selected.id) {
+                attribute.key = shouldSetAsKey;
+                if (shouldSetAsKey) {
                     attribute.partialKey = false;
-                } else {
-                    attribute.key = false;
                 }
+            } else if (shouldSetAsKey) {
+                // Solo mantenemos unicidad de PK si estamos activando una nueva clave
+                attribute.key = false;
+            }
+
+            const attributeCell = accessCell(attribute.idMx);
+            if (attributeCell) {
                 graph.getModel().setStyle(
-                    accessCell(attribute.cell.at(0)),
+                    attributeCell,
                     getAttributeStyleString(attribute),
                 );
-                cellsToRecreate.push(accessCell(attribute.cell.at(0)));
-                cellsToRecreate.push(accessCell(attribute.cell.at(1)));
-            });
+            }
+        });
 
-        graph.removeCells(cellsToDelete);
-        graph.addCells(cellsToRecreate);
-        graph.orderCells(true, cellsToRecreate);
-
-        // This triggers a rerender
+        refreshGraph();
+        updateDiagramData();
         setRefreshDiagram((prevState) => !prevState);
+
+        toast.success(
+            shouldSetAsKey
+                ? "Atributo marcado como clave"
+                : "Clave eliminada del atributo",
+        );
     };
 
     const toggleWeakEntity = () => {
@@ -1496,14 +1494,14 @@ export default function App(props) {
             }
         }
 
-        if (isAttribute && !isKey && !isFromRelation) {
+        if (isAttribute && !isFromRelation) {
             return (
                 <button
                     type="button"
                     className="button-toolbar-action"
                     onClick={toggleAttrKey}
                 >
-                    Convertir en clave
+                    {isKey ? "Quitar clave" : "Convertir en clave"}
                 </button>
             );
         }
