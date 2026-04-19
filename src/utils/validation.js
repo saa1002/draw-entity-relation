@@ -8,6 +8,7 @@ export function validateGraph(graph) {
         noNMRelationsWithPK: true,
         noUnconnectedRelations: true,
         noAttributesInNonNMRelations: true,
+        noBrokenRelationEntityReferences: true,
         noNotValidCardinalities: true,
         noWeakEntitiesWithoutPartialKey: true,
         noStrongEntitiesWithPartialKey: true,
@@ -71,9 +72,15 @@ export function validateGraph(graph) {
         diagnostics.isValid = false;
     }
 
+    
     // Check for relations with invalid cardinalities
     if (cardinalitiesNotValid(graph)) {
         diagnostics.noNotValidCardinalities = false;
+        diagnostics.isValid = false;
+    }
+
+    if (brokenRelationEntityReferences(graph)) {
+        diagnostics.noBrokenRelationEntityReferences = false;
         diagnostics.isValid = false;
     }
 
@@ -261,6 +268,27 @@ export function relationsUnconnected(graph) {
         }
     }
     return false; // All relations are connected
+}
+
+export function brokenRelationEntityReferences(graph) {
+    for (const relation of graph.relations) {
+        const side1EntityId = relation?.side1?.entity?.idMx;
+        const side2EntityId = relation?.side2?.entity?.idMx;
+
+        // Las relaciones no configuradas ya las cubre relationsUnconnected
+        if (!side1EntityId || !side2EntityId) {
+            continue;
+        }
+
+        const side1Exists = getEntityById(graph, side1EntityId) !== null;
+        const side2Exists = getEntityById(graph, side2EntityId) !== null;
+
+        if (!side1Exists || !side2Exists) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 export function notNMRelationsWithAttributes(graph) {

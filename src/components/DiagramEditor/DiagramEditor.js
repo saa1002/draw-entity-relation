@@ -2319,6 +2319,10 @@ export default function App(props) {
                     );
                 if (!diagnostics.noUnconnectedRelations)
                     messages.push("Hay relaciones desconectadas.");
+                if (!diagnostics.noBrokenRelationEntityReferences)
+                    messages.push(
+                        "Hay relaciones que apuntan a entidades inexistentes.",
+                    );
                 if (!diagnostics.noNotValidCardinalities)
                     messages.push(
                         "Hay cardinalidades no válidas en las relaciones.",
@@ -2433,6 +2437,10 @@ export default function App(props) {
                     );
                 if (!diagnostics.noUnconnectedRelations)
                     messages.push("Hay relaciones desconectadas.");
+                if (!diagnostics.noBrokenRelationEntityReferences)
+                    messages.push(
+                        "Hay relaciones que apuntan a entidades inexistentes.",
+                    );
                 if (!diagnostics.noNotValidCardinalities)
                     messages.push(
                         "Hay cardinalidades no válidas en las relaciones.",
@@ -2563,6 +2571,10 @@ export default function App(props) {
                             );
                         if (!diagnostics.noUnconnectedRelations)
                             messages.push("Hay relaciones desconectadas.");
+                        if (!diagnostics.noBrokenRelationEntityReferences)
+                            messages.push(
+                                "Hay relaciones que apuntan a entidades inexistentes.",
+                            );
                         if (!diagnostics.noNotValidCardinalities)
                             messages.push(
                                 "Hay cardinalidades no válidas en las relaciones.",
