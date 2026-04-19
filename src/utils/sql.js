@@ -320,7 +320,7 @@ const getSQLType = (attribute) => {
     return "VARCHAR(40)";
 };
 
-const normalizeIdentifier = (name) => {
+export const normalizeIdentifier = (name) => {
     return name
         .split("")
         .map((char) => accentMap[char] || char)

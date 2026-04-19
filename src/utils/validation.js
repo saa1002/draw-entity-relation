@@ -1,3 +1,5 @@
+import { normalizeIdentifier } from "./sql";
+
 export function validateGraph(graph) {
     const diagnostics = {
         noRepeatedNames: true,
@@ -10,6 +12,7 @@ export function validateGraph(graph) {
         noAttributesInNonNMRelations: true,
         noBrokenRelationEntityReferences: true,
         noNotValidCardinalities: true,
+        noSQLIdentifierCollisions: true,
         noWeakEntitiesWithoutPartialKey: true,
         noStrongEntitiesWithPartialKey: true,
         noWeakEntitiesWithoutIdentifyingRelation: true,
@@ -79,8 +82,14 @@ export function validateGraph(graph) {
         diagnostics.isValid = false;
     }
 
+
     if (brokenRelationEntityReferences(graph)) {
         diagnostics.noBrokenRelationEntityReferences = false;
+        diagnostics.isValid = false;
+    }
+
+    if (sqlIdentifierCollisions(graph)) {
+        diagnostics.noSQLIdentifierCollisions = false;
         diagnostics.isValid = false;
     }
 
@@ -316,6 +325,58 @@ export function cardinalitiesNotValid(graph) {
         }
     }
     return false; // All cardinalities are valid
+}
+
+export function sqlIdentifierCollisions(graph) {
+    const normalizedNames = new Set();
+
+    // Entidades y relaciones comparten namespace de tablas
+    for (const entity of graph.entities) {
+        const normalized = normalizeIdentifier(entity.name);
+        if (normalizedNames.has(normalized)) {
+            return true;
+        }
+        normalizedNames.add(normalized);
+    }
+
+    for (const relation of graph.relations) {
+        const normalized = normalizeIdentifier(relation.name);
+        if (normalizedNames.has(normalized)) {
+            return true;
+        }
+        normalizedNames.add(normalized);
+    }
+
+    const hasNormalizedAttributeCollision = (attributes) => {
+        const normalizedAttrNames = new Set();
+
+        for (const attribute of attributes) {
+            const normalized = normalizeIdentifier(attribute.name);
+            if (normalizedAttrNames.has(normalized)) {
+                return true;
+            }
+            normalizedAttrNames.add(normalized);
+        }
+
+        return false;
+    };
+
+    for (const entity of graph.entities) {
+        if (hasNormalizedAttributeCollision(entity.attributes || [])) {
+            return true;
+        }
+    }
+
+    for (const relation of graph.relations) {
+        if (
+            relation.canHoldAttributes &&
+            hasNormalizedAttributeCollision(relation.attributes || [])
+        ) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 export function weakEntitiesWithoutPartialKey(graph) {
