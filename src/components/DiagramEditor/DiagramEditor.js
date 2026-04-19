@@ -52,6 +52,7 @@ export default function App(props) {
     weakEntityDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
+    weakEntityDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
 
 
     const identifyingRelationDecoratorStyle = {};
@@ -62,6 +63,7 @@ export default function App(props) {
     identifyingRelationDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
     identifyingRelationDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
     identifyingRelationDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
 
     const partialKeyAttrStyle = {};
     partialKeyAttrStyle[mxConstants.STYLE_DASHED] = 1;
