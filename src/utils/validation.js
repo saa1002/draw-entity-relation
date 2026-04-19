@@ -14,6 +14,7 @@ export function validateGraph(graph) {
         noNotValidCardinalities: true,
         noSQLIdentifierCollisions: true,
         noWeakEntitiesWithoutPartialKey: true,
+        noWeakEntitiesWithPrimaryKey: true,
         noStrongEntitiesWithPartialKey: true,
         noWeakEntitiesWithoutIdentifyingRelation: true,
         noInvalidIdentifyingRelations: true,
@@ -95,6 +96,11 @@ export function validateGraph(graph) {
 
     if (weakEntitiesWithoutPartialKey(graph)) {
         diagnostics.noWeakEntitiesWithoutPartialKey = false;
+        diagnostics.isValid = false;
+    }
+
+    if (weakEntitiesWithPrimaryKey(graph)) {
+        diagnostics.noWeakEntitiesWithPrimaryKey = false;
         diagnostics.isValid = false;
     }
 
@@ -388,6 +394,22 @@ export function weakEntitiesWithoutPartialKey(graph) {
         );
 
         if (!hasPartialKey) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function weakEntitiesWithPrimaryKey(graph) {
+    for (const entity of graph.entities) {
+        if (!entity.weak) continue;
+
+        const hasPrimaryKey = entity.attributes?.some(
+            (attribute) => attribute.key === true,
+        );
+
+        if (hasPrimaryKey) {
             return true;
         }
     }
