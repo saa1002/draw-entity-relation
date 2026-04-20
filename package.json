@@ -42,12 +42,11 @@
     "not op_mini all"
   ],
   "devDependencies": {
-    "@biomejs/biome": "1.7.3",
+    "@biomejs/biome": "^1.7.3",
     "@playwright/test": "^1.44.0",
     "@types/node": "^20.12.12",
     "@vitest/coverage-v8": "^2.0.0",
     "@vue/test-utils": "^2.4.6",
-    "biome": "^0.3.3",
     "lefthook": "1.6.11",
     "vitest": "2.0.0"
   }

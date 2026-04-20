@@ -19,23 +19,22 @@ import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
 import {
-    ER_STROKE,
     ER_FILL,
     ER_FONT,
     ER_FONT_FAMILY,
     ER_FONT_SIZE,
+    ER_STROKE,
     getAttributeDimensions,
-    getEntityDimensions,
-    getRelationDimensions,
-    getEntityStyleString,
-    getRelationStyleString,
     getCardinalityStyleString,
+    getEntityDimensions,
+    getEntityStyleString,
+    getRelationDimensions,
+    getRelationStyleString,
 } from "./utils/diagramStyles";
 
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 
 export default function App(props) {
-
     // Apply font underline to the key attribute label text
     const keyAttrStyle = {};
     keyAttrStyle[mxConstants.STYLE_FONTSTYLE] = mxConstants.FONT_UNDERLINE;
@@ -54,10 +53,10 @@ export default function App(props) {
     weakEntityDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
 
-
     const identifyingRelationDecoratorStyle = {};
     identifyingRelationDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKECOLOR] =
+        ER_STROKE;
     identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
     identifyingRelationDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
     identifyingRelationDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
@@ -100,8 +99,8 @@ export default function App(props) {
     const getSelectedEntityData = () =>
         diagramRef.current.entities.find(
             (entity) => entity.idMx === selected?.id,
-    );
-    
+        );
+
     const getSelectedEntityAttributeData = () => {
         for (const entity of diagramRef.current.entities) {
             const attribute = entity.attributes.find(
@@ -122,7 +121,7 @@ export default function App(props) {
     const getSelectedRelationData = () =>
         diagramRef.current.relations.find(
             (relation) => relation.idMx === selected?.id,
-    );
+        );
 
     const saveToLocalStorage = () => {
         const diagramData = JSON.stringify(diagramRef.current);
@@ -198,7 +197,8 @@ export default function App(props) {
     const WEAK_ENTITY_DECORATOR_OFFSET = 4;
     const IDENTIFYING_RELATION_DECORATOR_SUFFIX = "__identifying_decorator";
     const IDENTIFYING_RELATION_DECORATOR_OFFSET = 4;
-    const IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX = "__identifying_weak_edge_decorator";
+    const IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX =
+        "__identifying_weak_edge_decorator";
     const IDENTIFYING_RELATION_EDGE_PARALLEL_GAP = 8;
 
     const isWeakEntityDecoratorCell = (cell) =>
@@ -225,7 +225,7 @@ export default function App(props) {
 
         graph.refresh(decorator);
         graph.orderCells(false, [decorator]);
-    };    
+    };
 
     const getWeakEntityDecoratorId = (entityId) =>
         `${entityId}${WEAK_ENTITY_DECORATOR_SUFFIX}`;
@@ -244,7 +244,9 @@ export default function App(props) {
         );
     };
     const ensureWeakEntityDecorator = (entityCell, entityData) => {
-        const existingDecorator = accessCell(getWeakEntityDecoratorId(entityCell.id));
+        const existingDecorator = accessCell(
+            getWeakEntityDecoratorId(entityCell.id),
+        );
 
         if (existingDecorator) {
             syncWeakEntityDecorator(entityCell);
@@ -324,7 +326,9 @@ export default function App(props) {
     };
 
     const removeIdentifyingRelationDecorator = (relationId) => {
-        const decorator = accessCell(getIdentifyingRelationDecoratorId(relationId));
+        const decorator = accessCell(
+            getIdentifyingRelationDecoratorId(relationId),
+        );
         if (decorator) {
             graph.removeCells([decorator]);
         }
@@ -344,10 +348,9 @@ export default function App(props) {
 
             const relationCell = accessCell(relation.idMx);
             if (relationCell) {
-                graph.getModel().setStyle(
-                    relationCell,
-                    getRelationStyleString(relation),
-                );
+                graph
+                    .getModel()
+                    .setStyle(relationCell, getRelationStyleString(relation));
             }
         }
 
@@ -361,7 +364,7 @@ export default function App(props) {
     const isIdentifyingRelationEdgeDecoratorCell = (cell) =>
         !!cell?.id &&
         String(cell.id).endsWith(IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX);
-        
+
     const getIdentifyingRelationEdgeDecoratorId = (relationId) =>
         `${relationId}${IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX}`;
 
@@ -417,8 +420,11 @@ export default function App(props) {
         };
     };
 
-    const createIdentifyingRelationEdgeDecorator = (relationCell, relationData) => {
-        const weakSide = getWeakSideOfIdentifyingRelation(relationData);        
+    const createIdentifyingRelationEdgeDecorator = (
+        relationCell,
+        relationData,
+    ) => {
+        const weakSide = getWeakSideOfIdentifyingRelation(relationData);
         const mainEdge = accessCell(weakSide?.edgeId);
 
         if (!mainEdge) return null;
@@ -459,7 +465,10 @@ export default function App(props) {
         return edge;
     };
 
-    const syncIdentifyingRelationEdgeDecorator = (relationCell, relationData) => {
+    const syncIdentifyingRelationEdgeDecorator = (
+        relationCell,
+        relationData,
+    ) => {
         const edge = accessCell(
             getIdentifyingRelationEdgeDecoratorId(relationData.idMx),
         );
@@ -492,7 +501,10 @@ export default function App(props) {
         graph.orderCells(true, [edge]);
     };
 
-    const ensureIdentifyingRelationEdgeDecorator = (relationCell, relationData) => {
+    const ensureIdentifyingRelationEdgeDecorator = (
+        relationCell,
+        relationData,
+    ) => {
         const existingEdge = accessCell(
             getIdentifyingRelationEdgeDecoratorId(relationData.idMx),
         );
@@ -507,14 +519,15 @@ export default function App(props) {
     };
 
     const removeIdentifyingRelationEdgeDecorator = (relationId) => {
-        const edge = accessCell(getIdentifyingRelationEdgeDecoratorId(relationId));
+        const edge = accessCell(
+            getIdentifyingRelationEdgeDecoratorId(relationId),
+        );
         if (edge) {
             graph.removeCells([edge]);
         }
-    };    
-    
-    const recreateGraphFromLocalStorage = () => {
+    };
 
+    const recreateGraphFromLocalStorage = () => {
         const recreateAttribute = (attribute, source) => {
             let target;
             let edge;
@@ -533,13 +546,7 @@ export default function App(props) {
 
             const storedEdgeId = attribute.cell?.at(1) ?? null;
 
-            edge = graph.insertEdge(
-                source,
-                storedEdgeId,
-                null,
-                source,
-                target,
-            );
+            edge = graph.insertEdge(source, storedEdgeId, null, source, target);
 
             attribute.cell = [target.id, edge.id];
 
@@ -563,14 +570,13 @@ export default function App(props) {
                 const decorator = createWeakEntityDecorator(entity);
                 graph.orderCells(false, [decorator]); // Move front the selected entity so the new vertex aren't on top
             }
-            
+
             for (const attribute of entity.attributes) {
                 recreateAttribute(attribute, source);
             }
         };
 
         const recreateRelation = (relation) => {
-
             const { width, height } = getRelationDimensions(relation.name);
 
             const source = graph.insertVertex(
@@ -683,12 +689,11 @@ export default function App(props) {
         if (graph) {
             // Override the isCellSelectable function
             mxGraph.prototype.isCellSelectable = function (cell) {
-
                 if (
                     this.model.isEdge(cell) ||
                     isWeakEntityDecoratorCell(cell) ||
                     isIdentifyingRelationDecoratorCell(cell) ||
-                    isIdentifyingRelationEdgeDecoratorCell(cell) 
+                    isIdentifyingRelationEdgeDecoratorCell(cell)
                 ) {
                     return false;
                 }
@@ -705,7 +710,9 @@ export default function App(props) {
 
             graph.getSelectionModel().addListener(mxEvent.CHANGE, onSelected);
 
-            const defaultEdgeStyle = graph.getStylesheet().getDefaultEdgeStyle();
+            const defaultEdgeStyle = graph
+                .getStylesheet()
+                .getDefaultEdgeStyle();
             defaultEdgeStyle[mxConstants.STYLE_ENDARROW] = "";
             defaultEdgeStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
             defaultEdgeStyle[mxConstants.STYLE_FONTCOLOR] = ER_FONT;
@@ -729,18 +736,19 @@ export default function App(props) {
             graph
                 .getStylesheet()
                 .putCellStyle("notResizeableStyle", notResizeableStyle);
-            
+
             const originalCellLabelChanged = graph.cellLabelChanged;
 
             graph.cellLabelChanged = function (cell, newValue, autoSize) {
-                originalCellLabelChanged.apply(this, arguments);
+                originalCellLabelChanged.call(this, cell, newValue, autoSize);
 
                 if (!cell?.style) return;
 
                 this.getModel().beginUpdate();
                 try {
                     if (cell.style.includes("shape=ellipse")) {
-                        const { width, height } = getAttributeDimensions(newValue);
+                        const { width, height } =
+                            getAttributeDimensions(newValue);
                         cell.geometry.width = width;
                         cell.geometry.height = height;
                     } else if (
@@ -759,29 +767,39 @@ export default function App(props) {
                             syncWeakEntityDecorator(cell);
                         }
                         if (entityData?.identifyingRelationId) {
-                            const relationData = diagramRef.current.relations.find(
-                                (relation) => relation.idMx === entityData.identifyingRelationId,
-                            );
+                            const relationData =
+                                diagramRef.current.relations.find(
+                                    (relation) =>
+                                        relation.idMx ===
+                                        entityData.identifyingRelationId,
+                                );
                             const relationCell = accessCell(relationData?.idMx);
 
                             if (relationData && relationCell) {
-                                syncIdentifyingRelationEdgeDecorator(relationCell, relationData);
+                                syncIdentifyingRelationEdgeDecorator(
+                                    relationCell,
+                                    relationData,
+                                );
                             }
                         }
                     } else if (
                         cell.style.includes("shape=rhombus") &&
                         !isIdentifyingRelationDecoratorCell(cell)
                     ) {
-                        const { width, height } = getRelationDimensions(newValue);
+                        const { width, height } =
+                            getRelationDimensions(newValue);
                         cell.geometry.width = width;
                         cell.geometry.height = height;
                         const relationData = diagramRef.current.relations.find(
-                                (relation) => relation.idMx === cell.id,
+                            (relation) => relation.idMx === cell.id,
                         );
 
                         if (relationData?.isIdentifying) {
                             syncIdentifyingRelationDecorator(cell);
-                            syncIdentifyingRelationEdgeDecorator(cell, relationData);
+                            syncIdentifyingRelationEdgeDecorator(
+                                cell,
+                                relationData,
+                            );
                         }
                     }
                 } finally {
@@ -797,18 +815,26 @@ export default function App(props) {
                 const id = String(cell.id);
 
                 if (id.endsWith(WEAK_ENTITY_DECORATOR_SUFFIX)) {
-                    return accessCell(id.slice(0, -WEAK_ENTITY_DECORATOR_SUFFIX.length));
+                    return accessCell(
+                        id.slice(0, -WEAK_ENTITY_DECORATOR_SUFFIX.length),
+                    );
                 }
 
                 if (id.endsWith(IDENTIFYING_RELATION_DECORATOR_SUFFIX)) {
                     return accessCell(
-                        id.slice(0, -IDENTIFYING_RELATION_DECORATOR_SUFFIX.length),
+                        id.slice(
+                            0,
+                            -IDENTIFYING_RELATION_DECORATOR_SUFFIX.length,
+                        ),
                     );
                 }
 
                 if (id.endsWith(IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX)) {
                     return accessCell(
-                        id.slice(0, -IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX.length),
+                        id.slice(
+                            0,
+                            -IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX.length,
+                        ),
                     );
                 }
 
@@ -821,7 +847,7 @@ export default function App(props) {
                 const cell = originalGetCellForEvent.call(this, evt);
                 return getUnderlyingInteractiveCell(cell);
             };
-            
+
             const originalGetInitialCellForEvent =
                 graph.graphHandler.getInitialCellForEvent;
 
@@ -831,14 +857,15 @@ export default function App(props) {
             };
 
             recreateGraphFromLocalStorage();
-            
+
             return () => {
                 graph
-                .getSelectionModel()
-                .removeListener(mxEvent.CHANGE, onSelected);
+                    .getSelectionModel()
+                    .removeListener(mxEvent.CHANGE, onSelected);
                 graph.cellLabelChanged = originalCellLabelChanged;
                 graph.getCellForEvent = originalGetCellForEvent;
-                graph.graphHandler.getInitialCellForEvent = originalGetInitialCellForEvent;   
+                graph.graphHandler.getInitialCellForEvent =
+                    originalGetInitialCellForEvent;
             };
         }
     }, [graph, onSelected]);
@@ -847,23 +874,24 @@ export default function App(props) {
         if (entity.attributes) {
             entity.attributes.forEach((attr) => {
                 if (graph.model.cells.hasOwnProperty(attr.idMx)) {
-                const cellDataAttr = accessCell(attr.idMx);
+                    const cellDataAttr = accessCell(attr.idMx);
 
-                let cellEdgeAttr = null;
-                const storedEdgeId = attr?.cell?.[1];
+                    let cellEdgeAttr = null;
+                    const storedEdgeId = attr?.cell?.[1];
 
-                if (storedEdgeId) {
-                    cellEdgeAttr = accessCell(storedEdgeId);
-                }
+                    if (storedEdgeId) {
+                        cellEdgeAttr = accessCell(storedEdgeId);
+                    }
 
-                if (!cellEdgeAttr && cellDataAttr) {
-                    const connectedEdges = graph.getEdges(cellDataAttr) || [];
-                    cellEdgeAttr = connectedEdges[0] ?? null;
-                }
+                    if (!cellEdgeAttr && cellDataAttr) {
+                        const connectedEdges =
+                            graph.getEdges(cellDataAttr) || [];
+                        cellEdgeAttr = connectedEdges[0] ?? null;
+                    }
 
-                if (!cellDataAttr || !cellEdgeAttr) {
-                    return;
-                }
+                    if (!cellDataAttr || !cellEdgeAttr) {
+                        return;
+                    }
 
                     attr.name = cellDataAttr.value;
                     attr.position.x = cellDataAttr.geometry.x;
@@ -919,18 +947,22 @@ export default function App(props) {
                 selected.geometry.y + attribute.offsetY;
         });
 
-        if(selectedEntityDiag?.weak) {
+        if (selectedEntityDiag?.weak) {
             syncWeakEntityDecorator(selected);
         }
 
         if (selectedEntityDiag?.identifyingRelationId) {
             const relationData = diagramRef.current.relations.find(
-                (relation) => relation.idMx === selectedEntityDiag.identifyingRelationId,
+                (relation) =>
+                    relation.idMx === selectedEntityDiag.identifyingRelationId,
             );
             const relationCell = accessCell(relationData?.idMx);
 
             if (relationData && relationCell) {
-                syncIdentifyingRelationEdgeDecorator(relationCell, relationData);
+                syncIdentifyingRelationEdgeDecorator(
+                    relationCell,
+                    relationData,
+                );
             }
         }
 
@@ -971,7 +1003,10 @@ export default function App(props) {
         }
         if (selectedRelationDiag?.isIdentifying) {
             syncIdentifyingRelationDecorator(selected);
-            syncIdentifyingRelationEdgeDecorator(selected, selectedRelationDiag);
+            syncIdentifyingRelationEdgeDecorator(
+                selected,
+                selectedRelationDiag,
+            );
         }
     };
 
@@ -1003,8 +1038,10 @@ export default function App(props) {
 
     const onCellsMoved = (_evt) => {
         if (selected) {
-            if (selected?.style?.includes("shape=rectangle") && 
-            !isWeakEntityDecoratorCell(selected)) {
+            if (
+                selected?.style?.includes("shape=rectangle") &&
+                !isWeakEntityDecoratorCell(selected)
+            ) {
                 handleEntityMove(selected);
             } else if (
                 selected?.style?.includes("shape=rhombus") &&
@@ -1044,8 +1081,10 @@ export default function App(props) {
     const addAttribute = () => {
         let selectedDiag;
         let isRelation = false;
-        if (selected?.style?.includes("shape=rectangle") &&
-            !isWeakEntityDecoratorCell(selected)) {
+        if (
+            selected?.style?.includes("shape=rectangle") &&
+            !isWeakEntityDecoratorCell(selected)
+        ) {
             selectedDiag = diagramRef.current.entities.find(
                 (entity) => entity.idMx === selected.id,
             );
@@ -1131,7 +1170,7 @@ export default function App(props) {
                     },
                     key: addPrimaryAttrRef.current,
                     partialKey: false,
-                    cell: [target.id, edge.id],                    
+                    cell: [target.id, edge.id],
                     offsetX: target.geometry.x - selected.geometry.x,
                     offsetY: target.geometry.y - selected.geometry.y,
                 });
@@ -1200,7 +1239,8 @@ export default function App(props) {
         const selectedEntityAttribute = getSelectedEntityAttributeData();
         if (!selectedEntityAttribute) return;
 
-        const { entity, attribute: selectedAttribute } = selectedEntityAttribute;
+        const { entity, attribute: selectedAttribute } =
+            selectedEntityAttribute;
 
         const shouldSetAsKey = !selectedAttribute.key;
 
@@ -1217,10 +1257,12 @@ export default function App(props) {
 
             const attributeCell = accessCell(attribute.idMx);
             if (attributeCell) {
-                graph.getModel().setStyle(
-                    attributeCell,
-                    getAttributeStyleString(attribute),
-                );
+                graph
+                    .getModel()
+                    .setStyle(
+                        attributeCell,
+                        getAttributeStyleString(attribute),
+                    );
             }
         });
 
@@ -1279,10 +1321,9 @@ export default function App(props) {
 
         const attributeCell = accessCell(attribute.idMx);
         if (attributeCell) {
-            graph.getModel().setStyle(
-                attributeCell,
-                getAttributeStyleString(attribute),
-            );
+            graph
+                .getModel()
+                .setStyle(attributeCell, getAttributeStyleString(attribute));
         }
 
         refreshGraph();
@@ -1307,9 +1348,7 @@ export default function App(props) {
 
         if (!relation.isIdentifying) {
             if (!side1Entity || !side2Entity) {
-                toast.error(
-                    "Configura primero los dos lados de la relación.",
-                );
+                toast.error("Configura primero los dos lados de la relación.");
                 return;
             }
 
@@ -1326,7 +1365,9 @@ export default function App(props) {
 
             const weakEntity = weakEntities[0];
             const ownerEntity =
-                weakEntity.idMx === side1Entity.idMx ? side2Entity : side1Entity;
+                weakEntity.idMx === side1Entity.idMx
+                    ? side2Entity
+                    : side1Entity;
 
             if (!ownerEntity || ownerEntity.weak) {
                 toast.error(
@@ -1341,7 +1382,7 @@ export default function App(props) {
             ) {
                 clearIdentifyingRelationSemantics(
                     weakEntity.identifyingRelationId,
-                );                
+                );
             }
 
             relation.isIdentifying = true;
@@ -1359,10 +1400,9 @@ export default function App(props) {
 
         const relationCell = accessCell(relation.idMx);
         if (relationCell) {
-            graph.getModel().setStyle(
-                relationCell,
-                getRelationStyleString(relation),
-            );
+            graph
+                .getModel()
+                .setStyle(relationCell, getRelationStyleString(relation));
         }
 
         refreshGraph();
@@ -1391,8 +1431,10 @@ export default function App(props) {
         );
 
     const AddAttributeButton = () => {
-        if (selected?.style?.includes("shape=rectangle") && 
-            !isWeakEntityDecoratorCell(selected)) {
+        if (
+            selected?.style?.includes("shape=rectangle") &&
+            !isWeakEntityDecoratorCell(selected)
+        ) {
             return (
                 <button
                     type="button"
@@ -1425,7 +1467,8 @@ export default function App(props) {
     };
 
     const ToggleAttributesButton = () => {
-        const isEntity = selected?.style?.includes("shape=rectangle") &&
+        const isEntity =
+            selected?.style?.includes("shape=rectangle") &&
             !isWeakEntityDecoratorCell(selected);
         const isRelationNM =
             selected?.style?.includes("shape=rhombus") &&
@@ -2027,7 +2070,8 @@ export default function App(props) {
     };
 
     const DeleteEntityButton = () => {
-        const isEntity = selected?.style?.includes("shape=rectangle") && 
+        const isEntity =
+            selected?.style?.includes("shape=rectangle") &&
             !isWeakEntityDecoratorCell(selected);
         function deleteEntity() {
             // Find the entity in diagramRef.current.entities
@@ -2064,7 +2108,6 @@ export default function App(props) {
                             relation.side1.entity.idMx === entity.idMx ||
                             relation.side2.entity.idMx === entity.idMx
                         ) {
-                            
                             clearIdentifyingRelationSemantics(relation.idMx);
 
                             // Find the corresponding cells in graph.model.cells for the relation
@@ -2319,7 +2362,7 @@ export default function App(props) {
                     );
                 if (!diagnostics.noAttributesInNonNMRelations)
                     messages.push(
-                        "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado."
+                        "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
                     );
                 if (!diagnostics.noUnconnectedRelations)
                     messages.push("Hay relaciones desconectadas.");

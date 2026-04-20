@@ -76,13 +76,11 @@ export function validateGraph(graph) {
         diagnostics.isValid = false;
     }
 
-    
     // Check for relations with invalid cardinalities
     if (cardinalitiesNotValid(graph)) {
         diagnostics.noNotValidCardinalities = false;
         diagnostics.isValid = false;
     }
-
 
     if (brokenRelationEntityReferences(graph)) {
         diagnostics.noBrokenRelationEntityReferences = false;
@@ -108,7 +106,7 @@ export function validateGraph(graph) {
         diagnostics.noStrongEntitiesWithPartialKey = false;
         diagnostics.isValid = false;
     }
-    
+
     if (weakEntitiesWithoutIdentifyingRelation(graph)) {
         diagnostics.noWeakEntitiesWithoutIdentifyingRelation = false;
         diagnostics.isValid = false;

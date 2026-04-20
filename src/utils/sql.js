@@ -351,7 +351,9 @@ const createTableSQL = (table) => {
 
     const columns = table.attributes
         .map((attr) => {
-            let columnDef = `${normalizeIdentifier(attr.name)} ${getSQLType(attr)}`;
+            let columnDef = `${normalizeIdentifier(attr.name)} ${getSQLType(
+                attr,
+            )}`;
             if (primaryKeyColumns.length === 1 && attr.key) {
                 columnDef += " PRIMARY KEY";
             }
@@ -361,7 +363,8 @@ const createTableSQL = (table) => {
         })
         .join(",\n  ");
 
-    const primaryKeyClause = primaryKeyColumns.length > 1
+    const primaryKeyClause =
+        primaryKeyColumns.length > 1
             ? `, \n  PRIMARY KEY (${primaryKeyColumns.join(", ")})`
             : "";
 
@@ -373,9 +376,7 @@ const createTableSQL = (table) => {
 const createForeignKeySQL = (table) => {
     const foreignKeys = table.attributes
         .filter((attr) => attr.foreign_key)
-        .map(
-            (attr) =>{
-
+        .map((attr) => {
             const referencedTable = normalizeIdentifier(attr.foreign_key);
             const referencedColumn = attr.foreign_key_column
                 ? `(${normalizeIdentifier(attr.foreign_key_column)})`
@@ -387,7 +388,7 @@ const createForeignKeySQL = (table) => {
                 attr.name,
             )} FOREIGN KEY (${normalizeIdentifier(
                 attr.name,
-            )}) REFERENCES ${referencedTable}${referencedColumn};`;                
+            )}) REFERENCES ${referencedTable}${referencedColumn};`;
         })
         .join("\n");
 
@@ -497,7 +498,7 @@ function applyWeakEntitySemantics(tableMap, graph) {
                 notnull:
                     sourceAttribute.partialKey === true
                         ? true
-                        : (attr.notnull ?? false),
+                        : attr.notnull ?? false,
             };
         });
 
@@ -532,7 +533,7 @@ export function generateSQL(graph) {
     const tableMap = new Map(); // Track processed tables and their attributes
 
     applyWeakEntitySemantics(tableMap, graph);
-    
+
     for (const table of tables) {
         let processedTablesArray;
         switch (table.type) {
@@ -567,7 +568,7 @@ export function generateSQL(graph) {
             }
         }
     }
-    
+
     for (const table of tableMap.values()) {
         table.name = normalizeIdentifier(table.name);
 

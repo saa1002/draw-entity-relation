@@ -1,8 +1,5 @@
 import { default as MxGraph } from "mxgraph";
-import {
-    getEntityDimensions,
-    getRelationDimensions,
-} from "./diagramStyles";
+import { getEntityDimensions, getRelationDimensions } from "./diagramStyles";
 
 const { mxEvent, mxUtils } = MxGraph();
 
@@ -74,7 +71,7 @@ export default function addToolbarItem(
             vertex.geometry.width = width;
             vertex.geometry.height = height;
         }
-        
+
         vertex.geometry.x = x;
         vertex.geometry.y = y;
 

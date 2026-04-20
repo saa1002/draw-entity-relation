@@ -1,9 +1,9 @@
 import { default as MxGraph } from "mxgraph";
-import { addToolbarItem} from "./";
+import { addToolbarItem } from "./";
 import {
     getEntityDimensions,
-    getRelationDimensions,
     getEntityStyleString,
+    getRelationDimensions,
     getRelationStyleString,
 } from "./diagramStyles";
 
