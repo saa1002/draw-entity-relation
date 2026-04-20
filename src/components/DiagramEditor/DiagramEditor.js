@@ -1094,8 +1094,15 @@ export default function App(props) {
             );
             isRelation = true;
         }
-        const addKey = selectedDiag?.attributes?.length === 0;
-        addPrimaryAttrRef.current = addKey;
+
+        const isFirstAttribute = (selectedDiag?.attributes?.length ?? 0) === 0;
+        const isWeakEntity = !isRelation && selectedDiag?.weak === true;
+
+        const shouldAddPrimaryKey =
+            isFirstAttribute && !isWeakEntity && !isRelation;
+        const shouldAddPartialKey = isFirstAttribute && isWeakEntity;
+
+        addPrimaryAttrRef.current = shouldAddPrimaryKey;
         const source = selected;
 
         // Initial offset
@@ -1137,8 +1144,8 @@ export default function App(props) {
             existingAttributes,
         );
         const newAttributeData = {
-            key: addPrimaryAttrRef.current && !isRelation,
-            partialKey: false,
+            key: shouldAddPrimaryKey,
+            partialKey: shouldAddPartialKey,
         };
 
         const { width, height } = getAttributeDimensions(uniqueAttributeName);
@@ -1168,8 +1175,8 @@ export default function App(props) {
                         x: target.geometry.x,
                         y: target.geometry.y,
                     },
-                    key: addPrimaryAttrRef.current,
-                    partialKey: false,
+                    key: shouldAddPrimaryKey,
+                    partialKey: shouldAddPartialKey,
                     cell: [target.id, edge.id],
                     offsetX: target.geometry.x - selected.geometry.x,
                     offsetY: target.geometry.y - selected.geometry.y,
