@@ -18,6 +18,7 @@ import {
     identifyingRelationsNotValid,
     identifyingRelationCardinalitiesNotValid,
     inconsistentWeakEntityOwnership,
+    multipleIdentifyingRelationsPerWeakEntity,
 } from "../../src/utils/validation"
 
 let graph;
@@ -378,6 +379,49 @@ describe("Weak entities", () => {
         weakEntity.ownerEntityId = strongEntity.idMx;
 
         expect(inconsistentWeakEntityOwnership(graph)).toBe(false);
+    });
+    test("a weak entity cannot participate in more than one identifying relationship", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity1 = graph.entities.at(1);
+        const strongEntity2 = graph.entities.at(2);
+
+        const relation1 = graph.relations.at(0);
+        const relation2 = graph.relations.at(1);
+
+        weakEntity.weak = true;
+        strongEntity1.weak = false;
+        strongEntity2.weak = false;
+
+        relation1.isIdentifying = true;
+        relation1.side1.entity.idMx = weakEntity.idMx;
+        relation1.side2.entity.idMx = strongEntity1.idMx;
+
+        relation2.isIdentifying = true;
+        relation2.side1.entity.idMx = weakEntity.idMx;
+        relation2.side2.entity.idMx = strongEntity2.idMx;
+
+        expect(multipleIdentifyingRelationsPerWeakEntity(graph)).toBe(true);
+        expect(
+            validateGraph(graph).noMultipleIdentifyingRelationsPerWeakEntity,
+        ).toBe(false);
+    });
+    
+    test("a weak entity with a single identifying relationship should pass uniqueness validation", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        expect(multipleIdentifyingRelationsPerWeakEntity(graph)).toBe(false);
+        expect(
+            validateGraph(graph).noMultipleIdentifyingRelationsPerWeakEntity,
+        ).toBe(true);
     });    
 });
 

@@ -2543,6 +2543,10 @@ export default function App(props) {
                     messages.push(
                         "Hay entidades débiles con una entidad propietaria inconsistente.",
                     );
+                if (!diagnostics.noMultipleIdentifyingRelationsPerWeakEntity)
+                    messages.push(
+                        "Hay entidades débiles participando en más de una relación identificadora.",
+                    );
                 if (!diagnostics.noAttributesInNonNMRelations)
                     messages.push(
                         "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
@@ -2688,6 +2692,10 @@ export default function App(props) {
                 if (!diagnostics.noInconsistentWeakEntityOwnership)
                     messages.push(
                         "Hay entidades débiles con una entidad propietaria inconsistente.",
+                    );
+                if (!diagnostics.noMultipleIdentifyingRelationsPerWeakEntity)
+                    messages.push(
+                        "Hay entidades débiles participando en más de una relación identificadora.",
                     );
                 if (!diagnostics.noAttributesInNonNMRelations)
                     messages.push(
@@ -2856,6 +2864,12 @@ export default function App(props) {
                         if (!diagnostics.noInconsistentWeakEntityOwnership)
                             messages.push(
                                 "Hay entidades débiles con una entidad propietaria inconsistente.",
+                            );
+                        if (
+                            !diagnostics.noMultipleIdentifyingRelationsPerWeakEntity
+                        )
+                            messages.push(
+                                "Hay entidades débiles participando en más de una relación identificadora.",
                             );
                         if (!diagnostics.noAttributesInNonNMRelations)
                             messages.push(

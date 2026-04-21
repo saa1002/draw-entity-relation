@@ -20,6 +20,7 @@ export function validateGraph(graph) {
         noInvalidIdentifyingRelations: true,
         noInvalidIdentifyingCardinalities: true,
         noInconsistentWeakEntityOwnership: true,
+        noMultipleIdentifyingRelationsForWeakEntity: true,
         notEmpty: true,
         isValid: true,
     };
@@ -125,6 +126,11 @@ export function validateGraph(graph) {
 
     if (inconsistentWeakEntityOwnership(graph)) {
         diagnostics.noInconsistentWeakEntityOwnership = false;
+        diagnostics.isValid = false;
+    }
+
+    if (multipleIdentifyingRelationsPerWeakEntity(graph)) {
+        diagnostics.noMultipleIdentifyingRelationsPerWeakEntity = false;
         diagnostics.isValid = false;
     }
 
@@ -563,6 +569,27 @@ export function inconsistentWeakEntityOwnership(graph) {
         const ownerEntity = getEntityById(graph, ownerId);
 
         if (!ownerEntity || ownerEntity.weak) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function multipleIdentifyingRelationsPerWeakEntity(graph) {
+    for (const entity of graph.entities) {
+        if (!entity.weak) continue;
+
+        const identifyingRelations = graph.relations.filter((relation) => {
+            if (!relation.isIdentifying) return false;
+
+            return (
+                relation?.side1?.entity?.idMx === entity.idMx ||
+                relation?.side2?.entity?.idMx === entity.idMx
+            );
+        });
+
+        if (identifyingRelations.length > 1) {
             return true;
         }
     }
