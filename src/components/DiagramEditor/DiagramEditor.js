@@ -2523,6 +2523,26 @@ export default function App(props) {
                     messages.push(
                         "Hay entidades débiles con clave primaria normal.",
                     );
+                if (!diagnostics.noWeakEntitiesWithoutPartialKey)
+                    messages.push("Hay entidades débiles sin clave parcial.");
+                if (!diagnostics.noStrongEntitiesWithPartialKey)
+                    messages.push("Hay entidades fuertes con clave parcial.");
+                if (!diagnostics.noWeakEntitiesWithoutIdentifyingRelation)
+                    messages.push(
+                        "Hay entidades débiles sin relación identificadora.",
+                    );
+                if (!diagnostics.noInvalidIdentifyingRelations)
+                    messages.push(
+                        "Hay relaciones identificadoras que no conectan exactamente una entidad débil y una fuerte.",
+                    );
+                if (!diagnostics.noInvalidIdentifyingCardinalities)
+                    messages.push(
+                        "Hay relaciones identificadoras con cardinalidades no válidas.",
+                    );
+                if (!diagnostics.noInconsistentWeakEntityOwnership)
+                    messages.push(
+                        "Hay entidades débiles con una entidad propietaria inconsistente.",
+                    );
                 if (!diagnostics.noAttributesInNonNMRelations)
                     messages.push(
                         "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
@@ -2648,6 +2668,26 @@ export default function App(props) {
                 if (!diagnostics.noWeakEntitiesWithPrimaryKey)
                     messages.push(
                         "Hay entidades débiles con clave primaria normal.",
+                    );
+                if (!diagnostics.noWeakEntitiesWithoutPartialKey)
+                    messages.push("Hay entidades débiles sin clave parcial.");
+                if (!diagnostics.noStrongEntitiesWithPartialKey)
+                    messages.push("Hay entidades fuertes con clave parcial.");
+                if (!diagnostics.noWeakEntitiesWithoutIdentifyingRelation)
+                    messages.push(
+                        "Hay entidades débiles sin relación identificadora.",
+                    );
+                if (!diagnostics.noInvalidIdentifyingRelations)
+                    messages.push(
+                        "Hay relaciones identificadoras que no conectan exactamente una entidad débil y una fuerte.",
+                    );
+                if (!diagnostics.noInvalidIdentifyingCardinalities)
+                    messages.push(
+                        "Hay relaciones identificadoras con cardinalidades no válidas.",
+                    );
+                if (!diagnostics.noInconsistentWeakEntityOwnership)
+                    messages.push(
+                        "Hay entidades débiles con una entidad propietaria inconsistente.",
                     );
                 if (!diagnostics.noAttributesInNonNMRelations)
                     messages.push(
@@ -2790,6 +2830,32 @@ export default function App(props) {
                         if (!diagnostics.noWeakEntitiesWithPrimaryKey)
                             messages.push(
                                 "Hay entidades débiles con clave primaria normal.",
+                            );
+                        if (!diagnostics.noWeakEntitiesWithoutPartialKey)
+                            messages.push(
+                                "Hay entidades débiles sin clave parcial.",
+                            );
+                        if (!diagnostics.noStrongEntitiesWithPartialKey)
+                            messages.push(
+                                "Hay entidades fuertes con clave parcial.",
+                            );
+                        if (
+                            !diagnostics.noWeakEntitiesWithoutIdentifyingRelation
+                        )
+                            messages.push(
+                                "Hay entidades débiles sin relación identificadora.",
+                            );
+                        if (!diagnostics.noInvalidIdentifyingRelations)
+                            messages.push(
+                                "Hay relaciones identificadoras que no conectan exactamente una entidad débil y una fuerte.",
+                            );
+                        if (!diagnostics.noInvalidIdentifyingCardinalities)
+                            messages.push(
+                                "Hay relaciones identificadoras con cardinalidades no válidas.",
+                            );
+                        if (!diagnostics.noInconsistentWeakEntityOwnership)
+                            messages.push(
+                                "Hay entidades débiles con una entidad propietaria inconsistente.",
                             );
                         if (!diagnostics.noAttributesInNonNMRelations)
                             messages.push(
