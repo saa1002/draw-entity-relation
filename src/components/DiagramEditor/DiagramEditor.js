@@ -1431,9 +1431,9 @@ export default function App(props) {
 
         if (attribute.partialKey) {
             attribute.key = false;
-            toast.success("Atributo marcado como clave parcial");
+            toast.success("Atributo marcado como discriminante");
         } else {
-            toast.success("Clave parcial eliminada");
+            toast.success("Discriminante eliminado");
         }
 
         const attributeCell = accessCell(attribute.idMx);
@@ -1686,8 +1686,8 @@ export default function App(props) {
                 onClick={togglePartialKey}
             >
                 {attribute.partialKey
-                    ? "Quitar clave parcial"
-                    : "Convertir en clave parcial"}
+                    ? "Quitar discriminante"
+                    : "Convertir en discriminante"}
             </button>
         );
     };
@@ -2524,9 +2524,13 @@ export default function App(props) {
                         "Hay entidades débiles con clave primaria normal.",
                     );
                 if (!diagnostics.noWeakEntitiesWithoutPartialKey)
-                    messages.push("Hay entidades débiles sin clave parcial.");
+                    messages.push(
+                        "Hay entidades débiles sin atributo discriminante.",
+                    );
                 if (!diagnostics.noStrongEntitiesWithPartialKey)
-                    messages.push("Hay entidades fuertes con clave parcial.");
+                    messages.push(
+                        "Hay entidades fuertes con atributo discriminante.",
+                    );
                 if (!diagnostics.noWeakEntitiesWithoutIdentifyingRelation)
                     messages.push(
                         "Hay entidades débiles sin relación identificadora.",
@@ -2674,9 +2678,13 @@ export default function App(props) {
                         "Hay entidades débiles con clave primaria normal.",
                     );
                 if (!diagnostics.noWeakEntitiesWithoutPartialKey)
-                    messages.push("Hay entidades débiles sin clave parcial.");
+                    messages.push(
+                        "Hay entidades débiles sin atributo discriminante.",
+                    );
                 if (!diagnostics.noStrongEntitiesWithPartialKey)
-                    messages.push("Hay entidades fuertes con clave parcial.");
+                    messages.push(
+                        "Hay entidades fuertes con atributo discriminante.",
+                    );
                 if (!diagnostics.noWeakEntitiesWithoutIdentifyingRelation)
                     messages.push(
                         "Hay entidades débiles sin relación identificadora.",
@@ -2841,11 +2849,11 @@ export default function App(props) {
                             );
                         if (!diagnostics.noWeakEntitiesWithoutPartialKey)
                             messages.push(
-                                "Hay entidades débiles sin clave parcial.",
+                                "Hay entidades débiles sin atributo discriminante.",
                             );
                         if (!diagnostics.noStrongEntitiesWithPartialKey)
                             messages.push(
-                                "Hay entidades fuertes con clave parcial.",
+                                "Hay entidades fuertes con atributo discriminante.",
                             );
                         if (
                             !diagnostics.noWeakEntitiesWithoutIdentifyingRelation
