@@ -16,6 +16,7 @@ import {
     strongEntitiesWithPartialKey,
     weakEntitiesWithoutIdentifyingRelation,
     identifyingRelationsNotValid,
+    identifyingRelationCardinalitiesNotValid,
     inconsistentWeakEntityOwnership,
 } from "../../src/utils/validation"
 
@@ -164,6 +165,82 @@ describe("Relations", () => {
 });
 
 describe("Weak entities", () => {
+    test("an identifying relation is invalid if the strong side is not 1:1", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        relation.side1.cardinality = "0:N";
+        relation.side2.cardinality = "0:1";
+
+        expect(identifyingRelationCardinalitiesNotValid(graph)).toBe(true);
+        expect(validateGraph(graph).noInvalidIdentifyingCardinalities).toBe(false);
+    });
+
+    test("an identifying relation is invalid if the weak side is not N-based", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        relation.side1.cardinality = "0:1";
+        relation.side2.cardinality = "1:1";
+
+        expect(identifyingRelationCardinalitiesNotValid(graph)).toBe(true);
+        expect(validateGraph(graph).noInvalidIdentifyingCardinalities).toBe(false);
+    });
+
+    test("an identifying relation with valid identifying cardinalities should pass validation", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        relation.side1.cardinality = "0:N";
+        relation.side2.cardinality = "1:1";
+
+        expect(identifyingRelationCardinalitiesNotValid(graph)).toBe(false);
+        expect(validateGraph(graph).noInvalidIdentifyingCardinalities).toBe(true);
+    });   
+
+    test("an identifying relation should also allow 1:N on the weak side", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        relation.side1.cardinality = "1:N";
+        relation.side2.cardinality = "1:1";
+
+        expect(identifyingRelationCardinalitiesNotValid(graph)).toBe(false);
+        expect(validateGraph(graph).noInvalidIdentifyingCardinalities).toBe(true);
+    }); 
+    
     test("a weak entity must have at least one partial key", () => {
         const weakEntity = graph.entities.at(0);
 
