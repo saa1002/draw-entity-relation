@@ -388,6 +388,64 @@ export default function App(props) {
         return null;
     };
 
+    const getWeakAndStrongSidesForRelation = (relationData) => {
+        if (!relationData) {
+            return {
+                weakEntity: null,
+                strongEntity: null,
+                weakSide: null,
+                strongSide: null,
+            };
+        }
+
+        const side1Entity =
+            diagramRef.current.entities.find(
+                (entity) => entity.idMx === relationData?.side1?.entity?.idMx,
+            ) ?? null;
+
+        const side2Entity =
+            diagramRef.current.entities.find(
+                (entity) => entity.idMx === relationData?.side2?.entity?.idMx,
+            ) ?? null;
+
+        if (!side1Entity || !side2Entity) {
+            return {
+                weakEntity: null,
+                strongEntity: null,
+                weakSide: null,
+                strongSide: null,
+            };
+        }
+
+        const side1IsWeak = side1Entity.weak === true;
+        const side2IsWeak = side2Entity.weak === true;
+
+        if (side1IsWeak === side2IsWeak) {
+            return {
+                weakEntity: null,
+                strongEntity: null,
+                weakSide: null,
+                strongSide: null,
+            };
+        }
+
+        if (side1IsWeak) {
+            return {
+                weakEntity: side1Entity,
+                strongEntity: side2Entity,
+                weakSide: relationData.side1,
+                strongSide: relationData.side2,
+            };
+        }
+
+        return {
+            weakEntity: side2Entity,
+            strongEntity: side1Entity,
+            weakSide: relationData.side2,
+            strongSide: relationData.side1,
+        };
+    };
+
     const getParallelTerminalPointsFromMainEdge = (mainEdge) => {
         if (!mainEdge) return null;
 
@@ -1346,39 +1404,21 @@ export default function App(props) {
         const relation = getSelectedRelationData();
         if (!relation) return;
 
-        const side1Entity = diagramRef.current.entities.find(
-            (entity) => entity.idMx === relation.side1.entity.idMx,
-        );
-        const side2Entity = diagramRef.current.entities.find(
-            (entity) => entity.idMx === relation.side2.entity.idMx,
-        );
+        const { weakEntity, strongEntity: ownerEntity } =
+            getWeakAndStrongSidesForRelation(relation);
 
         if (!relation.isIdentifying) {
-            if (!side1Entity || !side2Entity) {
+            if (
+                !relation.side1?.entity?.idMx ||
+                !relation.side2?.entity?.idMx
+            ) {
                 toast.error("Configura primero los dos lados de la relación.");
                 return;
             }
 
-            const weakEntities = [side1Entity, side2Entity].filter(
-                (entity) => entity?.weak,
-            );
-
-            if (weakEntities.length !== 1) {
+            if (!weakEntity || !ownerEntity) {
                 toast.error(
                     "Una relación identificadora debe conectar exactamente una entidad débil y una fuerte.",
-                );
-                return;
-            }
-
-            const weakEntity = weakEntities[0];
-            const ownerEntity =
-                weakEntity.idMx === side1Entity.idMx
-                    ? side2Entity
-                    : side1Entity;
-
-            if (!ownerEntity || ownerEntity.weak) {
-                toast.error(
-                    "La entidad propietaria de una relación identificadora debe ser fuerte.",
                 );
                 return;
             }
