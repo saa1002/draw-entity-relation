@@ -64,10 +64,6 @@ export default function App(props) {
     identifyingRelationDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
     identifyingRelationDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
 
-    const partialKeyAttrStyle = {};
-    partialKeyAttrStyle[mxConstants.STYLE_DASHED] = 1;
-    partialKeyAttrStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
-
     const containerRef = React.useRef(null);
     const toolbarRef = React.useRef(null);
 
@@ -146,10 +142,6 @@ export default function App(props) {
             `fontFamily=${ER_FONT_FAMILY}`,
         ].join(";");
 
-        if (attribute?.partialKey) {
-            return `${baseStyle};partialKeyAttrStyle`;
-        }
-
         if (attribute?.key) {
             return `${baseStyle};keyAttrStyle`;
         }
@@ -200,9 +192,15 @@ export default function App(props) {
     const IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX =
         "__identifying_weak_edge_decorator";
     const IDENTIFYING_RELATION_EDGE_PARALLEL_GAP = 8;
+    const DISCRIMINANT_UNDERLINE_SUFFIX = "__discriminant_underline";
+    const DISCRIMINANT_UNDERLINE_MARGIN_X = 16;
+    const DISCRIMINANT_UNDERLINE_OFFSET_Y = 12;
 
     const isWeakEntityDecoratorCell = (cell) =>
         !!cell?.id && String(cell.id).endsWith(WEAK_ENTITY_DECORATOR_SUFFIX);
+
+    const isDiscriminantUnderlineCell = (cell) =>
+        !!cell?.id && String(cell.id).endsWith(DISCRIMINANT_UNDERLINE_SUFFIX);
 
     const syncWeakEntityDecorator = (entityCell) => {
         if (!entityCell) return;
@@ -637,6 +635,137 @@ export default function App(props) {
         return true;
     };
 
+    const getDiscriminantUnderlineId = (attributeId) =>
+        `${attributeId}${DISCRIMINANT_UNDERLINE_SUFFIX}`;
+
+    const getDiscriminantUnderlinePoints = (attributeCell) => {
+        if (!attributeCell?.geometry) return null;
+
+        const { x, y, width, height } = attributeCell.geometry;
+
+        const startX = x + DISCRIMINANT_UNDERLINE_MARGIN_X;
+        const endX =
+            x +
+            Math.max(
+                DISCRIMINANT_UNDERLINE_MARGIN_X + 1,
+                width - DISCRIMINANT_UNDERLINE_MARGIN_X,
+            );
+        const underlineY = y + height / 2 + DISCRIMINANT_UNDERLINE_OFFSET_Y;
+
+        return {
+            source: new mxPoint(startX, underlineY),
+            target: new mxPoint(endX, underlineY),
+        };
+    };
+
+    const createDiscriminantUnderline = (attributeCell) => {
+        const points = getDiscriminantUnderlinePoints(attributeCell);
+        if (!points) return null;
+
+        const edge = graph.insertEdge(
+            null,
+            getDiscriminantUnderlineId(attributeCell.id),
+            null,
+            null,
+            null,
+            [
+                `strokeColor=${ER_FONT}`,
+                "strokeWidth=2",
+                "endArrow=none",
+                "dashed=1",
+                "editable=0",
+                "movable=0",
+                "resizable=0",
+                "rounded=0",
+                "pointerEvents=0",
+                "edgeStyle=none",
+            ].join(";"),
+        );
+
+        if (!edge.geometry) {
+            edge.geometry = new mxGeometry();
+        }
+
+        edge.geometry.relative = false;
+        edge.geometry.points = null;
+        edge.geometry.setTerminalPoint(points.source, true);
+        edge.geometry.setTerminalPoint(points.target, false);
+
+        graph.orderCells(false, [edge]);
+        return edge;
+    };
+
+    const syncDiscriminantUnderline = (attributeCell) => {
+        if (!attributeCell) return;
+
+        const underline = accessCell(
+            getDiscriminantUnderlineId(attributeCell.id),
+        );
+        if (!underline) return;
+
+        const points = getDiscriminantUnderlinePoints(attributeCell);
+        if (!points) return;
+
+        graph.getModel().beginUpdate();
+        try {
+            graph.getModel().setTerminal(underline, null, true);
+            graph.getModel().setTerminal(underline, null, false);
+
+            if (!underline.geometry) {
+                underline.geometry = new mxGeometry();
+            }
+
+            underline.geometry.relative = false;
+            underline.geometry.points = null;
+            underline.geometry.setTerminalPoint(points.source, true);
+            underline.geometry.setTerminalPoint(points.target, false);
+        } finally {
+            graph.getModel().endUpdate();
+        }
+
+        graph.refresh(underline);
+        graph.orderCells(false, [underline]);
+    };
+
+    const ensureDiscriminantUnderline = (attributeCell) => {
+        const existingUnderline = accessCell(
+            getDiscriminantUnderlineId(attributeCell.id),
+        );
+
+        if (existingUnderline) {
+            syncDiscriminantUnderline(attributeCell);
+            return;
+        }
+
+        createDiscriminantUnderline(attributeCell);
+        syncDiscriminantUnderline(attributeCell);
+    };
+
+    const removeDiscriminantUnderline = (attributeId) => {
+        const underline = accessCell(getDiscriminantUnderlineId(attributeId));
+        if (underline) {
+            graph.removeCells([underline]);
+        }
+    };
+
+    const getAttributeDataById = (attributeId) => {
+        for (const entity of diagramRef.current.entities) {
+            const attribute = entity.attributes.find(
+                (attr) => attr.idMx === attributeId,
+            );
+            if (attribute) return attribute;
+        }
+
+        for (const relation of diagramRef.current.relations) {
+            const attribute = relation.attributes.find(
+                (attr) => attr.idMx === attributeId,
+            );
+            if (attribute) return attribute;
+        }
+
+        return null;
+    };
+
     const recreateGraphFromLocalStorage = () => {
         const recreateAttribute = (attribute, source) => {
             let target;
@@ -659,6 +788,10 @@ export default function App(props) {
             edge = graph.insertEdge(source, storedEdgeId, null, source, target);
 
             attribute.cell = [target.id, edge.id];
+
+            if (attribute.partialKey) {
+                ensureDiscriminantUnderline(target);
+            }
 
             graph.orderCells(true, [edge]); // Move front the selected entity so the new vertex aren't on top
         };
@@ -803,7 +936,8 @@ export default function App(props) {
                     this.model.isEdge(cell) ||
                     isWeakEntityDecoratorCell(cell) ||
                     isIdentifyingRelationDecoratorCell(cell) ||
-                    isIdentifyingRelationEdgeDecoratorCell(cell)
+                    isIdentifyingRelationEdgeDecoratorCell(cell) ||
+                    isDiscriminantUnderlineCell(cell)
                 ) {
                     return false;
                 }
@@ -828,9 +962,6 @@ export default function App(props) {
             defaultEdgeStyle[mxConstants.STYLE_FONTCOLOR] = ER_FONT;
 
             graph.getStylesheet().putCellStyle("keyAttrStyle", keyAttrStyle);
-            graph
-                .getStylesheet()
-                .putCellStyle("partialKeyAttrStyle", partialKeyAttrStyle);
             graph
                 .getStylesheet()
                 .putCellStyle(
@@ -861,6 +992,10 @@ export default function App(props) {
                             getAttributeDimensions(newValue);
                         cell.geometry.width = width;
                         cell.geometry.height = height;
+                        const attributeData = getAttributeDataById(cell.id);
+                        if (attributeData?.partialKey) {
+                            syncDiscriminantUnderline(cell);
+                        }
                     } else if (
                         cell.style.includes("shape=rectangle") &&
                         !isWeakEntityDecoratorCell(cell)
@@ -945,6 +1080,12 @@ export default function App(props) {
                             0,
                             -IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX.length,
                         ),
+                    );
+                }
+
+                if (id.endsWith(DISCRIMINANT_UNDERLINE_SUFFIX)) {
+                    return accessCell(
+                        id.slice(0, -DISCRIMINANT_UNDERLINE_SUFFIX.length),
                     );
                 }
 
@@ -1051,10 +1192,13 @@ export default function App(props) {
         );
 
         selectedEntityDiag?.attributes.forEach((attribute) => {
-            accessCell(attribute.cell.at(0)).geometry.x =
-                selected.geometry.x + attribute.offsetX;
-            accessCell(attribute.cell.at(0)).geometry.y =
-                selected.geometry.y + attribute.offsetY;
+            const attributeCell = accessCell(attribute.cell.at(0));
+            attributeCell.geometry.x = selected.geometry.x + attribute.offsetX;
+            attributeCell.geometry.y = selected.geometry.y + attribute.offsetY;
+
+            if (attribute.partialKey) {
+                syncDiscriminantUnderline(attributeCell);
+            }
         });
 
         if (selectedEntityDiag?.weak) {
@@ -1085,10 +1229,15 @@ export default function App(props) {
         );
         if (selectedRelationDiag.canHoldAttributes) {
             selectedRelationDiag?.attributes.forEach((attribute) => {
-                accessCell(attribute.cell.at(0)).geometry.x =
+                const attributeCell = accessCell(attribute.cell.at(0));
+                attributeCell.geometry.x =
                     selected.geometry.x + attribute.offsetX;
-                accessCell(attribute.cell.at(0)).geometry.y =
+                attributeCell.geometry.y =
                     selected.geometry.y + attribute.offsetY;
+
+                if (attribute.partialKey) {
+                    syncDiscriminantUnderline(attributeCell);
+                }
             });
             refreshGraph();
         }
@@ -1142,6 +1291,9 @@ export default function App(props) {
                     selected.geometry.x - parentEntity.position.x;
                 attribute.offsetY =
                     selected.geometry.y - parentEntity.position.y;
+                if (attribute.partialKey) {
+                    syncDiscriminantUnderline(selected);
+                }
             }
         }
     };
@@ -1274,6 +1426,14 @@ export default function App(props) {
         const edge = graph.insertEdge(selected, null, null, source, target);
         graph.orderCells(false); // Move front the selected entity so the new vertex aren't on top
 
+        if (!isRelation && selectedDiag?.weak) {
+            syncWeakEntityDecorator(selected);
+        }
+
+        if (shouldAddPartialKey) {
+            ensureDiscriminantUnderline(target);
+        }
+
         if (!isRelation) {
             // Update diagram state
             diagramRef.current.entities
@@ -1320,9 +1480,16 @@ export default function App(props) {
             : diagramRef.current.relations.find(
                   ({ idMx }) => idMx === selected.id,
               );
-        selectedEntity.attributes.forEach(({ cell }) => {
+        selectedEntity.attributes.forEach(({ cell, idMx, partialKey }) => {
             accessCell(cell.at(0)).setVisible(false);
             accessCell(cell.at(1)).setVisible(false);
+
+            if (partialKey) {
+                const underline = accessCell(getDiscriminantUnderlineId(idMx));
+                if (underline) {
+                    underline.setVisible(false);
+                }
+            }
         });
 
         const updatedAttributesHidden = { ...entityWithAttributesHidden };
@@ -1340,9 +1507,16 @@ export default function App(props) {
             : diagramRef.current.relations.find(
                   ({ idMx }) => idMx === selected.id,
               );
-        selectedEntity.attributes.forEach(({ cell }) => {
+        selectedEntity.attributes.forEach(({ cell, idMx, partialKey }) => {
             accessCell(cell.at(0)).setVisible(true);
             accessCell(cell.at(1)).setVisible(true);
+
+            if (partialKey) {
+                const underline = accessCell(getDiscriminantUnderlineId(idMx));
+                if (underline) {
+                    underline.setVisible(true);
+                }
+            }
         });
 
         const updatedAttributesHidden = { ...entityWithAttributesHidden };
@@ -1362,17 +1536,25 @@ export default function App(props) {
         const shouldSetAsKey = !selectedAttribute.key;
 
         entity.attributes.forEach((attribute) => {
+            const attributeCell = accessCell(attribute.idMx);
+
             if (attribute.idMx === selected.id) {
+                const wasPartialKey = attribute.partialKey === true;
+
                 attribute.key = shouldSetAsKey;
+
                 if (shouldSetAsKey) {
                     attribute.partialKey = false;
+
+                    if (wasPartialKey) {
+                        removeDiscriminantUnderline(attribute.idMx);
+                    }
                 }
             } else if (shouldSetAsKey) {
                 // Solo mantenemos unicidad de PK si estamos activando una nueva clave
                 attribute.key = false;
             }
 
-            const attributeCell = accessCell(attribute.idMx);
             if (attributeCell) {
                 graph
                     .getModel()
@@ -1441,6 +1623,12 @@ export default function App(props) {
             graph
                 .getModel()
                 .setStyle(attributeCell, getAttributeStyleString(attribute));
+
+            if (attribute.partialKey) {
+                ensureDiscriminantUnderline(attributeCell);
+            } else {
+                removeDiscriminantUnderline(attribute.idMx);
+            }
         }
 
         refreshGraph();
@@ -2255,9 +2443,12 @@ export default function App(props) {
                     : null;
                 if (cell) {
                     // Collect the attribute cells to delete
-                    const attributeCells = entity.attributes.flatMap((attr) => {
-                        return accessCell(attr.cell.at(0));
-                    });
+                    const attributeCells = entity.attributes
+                        .flatMap((attr) => [
+                            accessCell(attr.cell.at(0)),
+                            accessCell(getDiscriminantUnderlineId(attr.idMx)),
+                        ])
+                        .filter(Boolean);
 
                     // Remove the entity's cell and its attributes from the graph
                     graph.removeCells(
@@ -2280,10 +2471,14 @@ export default function App(props) {
                             const edge2Cell = accessCell(relation.side2.edgeId);
 
                             // Collect the relation's attribute cells to delete
-                            const relationAttributeCells =
-                                relation.attributes.flatMap((attr) =>
+                            const relationAttributeCells = relation.attributes
+                                .flatMap((attr) => [
                                     accessCell(attr.cell.at(0)),
-                                );
+                                    accessCell(
+                                        getDiscriminantUnderlineId(attr.idMx),
+                                    ),
+                                ])
+                                .filter(Boolean);
 
                             // Remove the relation's cells and its attributes from the graph
                             graph.removeCells([
@@ -2377,10 +2572,14 @@ export default function App(props) {
                         // Remove the attribute from the entity
                         entity.attributes.splice(attrIndex, 1);
 
-                        // Find the corresponding cells in graph.model.cells
-                        const cells = attribute.cell.map(
-                            (cellId) => graph.model.cells[cellId],
-                        );
+                        const cells = [
+                            ...attribute.cell.map(
+                                (cellId) => graph.model.cells[cellId],
+                            ),
+                            accessCell(
+                                getDiscriminantUnderlineId(attribute.idMx),
+                            ),
+                        ].filter(Boolean);
 
                         if (cells.length) {
                             // Remove the cells from the graph
@@ -2408,10 +2607,14 @@ export default function App(props) {
                         // Remove the attribute from the relation
                         relation.attributes.splice(attrIndex, 1);
 
-                        // Find the corresponding cells in graph.model.cells
-                        const cells = attribute.cell.map(
-                            (cellId) => graph.model.cells[cellId],
-                        );
+                        const cells = [
+                            ...attribute.cell.map(
+                                (cellId) => graph.model.cells[cellId],
+                            ),
+                            accessCell(
+                                getDiscriminantUnderlineId(attribute.idMx),
+                            ),
+                        ].filter(Boolean);
 
                         if (cells.length) {
                             // Remove the cells from the graph
@@ -2460,13 +2663,12 @@ export default function App(props) {
 
                 if (cell) {
                     // Remove the attributes associated with the entity
-                    const attributeCells = relation.attributes.flatMap(
-                        (attr) => {
-                            // NOTE: Seems that we only need to delete the label and ellipse
-                            // because the edge is deleted when deleting the parent object
-                            return accessCell(attr.cell.at(0));
-                        },
-                    );
+                    const attributeCells = relation.attributes
+                        .flatMap((attr) => [
+                            accessCell(attr.cell.at(0)),
+                            accessCell(getDiscriminantUnderlineId(attr.idMx)),
+                        ])
+                        .filter(Boolean);
 
                     // Remove the cell and its attributes from the graph
                     graph.removeCells([cell, ...attributeCells]);
