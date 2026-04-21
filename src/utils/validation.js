@@ -20,7 +20,7 @@ export function validateGraph(graph) {
         noInvalidIdentifyingRelations: true,
         noInvalidIdentifyingCardinalities: true,
         noInconsistentWeakEntityOwnership: true,
-        noMultipleIdentifyingRelationsForWeakEntity: true,
+        noMultipleIdentifyingRelationsPerWeakEntity: true,
         notEmpty: true,
         isValid: true,
     };
