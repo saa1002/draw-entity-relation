@@ -18,6 +18,7 @@ export function validateGraph(graph) {
         noStrongEntitiesWithPartialKey: true,
         noWeakEntitiesWithoutIdentifyingRelation: true,
         noInvalidIdentifyingRelations: true,
+        noInvalidIdentifyingCardinalities: true,
         noInconsistentWeakEntityOwnership: true,
         notEmpty: true,
         isValid: true,
@@ -114,6 +115,11 @@ export function validateGraph(graph) {
 
     if (identifyingRelationsNotValid(graph)) {
         diagnostics.noInvalidIdentifyingRelations = false;
+        diagnostics.isValid = false;
+    }
+
+    if (identifyingRelationCardinalitiesNotValid(graph)) {
+        diagnostics.noInvalidIdentifyingCardinalities = false;
         diagnostics.isValid = false;
     }
 
@@ -478,6 +484,47 @@ export function identifyingRelationsNotValid(graph) {
         ).length;
 
         if (weakCount !== 1 || strongCount !== 1) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function identifyingRelationCardinalitiesNotValid(graph) {
+    for (const relation of graph.relations) {
+        if (!relation.isIdentifying) continue;
+
+        const side1EntityId = relation.side1?.entity?.idMx;
+        const side2EntityId = relation.side2?.entity?.idMx;
+
+        if (!side1EntityId || !side2EntityId) {
+            continue;
+        }
+
+        const entity1 = getEntityById(graph, side1EntityId);
+        const entity2 = getEntityById(graph, side2EntityId);
+
+        if (!entity1 || !entity2) {
+            continue;
+        }
+
+        const side1IsWeak = entity1.weak === true;
+        const side2IsWeak = entity2.weak === true;
+
+        if (side1IsWeak === side2IsWeak) {
+            continue;
+        }
+
+        const weakSide = side1IsWeak ? relation.side1 : relation.side2;
+        const strongSide = side1IsWeak ? relation.side2 : relation.side1;
+
+        const weakCardinalityIsValid = ["0:N", "1:N"].includes(
+            weakSide.cardinality,
+        );
+        const strongCardinalityIsValid = strongSide.cardinality === "1:1";
+
+        if (!weakCardinalityIsValid || !strongCardinalityIsValid) {
             return true;
         }
     }
