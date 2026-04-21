@@ -2002,6 +2002,8 @@ export default function App(props) {
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
 
         const handleClickOpen = () => {
+            setSide1(selectedDiag?.side1?.cardinality ?? "");
+            setSide2(selectedDiag?.side2?.cardinality ?? "");
             setOpen(true);
         };
 
@@ -2010,30 +2012,34 @@ export default function App(props) {
         };
 
         const handleAccept = () => {
-            selectedDiag.side1.cardinality = side1;
-            selectedDiag.side2.cardinality = side2;
-
-            if (side1.endsWith(":N") && side2.endsWith(":N")) {
-                selectedDiag.canHoldAttributes = true;
-            } else {
-                let attributesToDelete = [];
-
-                for (const attribute of selectedDiag.attributes) {
-                    attributesToDelete.push(accessCell(attribute.cell.at(0)));
-                    attributesToDelete.push(accessCell(attribute.cell.at(1)));
+            if (selectedDiag.isIdentifying && !side1IsWeak && !side2IsWeak) {
+                toast.error(
+                    "The identifying relationship sides could not be resolved.",
+                );
+                return;
+            }
+            if (selectedDiag.isIdentifying) {
+                if (side1IsWeak) {
+                    selectedDiag.side1.cardinality = side1;
+                    selectedDiag.side2.cardinality = "1:1";
+                } else {
+                    selectedDiag.side1.cardinality = "1:1";
+                    selectedDiag.side2.cardinality = side2;
                 }
-                graph.removeCells(attributesToDelete);
 
-                selectedDiag.canHoldAttributes = false;
-                selectedDiag.attributes = [];
+                removeRelationAttributes(selectedDiag);
+            } else {
+                selectedDiag.side1.cardinality = side1;
+                selectedDiag.side2.cardinality = side2;
+
+                if (side1.endsWith(":N") && side2.endsWith(":N")) {
+                    selectedDiag.canHoldAttributes = true;
+                } else {
+                    removeRelationAttributes(selectedDiag);
+                }
             }
 
-            const label1 = accessCell(selectedDiag.side1.cell);
-            const label2 = accessCell(selectedDiag.side2.cell);
-
-            graph.model.setValue(label1, side1);
-            graph.model.setValue(label2, side2);
-
+            syncRelationCardinalityLabels(selectedDiag);
             refreshGraph();
 
             setSide1("");
@@ -2055,8 +2061,48 @@ export default function App(props) {
         React.useEffect(() => {
             if (side1 !== "" && side2 !== "") {
                 setAcceptDisabled(false);
+            } else {
+                setAcceptDisabled(true);
             }
         }, [side1, side2]);
+
+        const { weakSide, strongSide } =
+            getWeakAndStrongSidesForRelation(selectedDiag);
+
+        const side1IsWeak =
+            selectedDiag?.isIdentifying &&
+            weakSide?.entity?.idMx === selectedDiag?.side1?.entity?.idMx;
+
+        const side2IsWeak =
+            selectedDiag?.isIdentifying &&
+            weakSide?.entity?.idMx === selectedDiag?.side2?.entity?.idMx;
+
+        const side1IsStrong =
+            selectedDiag?.isIdentifying &&
+            strongSide?.entity?.idMx === selectedDiag?.side1?.entity?.idMx;
+
+        const side2IsStrong =
+            selectedDiag?.isIdentifying &&
+            strongSide?.entity?.idMx === selectedDiag?.side2?.entity?.idMx;
+
+        const getAllowedCardinalitiesForSide = (sideKey) => {
+            if (!selectedDiag?.isIdentifying) {
+                const oppositeValue = sideKey === "side1" ? side2 : side1;
+
+                return POSSIBLE_CARDINALITIES.filter(
+                    (cardinality) =>
+                        cardinality !== "1:1" || oppositeValue !== "1:1",
+                );
+            }
+
+            const isWeakSide = sideKey === "side1" ? side1IsWeak : side2IsWeak;
+
+            if (isWeakSide) {
+                return ["0:N", "1:N"];
+            }
+
+            return ["1:1"];
+        };
 
         if (isRelation) {
             const isConfigured =
@@ -2113,11 +2159,13 @@ export default function App(props) {
                                             value={side1}
                                             label="Cardinalidad 1"
                                             onChange={handleChangeSide1}
+                                            disabled={
+                                                selectedDiag?.isIdentifying &&
+                                                side1IsStrong
+                                            }
                                         >
-                                            {POSSIBLE_CARDINALITIES.filter(
-                                                (cardinality) =>
-                                                    cardinality !== "1:1" ||
-                                                    side2 !== "1:1",
+                                            {getAllowedCardinalitiesForSide(
+                                                "side1",
                                             ).map((cardinality) => (
                                                 <MenuItem
                                                     key={cardinality}
@@ -2148,11 +2196,13 @@ export default function App(props) {
                                             value={side2}
                                             label="Cardinalidad 2"
                                             onChange={handleChangeSide2}
+                                            disabled={
+                                                selectedDiag?.isIdentifying &&
+                                                side2IsStrong
+                                            }
                                         >
-                                            {POSSIBLE_CARDINALITIES.filter(
-                                                (cardinality) =>
-                                                    cardinality !== "1:1" ||
-                                                    side1 !== "1:1",
+                                            {getAllowedCardinalitiesForSide(
+                                                "side2",
                                             ).map((cardinality) => (
                                                 <MenuItem
                                                     key={cardinality}
