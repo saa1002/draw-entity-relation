@@ -585,6 +585,58 @@ export default function App(props) {
         }
     };
 
+    const syncRelationCardinalityLabels = (relationData) => {
+        if (!relationData) return;
+
+        const side1Label = accessCell(relationData?.side1?.cell);
+        const side2Label = accessCell(relationData?.side2?.cell);
+
+        if (side1Label) {
+            graph.model.setValue(side1Label, relationData.side1.cardinality);
+            graph.updateCellSize(side1Label);
+        }
+
+        if (side2Label) {
+            graph.model.setValue(side2Label, relationData.side2.cardinality);
+            graph.updateCellSize(side2Label);
+        }
+    };
+
+    const removeRelationAttributes = (relationData) => {
+        if (!relationData) return;
+
+        const attributeCellsToRemove = relationData.attributes
+            .flatMap((attribute) => [
+                accessCell(attribute?.cell?.[0]),
+                accessCell(attribute?.cell?.[1]),
+            ])
+            .filter(Boolean);
+
+        if (attributeCellsToRemove.length > 0) {
+            graph.removeCells(attributeCellsToRemove);
+        }
+
+        relationData.attributes = [];
+        relationData.canHoldAttributes = false;
+    };
+
+    const applyIdentifyingRelationCardinalities = (relationData) => {
+        const { weakSide, strongSide } =
+            getWeakAndStrongSidesForRelation(relationData);
+
+        if (!weakSide || !strongSide) {
+            return false;
+        }
+
+        weakSide.cardinality = "0:N";
+        strongSide.cardinality = "1:1";
+
+        removeRelationAttributes(relationData);
+        syncRelationCardinalityLabels(relationData);
+
+        return true;
+    };
+
     const recreateGraphFromLocalStorage = () => {
         const recreateAttribute = (attribute, source) => {
             let target;
@@ -1435,6 +1487,20 @@ export default function App(props) {
             relation.isIdentifying = true;
             weakEntity.identifyingRelationId = relation.idMx;
             weakEntity.ownerEntityId = ownerEntity.idMx;
+
+            const identifyingCardinalitiesApplied =
+                applyIdentifyingRelationCardinalities(relation);
+
+            if (!identifyingCardinalitiesApplied) {
+                relation.isIdentifying = false;
+                weakEntity.identifyingRelationId = null;
+                weakEntity.ownerEntityId = null;
+
+                toast.error(
+                    "No se pudieron aplicar las cardinalidades de la relación identificadora.",
+                );
+                return;
+            }
 
             ensureIdentifyingRelationDecorator(selected, relation);
             ensureIdentifyingRelationEdgeDecorator(selected, relation);
