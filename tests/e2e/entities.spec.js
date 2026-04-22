@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test('add entities to the canvas and change name', async ({ page }) => {
     await page.goto('/');
