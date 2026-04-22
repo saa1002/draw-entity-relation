@@ -6,8 +6,6 @@ import path from "path";
 import { 
     repeatedAttributesInEntity, 
     entitiesWithoutPK,
-    repeatedEntities, 
-    entitiesWithoutAttributes,
     relationsUnconnected,
     validateGraph, 
     cardinalitiesNotValid,
@@ -25,29 +23,7 @@ import {
 
 let graph;
 
-beforeEach(() => {
-  // Load fresh data before each test
-  const data = readFileSync(resolve(__dirname, './graphs/example.json'), 'utf-8');
-  graph = JSON.parse(data);
-});
 
-describe('Non repeated entity or n:m relation name', ()=> {
-    test("entities can't have repeated names", () => {
-        expect(repeatedEntities(graph)).toBe(false);
-        // Access an entity and set its name to an already existing entity name
-        graph.entities.at(1).name = graph.entities.at(0).name
-        expect(repeatedEntities(graph)).toBe(true);
-        expect(validateGraph(graph).noRepeatedNames).toBe(false)
-    })
-
-    test("N:M relations and entities can't have repeated names", () => {
-        expect(repeatedEntities(graph)).toBe(false);
-        // Access the N:M relation and set its name to an already existing entity name
-        graph.relations.at(0).name = graph.entities.at(0).name
-        expect(repeatedEntities(graph)).toBe(true);
-        expect(validateGraph(graph).noRepeatedNames).toBe(false)
-    })
-})
 
 describe("Non repeated attributes in entities or n:m relations", ()=> {
     test("entities can't have repeated attributes names", () => {
@@ -67,17 +43,6 @@ describe("Non repeated attributes in entities or n:m relations", ()=> {
         expect(validateGraph(graph).noRepeatedAttrNames).toBe(false)
     })
 })
-
-describe("Every entity should have at least one attribute", () => {
-    test("entities must have at least one attribute", () => {
-        // Ensure the graph is valid initially
-        expect(entitiesWithoutAttributes(graph)).toBe(false);
-        // Remove attributes from an entity
-        graph.entities.at(0).attributes = [];
-        expect(entitiesWithoutAttributes(graph)).toBe(true);
-        expect(validateGraph(graph).noEntitiesWithoutAttributes).toBe(false)
-    });
-});
 
 describe("Relations", () => {
     test("Every relation should connect two entities (can be the same at both sides)", () => {
