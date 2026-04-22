@@ -13,6 +13,7 @@ import {
     cardinalitiesNotValid,
     notNMRelationsWithAttributes,
     weakEntitiesWithoutPartialKey,
+    weakEntitiesWithMoreThanOnePartialKey,
     strongEntitiesWithPartialKey,
     weakEntitiesWithoutIdentifyingRelation,
     identifyingRelationsNotValid,
@@ -422,7 +423,34 @@ describe("Weak entities", () => {
         expect(
             validateGraph(graph).noMultipleIdentifyingRelationsPerWeakEntity,
         ).toBe(true);
+    });
+    
+    test("a weak entity cannot have more than one partial key", () => {
+        const weakEntity = graph.entities.at(0);
+
+        weakEntity.weak = true;
+        weakEntity.attributes.at(0).partialKey = true;
+        weakEntity.attributes.at(1).partialKey = true;
+
+        expect(weakEntitiesWithMoreThanOnePartialKey(graph)).toBe(true);
+        expect(
+            validateGraph(graph).noWeakEntitiesWithMoreThanOnePartialKey
+        ).toBe(false);
     });    
+
+    test("a weak entity with a single partial key should pass partial key uniqueness validation", () => {
+        const weakEntity = graph.entities.at(0);
+
+        weakEntity.weak = true;
+        weakEntity.attributes.forEach((attribute, index) => {
+            attribute.partialKey = index === 0;
+        });
+
+        expect(weakEntitiesWithMoreThanOnePartialKey(graph)).toBe(false);
+        expect(
+            validateGraph(graph).noWeakEntitiesWithMoreThanOnePartialKey
+        ).toBe(true);
+    });
 });
 
 describe("Architecture", () => {

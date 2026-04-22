@@ -1607,33 +1607,48 @@ export default function App(props) {
         const selectedEntityAttribute = getSelectedEntityAttributeData();
         if (!selectedEntityAttribute) return;
 
-        const { attribute } = selectedEntityAttribute;
+        const { entity, attribute: selectedAttribute } =
+            selectedEntityAttribute;
+        const shouldSetAsPartialKey = !selectedAttribute.partialKey;
 
-        attribute.partialKey = !attribute.partialKey;
+        entity.attributes.forEach((attribute) => {
+            const attributeCell = accessCell(attribute.idMx);
 
-        if (attribute.partialKey) {
-            attribute.key = false;
-            toast.success("Atributo marcado como discriminante");
-        } else {
-            toast.success("Discriminante eliminado");
-        }
+            if (attribute.idMx === selected.id) {
+                attribute.partialKey = shouldSetAsPartialKey;
 
-        const attributeCell = accessCell(attribute.idMx);
-        if (attributeCell) {
-            graph
-                .getModel()
-                .setStyle(attributeCell, getAttributeStyleString(attribute));
-
-            if (attribute.partialKey) {
-                ensureDiscriminantUnderline(attributeCell);
-            } else {
-                removeDiscriminantUnderline(attribute.idMx);
+                if (shouldSetAsPartialKey) {
+                    attribute.key = false;
+                }
+            } else if (shouldSetAsPartialKey) {
+                attribute.partialKey = false;
             }
-        }
+
+            if (attributeCell) {
+                graph
+                    .getModel()
+                    .setStyle(
+                        attributeCell,
+                        getAttributeStyleString(attribute),
+                    );
+
+                if (attribute.partialKey) {
+                    ensureDiscriminantUnderline(attributeCell);
+                } else {
+                    removeDiscriminantUnderline(attribute.idMx);
+                }
+            }
+        });
 
         refreshGraph();
         updateDiagramData();
         setRefreshDiagram((prevState) => !prevState);
+
+        toast.success(
+            shouldSetAsPartialKey
+                ? "Atributo marcado como discriminante"
+                : "Discriminante eliminado",
+        );
     };
 
     const toggleIdentifyingRelation = () => {
@@ -2731,6 +2746,10 @@ export default function App(props) {
                     messages.push(
                         "Hay entidades débiles sin atributo discriminante.",
                     );
+                if (!diagnostics.noWeakEntitiesWithMoreThanOnePartialKey)
+                    messages.push(
+                        "Hay entidades débiles con más de un atributo discriminante.",
+                    );
                 if (!diagnostics.noStrongEntitiesWithPartialKey)
                     messages.push(
                         "Hay entidades fuertes con atributo discriminante.",
@@ -2884,6 +2903,10 @@ export default function App(props) {
                 if (!diagnostics.noWeakEntitiesWithoutPartialKey)
                     messages.push(
                         "Hay entidades débiles sin atributo discriminante.",
+                    );
+                if (!diagnostics.noWeakEntitiesWithMoreThanOnePartialKey)
+                    messages.push(
+                        "Hay entidades débiles con más de un atributo discriminante.",
                     );
                 if (!diagnostics.noStrongEntitiesWithPartialKey)
                     messages.push(
@@ -3054,6 +3077,12 @@ export default function App(props) {
                         if (!diagnostics.noWeakEntitiesWithoutPartialKey)
                             messages.push(
                                 "Hay entidades débiles sin atributo discriminante.",
+                            );
+                        if (
+                            !diagnostics.noWeakEntitiesWithMoreThanOnePartialKey
+                        )
+                            messages.push(
+                                "Hay entidades débiles con más de un atributo discriminante.",
                             );
                         if (!diagnostics.noStrongEntitiesWithPartialKey)
                             messages.push(
