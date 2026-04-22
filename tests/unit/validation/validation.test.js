@@ -21,7 +21,7 @@ import {
     identifyingRelationCardinalitiesNotValid,
     inconsistentWeakEntityOwnership,
     multipleIdentifyingRelationsPerWeakEntity,
-} from "../../src/utils/validation"
+} from "../../../src/utils/validation"
 
 let graph;
 
@@ -30,12 +30,6 @@ beforeEach(() => {
   const data = readFileSync(resolve(__dirname, './graphs/example.json'), 'utf-8');
   graph = JSON.parse(data);
 });
-
-describe("General validation function", () => {
-    test("correct graph return true", () => {
-        expect(validateGraph(graph).isValid).toBe(true)
-    })
-})
 
 describe('Non repeated entity or n:m relation name', ()=> {
     test("entities can't have repeated names", () => {

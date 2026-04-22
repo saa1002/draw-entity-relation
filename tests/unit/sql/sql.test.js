@@ -7,7 +7,7 @@ import {
     process11Relation,
     processNMRelation,
     generateSQL
-} from "../../src/utils/sql"
+} from "../../../src/utils/sql"
 
 let oneNGraph;
 let oneOneGraph;
