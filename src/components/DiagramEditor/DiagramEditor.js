@@ -1693,10 +1693,12 @@ export default function App(props) {
             ensureIdentifyingRelationDecorator(selected, relation);
             ensureIdentifyingRelationEdgeDecorator(selected, relation);
 
-            toast.success("Relación marcada como identificadora");
+            toast.success(
+                "Relación marcada como dependencia por identificación",
+            );
         } else {
             clearIdentifyingRelationSemantics(relation.idMx);
-            toast.success("Relación identificadora eliminada");
+            toast.success("Dependencia por identificación desmarcada");
         }
 
         const relationCell = accessCell(relation.idMx);
@@ -1914,8 +1916,8 @@ export default function App(props) {
                     onClick={toggleIdentifyingRelation}
                 >
                     {selectedRelationDiag.isIdentifying
-                        ? "Quitar relación identificadora"
-                        : "Marcar como identificadora"}
+                        ? "Desmarcar como dependencia por identificación"
+                        : "Marcar como dependencia por identificación"}
                 </button>
             );
         }
