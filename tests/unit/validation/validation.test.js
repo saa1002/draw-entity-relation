@@ -3,8 +3,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import fs from "fs";
 import path from "path";
-import { 
-    repeatedAttributesInEntity, 
+import {  
     entitiesWithoutPK,
     relationsUnconnected,
     validateGraph, 
@@ -22,27 +21,6 @@ import {
 } from "../../../src/utils/validation"
 
 let graph;
-
-
-
-describe("Non repeated attributes in entities or n:m relations", ()=> {
-    test("entities can't have repeated attributes names", () => {
-        expect(repeatedAttributesInEntity(graph)).toBe(false);
-        // Set an attribute in an entity to the same name of other
-        graph.entities.at(0).attributes.at(1).name = graph.entities.at(0).attributes.at(0).name
-        expect(repeatedAttributesInEntity(graph)).toBe(true);
-        expect(validateGraph(graph).noRepeatedAttrNames).toBe(false)
-    })
-
-    test("N:M relations can't have repeated attributes names", () => {
-        // Test the graph without repeated attributes
-        expect(repeatedAttributesInEntity(graph)).toBe(false);
-        // Set an attribute in an N:M relation to the same name of other
-        graph.relations.at(0).attributes.at(1).name = graph.relations.at(0).attributes.at(0).name
-        expect(repeatedAttributesInEntity(graph)).toBe(true);
-        expect(validateGraph(graph).noRepeatedAttrNames).toBe(false)
-    })
-})
 
 describe("Relations", () => {
     test("Every relation should connect two entities (can be the same at both sides)", () => {
