@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
-import { generateSQL } from '../../../src/utils/sql'
+import { generateSQL, filterTables } from '../../../src/utils/sql'
 
 let oneNGraph
 let oneOneGraph
@@ -12,6 +12,34 @@ beforeEach(() => {
     oneOneGraph = loadGraphFixture('1-1-relation.json')
     nMGraph = loadGraphFixture('n-m-relation.json')
     oneNGraphAndEntity = loadGraphFixture('1-n-relation_alone-entity.json')
+})
+
+describe("Filter graph tables", () => {
+    test("1:1 relation", () => {
+        const tables = filterTables(oneOneGraph)
+        expect(tables.length).toBe(1)
+        expect(tables.at(0).type).toBe("1:1")
+    })
+
+    test("1:N relation", () => {
+        const tables = filterTables(oneNGraph)
+        expect(tables.length).toBe(1)
+        expect(tables.at(0).type).toBe("1:N")
+    })
+
+    test("N:M relation", () => {
+        const tables = filterTables(nMGraph)
+        expect(tables.length).toBe(1)
+        expect(tables.at(0).type).toBe("N:M")
+    })
+
+    test("1:N relation and unconnected entity", () => {
+        const tables = filterTables(oneNGraphAndEntity)
+        expect(tables.length).toBe(2)
+        expect(tables.at(0).type).toBe("1:N")
+        expect(tables.at(0).name).toBe("Relación")
+        expect(tables.at(1).name).toBe("Entidad")
+    })
 })
 
 describe("Generate SQL", () => {
