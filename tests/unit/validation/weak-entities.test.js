@@ -305,4 +305,18 @@ describe("Weak entities", () => {
             validateGraph(graph).noWeakEntitiesWithMoreThanOnePartialKey
         ).toBe(true);
     });
+
+    test("a weak entity cannot have a regular primary key", () => {
+        const weakEntity = graph.entities.at(0);
+
+        weakEntity.weak = true;
+
+        weakEntity.attributes.forEach((attribute, index) => {
+            attribute.key = index === 0;
+            attribute.partialKey = false;
+        });
+
+        expect(weakEntitiesWithPrimaryKey(graph)).toBe(true);
+        expect(validateGraph(graph).noWeakEntitiesWithPrimaryKey).toBe(false);
+    });
 });
