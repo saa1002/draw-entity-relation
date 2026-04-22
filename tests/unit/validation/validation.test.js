@@ -452,6 +452,7 @@ describe("Weak entities", () => {
             validateGraph(graph).noWeakEntitiesWithMoreThanOnePartialKey
         ).toBe(true);
     });
+    
     test("a weak entity cannot have a regular primary key", () => {
         const weakEntity = graph.entities.at(0);
 
