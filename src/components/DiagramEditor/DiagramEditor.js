@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
+import { BUILD_DATE } from "../../buildInfo";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
@@ -63,6 +64,8 @@ export default function App(props) {
     identifyingRelationDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
     identifyingRelationDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
     identifyingRelationDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
+
+    const BUILD_LABEL = `Build: ${BUILD_DATE}`;
 
     const containerRef = React.useRef(null);
     const toolbarRef = React.useRef(null);
@@ -3260,6 +3263,7 @@ export default function App(props) {
 
     return (
         <div className="mxgraph-container">
+            <div className="build-info-badge">{BUILD_LABEL}</div>
             <div className="mxgraph-toolbar-container">
                 <div className="mxgraph-toolbar-container" ref={toolbarRef} />
 
