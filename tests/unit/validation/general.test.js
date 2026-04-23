@@ -22,7 +22,7 @@ describe("General validation function", () => {
         expect(diagnostics.isValid).toBe(false)
     })
 
-    test("correct graph return true", () => {
+    test("a valid graph should pass validation", () => {
         expect(validateGraph(graph).isValid).toBe(true)
     })
     

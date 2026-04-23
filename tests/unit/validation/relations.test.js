@@ -55,7 +55,7 @@ describe("Attributes in non N:M relations", () => {
         expect(diagnostics.isValid).toBe(true);
     });
 
-    test("Cant be relations with attributes if they are not N:M", () => {
+    test("Non N:M relations cannot have attributes", () => {
         // Ensure the graph is valid initially
         expect(relationsUnconnected(graph)).toBe(false);
 
