@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { generateSQL } from '../../../src/utils/sql'
 
-describe('Generate SQL for standalone entities', () => {
+describe('Standalone entity SQL generation', () => {
     test('a standalone strong entity should generate a single table with its primary key', () => {
         const graph = {
             entities: [
@@ -33,5 +33,7 @@ describe('Generate SQL for standalone entities', () => {
         expect(sql).toContain('CREATE TABLE Cliente')
         expect(sql).toContain('id_cliente VARCHAR(40) PRIMARY KEY')
         expect(sql).toContain('nombre VARCHAR(40)')
+        expect(sql).not.toContain('ALTER TABLE')
+        expect(sql).not.toContain('FOREIGN KEY')
     })
 })
