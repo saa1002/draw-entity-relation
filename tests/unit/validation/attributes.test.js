@@ -30,6 +30,16 @@ describe("Non repeated attributes in entities or n:m relations", ()=> {
         expect(validateGraph(graph).noRepeatedAttrNames).toBe(false)
     })
     
+    test("attributes normalized for SQL should not collide", () => {
+        expect(sqlIdentifierCollisions(graph)).toBe(false)
+
+        graph.entities.at(0).attributes.at(0).name = "código"
+        graph.entities.at(0).attributes.at(1).name = "codigo"
+
+        expect(sqlIdentifierCollisions(graph)).toBe(true)
+        expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false)
+    })
+    
     test("N:M relations can't have primary key attributes", () => {
         expect(nmRelationsWithPK(graph)).toBe(false);
 
