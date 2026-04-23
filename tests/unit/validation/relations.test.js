@@ -70,6 +70,15 @@ describe("Relations", () => {
         expect(validateGraph(graph).noAttributesInNonNMRelations).toBe(false)
     });
 
+    test("a non N:M relation without attributes should be valid", () => {
+        expect(notNMRelationsWithAttributes(graph)).toBe(false);
+
+        const diagnostics = validateGraph(graph);
+
+        expect(diagnostics.noAttributesInNonNMRelations).toBe(true);
+        expect(diagnostics.isValid).toBe(true);
+    });
+    
     test("Every relation should have valid cardinalities", () => {
         // Ensure the graph is valid initially
         expect(cardinalitiesNotValid(graph)).toBe(false);
