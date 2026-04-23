@@ -50,6 +50,14 @@ describe("Every entity should have at least one attribute", () => {
         expect(entitiesWithoutAttributes(graph)).toBe(true);
         expect(validateGraph(graph).noEntitiesWithoutAttributes).toBe(false)
     });
+    test("entities with at least one attribute should be valid", () => {
+        expect(entitiesWithoutAttributes(graph)).toBe(false);
+
+        const diagnostics = validateGraph(graph);
+
+        expect(diagnostics.noEntitiesWithoutAttributes).toBe(true);
+        expect(diagnostics.isValid).toBe(true);
+    });
 });
 
 describe("Every strong entity should have a primary key", () => {
