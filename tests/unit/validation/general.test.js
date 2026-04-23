@@ -10,6 +10,7 @@ beforeEach(() => {
 
 describe("General validation function", () => {
     test("empty graph should be invalid", () => {
+        
         const emptyGraph = {
             entities: [],
             relations: [],
@@ -20,6 +21,7 @@ describe("General validation function", () => {
         expect(diagnostics.notEmpty).toBe(false)
         expect(diagnostics.isValid).toBe(false)
     })
+
     test("correct graph return true", () => {
         expect(validateGraph(graph).isValid).toBe(true)
     })

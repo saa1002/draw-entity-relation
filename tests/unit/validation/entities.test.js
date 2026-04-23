@@ -3,6 +3,7 @@ import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     repeatedEntities,
     entitiesWithoutAttributes,
+    entitiesWithoutPK,
     validateGraph,
 } from '../../../src/utils/validation'
 
@@ -40,3 +41,16 @@ describe("Every entity should have at least one attribute", () => {
         expect(validateGraph(graph).noEntitiesWithoutAttributes).toBe(false)
     });
 });
+
+describe("Every strong entity should have a primary key", () => {
+    test("a strong entity without primary key should be invalid", () => {
+        expect(entitiesWithoutPK(graph)).toBe(false)
+
+        graph.entities.at(0).attributes.forEach((attribute) => {
+            attribute.key = false
+        })
+
+        expect(entitiesWithoutPK(graph)).toBe(true)
+        expect(validateGraph(graph).noEntitiesWithoutPK).toBe(false)
+    })
+})
