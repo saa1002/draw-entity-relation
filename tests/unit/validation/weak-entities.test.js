@@ -21,7 +21,7 @@ beforeEach(() => {
 })
 
 describe("Partial keys", () => {
-    test("a weak entity with one partial key should pass partial key presence validation", () => {
+    test("A weak entity with one partial key should pass partial key presence validation", () => {
         const weakEntity = graph.entities.at(0);
 
         weakEntity.weak = true;
@@ -35,7 +35,7 @@ describe("Partial keys", () => {
         expect(validateGraph(graph).noWeakEntitiesWithoutPartialKey).toBe(true);
     });  
 
-    test("a weak entity must have at least one partial key", () => {
+    test("A weak entity must have at least one partial key", () => {
         const weakEntity = graph.entities.at(0);
 
         weakEntity.weak = true;
@@ -47,7 +47,7 @@ describe("Partial keys", () => {
         expect(validateGraph(graph).noWeakEntitiesWithoutPartialKey).toBe(false);
     });
 
-    test("a weak entity with a single partial key should pass partial key uniqueness validation", () => {
+    test("A weak entity with a single partial key should pass partial key uniqueness validation", () => {
         const weakEntity = graph.entities.at(0);
 
         weakEntity.weak = true;
@@ -61,7 +61,7 @@ describe("Partial keys", () => {
         ).toBe(true);
     });
 
-    test("a weak entity cannot have more than one partial key", () => {
+    test("A weak entity cannot have more than one partial key", () => {
         const weakEntity = graph.entities.at(0);
 
         weakEntity.weak = true;
@@ -76,7 +76,7 @@ describe("Partial keys", () => {
 });
 
 describe("Partial keys in strong entities", () => {
-    test("a strong entity without partial key should pass validation", () => {
+    test("A strong entity without partial key should pass validation", () => {
         const strongEntity = graph.entities.at(0);
 
         strongEntity.weak = false;
@@ -88,7 +88,7 @@ describe("Partial keys in strong entities", () => {
         expect(validateGraph(graph).noStrongEntitiesWithPartialKey).toBe(true);
     });
   
-    test("a strong entity cannot have partial key", () => {
+    test("A strong entity cannot have partial key", () => {
         const strongEntity = graph.entities.at(0);
 
         strongEntity.weak = false;
@@ -100,7 +100,7 @@ describe("Partial keys in strong entities", () => {
 });
 
 describe("Identifying relations presence", () => {
-    test("a weak entity with a valid identifying relation should pass validation", () => {
+    test("A weak entity with a valid identifying relation should pass validation", () => {
         const weakEntity = graph.entities.at(0);
         const strongEntity = graph.entities.at(1);
         const relation = graph.relations.at(0);
@@ -117,8 +117,8 @@ describe("Identifying relations presence", () => {
         expect(weakEntitiesWithoutIdentifyingRelation(graph)).toBe(false);
         expect(validateGraph(graph).noWeakEntitiesWithoutIdentifyingRelation).toBe(true);
     });
-    
-    test("a weak entity must have an identifying relation", () => {
+
+    test("A weak entity must have an identifying relation", () => {
         const weakEntity = graph.entities.at(0);
 
         weakEntity.weak = true;
@@ -130,7 +130,7 @@ describe("Identifying relations presence", () => {
         ).toBe(false);
     });
 
-    test("a weak entity cannot reference a non-identifying relation", () => {
+    test("A weak entity cannot reference a non-identifying relation", () => {
         const weakEntity = graph.entities.at(0);
         const relation = graph.relations.at(0);
 
@@ -146,66 +146,51 @@ describe("Identifying relations presence", () => {
 });
 
 describe("Identifying relation structure", () => {
+    test("An identifying relation connecting one weak and one strong entity should be valid", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        expect(identifyingRelationsNotValid(graph)).toBe(false);
+    });
+
+    test("A valid identifying relation should pass diagnostics", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        expect(identifyingRelationsNotValid(graph)).toBe(false);
+        expect(validateGraph(graph).noInvalidIdentifyingRelations).toBe(true);
+    }); 
+
+    test("An identifying relation must connect exactly one weak entity and one strong entity", () => {
+        const entity1 = graph.entities.at(0);
+        const entity2 = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        entity1.weak = false;
+        entity2.weak = false;
+        relation.isIdentifying = true;
+
+        expect(identifyingRelationsNotValid(graph)).toBe(true);
+        expect(validateGraph(graph).noInvalidIdentifyingRelations).toBe(false);
+    });    
 });
 
 describe("Identifying relation cardinalities", () => {
-});
-
-describe("Ownership consistency", () => {
-});
-
-describe("Identifying relation uniqueness", () => {
-});
-
-describe("Regular primary keys in weak entities", () => {
-});
-
-describe("Interaction with strong entity PK validation", () => {
-});
-
-describe("Canonical valid configuration", () => {
-});
-
-describe("Weak entities", () => {
-    test("an identifying relation is invalid if the strong side is not 1:1", () => {
-        const weakEntity = graph.entities.at(0);
-        const strongEntity = graph.entities.at(1);
-        const relation = graph.relations.at(0);
-
-        weakEntity.weak = true;
-        strongEntity.weak = false;
-
-        relation.isIdentifying = true;
-        relation.side1.entity.idMx = weakEntity.idMx;
-        relation.side2.entity.idMx = strongEntity.idMx;
-
-        relation.side1.cardinality = "0:N";
-        relation.side2.cardinality = "0:1";
-
-        expect(identifyingRelationCardinalitiesNotValid(graph)).toBe(true);
-        expect(validateGraph(graph).noInvalidIdentifyingCardinalities).toBe(false);
-    });
-
-    test("an identifying relation is invalid if the weak side is not N-based", () => {
-        const weakEntity = graph.entities.at(0);
-        const strongEntity = graph.entities.at(1);
-        const relation = graph.relations.at(0);
-
-        weakEntity.weak = true;
-        strongEntity.weak = false;
-
-        relation.isIdentifying = true;
-        relation.side1.entity.idMx = weakEntity.idMx;
-        relation.side2.entity.idMx = strongEntity.idMx;
-
-        relation.side1.cardinality = "0:1";
-        relation.side2.cardinality = "1:1";
-
-        expect(identifyingRelationCardinalitiesNotValid(graph)).toBe(true);
-        expect(validateGraph(graph).noInvalidIdentifyingCardinalities).toBe(false);
-    });
-
-    test("an identifying relation with valid identifying cardinalities should pass validation", () => {
+    test("An identifying relation with valid identifying cardinalities should pass validation", () => {
         const weakEntity = graph.entities.at(0);
         const strongEntity = graph.entities.at(1);
         const relation = graph.relations.at(0);
@@ -224,7 +209,7 @@ describe("Weak entities", () => {
         expect(validateGraph(graph).noInvalidIdentifyingCardinalities).toBe(true);
     });
 
-    test("an identifying relation should also allow 1:N on the weak side", () => {
+    test("An identifying relation should also allow 1:N on the weak side", () => {
         const weakEntity = graph.entities.at(0);
         const strongEntity = graph.entities.at(1);
         const relation = graph.relations.at(0);
@@ -243,75 +228,7 @@ describe("Weak entities", () => {
         expect(validateGraph(graph).noInvalidIdentifyingCardinalities).toBe(true);
     });
 
-    test("an identifying relation must connect exactly one weak entity and one strong entity", () => {
-        const entity1 = graph.entities.at(0);
-        const entity2 = graph.entities.at(1);
-        const relation = graph.relations.at(0);
-
-        entity1.weak = false;
-        entity2.weak = false;
-        relation.isIdentifying = true;
-
-        expect(identifyingRelationsNotValid(graph)).toBe(true);
-        expect(validateGraph(graph).noInvalidIdentifyingRelations).toBe(false);
-    });
-
-    test("an identifying relation connecting one weak and one strong entity should be valid", () => {
-        const weakEntity = graph.entities.at(0);
-        const strongEntity = graph.entities.at(1);
-        const relation = graph.relations.at(0);
-
-        weakEntity.weak = true;
-        strongEntity.weak = false;
-        relation.isIdentifying = true;
-        relation.side1.entity.idMx = weakEntity.idMx;
-        relation.side2.entity.idMx = strongEntity.idMx;
-
-        expect(identifyingRelationsNotValid(graph)).toBe(false);
-    });
-
-    test("a valid identifying relation should pass diagnostics", () => {
-        const weakEntity = graph.entities.at(0);
-        const strongEntity = graph.entities.at(1);
-        const relation = graph.relations.at(0);
-
-        weakEntity.weak = true;
-        strongEntity.weak = false;
-        relation.isIdentifying = true;
-        relation.side1.entity.idMx = weakEntity.idMx;
-        relation.side2.entity.idMx = strongEntity.idMx;
-
-        expect(identifyingRelationsNotValid(graph)).toBe(false);
-        expect(validateGraph(graph).noInvalidIdentifyingRelations).toBe(true);
-    }); 
-
-    test("a weak entity without primary key can still be valid at PK level", () => {
-        const weakEntity = graph.entities.at(0);
-
-        weakEntity.weak = true;
-        weakEntity.attributes.forEach((attribute) => {
-            attribute.key = false;
-        });
-
-        expect(entitiesWithoutPK(graph)).toBe(false);
-        expect(validateGraph(graph).noEntitiesWithoutPK).toBe(true);
-    });
-
-    test("a weak entity must be connected to its identifying relation", () => {
-        const weakEntity = graph.entities.at(0);
-        const ownerEntity = graph.entities.at(1);
-        const relation = graph.relations.at(1);
-
-        weakEntity.weak = true;
-        weakEntity.identifyingRelationId = relation.idMx;
-        weakEntity.ownerEntityId = ownerEntity.idMx;
-        relation.isIdentifying = true;
-
-        expect(inconsistentWeakEntityOwnership(graph)).toBe(true);
-        expect(validateGraph(graph).noInconsistentWeakEntityOwnership).toBe(false);
-    });
-
-    test("a weak entity owner must match the strong entity on the other side", () => {
+    test("An identifying relation is invalid if the strong side is not 1:1", () => {
         const weakEntity = graph.entities.at(0);
         const strongEntity = graph.entities.at(1);
         const relation = graph.relations.at(0);
@@ -323,14 +240,35 @@ describe("Weak entities", () => {
         relation.side1.entity.idMx = weakEntity.idMx;
         relation.side2.entity.idMx = strongEntity.idMx;
 
-        weakEntity.identifyingRelationId = relation.idMx;
-        weakEntity.ownerEntityId = graph.entities.at(2).idMx;
+        relation.side1.cardinality = "0:N";
+        relation.side2.cardinality = "0:1";
 
-        expect(inconsistentWeakEntityOwnership(graph)).toBe(true);
-        expect(validateGraph(graph).noInconsistentWeakEntityOwnership).toBe(false);
+        expect(identifyingRelationCardinalitiesNotValid(graph)).toBe(true);
+        expect(validateGraph(graph).noInvalidIdentifyingCardinalities).toBe(false);
     });
 
-    test("a weak entity with consistent owner and identifying relation should pass ownership validation", () => {
+    test("An identifying relation is invalid if the weak side is not N-based", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        relation.side1.cardinality = "0:1";
+        relation.side2.cardinality = "1:1";
+
+        expect(identifyingRelationCardinalitiesNotValid(graph)).toBe(true);
+        expect(validateGraph(graph).noInvalidIdentifyingCardinalities).toBe(false);
+    });
+});
+
+describe("Ownership consistency", () => {
+    test("A weak entity with consistent owner and identifying relation should pass ownership validation", () => {
         const weakEntity = graph.entities.at(0);
         const strongEntity = graph.entities.at(1);
         const relation = graph.relations.at(0);
@@ -349,7 +287,60 @@ describe("Weak entities", () => {
         expect(validateGraph(graph).noInconsistentWeakEntityOwnership).toBe(true);
     });
 
-    test("a weak entity cannot participate in more than one identifying relationship", () => {
+    test("A weak entity must be connected to its identifying relation", () => {
+        const weakEntity = graph.entities.at(0);
+        const ownerEntity = graph.entities.at(1);
+        const relation = graph.relations.at(1);
+
+        weakEntity.weak = true;
+        weakEntity.identifyingRelationId = relation.idMx;
+        weakEntity.ownerEntityId = ownerEntity.idMx;
+        relation.isIdentifying = true;
+
+        expect(inconsistentWeakEntityOwnership(graph)).toBe(true);
+        expect(validateGraph(graph).noInconsistentWeakEntityOwnership).toBe(false);
+    });
+
+    test("A weak entity owner must match the strong entity on the other side", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        weakEntity.identifyingRelationId = relation.idMx;
+        weakEntity.ownerEntityId = graph.entities.at(2).idMx;
+
+        expect(inconsistentWeakEntityOwnership(graph)).toBe(true);
+        expect(validateGraph(graph).noInconsistentWeakEntityOwnership).toBe(false);
+    });
+});
+
+describe("Identifying relation uniqueness", () => {
+    test("A weak entity with a single identifying relationship should pass uniqueness validation", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        expect(multipleIdentifyingRelationsPerWeakEntity(graph)).toBe(false);
+        expect(
+            validateGraph(graph).noMultipleIdentifyingRelationsPerWeakEntity,
+        ).toBe(true);
+    });
+
+    test("A weak entity cannot participate in more than one identifying relationship", () => {
         const weakEntity = graph.entities.at(0);
         const strongEntity1 = graph.entities.at(1);
         const strongEntity2 = graph.entities.at(2);
@@ -374,30 +365,24 @@ describe("Weak entities", () => {
             validateGraph(graph).noMultipleIdentifyingRelationsPerWeakEntity,
         ).toBe(false);
     });
+});
 
-    test("a weak entity with a single identifying relationship should pass uniqueness validation", () => {
+describe("Regular primary keys in weak entities", () => {
+    test("A weak entity without a regular primary key should pass validation", () => {
         const weakEntity = graph.entities.at(0);
-        const strongEntity = graph.entities.at(1);
-        const relation = graph.relations.at(0);
 
         weakEntity.weak = true;
-        strongEntity.weak = false;
 
-        relation.isIdentifying = true;
-        relation.side1.entity.idMx = weakEntity.idMx;
-        relation.side2.entity.idMx = strongEntity.idMx;
+        weakEntity.attributes.forEach((attribute, index) => {
+            attribute.key = false;
+            attribute.partialKey = index === 0;
+        });
 
-        expect(multipleIdentifyingRelationsPerWeakEntity(graph)).toBe(false);
-        expect(
-            validateGraph(graph).noMultipleIdentifyingRelationsPerWeakEntity,
-        ).toBe(true);
+        expect(weakEntitiesWithPrimaryKey(graph)).toBe(false);
+        expect(validateGraph(graph).noWeakEntitiesWithPrimaryKey).toBe(true);
     });
 
-
-
-
-
-    test("a weak entity cannot have a regular primary key", () => {
+    test("A weak entity cannot have a regular primary key", () => {
         const weakEntity = graph.entities.at(0);
 
         weakEntity.weak = true;
@@ -410,22 +395,24 @@ describe("Weak entities", () => {
         expect(weakEntitiesWithPrimaryKey(graph)).toBe(true);
         expect(validateGraph(graph).noWeakEntitiesWithPrimaryKey).toBe(false);
     });
+});
 
-    test("a weak entity without a regular primary key should pass validation", () => {
+describe("Interaction with strong entity PK validation", () => {
+    test("Weak entities should not fail strong entity primary key validation", () => {
         const weakEntity = graph.entities.at(0);
 
         weakEntity.weak = true;
-
-        weakEntity.attributes.forEach((attribute, index) => {
+        weakEntity.attributes.forEach((attribute) => {
             attribute.key = false;
-            attribute.partialKey = index === 0;
         });
 
-        expect(weakEntitiesWithPrimaryKey(graph)).toBe(false);
-        expect(validateGraph(graph).noWeakEntitiesWithPrimaryKey).toBe(true);
-    });    
+        expect(entitiesWithoutPK(graph)).toBe(false);
+        expect(validateGraph(graph).noEntitiesWithoutPK).toBe(true);
+    });
+});
 
-    test("a canonical weak entity configuration should be valid", () => {
+describe("Canonical valid configuration", () => {
+    test("A canonical weak entity configuration should be valid", () => {
         const weakEntity = graph.entities.at(0);
         const strongEntity = graph.entities.at(1);
         const relation = graph.relations.at(1);
