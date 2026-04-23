@@ -14,7 +14,7 @@ beforeEach(() => {
     graph = loadGraphFixture('example.json')
 })
 
-describe("Relations", () => {
+describe("Conectivity", () => {
     test("Every relation should connect two entities (can be the same at both sides)", () => {
         // Ensure the graph is valid initially
         expect(relationsUnconnected(graph)).toBe(false);
@@ -44,6 +44,16 @@ describe("Relations", () => {
         expect(brokenRelationEntityReferences(graph)).toBe(true)
         expect(validateGraph(graph).noBrokenRelationEntityReferences).toBe(false)
     })
+})
+describe("Attributes in non N:M relations", () => {
+    test("A non N:M relation without attributes should be valid", () => {
+        expect(notNMRelationsWithAttributes(graph)).toBe(false);
+
+        const diagnostics = validateGraph(graph);
+
+        expect(diagnostics.noAttributesInNonNMRelations).toBe(true);
+        expect(diagnostics.isValid).toBe(true);
+    });
 
     test("Cant be relations with attributes if they are not N:M", () => {
         // Ensure the graph is valid initially
@@ -69,13 +79,27 @@ describe("Relations", () => {
         expect(notNMRelationsWithAttributes(graph)).toBe(true);
         expect(validateGraph(graph).noAttributesInNonNMRelations).toBe(false)
     });
-
-    test("a non N:M relation without attributes should be valid", () => {
-        expect(notNMRelationsWithAttributes(graph)).toBe(false);
+})
+describe("Cardinalities", () => {
+    test("A standard 1:N relation should be valid", () => {
+        graph.relations.at(1).side1.cardinality = "0:N";
+        graph.relations.at(1).side2.cardinality = "1:1";
 
         const diagnostics = validateGraph(graph);
 
-        expect(diagnostics.noAttributesInNonNMRelations).toBe(true);
+        expect(cardinalitiesNotValid(graph)).toBe(false);
+        expect(diagnostics.noNotValidCardinalities).toBe(true);
+        expect(diagnostics.isValid).toBe(true);
+    });
+
+    test("A fully mandatory 1:1 relation should be valid", () => {
+        graph.relations.at(1).side1.cardinality = "1:1";
+        graph.relations.at(1).side2.cardinality = "1:1";
+
+        const diagnostics = validateGraph(graph);
+
+        expect(cardinalitiesNotValid(graph)).toBe(false);
+        expect(diagnostics.noNotValidCardinalities).toBe(true);
         expect(diagnostics.isValid).toBe(true);
     });
     
@@ -106,27 +130,5 @@ describe("Relations", () => {
 
         expect(cardinalitiesNotValid(graph)).toBe(true);
         expect(validateGraph(graph).noNotValidCardinalities).toBe(false)
-    });
-
-    test("A fully mandatory 1:1 relation should be valid", () => {
-        graph.relations.at(1).side1.cardinality = "1:1";
-        graph.relations.at(1).side2.cardinality = "1:1";
-
-        const diagnostics = validateGraph(graph);
-
-        expect(cardinalitiesNotValid(graph)).toBe(false);
-        expect(diagnostics.noNotValidCardinalities).toBe(true);
-        expect(diagnostics.isValid).toBe(true);
-    });
-
-    test("A standard 1:N relation should be valid", () => {
-        graph.relations.at(1).side1.cardinality = "0:N";
-        graph.relations.at(1).side2.cardinality = "1:1";
-
-        const diagnostics = validateGraph(graph);
-
-        expect(cardinalitiesNotValid(graph)).toBe(false);
-        expect(diagnostics.noNotValidCardinalities).toBe(true);
-        expect(diagnostics.isValid).toBe(true);
     });    
 });
