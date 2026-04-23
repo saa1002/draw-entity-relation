@@ -319,4 +319,39 @@ describe("Weak entities", () => {
         expect(weakEntitiesWithPrimaryKey(graph)).toBe(true);
         expect(validateGraph(graph).noWeakEntitiesWithPrimaryKey).toBe(false);
     });
+    
+    test("a canonical weak entity configuration should be valid", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(1);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        weakEntity.attributes.forEach((attribute, index) => {
+            attribute.key = false;
+            attribute.partialKey = index === 0;
+        });
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+        relation.side1.cardinality = "0:N";
+        relation.side2.cardinality = "1:1";
+
+        weakEntity.identifyingRelationId = relation.idMx;
+        weakEntity.ownerEntityId = strongEntity.idMx;
+
+        const diagnostics = validateGraph(graph);
+
+        expect(weakEntitiesWithoutPartialKey(graph)).toBe(false);
+        expect(weakEntitiesWithMoreThanOnePartialKey(graph)).toBe(false);
+        expect(weakEntitiesWithPrimaryKey(graph)).toBe(false);
+        expect(weakEntitiesWithoutIdentifyingRelation(graph)).toBe(false);
+        expect(identifyingRelationsNotValid(graph)).toBe(false);
+        expect(identifyingRelationCardinalitiesNotValid(graph)).toBe(false);
+        expect(inconsistentWeakEntityOwnership(graph)).toBe(false);
+        expect(multipleIdentifyingRelationsPerWeakEntity(graph)).toBe(false);
+        expect(diagnostics.isValid).toBe(true);
+    });
 });
