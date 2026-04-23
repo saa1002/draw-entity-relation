@@ -22,6 +22,15 @@ describe("Non repeated attributes in entities or n:m relations", ()=> {
         expect(validateGraph(graph).noRepeatedAttrNames).toBe(false)
     })
 
+    test("entities with unique attribute names should be valid", () => {
+        expect(repeatedAttributesInEntity(graph)).toBe(false)
+
+        const diagnostics = validateGraph(graph)
+
+        expect(diagnostics.noRepeatedAttrNames).toBe(true)
+        expect(diagnostics.isValid).toBe(true)
+    })
+
     test("N:M relations can't have repeated attributes names", () => {
         // Test the graph without repeated attributes
         expect(repeatedAttributesInEntity(graph)).toBe(false);
