@@ -109,6 +109,20 @@ describe("Weak entities", () => {
         expect(validateGraph(graph).noWeakEntitiesWithoutPartialKey).toBe(false);
     });
 
+    test("a weak entity with one partial key should pass partial key presence validation", () => {
+        const weakEntity = graph.entities.at(0);
+
+        weakEntity.weak = true;
+        weakEntity.attributes.forEach((attribute, index) => {
+            attribute.key = false;
+            attribute.partialKey = index === 0;
+        });
+
+        expect(weakEntitiesWithoutPartialKey(graph)).toBe(false);
+        expect(weakEntitiesWithPrimaryKey(graph)).toBe(false);
+        expect(validateGraph(graph).noWeakEntitiesWithoutPartialKey).toBe(true);
+    });    
+
     test("a strong entity cannot have partial key", () => {
         const strongEntity = graph.entities.at(0);
 
