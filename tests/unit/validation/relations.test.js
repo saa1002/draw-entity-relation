@@ -109,4 +109,15 @@ describe("Relations", () => {
         expect(diagnostics.noNotValidCardinalities).toBe(true);
         expect(diagnostics.isValid).toBe(true);
     });
+
+    test("A standard 1:N relation should be valid", () => {
+        graph.relations.at(1).side1.cardinality = "0:N";
+        graph.relations.at(1).side2.cardinality = "1:1";
+
+        const diagnostics = validateGraph(graph);
+
+        expect(cardinalitiesNotValid(graph)).toBe(false);
+        expect(diagnostics.noNotValidCardinalities).toBe(true);
+        expect(diagnostics.isValid).toBe(true);
+    });    
 });
