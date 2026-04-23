@@ -30,6 +30,15 @@ describe('Non repeated entity or n:m relation name', ()=> {
         expect(repeatedEntities(graph)).toBe(true);
         expect(validateGraph(graph).noRepeatedNames).toBe(false)
     })
+
+    test("entities and N:M relations with unique names should be valid", () => {
+        expect(repeatedEntities(graph)).toBe(false);
+
+        const diagnostics = validateGraph(graph);
+
+        expect(diagnostics.noRepeatedNames).toBe(true);
+        expect(diagnostics.isValid).toBe(true);
+    })
 })
 
 describe("Every entity should have at least one attribute", () => {
