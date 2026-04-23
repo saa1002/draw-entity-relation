@@ -9,7 +9,7 @@ beforeEach(() => {
 })
 
 describe("General validation function", () => {
-    test("empty graph should be invalid", () => {
+    test("Empty graph should be invalid", () => {
         
         const emptyGraph = {
             entities: [],
@@ -22,11 +22,11 @@ describe("General validation function", () => {
         expect(diagnostics.isValid).toBe(false)
     })
 
-    test("a valid graph should pass validation", () => {
+    test("A valid graph should pass validation", () => {
         expect(validateGraph(graph).isValid).toBe(true)
     })
     
-    test("normalized SQL identifiers should not collide", () => {
+    test("Normalized SQL identifiers should not collide", () => {
         expect(sqlIdentifierCollisions(graph)).toBe(false)
 
         graph.entities.at(0).name = "País"

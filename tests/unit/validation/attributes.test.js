@@ -13,7 +13,7 @@ beforeEach(() => {
     graph = loadGraphFixture('example.json')
 })
 describe("Attribute name uniqueness", () => {
-    test("entities with unique attribute names should be valid", () => {
+    test("Entities with unique attribute names should be valid", () => {
         expect(repeatedAttributesInEntity(graph)).toBe(false)
 
         const diagnostics = validateGraph(graph)
@@ -22,7 +22,7 @@ describe("Attribute name uniqueness", () => {
         expect(diagnostics.isValid).toBe(true)
     })
 
-    test("entities can't have repeated attributes names", () => {
+    test("Entities can't have repeated attributes names", () => {
         expect(repeatedAttributesInEntity(graph)).toBe(false);
         // Set an attribute in an entity to the same name of other
         graph.entities.at(0).attributes.at(1).name = graph.entities.at(0).attributes.at(0).name
@@ -41,7 +41,7 @@ describe("Attribute name uniqueness", () => {
 })
 
 describe("N:M relation attribute constraints", ()=> {
-    test("an N:M relation without primary key attributes should be valid", () => {
+    test("An N:M relation without primary key attributes should be valid", () => {
         expect(nmRelationsWithPK(graph)).toBe(false)
 
         const diagnostics = validateGraph(graph)
@@ -62,7 +62,7 @@ describe("N:M relation attribute constraints", ()=> {
 })
 
 describe("SQL identifier normalization", () => {
-    test("attributes normalized for SQL should not collide", () => {
+    test("Attributes normalized for SQL should not collide", () => {
         expect(sqlIdentifierCollisions(graph)).toBe(false)
 
         graph.entities.at(0).attributes.at(0).name = "código"

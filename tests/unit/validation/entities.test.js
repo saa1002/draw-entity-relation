@@ -15,7 +15,7 @@ beforeEach(() => {
 })
 
 describe('Non repeated entity or n:m relation name', ()=> {
-    test("entities and N:M relations with unique names should be valid", () => {
+    test("Entities and N:M relations with unique names should be valid", () => {
         expect(repeatedEntities(graph)).toBe(false);
 
         const diagnostics = validateGraph(graph);
@@ -24,7 +24,7 @@ describe('Non repeated entity or n:m relation name', ()=> {
         expect(diagnostics.isValid).toBe(true);
     })
 
-    test("entities can't have repeated names", () => {
+    test("Entities can't have repeated names", () => {
         expect(repeatedEntities(graph)).toBe(false);
         // Access an entity and set its name to an already existing entity name
         graph.entities.at(1).name = graph.entities.at(0).name
@@ -42,7 +42,7 @@ describe('Non repeated entity or n:m relation name', ()=> {
 })
 
 describe("Every entity should have at least one attribute", () => {
-    test("entities with at least one attribute should be valid", () => {
+    test("Entities with at least one attribute should be valid", () => {
         expect(entitiesWithoutAttributes(graph)).toBe(false);
 
         const diagnostics = validateGraph(graph);
@@ -50,7 +50,7 @@ describe("Every entity should have at least one attribute", () => {
         expect(diagnostics.noEntitiesWithoutAttributes).toBe(true);
         expect(diagnostics.isValid).toBe(true);
     });
-    test("entities must have at least one attribute", () => {
+    test("Entities must have at least one attribute", () => {
         // Ensure the graph is valid initially
         expect(entitiesWithoutAttributes(graph)).toBe(false);
         // Remove attributes from an entity
@@ -61,7 +61,7 @@ describe("Every entity should have at least one attribute", () => {
 });
 
 describe("Every strong entity should have a primary key", () => {
-    test("a strong entity with exactly one primary key should be valid", () => {
+    test("A strong entity with exactly one primary key should be valid", () => {
         expect(entitiesWithoutPK(graph)).toBe(false)
         expect(entitiesWithMoreThanOnePK(graph)).toBe(false)
 
@@ -72,7 +72,7 @@ describe("Every strong entity should have a primary key", () => {
         expect(diagnostics.isValid).toBe(true)
     })
     
-    test("a strong entity without primary key should be invalid", () => {
+    test("A strong entity without primary key should be invalid", () => {
         expect(entitiesWithoutPK(graph)).toBe(false)
 
         graph.entities.at(0).attributes.forEach((attribute) => {
@@ -83,7 +83,7 @@ describe("Every strong entity should have a primary key", () => {
         expect(validateGraph(graph).noEntitiesWithoutPK).toBe(false)
     })
     
-    test("a strong entity with more than one primary key should be invalid", () => {
+    test("A strong entity with more than one primary key should be invalid", () => {
         expect(entitiesWithMoreThanOnePK(graph)).toBe(false)
 
         graph.entities.at(0).attributes.at(1).key = true
