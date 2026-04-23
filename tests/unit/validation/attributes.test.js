@@ -3,6 +3,7 @@ import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     repeatedAttributesInEntity,
     nmRelationsWithPK,
+    sqlIdentifierCollisions,
     validateGraph,
 } from '../../../src/utils/validation'
 
@@ -29,7 +30,7 @@ describe("Non repeated attributes in entities or n:m relations", ()=> {
         expect(repeatedAttributesInEntity(graph)).toBe(true);
         expect(validateGraph(graph).noRepeatedAttrNames).toBe(false)
     })
-    
+
     test("attributes normalized for SQL should not collide", () => {
         expect(sqlIdentifierCollisions(graph)).toBe(false)
 
