@@ -5,6 +5,7 @@ import {
     validateGraph,
     cardinalitiesNotValid,
     notNMRelationsWithAttributes,
+    brokenRelationEntityReferences,
 } from '../../../src/utils/validation'
 
 let graph
@@ -33,6 +34,16 @@ describe("Relations", () => {
         expect(relationsUnconnected(graph)).toBe(true);
         expect(validateGraph(graph).noUnconnectedRelations).toBe(false)
     });
+
+    test("Every relation should reference existing entities", () => {
+        expect(brokenRelationEntityReferences(graph)).toBe(false)
+
+        graph.relations.at(1).side1.entity.idMx = "non-existing-entity-id"
+
+        expect(relationsUnconnected(graph)).toBe(false)
+        expect(brokenRelationEntityReferences(graph)).toBe(true)
+        expect(validateGraph(graph).noBrokenRelationEntityReferences).toBe(false)
+    })
 
     test("Cant be relations with attributes if they are not N:M", () => {
         // Ensure the graph is valid initially
