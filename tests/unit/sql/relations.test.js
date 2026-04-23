@@ -9,61 +9,104 @@ import {
 let oneNGraph
 let oneOneGraph
 
+const extract1NTables = () => {
+    const filteredTables = filterTables(oneNGraph)
+    return process1NRelation(filteredTables.at(0))
+}
+
+const extract11Tables = () => {
+    const filteredTables = filterTables(oneOneGraph)
+    return process11Relation(filteredTables.at(0))
+}
+
 beforeEach(() => {
     oneNGraph = loadGraphFixture('1-n-relation.json')
     oneOneGraph = loadGraphFixture('1-1-relation.json')
 })
 
-describe("Extract table 1:N relation", () => {
-    test("1:N relation", () => {
-        const filteredTables = filterTables(oneNGraph)
-        const tables = process1NRelation(filteredTables.at(0))
+describe("1:N relation extraction", () => {
+    test("should extract a nullable foreign key when the 1 side is optional", () => {
+        const tables = extract1NTables()
+        const sourceTable = tables.at(0)
+        const targetTable = tables.at(1)
+        const foreignKey = targetTable.attributes.at(1)
+
         expect(tables.length).toBe(2)
-        expect(tables.at(0).attributes.length).toBe(1)
-        expect(tables.at(1).attributes.length).toBe(2)
-        expect(tables.at(1).attributes.at(0).name).toBe("Atributo")
-        expect(tables.at(1).attributes.at(1).name).toBe("Atributo_Relación")
-        expect(tables.at(1).attributes.at(1).notnull).toBe(false)
+        expect(sourceTable.attributes.length).toBe(1)
+        expect(targetTable.attributes.length).toBe(2)
+        expect(targetTable.attributes.at(0).name).toBe("Atributo")
+        expect(foreignKey.name).toBe("Atributo_Relación")
+        expect(foreignKey.notnull).toBe(false)
     })
 
-    test("1:N relation with 1 side and min cardinality of 1", () => {
+    test("should extract a non-null foreign key when the 1 side is mandatory", () => {
         oneNGraph.relations.at(0).side1.cardinality = "1:1"
-        const filteredTables = filterTables(oneNGraph)
-        const tables = process1NRelation(filteredTables.at(0))
+
+        const tables = extract1NTables()
+        const sourceTable = tables.at(0)
+        const targetTable = tables.at(1)
+        const foreignKey = targetTable.attributes.at(1)
+
         expect(tables.length).toBe(2)
-        expect(tables.at(0).attributes.length).toBe(1)
-        expect(tables.at(1).attributes.length).toBe(2)
-        expect(tables.at(1).attributes.at(0).name).toBe("Atributo")
-        expect(tables.at(1).attributes.at(1).name).toBe("Atributo_Relación")
-        expect(tables.at(1).attributes.at(1).notnull).toBe(true)
+        expect(sourceTable.attributes.length).toBe(1)
+        expect(targetTable.attributes.length).toBe(2)
+        expect(targetTable.attributes.at(0).name).toBe("Atributo")
+        expect(foreignKey.name).toBe("Atributo_Relación")
+        expect(foreignKey.notnull).toBe(true)
     })
 })
 
-describe("Extract table 1:1 relation", () => {
-    test("1:1 relation, 0:1-1:1", () => {
+describe("1:1 relation extraction", () => {
+    test("should extract a unique non-null foreign key for a 0:1-1:1 relation", () => {
         oneOneGraph.relations.at(0).side1.cardinality = "0:1"
-        const filteredTables = filterTables(oneOneGraph)
-        const tables = process11Relation(filteredTables.at(0))
+
+        const tables = extract11Tables()
+        const sourceTable = tables.at(0)
+        const targetTable = tables.at(1)
+        const foreignKey = targetTable.attributes.at(1)
+
         expect(tables.length).toBe(2)
-        expect(tables.at(0).attributes.length).toBe(1)
-        expect(tables.at(1).attributes.length).toBe(2)
-        expect(tables.at(0).attributes.at(0).name).toBe("Atributo")
-        expect(tables.at(1).attributes.at(1).name).toBe("Atributo_Relación")
-        expect(tables.at(1).attributes.at(1).notnull).toBe(true)
-        expect(tables.at(1).attributes.at(1).unique).toBe(true)
+        expect(sourceTable.attributes.length).toBe(1)
+        expect(targetTable.attributes.length).toBe(2)
+        expect(sourceTable.attributes.at(0).name).toBe("Atributo")
+        expect(foreignKey.name).toBe("Atributo_Relación")
+        expect(foreignKey.notnull).toBe(true)
+        expect(foreignKey.unique).toBe(true)
     })
 
-    test("1:1 relation, 0:1-0:1", () => {
+    test("should extract a unique nullable foreign key for a 0:1-0:1 relation", () => {
         oneOneGraph.relations.at(0).side1.cardinality = "0:1"
         oneOneGraph.relations.at(0).side2.cardinality = "0:1"
-        const filteredTables = filterTables(oneOneGraph)
-        const tables = process11Relation(filteredTables.at(0))
+
+        const tables = extract11Tables()
+        const sourceTable = tables.at(0)
+        const targetTable = tables.at(1)
+        const foreignKey = targetTable.attributes.at(1)
+
         expect(tables.length).toBe(2)
-        expect(tables.at(0).attributes.length).toBe(1)
-        expect(tables.at(1).attributes.length).toBe(2)
-        expect(tables.at(0).attributes.at(0).name).toBe("Atributo")
-        expect(tables.at(1).attributes.at(1).name).toBe("Atributo_Relación")
-        expect(tables.at(1).attributes.at(1).notnull).toBe(false)
-        expect(tables.at(1).attributes.at(1).unique).toBe(true)
+        expect(sourceTable.attributes.length).toBe(1)
+        expect(targetTable.attributes.length).toBe(2)
+        expect(sourceTable.attributes.at(0).name).toBe("Atributo")
+        expect(foreignKey.name).toBe("Atributo_Relación")
+        expect(foreignKey.notnull).toBe(false)
+        expect(foreignKey.unique).toBe(true)
+    })
+
+    test("should extract a unique non-null foreign key for a mandatory 1:1 relation", () => {
+        oneOneGraph.relations.at(0).side1.cardinality = "1:1"
+        oneOneGraph.relations.at(0).side2.cardinality = "1:1"
+
+        const tables = extract11Tables()
+        const sourceTable = tables.at(0)
+        const targetTable = tables.at(1)
+        const foreignKey = targetTable.attributes.at(1)
+
+        expect(tables.length).toBe(2)
+        expect(sourceTable.attributes.length).toBe(1)
+        expect(targetTable.attributes.length).toBe(2)
+        expect(sourceTable.attributes.at(0).name).toBe("Atributo")
+        expect(foreignKey.name).toBe("Atributo_Relación")
+        expect(foreignKey.notnull).toBe(true)
+        expect(foreignKey.unique).toBe(true)
     })
 })
