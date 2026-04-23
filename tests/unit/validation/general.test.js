@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
-import { validateGraph } from '../../../src/utils/validation'
+import { validateGraph, sqlIdentifierCollisions } from '../../../src/utils/validation'
 
 let graph
 
@@ -22,6 +22,16 @@ describe("General validation function", () => {
         expect(diagnostics.isValid).toBe(false)
     })
 
+    test("normalized SQL identifiers should not collide", () => {
+        expect(sqlIdentifierCollisions(graph)).toBe(false)
+
+        graph.entities.at(0).name = "País"
+        graph.entities.at(1).name = "Pais"
+
+        expect(sqlIdentifierCollisions(graph)).toBe(true)
+        expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false)
+    })
+    
     test("correct graph return true", () => {
         expect(validateGraph(graph).isValid).toBe(true)
     })
