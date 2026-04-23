@@ -8,34 +8,31 @@ beforeEach(() => {
     graph = loadGraphFixture('example.json')
 })
 
-describe("General validation function", () => {
-    test("Empty graph should be invalid", () => {
+test("Empty graph should be invalid", () => {
         
-        const emptyGraph = {
-            entities: [],
-            relations: [],
-        }
+    const emptyGraph = {
+        entities: [],
+        relations: [],
+    }
 
-        const diagnostics = validateGraph(emptyGraph)
+    const diagnostics = validateGraph(emptyGraph)
 
-        expect(diagnostics.notEmpty).toBe(false)
-        expect(diagnostics.isValid).toBe(false)
-    })
+    expect(diagnostics.notEmpty).toBe(false)
+    expect(diagnostics.isValid).toBe(false)
+})
 
-    test("A valid graph should pass validation", () => {
-        expect(validateGraph(graph).isValid).toBe(true)
-    })
+test("A valid graph should pass validation", () => {
+    expect(validateGraph(graph).isValid).toBe(true)
+})
     
-    test("Normalized SQL identifiers should not collide", () => {
-        expect(sqlIdentifierCollisions(graph)).toBe(false)
+test("Normalized SQL identifiers should not collide", () => {
+    expect(sqlIdentifierCollisions(graph)).toBe(false)
 
-        graph.entities.at(0).name = "País"
-        graph.entities.at(1).name = "Pais"
+    graph.entities.at(0).name = "País"
+    graph.entities.at(1).name = "Pais"
 
-        expect(sqlIdentifierCollisions(graph)).toBe(true)
-        expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false)
-    })
-
+    expect(sqlIdentifierCollisions(graph)).toBe(true)
+    expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false)
 })
 
 /*

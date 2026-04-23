@@ -99,7 +99,7 @@ describe("Partial keys in strong entities", () => {
     });
 });
 
-describe("Identifying relations presence", () => {
+describe("Identifying relation presence", () => {
     test("A weak entity with a valid identifying relation should pass validation", () => {
         const weakEntity = graph.entities.at(0);
         const strongEntity = graph.entities.at(1);
@@ -143,24 +143,8 @@ describe("Identifying relations presence", () => {
             validateGraph(graph).noWeakEntitiesWithoutIdentifyingRelation
         ).toBe(false);
     });
-});
 
-describe("Identifying relation structure", () => {
-    test("An identifying relation connecting one weak and one strong entity should be valid", () => {
-        const weakEntity = graph.entities.at(0);
-        const strongEntity = graph.entities.at(1);
-        const relation = graph.relations.at(0);
-
-        weakEntity.weak = true;
-        strongEntity.weak = false;
-        relation.isIdentifying = true;
-        relation.side1.entity.idMx = weakEntity.idMx;
-        relation.side2.entity.idMx = strongEntity.idMx;
-
-        expect(identifyingRelationsNotValid(graph)).toBe(false);
-    });
-
-    test("A valid identifying relation should pass diagnostics", () => {
+    test("A valid identifying relation should pass structure diagnostics", () => {
         const weakEntity = graph.entities.at(0);
         const strongEntity = graph.entities.at(1);
         const relation = graph.relations.at(0);
@@ -187,9 +171,7 @@ describe("Identifying relation structure", () => {
         expect(identifyingRelationsNotValid(graph)).toBe(true);
         expect(validateGraph(graph).noInvalidIdentifyingRelations).toBe(false);
     });    
-});
 
-describe("Identifying relation cardinalities", () => {
     test("An identifying relation with valid identifying cardinalities should pass validation", () => {
         const weakEntity = graph.entities.at(0);
         const strongEntity = graph.entities.at(1);
@@ -415,7 +397,7 @@ describe("Canonical valid configuration", () => {
     test("A canonical weak entity configuration should be valid", () => {
         const weakEntity = graph.entities.at(0);
         const strongEntity = graph.entities.at(1);
-        const relation = graph.relations.at(1);
+        const relation = graph.relations.at(0);
 
         weakEntity.weak = true;
         strongEntity.weak = false;

@@ -14,8 +14,8 @@ beforeEach(() => {
     graph = loadGraphFixture('example.json')
 })
 
-describe("Conectivity", () => {
-    test("Every relation should connect two entities (can be the same at both sides)", () => {
+describe("Connectivity", () => {
+    test("Every relation should connect two entities (both sides may reference the same entity)", () => {
         // Ensure the graph is valid initially
         expect(relationsUnconnected(graph)).toBe(false);
 
@@ -45,6 +45,7 @@ describe("Conectivity", () => {
         expect(validateGraph(graph).noBrokenRelationEntityReferences).toBe(false)
     })
 })
+
 describe("Attributes in non N:M relations", () => {
     test("A non N:M relation without attributes should be valid", () => {
         expect(notNMRelationsWithAttributes(graph)).toBe(false);
@@ -80,6 +81,7 @@ describe("Attributes in non N:M relations", () => {
         expect(validateGraph(graph).noAttributesInNonNMRelations).toBe(false)
     });
 })
+
 describe("Cardinalities", () => {
     test("A standard 1:N relation should be valid", () => {
         graph.relations.at(1).side1.cardinality = "0:N";

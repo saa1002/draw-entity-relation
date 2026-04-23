@@ -14,7 +14,7 @@ beforeEach(() => {
     graph = loadGraphFixture('example.json')
 })
 
-describe('Non repeated entity or n:m relation name', ()=> {
+describe('Entity and N:M relation name uniqueness', ()=> {
     test("Entities and N:M relations with unique names should be valid", () => {
         expect(repeatedEntities(graph)).toBe(false);
 
@@ -41,7 +41,7 @@ describe('Non repeated entity or n:m relation name', ()=> {
     })
 })
 
-describe("Every entity should have at least one attribute", () => {
+describe("Entity attribute presence", () => {
     test("Entities with at least one attribute should be valid", () => {
         expect(entitiesWithoutAttributes(graph)).toBe(false);
 
@@ -60,7 +60,7 @@ describe("Every entity should have at least one attribute", () => {
     });
 });
 
-describe("Every strong entity should have a primary key", () => {
+describe("Strong entity primary key constraints", () => {
     test("A strong entity with exactly one primary key should be valid", () => {
         expect(entitiesWithoutPK(graph)).toBe(false)
         expect(entitiesWithMoreThanOnePK(graph)).toBe(false)
