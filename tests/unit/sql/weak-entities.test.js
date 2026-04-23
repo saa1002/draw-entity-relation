@@ -69,4 +69,59 @@ describe('Weak entity SQL generation', () => {
         )
         expect(sql).toContain('cantidad VARCHAR(40)')
     })
+    
+    test('an identifying relation should not generate a standalone table', () => {
+        const graph = {
+            entities: [
+                {
+                    idMx: '1',
+                    name: 'Pedido',
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: '2',
+                            name: 'id_pedido',
+                            key: true,
+                            partialKey: false,
+                        },
+                    ],
+                },
+                {
+                    idMx: '3',
+                    name: 'LineaPedido',
+                    weak: true,
+                    ownerEntityId: '1',
+                    identifyingRelationId: '4',
+                    attributes: [
+                        {
+                            idMx: '5',
+                            name: 'numero_linea',
+                            key: false,
+                            partialKey: true,
+                        },
+                    ],
+                },
+            ],
+            relations: [
+                {
+                    idMx: '4',
+                    name: 'Identifica',
+                    isIdentifying: true,
+                    attributes: [],
+                    side1: {
+                        cardinality: '1:N',
+                        entity: { idMx: '3' },
+                    },
+                    side2: {
+                        cardinality: '1:1',
+                        entity: { idMx: '1' },
+                    },
+                },
+            ],
+        }
+
+        const sql = generateSQL(graph)
+
+        expect(sql).not.toContain('CREATE TABLE Identifica')
+    })
 })

@@ -24,9 +24,9 @@ describe("N:M relation extraction", () => {
         const rightForeignKey = junctionTable.attributes.at(1)
 
         expect(tables.length).toBe(3)
-        expect(tables.at(0).attributes.length).toBe(1)
-        expect(tables.at(1).attributes.length).toBe(1)
-        expect(tables.at(2).attributes.length).toBe(3)
+        expect(leftEntityTable.attributes.length).toBe(1)
+        expect(rightEntityTable.attributes.length).toBe(1)
+        expect(junctionTable.attributes.length).toBe(3)
 
         expect(leftForeignKey.name).toBe("Atributo_Relación_1")
         expect(leftForeignKey.key).toBe(true)
