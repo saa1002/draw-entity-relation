@@ -92,21 +92,22 @@ describe("1:1 relation extraction", () => {
         expect(foreignKey.unique).toBe(true)
     })
 
-    test("should extract a unique non-null foreign key for a mandatory 1:1 relation", () => {
+    test("should merge both entities into a single table for a mandatory 1:1 relation", () => {
         oneOneGraph.relations.at(0).side1.cardinality = "1:1"
         oneOneGraph.relations.at(0).side2.cardinality = "1:1"
 
         const tables = extract11Tables()
-        const sourceTable = tables.at(0)
-        const targetTable = tables.at(1)
-        const foreignKey = targetTable.attributes.at(1)
+        const mergedTable = tables.at(0)
 
-        expect(tables.length).toBe(2)
-        expect(sourceTable.attributes.length).toBe(1)
-        expect(targetTable.attributes.length).toBe(2)
-        expect(sourceTable.attributes.at(0).name).toBe("Atributo")
-        expect(foreignKey.name).toBe("Atributo_Relación")
-        expect(foreignKey.notnull).toBe(true)
-        expect(foreignKey.unique).toBe(true)
+        expect(tables.length).toBe(1)
+        expect(mergedTable.name).toBe("Relación")
+        expect(mergedTable.attributes.length).toBe(2)
+
+        expect(mergedTable.attributes.at(0).name).toBe("Atributo_Relación")
+        expect(mergedTable.attributes.at(0).key).toBe(true)
+
+        expect(mergedTable.attributes.at(1).name).toBe("Atributo_Relación")
+        expect(mergedTable.attributes.at(1).notnull).toBe(true)
+        expect(mergedTable.attributes.at(1).unique).toBe(true)
     })
 })
