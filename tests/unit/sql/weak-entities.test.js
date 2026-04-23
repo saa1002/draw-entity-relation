@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { generateSQL } from '../../../src/utils/sql'
 
-describe('Generate SQL for weak entities', () => {
+describe('Weak entity SQL generation', () => {
     test('a weak entity should generate a composite primary key with owner key and partial key', () => {
         const graph = {
             entities: [
@@ -67,5 +67,6 @@ describe('Generate SQL for weak entities', () => {
         expect(sql).toContain(
             'FOREIGN KEY (id_pedido_Pedido) REFERENCES Pedido(id_pedido)'
         )
+        expect(sql).toContain('cantidad VARCHAR(40)')
     })
 })
