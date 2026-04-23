@@ -67,6 +67,7 @@ describe("Relations", () => {
         graph.relations.at(1).attributes = attributes
 
         expect(notNMRelationsWithAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noNotNMRelationsWithAttributes).toBe(false)
     });
 
     test("Every relation should have valid cardinalities", () => {
