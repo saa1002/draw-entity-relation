@@ -22,6 +22,10 @@ describe("General validation function", () => {
         expect(diagnostics.isValid).toBe(false)
     })
 
+    test("correct graph return true", () => {
+        expect(validateGraph(graph).isValid).toBe(true)
+    })
+    
     test("normalized SQL identifiers should not collide", () => {
         expect(sqlIdentifierCollisions(graph)).toBe(false)
 
@@ -31,10 +35,7 @@ describe("General validation function", () => {
         expect(sqlIdentifierCollisions(graph)).toBe(true)
         expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false)
     })
-    
-    test("correct graph return true", () => {
-        expect(validateGraph(graph).isValid).toBe(true)
-    })
+
 })
 
 /*
