@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     repeatedAttributesInEntity,
+    nmRelationsWithPK,
     validateGraph,
 } from '../../../src/utils/validation'
 
@@ -27,5 +28,14 @@ describe("Non repeated attributes in entities or n:m relations", ()=> {
         graph.relations.at(0).attributes.at(1).name = graph.relations.at(0).attributes.at(0).name
         expect(repeatedAttributesInEntity(graph)).toBe(true);
         expect(validateGraph(graph).noRepeatedAttrNames).toBe(false)
+    })
+    
+    test("N:M relations can't have primary key attributes", () => {
+        expect(nmRelationsWithPK(graph)).toBe(false);
+
+        graph.relations.at(0).attributes.at(0).key = true;
+
+        expect(nmRelationsWithPK(graph)).toBe(true);
+        expect(validateGraph(graph).noNMRelationsWithPK).toBe(false);
     })
 })
