@@ -49,4 +49,13 @@ describe("Non repeated attributes in entities or n:m relations", ()=> {
         expect(nmRelationsWithPK(graph)).toBe(true);
         expect(validateGraph(graph).noNMRelationsWithPK).toBe(false);
     })
+
+    test("an N:M relation without primary key attributes should be valid", () => {
+        expect(nmRelationsWithPK(graph)).toBe(false)
+
+        const diagnostics = validateGraph(graph)
+
+        expect(diagnostics.noNMRelationsWithPK).toBe(true)
+        expect(diagnostics.isValid).toBe(true)
+    })
 })
