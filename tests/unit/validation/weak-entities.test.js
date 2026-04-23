@@ -171,6 +171,24 @@ describe("Weak entities", () => {
         ).toBe(false);
     });
 
+    test("a weak entity with a valid identifying relation should pass validation", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        weakEntity.identifyingRelationId = relation.idMx;
+
+        expect(weakEntitiesWithoutIdentifyingRelation(graph)).toBe(false);
+        expect(validateGraph(graph).noWeakEntitiesWithoutIdentifyingRelation).toBe(true);
+    });
+
     test("an identifying relation must connect exactly one weak entity and one strong entity", () => {
         const entity1 = graph.entities.at(0);
         const entity2 = graph.entities.at(1);
