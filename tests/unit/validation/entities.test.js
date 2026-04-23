@@ -4,6 +4,7 @@ import {
     repeatedEntities,
     entitiesWithoutAttributes,
     entitiesWithoutPK,
+    entitiesWithMoreThanOnePK,
     validateGraph,
 } from '../../../src/utils/validation'
 
@@ -52,5 +53,13 @@ describe("Every strong entity should have a primary key", () => {
 
         expect(entitiesWithoutPK(graph)).toBe(true)
         expect(validateGraph(graph).noEntitiesWithoutPK).toBe(false)
+    })
+    test("a strong entity with more than one primary key should be invalid", () => {
+        expect(entitiesWithMoreThanOnePK(graph)).toBe(false)
+
+        graph.entities.at(0).attributes.at(1).key = true
+
+        expect(entitiesWithMoreThanOnePK(graph)).toBe(true)
+        expect(validateGraph(graph).noEntitiesWithMoreThanOnePK).toBe(false)
     })
 })
