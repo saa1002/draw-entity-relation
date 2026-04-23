@@ -216,6 +216,21 @@ describe("Weak entities", () => {
         expect(identifyingRelationsNotValid(graph)).toBe(false);
     });
 
+    test("a valid identifying relation should pass diagnostics", () => {
+        const weakEntity = graph.entities.at(0);
+        const strongEntity = graph.entities.at(1);
+        const relation = graph.relations.at(0);
+
+        weakEntity.weak = true;
+        strongEntity.weak = false;
+        relation.isIdentifying = true;
+        relation.side1.entity.idMx = weakEntity.idMx;
+        relation.side2.entity.idMx = strongEntity.idMx;
+
+        expect(identifyingRelationsNotValid(graph)).toBe(false);
+        expect(validateGraph(graph).noInvalidIdentifyingRelations).toBe(true);
+    }); 
+       
     test("a weak entity without primary key can still be valid at PK level", () => {
         const weakEntity = graph.entities.at(0);
 
