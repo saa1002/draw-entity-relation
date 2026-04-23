@@ -54,6 +54,18 @@ describe("Every strong entity should have a primary key", () => {
         expect(entitiesWithoutPK(graph)).toBe(true)
         expect(validateGraph(graph).noEntitiesWithoutPK).toBe(false)
     })
+
+    test("a strong entity with exactly one primary key should be valid", () => {
+        expect(entitiesWithoutPK(graph)).toBe(false)
+        expect(entitiesWithMoreThanOnePK(graph)).toBe(false)
+
+        const diagnostics = validateGraph(graph)
+
+        expect(diagnostics.noEntitiesWithoutPK).toBe(true)
+        expect(diagnostics.noEntitiesWithMoreThanOnePK).toBe(true)
+        expect(diagnostics.isValid).toBe(true)
+    })
+    
     test("a strong entity with more than one primary key should be invalid", () => {
         expect(entitiesWithMoreThanOnePK(graph)).toBe(false)
 
