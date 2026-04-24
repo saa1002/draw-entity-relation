@@ -165,7 +165,7 @@ export async function unmarkSelectedWeakEntity(page) {
 export async function addAttributeToSelectedElement(page) {
     await page.getByRole('button', { name: 'Añadir atributo' }).click();
 
-    await expect(page.getByText('Atributo insertado')).toBeVisible();
+    await expect(page.getByText('Atributo insertado').last()).toBeVisible();
 }
 
 export async function addAttributeToSelectedEntity(page) {
@@ -273,4 +273,17 @@ export async function markSelectedRelationAsIdentifying(page) {
     await expect(
         page.getByText('Relación marcada como dependencia por identificación'),
     ).toBeVisible();
+}
+
+export async function renameElement(page, currentName, newName) {
+    await page.getByText(currentName, { exact: true }).first().dblclick();
+
+    const editor = page.locator('.mxCellEditor');
+
+    await expect(editor).toBeVisible();
+
+    await editor.press('Control+A');
+    await editor.type(newName);
+
+    await page.locator('svg').click({ position: { x: 20, y: 20 } });
 }

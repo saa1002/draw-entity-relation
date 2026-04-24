@@ -1,51 +1,58 @@
 import { test, expect } from '@playwright/test';
 
+import {
+    addAttributeToSelectedEntity,
+    addEntity,
+    expectSavedEntityAttributeToMatch,
+    selectEntity,
+    renameElement,
+} from '../helpers/canvas';
+
 test('add attributes to an entity', async ({ page }) => {
     await page.goto('/');
 
-    const canvas = page.locator("svg")
-    await page.getByRole('img').first().dragTo(canvas);
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
 
-    await canvas.click();
+    await addAttributeToSelectedEntity(page);
 
-    await page.getByText('Entidad').first().dblclick();
-    await page.getByText('Añadir atributo').first().click();
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+        name: 'Atributo',
+    });
 
-    await page.getByText('Atributo', {exact: true}).first().dblclick();
-    await page.keyboard.type('Clave');
-    await canvas.click();
+    await renameElement(page, 'Atributo', 'Clave');
 
-    // Añadir un atributo secundario
-    await page.getByText('Entidad').first().dblclick();
-    await page.getByText('Añadir atributo').first().click();
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+        name: 'Clave',
+    });
+
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
+        name: 'Atributo',
+    });
 });
 
 test('hide/show attributes', async ({ page }) => {
     await page.goto('/');
 
-    const canvas = page.locator("svg");
-    await page.getByRole('img').first().dragTo(canvas);
-    await canvas.click();
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
 
-    // Add a primary attribute
-    await page.getByText('Entidad').first().dblclick();
-    await page.getByText('Añadir atributo').first().click();
+    await expect(page.getByText('Atributo', { exact: true })).toBeVisible();
 
-    await page.getByText('Atributo', {exact: true}).first().dblclick();
+    await selectEntity(page, 'Entidad');
+    await page
+        .getByRole('button', { name: 'Ocultar atributos' })
+        .click();
 
-    await page.getByText('Entidad').first().dblclick();
+    await expect(page.getByText('Atributo', { exact: true })).toBeHidden();
 
-    // Hide attributes
-    await page.getByText('Ocultar atributos', {exact: true}).first().click();
-    await page.waitForTimeout(1000); // Wait for 1 second after hiding attributes
+    await page
+        .getByRole('button', { name: 'Mostrar atributos' })
+        .click();
 
-    // Check if the added attribute is hidden
-    await expect(page.getByText('Atributo', {exact: true}).first()).not.toBeVisible()
-
-    // Show attributes
-    await page.getByText('Mostrar atributos', {exact: true}).first().click();
-    await page.waitForTimeout(1000); // Wait for 2 seconds after showing attributes to ensure changes take effect
-
-    // Check if the added attribute is shown
-    await expect(page.getByText('Atributo', {exact: true}).first()).toBeVisible()
+    await expect(page.getByText('Atributo', { exact: true })).toBeVisible();
 });
