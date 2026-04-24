@@ -57,6 +57,46 @@ test('hide/show attributes', async ({ page }) => {
     await expect(page.getByText('Atributo', { exact: true })).toBeVisible();
 });
 
+test('toggle primary key on an entity attribute', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+        name: 'Atributo',
+        key: true,
+        partialKey: false,
+    });
+
+    await page.getByText('Atributo', { exact: true }).click();
+
+    await page.getByRole('button', { name: 'Quitar clave' }).click();
+
+    await expect(
+        page.getByText('Clave eliminada del atributo').last(),
+    ).toBeVisible();
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+        name: 'Atributo',
+        key: false,
+        partialKey: false,
+    });
+
+    await page.getByRole('button', { name: 'Convertir en clave' }).click();
+
+    await expect(
+        page.getByText('Atributo marcado como clave').last(),
+    ).toBeVisible();
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+        name: 'Atributo',
+        key: true,
+        partialKey: false,
+    });
+});
+
 test('toggle discriminant on an entity attribute', async ({ page }) => {
     await page.goto('/');
 

@@ -17,8 +17,8 @@ test('mark and unmark an entity as weak', async ({ page }) => {
     await page.goto('/');
 
     await addEntity(page);
-    await markEntityAsWeak(page);    
-
+    await markEntityAsWeak(page);
+    
     await expectSavedEntityToMatch(page, 'Entidad', {
         weak: true,
     });
