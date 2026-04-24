@@ -153,23 +153,35 @@ export async function addAttributeToSelectedEntity(page) {
     await expect(page.getByText('Atributo insertado')).toBeVisible();
 }
 
+export async function openRelationConfigDialog(
+    page,
+    relationName = 'Relación',
+) {
+    await selectRelation(page, relationName);
+    await page.getByRole('button', { name: 'Configurar relación' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(dialog.getByText('Configurar relación')).toBeVisible();
+
+    return dialog;
+}
+
+export async function selectRelationSide(page, dialog, sideId, entityName) {
+    await dialog.locator(`#${sideId}`).click();
+    await page.getByRole('option', { name: entityName, exact: true }).click();
+}
+
 export async function configureRelationSides(
     page,
     relationName,
     side1Name,
     side2Name,
 ) {
-    await selectRelation(page, relationName);
-    await page.getByRole('button', { name: 'Configurar relación' }).click();
+    const dialog = await openRelationConfigDialog(page, relationName);
 
-    const dialog = page.getByRole('dialog');
-    await expect(dialog.getByText('Configurar relación')).toBeVisible();
-
-    await dialog.locator('#side1').click();
-    await page.getByRole('option', { name: side1Name, exact: true }).click();
-
-    await dialog.locator('#side2').click();
-    await page.getByRole('option', { name: side2Name, exact: true }).click();
+    await selectRelationSide(page, dialog, 'side1', side1Name);
+    await selectRelationSide(page, dialog, 'side2', side2Name);
 
     const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
     await expect(acceptBtn).toBeEnabled();

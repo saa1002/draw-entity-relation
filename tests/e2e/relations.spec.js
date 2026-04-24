@@ -1,63 +1,87 @@
 import { test, expect } from '@playwright/test';
 
+import {
+    addEntity,
+    addRelation,
+    expectSavedDiagramState,
+    openRelationConfigDialog,
+    selectRelationSide,
+} from '../helpers/canvas';
+
 test('reconfigure relationship: Accept disabled/enabled in both configurations', async ({ page }) => {
     await page.goto('/');
 
-    const canvas = page.locator('svg');
-    const entidadIcono = page.locator('img[src="images/rectangle.png"]');
-    const relacionIcono = page.locator('img[src="images/rhombus.png"]');
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 420, y: 180 });
+    await addRelation(page, 'Relación', { x: 300, y: 320 });
 
-    // 1) Create 2 entities + 1 relationship
-    await entidadIcono.dragTo(canvas);
-    await entidadIcono.dragTo(canvas);
-    await relacionIcono.dragTo(canvas);
+    const configureSidesCheckingAcceptButton = async (side1Name, side2Name) => {
+        const dialog = await openRelationConfigDialog(page, 'Relación');
+        const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
 
-    // Helper to open the configuration modal with the relationship selected
-    const openConfigDialog = async () => {
-        await page.getByText('Relación', { exact: true }).click();
-        await page.getByRole('button', { name: 'Configurar relación' }).click();
-        const dialog = page.getByRole('dialog');
-        await expect(dialog.getByText('Configurar relación')).toBeVisible();
-        return dialog;
-    };
+        await expect(acceptBtn).toBeDisabled();
 
-    // Helper to select sides and verify Accept button disabled/enabled state
-    const configureSides = async (side1Name, side2Name) => {
-        const dialog = page.getByRole('dialog');
-        const aceptarBtn = dialog.getByRole('button', { name: 'Aceptar' });
+        await selectRelationSide(page, dialog, 'side1', side1Name);
 
-        // When the dialog opens, it must always be disabled (side1/side2 start as "")
-        await expect(aceptarBtn).toBeDisabled();
+        await expect(acceptBtn).toBeDisabled();
 
-        // Select side 1
-        await dialog.locator('#side1').click();
-        await page.getByRole('option', { name: side1Name, exact: true }).click();
+        await selectRelationSide(page, dialog, 'side2', side2Name);
 
-        // It must still be disabled because side 2 is not selected yet
-        await expect(aceptarBtn).toBeDisabled();
+        await expect(acceptBtn).toBeEnabled();
 
-        // Select side 2
-        await dialog.locator('#side2').click();
-        await page.getByRole('option', { name: side2Name, exact: true }).click();
-
-        // Now it must be enabled
-        await expect(aceptarBtn).toBeEnabled();
-
-        await aceptarBtn.click();
+        await acceptBtn.click();
         await expect(dialog).toBeHidden();
     };
 
-    // 2) First configuration: Entidad -> Entidad 1
-    await openConfigDialog();
-    await configureSides('Entidad', 'Entidad 1');
+    await configureSidesCheckingAcceptButton('Entidad', 'Entidad 1');
 
-    // Quick functional check: two cardinality labels should be created
     await expect(page.getByText('X:X', { exact: true })).toHaveCount(2);
 
-    // 3) Reconfiguration: reopen and swap sides (Entidad 1 -> Entidad)
-    await openConfigDialog();
-    await configureSides('Entidad 1', 'Entidad');
+    await expectSavedDiagramState(
+        page,
+        (diagram) => {
+            const relation = diagram.relations.find(
+                (relationItem) => relationItem.name === 'Relación',
+            );
 
-    // After reconfiguration, there should still be two cardinalities (old ones removed and recreated)
+            return {
+                side1Configured: Boolean(relation?.side1?.entity?.idMx),
+                side2Configured: Boolean(relation?.side2?.entity?.idMx),
+            };
+        },
+        {
+            side1Configured: true,
+            side2Configured: true,
+        },
+    );
+
+    await configureSidesCheckingAcceptButton('Entidad 1', 'Entidad');
+
     await expect(page.getByText('X:X', { exact: true })).toHaveCount(2);
+
+    await expectSavedDiagramState(
+        page,
+        (diagram) => {
+            const relation = diagram.relations.find(
+                (relationItem) => relationItem.name === 'Relación',
+            );
+            const entity = diagram.entities.find(
+                (entityItem) => entityItem.name === 'Entidad',
+            );
+            const entity1 = diagram.entities.find(
+                (entityItem) => entityItem.name === 'Entidad 1',
+            );
+
+            return {
+                side1IsEntity1:
+                    relation?.side1?.entity?.idMx === entity1?.idMx,
+                side2IsEntity:
+                    relation?.side2?.entity?.idMx === entity?.idMx,
+            };
+        },
+        {
+            side1IsEntity1: true,
+            side2IsEntity: true,
+        },
+    );
 });
