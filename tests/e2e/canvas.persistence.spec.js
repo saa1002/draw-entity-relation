@@ -3,13 +3,23 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import {
+    addEntity,
+    addRelation,
+    configureRelationSides,
+    expectSavedDiagramState,
+    getSavedDiagram,
+} from '../helpers/canvas';
+
 async function exportCurrentDiagram(page) {
     const downloadPromise = page.waitForEvent('download');
 
     await page.getByRole('button', { name: 'Exportar JSON' }).click();
 
     const dialog = page.getByRole('dialog');
-    await expect(dialog.getByText('Exportación diagrama en JSON')).toBeVisible();
+    await expect(
+        dialog.getByText('Exportación diagrama en JSON'),
+    ).toBeVisible();
 
     await dialog.getByRole('button', { name: 'Aceptar' }).click();
 
@@ -38,7 +48,9 @@ async function importDiagram(page, diagram) {
     await page.getByRole('button', { name: 'Importar JSON' }).click();
 
     const dialog = page.getByRole('dialog');
-    await expect(dialog.getByText('Importación de diagrama desde JSON')).toBeVisible();
+    await expect(
+        dialog.getByText('Importación de diagrama desde JSON'),
+    ).toBeVisible();
 
     const input = dialog.locator('input[type="file"]');
 
@@ -48,49 +60,61 @@ async function importDiagram(page, diagram) {
         buffer: Buffer.from(JSON.stringify(diagram), 'utf8'),
     });
 
-    // Si este toast da problemas por timing, puede eliminarse
-    await expect(page.getByText('Diagrama importado con éxito.')).toBeVisible();
+    await expect(
+        page.getByText('Diagrama importado con éxito.').last(),
+    ).toBeVisible();
 }
 
 test('relation configuration persists after accept and survives reload', async ({ page }) => {
     await page.goto('/');
 
-    const canvas = page.locator('svg');
-    const entidadIcono = page.locator('img[src="images/rectangle.png"]');
-    const relacionIcono = page.locator('img[src="images/rhombus.png"]');
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 420, y: 180 });
+    await addRelation(page, 'Relación', { x: 300, y: 320 });
 
-    // 1) Create 2 entities + 1 relationship
-    await entidadIcono.dragTo(canvas);
-    await entidadIcono.dragTo(canvas);
-    await relacionIcono.dragTo(canvas);
+    await configureRelationSides(page, 'Relación', 'Entidad', 'Entidad 1');
 
-    // 2) Open relation configuration modal
-    await page.getByText('Relación', { exact: true }).click();
-    await page.getByRole('button', { name: 'Configurar relación' }).click();
-
-    const dialog = page.getByRole('dialog');
-    await expect(dialog.getByText('Configurar relación')).toBeVisible();
-
-    // 3) Configure both sides and accept (use the same pattern as the working Issue 8 test)
-    await dialog.locator('#side1').click();
-    await page.getByRole('option', { name: 'Entidad', exact: true }).click();
-
-    await dialog.locator('#side2').click();
-    await page.getByRole('option', { name: 'Entidad 1', exact: true }).click();
-
-    const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
-    await expect(acceptBtn).toBeEnabled();
-    await acceptBtn.click();
-    await expect(dialog).toBeHidden();
-
-    // Sanity check before reload: two cardinality labels exist
     await expect(page.getByText('X:X', { exact: true })).toHaveCount(2);
 
-    // 4) Reload immediately (no moving elements)
+    await expectSavedDiagramState(
+        page,
+        (diagram) => {
+            const relation = diagram.relations.find(
+                (relationItem) => relationItem.name === 'Relación',
+            );
+
+            return {
+                side1Configured: Boolean(relation?.side1?.entity?.idMx),
+                side2Configured: Boolean(relation?.side2?.entity?.idMx),
+            };
+        },
+        {
+            side1Configured: true,
+            side2Configured: true,
+        },
+    );
+
     await page.reload();
 
-    // 5) After reload, configuration must still exist
     await expect(page.getByText('X:X', { exact: true })).toHaveCount(2);
+
+    await expectSavedDiagramState(
+        page,
+        (diagram) => {
+            const relation = diagram.relations.find(
+                (relationItem) => relationItem.name === 'Relación',
+            );
+
+            return {
+                side1Configured: Boolean(relation?.side1?.entity?.idMx),
+                side2Configured: Boolean(relation?.side2?.entity?.idMx),
+            };
+        },
+        {
+            side1Configured: true,
+            side2Configured: true,
+        },
+    );
 });
 
 test('reload preserves explicit attribute edge ids', async ({ page }) => {
@@ -133,16 +157,17 @@ test('reload preserves explicit attribute edge ids', async ({ page }) => {
     // Seed a persisted diagram whose attribute-edge ids are explicit and non-arithmetic.
     // The editor must preserve them after recreate + sync.
     await page.addInitScript((initialDiagram) => {
-        window.localStorage.setItem('diagramData', JSON.stringify(initialDiagram));
+        window.localStorage.setItem(
+            'diagramData',
+            JSON.stringify(initialDiagram),
+        );
     }, diagram);
 
     await page.goto('/');
 
     await expect(page.locator('.mxgraph-drawing-container')).toBeVisible();
 
-    const persisted = await page.evaluate(() =>
-        JSON.parse(window.localStorage.getItem('diagramData') || '{}'),
-    );
+    const persisted = await getSavedDiagram(page);
 
     expect(
         persisted.entities[0].attributes.map((attr) => attr.cell[1]),
@@ -230,7 +255,10 @@ test('export/import round-trip preserves diagram structure', async ({ page }) =>
     };
 
     await page.addInitScript((initialDiagram) => {
-        window.localStorage.setItem('diagramData', JSON.stringify(initialDiagram));
+        window.localStorage.setItem(
+            'diagramData',
+            JSON.stringify(initialDiagram),
+        );
     }, diagram);
 
     await page.goto('/');
