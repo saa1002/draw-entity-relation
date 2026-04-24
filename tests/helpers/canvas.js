@@ -1,30 +1,90 @@
 import { expect } from '@playwright/test';
 
-export async function getPersistedDiagram(page) {
-    return page.evaluate(() =>
-        JSON.parse(
+export async function getSavedDiagram(page) {
+    return page.evaluate(() => {
+        const savedDiagram = JSON.parse(
             window.localStorage.getItem('diagramData') ||
                 '{"entities":[],"relations":[]}',
-        ),
-    );
+        );
+        
+        return {
+            ...savedDiagram,
+            entities: savedDiagram.entities || [],
+            relations: savedDiagram.relations || [],
+        };
+    });
 }
 
-export async function getPersistedEntity(page, entityName = 'Entidad') {
-    return page.evaluate((name) => {
-        const diagram = JSON.parse(
-            window.localStorage.getItem('diagramData') || '{"entities":[]}');
+export async function getSavedEntity(page, entityName = 'Entidad') {
+    const diagram = await getSavedDiagram(page);
 
-        return diagram.entities.find((entity) => entity.name === name);
-    }, entityName);
+    return diagram.entities.find((entity) => entity.name === entityName);
 }
 
-export async function getPersistedRelation(page, relationName = 'Relación') {
-    return page.evaluate((name) => {
-        const diagram = JSON.parse(
-            window.localStorage.getItem('diagramData') || '{"relations":[]}');
+export async function getSavedRelation(page, relationName = 'Relación') {
+    const diagram = await getSavedDiagram(page);
 
-        return diagram.relations.find((relation) => relation.name === name);
-    }, relationName);
+    return diagram.relations.find((relation) => relation.name === relationName);
+}
+
+export async function expectSavedEntityToExist(page, entityName = 'Entidad') {
+    await expect
+        .poll(async () => Boolean(await getSavedEntity(page, entityName)))
+        .toBe(true);
+}
+
+export async function expectSavedRelationToExist(
+    page,
+    relationName = 'Relación',
+) {
+    await expect
+        .poll(async () => Boolean(await getSavedRelation(page, relationName)))
+        .toBe(true);
+}
+
+export async function expectSavedEntityToMatch(
+    page,
+    entityName = 'Entidad',
+    expected,
+) {
+    await expect
+        .poll(async () => getSavedEntity(page, entityName))
+        .toMatchObject(expected);
+}
+
+export async function expectSavedRelationToMatch(
+    page,
+    relationName = 'Relación',
+    expected,
+) {
+    await expect
+        .poll(async () => getSavedRelation(page, relationName))
+        .toMatchObject(expected);
+}
+
+export async function expectSavedEntityAttributeToMatch(
+    page,
+    entityName,
+    attributeIndex,
+    expected,
+) {
+    await expect
+        .poll(async () => {
+            const entity = await getSavedEntity(page, entityName);
+
+            return entity?.attributes?.[attributeIndex];
+        })
+        .toMatchObject(expected);
+}
+
+export async function expectSavedDiagramState(page, getState, expectedState) {
+    await expect
+        .poll(async () => {
+            const diagram = await getSavedDiagram(page);
+
+            return getState(diagram);
+        })
+        .toEqual(expectedState);
 }
 
 export async function deselectCanvas(page) {
@@ -42,9 +102,7 @@ export async function addEntity(
         targetPosition: position,
     });
 
-    await expect
-        .poll(async () => Boolean(await getPersistedEntity(page, name)))
-        .toBe(true);
+    await expectSavedEntityToExist(page, name);
 
     await deselectCanvas(page);
 }
@@ -60,9 +118,7 @@ export async function addRelation(
         targetPosition: position,
     });
 
-    await expect
-        .poll(async () => Boolean(await getPersistedRelation(page, name)))
-        .toBe(true);
+    await expectSavedRelationToExist(page, name);
 
     await deselectCanvas(page);
 }
@@ -75,7 +131,7 @@ export async function selectRelation(page, relationName) {
     await page.getByText(relationName, { exact: true }).click();
 }
 
-export async function markEntityAsWeak(page, entityName) {
+export async function markEntityAsWeak(page, entityName = 'Entidad') {
     await selectEntity(page, entityName);
 
     await page
@@ -83,6 +139,18 @@ export async function markEntityAsWeak(page, entityName) {
         .click();
 
     await expect(page.getByText('Entidad marcada como débil')).toBeVisible();
+}
+
+export async function unmarkSelectedWeakEntity(page) {
+    await page.getByRole('button', { name: 'Quitar entidad débil' }).click();
+
+    await expect(page.getByText('Entidad marcada como fuerte')).toBeVisible();
+}
+
+export async function addAttributeToSelectedEntity(page) {
+    await page.getByRole('button', { name: 'Añadir atributo' }).click();
+
+    await expect(page.getByText('Atributo insertado')).toBeVisible();
 }
 
 export async function configureRelationSides(

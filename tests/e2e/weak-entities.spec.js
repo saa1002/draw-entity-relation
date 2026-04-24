@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
-
-async function getPersistedEntity(page, entityName = 'Entidad') {
-    return page.evaluate((name) => {
-        const diagram = JSON.parse(
-            window.localStorage.getItem('diagramData') || '{"entities":[]}',
-        );
-
-        return diagram.entities.find((entity) => entity.name === name);
-    }, entityName);
-}
+import {
+    addEntity,
+    addRelation,
+    configureRelationSides,
+    getPersistedDiagram,
+    getPersistedEntity,
+    markEntityAsWeak,
+    markSelectedRelationAsIdentifying,
+    selectEntity,
+} from '../helpers/canvas';
 
 test('mark and unmark an entity as weak', async ({ page }) => {
     await page.goto('/');
