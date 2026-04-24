@@ -77,6 +77,21 @@ export async function expectSavedEntityAttributeToMatch(
         .toMatchObject(expected);
 }
 
+export async function expectSavedRelationAttributeToMatch(
+    page,
+    relationName,
+    attributeIndex,
+    expected,
+) {
+    await expect
+        .poll(async () => {
+            const relation = await getSavedRelation(page, relationName);
+
+            return relation?.attributes?.[attributeIndex];
+        })
+        .toMatchObject(expected);
+}
+
 export async function expectSavedDiagramState(page, getState, expectedState) {
     await expect
         .poll(async () => {
@@ -147,10 +162,14 @@ export async function unmarkSelectedWeakEntity(page) {
     await expect(page.getByText('Entidad marcada como fuerte')).toBeVisible();
 }
 
-export async function addAttributeToSelectedEntity(page) {
+export async function addAttributeToSelectedElement(page) {
     await page.getByRole('button', { name: 'Añadir atributo' }).click();
 
     await expect(page.getByText('Atributo insertado')).toBeVisible();
+}
+
+export async function addAttributeToSelectedEntity(page) {
+    await addAttributeToSelectedElement(page);
 }
 
 export async function openRelationConfigDialog(

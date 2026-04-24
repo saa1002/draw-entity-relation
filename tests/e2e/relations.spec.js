@@ -1,13 +1,16 @@
 import { test, expect } from '@playwright/test';
 
 import {
+    addAttributeToSelectedElement,
     addEntity,
     addRelation,
     configureRelationCardinalities,
     configureRelationSides,
     expectSavedDiagramState,
+    expectSavedRelationAttributeToMatch,
     expectSavedRelationToMatch,
     openRelationConfigDialog,
+    selectRelation,
     selectRelationSide,
 } from '../helpers/canvas';
 
@@ -110,5 +113,38 @@ test('configure cardinalities for a configured relationship', async ({ page }) =
             cardinality: '0:1',
         },
         canHoldAttributes: false,
+    });
+});
+
+test('allow attributes on many-to-many relationships', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 420, y: 180 });
+    await addRelation(page, 'Relación', { x: 300, y: 320 });
+
+    await configureRelationSides(page, 'Relación', 'Entidad', 'Entidad 1');
+    await configureRelationCardinalities(page, 'Relación', '0:N', '1:N');
+
+    await expectSavedRelationToMatch(page, 'Relación', {
+        side1: {
+            cardinality: '0:N',
+        },
+        side2: {
+            cardinality: '1:N',
+        },
+        canHoldAttributes: true,
+    });
+
+    await selectRelation(page, 'Relación');
+
+    await expect(
+        page.getByRole('button', { name: 'Añadir atributo' }),
+    ).toBeVisible();
+
+    await addAttributeToSelectedElement(page);
+
+    await expectSavedRelationAttributeToMatch(page, 'Relación', 0, {
+        name: 'Atributo',
     });
 });
