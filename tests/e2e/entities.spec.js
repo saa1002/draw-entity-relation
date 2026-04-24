@@ -1,15 +1,27 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
-test('add entities to the canvas and change name', async ({ page }) => {
+import {
+    addEntity,
+    expectSavedEntityToMatch,
+    renameElement,
+} from '../helpers/canvas';
+
+test('add an entity to the canvas and rename it', async ({ page }) => {
     await page.goto('/');
 
-    const canvas = page.locator("svg")
-    await page.getByRole('img').first().dragTo(canvas);
+    await addEntity(page);
 
-    await canvas.click();
+    await expect(page.getByText('Entidad', { exact: true })).toBeVisible();
 
-    await page.getByText('Entidad').first().dblclick();
-    await page.keyboard.type('Clientes');
+    await expectSavedEntityToMatch(page, 'Entidad', {
+        name: 'Entidad',
+    });
 
-    await canvas.click();
+    await renameElement(page, 'Entidad', 'Clientes');
+
+    await expect(page.getByText('Clientes', { exact: true })).toBeVisible();
+
+    await expectSavedEntityToMatch(page, 'Clientes', {
+        name: 'Clientes',
+    });
 });
