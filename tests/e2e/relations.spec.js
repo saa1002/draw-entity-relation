@@ -3,7 +3,10 @@ import { test, expect } from '@playwright/test';
 import {
     addEntity,
     addRelation,
+    configureRelationCardinalities,
+    configureRelationSides,
     expectSavedDiagramState,
+    expectSavedRelationToMatch,
     openRelationConfigDialog,
     selectRelationSide,
 } from '../helpers/canvas';
@@ -84,4 +87,28 @@ test('reconfigure relationship: Accept disabled/enabled in both configurations',
             side2IsEntity: true,
         },
     );
+});
+
+test('configure cardinalities for a configured relationship', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 420, y: 180 });
+    await addRelation(page, 'Relación', { x: 300, y: 320 });
+
+    await configureRelationSides(page, 'Relación', 'Entidad', 'Entidad 1');
+    await configureRelationCardinalities(page, 'Relación', '1:N', '0:1');
+
+    await expect(page.getByText('1:N', { exact: true })).toBeVisible();
+    await expect(page.getByText('0:1', { exact: true })).toBeVisible();
+
+    await expectSavedRelationToMatch(page, 'Relación', {
+        side1: {
+            cardinality: '1:N',
+        },
+        side2: {
+            cardinality: '0:1',
+        },
+        canHoldAttributes: false,
+    });
 });

@@ -190,6 +190,60 @@ export async function configureRelationSides(
     await expect(dialog).toBeHidden();
 }
 
+export async function openRelationCardinalitiesDialog(
+    page,
+    relationName = 'Relación',
+) {
+    await selectRelation(page, relationName);
+    await page
+        .getByRole('button', { name: 'Configurar cardinalidades' })
+        .click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(dialog.getByText('Configurar cardinalidades')).toBeVisible();
+
+    return dialog;
+}
+
+export async function selectRelationCardinality(
+    page,
+    dialog,
+    sideId,
+    cardinality,
+) {
+    await dialog.locator(`#${sideId}`).click();
+    await page.getByRole('option', { name: cardinality, exact: true }).click();
+}
+
+export async function configureRelationCardinalities(
+    page,
+    relationName,
+    side1Cardinality,
+    side2Cardinality,
+) {
+    const dialog = await openRelationCardinalitiesDialog(page, relationName);
+
+    await selectRelationCardinality(
+        page,
+        dialog,
+        'side1-to-side2',
+        side1Cardinality,
+    );
+    await selectRelationCardinality(
+        page,
+        dialog,
+        'side2-to-side1',
+        side2Cardinality,
+    );
+
+    const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
+    await expect(acceptBtn).toBeEnabled();
+
+    await acceptBtn.click();
+    await expect(dialog).toBeHidden();
+}
+
 export async function markSelectedRelationAsIdentifying(page) {
     await page
         .getByRole('button', {
