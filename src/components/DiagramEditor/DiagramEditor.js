@@ -1301,6 +1301,43 @@ export default function App(props) {
         }
     };
 
+    const onCellsResized = (evt) => {
+        const cells = evt.getProperty("cells") || [];
+
+        cells.forEach((cell) => {
+            if (
+                cell?.style?.includes("shape=rectangle") &&
+                !isWeakEntityDecoratorCell(cell)
+            ) {
+                const entityData = diagramRef.current.entities.find(
+                    (entity) => entity.idMx === cell.id,
+                );
+
+                if (entityData?.weak) {
+                    syncWeakEntityDecorator(cell);
+                }
+
+                if (entityData?.identifyingRelationId) {
+                    const relationData = diagramRef.current.relations.find(
+                        (relation) =>
+                            relation.idMx === entityData.identifyingRelationId,
+                    );
+                    const relationCell = accessCell(relationData?.idMx);
+
+                    if (relationData && relationCell) {
+                        syncIdentifyingRelationEdgeDecorator(
+                            relationCell,
+                            relationData,
+                        );
+                    }
+                }
+            }
+        });
+
+        refreshGraph();
+        updateDiagramData();
+    };
+
     const onCellsMoved = (_evt) => {
         if (selected) {
             if (
@@ -1324,17 +1361,24 @@ export default function App(props) {
     React.useEffect(() => {
         if (graph) {
             // Define the listener as a function to refer it for removal
-            const handleCellsMoved = (evt) => {
+            const handleCellsMoved = (_sender, evt) => {
                 onCellsMoved(evt);
             };
+
+            const handleCellsResized = (_sender, evt) => {
+                onCellsResized(evt);
+            };
+
             // Add the listener
             graph.addListener(mxEvent.CELLS_MOVED, handleCellsMoved);
+            graph.addListener(mxEvent.CELLS_RESIZED, handleCellsResized);
 
             updateDiagramData();
 
             // Cleanup function to remove the listener
             return () => {
-                graph.removeListener(handleCellsMoved, mxEvent.CELLS_MOVED);
+                graph.removeListener(handleCellsMoved);
+                graph.removeListener(handleCellsResized);
             };
         }
     }, [graph, selected, diagramRef, refreshDiagram]);
