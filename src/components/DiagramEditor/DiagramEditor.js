@@ -2406,6 +2406,15 @@ export default function App(props) {
             const isConfigured =
                 selectedDiag?.side1.idMx !== "" &&
                 selectedDiag?.side2.idMx !== "";
+
+            const side1EntityName =
+                accessCell(selectedDiag?.side1?.entity?.idMx)?.value ??
+                "Lado 1";
+
+            const side2EntityName =
+                accessCell(selectedDiag?.side2?.entity?.idMx)?.value ??
+                "Lado 2";
+
             return (
                 <>
                     <button
@@ -2440,22 +2449,12 @@ export default function App(props) {
                                 <Box sx={{ minWidth: 120 }}>
                                     <FormControl fullWidth>
                                         <InputLabel id="side1-to-side2-label">
-                                            {`${
-                                                accessCell(
-                                                    selectedDiag?.side1?.entity
-                                                        ?.idMx,
-                                                )?.value
-                                            } - ${
-                                                accessCell(
-                                                    selectedDiag?.side2?.entity
-                                                        ?.idMx,
-                                                )?.value
-                                            }`}
+                                            {side1EntityName}
                                         </InputLabel>
                                         <Select
                                             id="side1-to-side2"
                                             value={side1}
-                                            label="Cardinalidad 1"
+                                            label={side1EntityName}
                                             onChange={handleChangeSide1}
                                             disabled={
                                                 selectedDiag?.isIdentifying &&
@@ -2477,22 +2476,12 @@ export default function App(props) {
                                     <Box sx={{ minHeight: 10 }} />
                                     <FormControl fullWidth>
                                         <InputLabel id="side2-to-side1-label">
-                                            {`${
-                                                accessCell(
-                                                    selectedDiag?.side2?.entity
-                                                        ?.idMx,
-                                                )?.value
-                                            } - ${
-                                                accessCell(
-                                                    selectedDiag?.side1?.entity
-                                                        ?.idMx,
-                                                )?.value
-                                            }`}
+                                            {side2EntityName}
                                         </InputLabel>
                                         <Select
                                             id="side2-to-side1"
                                             value={side2}
-                                            label="Cardinalidad 2"
+                                            label={side2EntityName}
                                             onChange={handleChangeSide2}
                                             disabled={
                                                 selectedDiag?.isIdentifying &&
