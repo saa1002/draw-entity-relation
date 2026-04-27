@@ -1766,7 +1766,7 @@ export default function App(props) {
 
             if (!weakEntity || !ownerEntity) {
                 toast.error(
-                    "Una relación identificadora debe conectar exactamente una entidad débil y una fuerte.",
+                    "Una relación de dependencia por identificación debe conectar exactamente una entidad débil y una fuerte.",
                 );
                 return;
             }
@@ -1793,7 +1793,7 @@ export default function App(props) {
                 weakEntity.ownerEntityId = null;
 
                 toast.error(
-                    "No se pudieron aplicar las cardinalidades de la relación identificadora.",
+                    "No se pudieron aplicar las cardinalidades de la relación de dependencia por identificación.",
                 );
                 return;
             }
@@ -2849,23 +2849,23 @@ export default function App(props) {
                     );
                 if (!diagnostics.noWeakEntitiesWithoutIdentifyingRelation)
                     messages.push(
-                        "Hay entidades débiles sin relación identificadora.",
+                        "Hay entidades débiles sin relación de dependencia por identificación.",
                     );
                 if (!diagnostics.noInvalidIdentifyingRelations)
                     messages.push(
-                        "Hay relaciones identificadoras que no conectan exactamente una entidad débil y una fuerte.",
+                        "Hay relaciones de dependencia por identificación que no conectan exactamente una entidad débil y una fuerte.",
                     );
                 if (!diagnostics.noInvalidIdentifyingCardinalities)
                     messages.push(
-                        "Hay relaciones identificadoras con cardinalidades no válidas.",
+                        "Hay relaciones de dependencia por identificación con cardinalidades no válidas.",
                     );
                 if (!diagnostics.noInconsistentWeakEntityOwnership)
                     messages.push(
-                        "Hay entidades débiles con una entidad propietaria inconsistente.",
+                        "Hay entidades débiles cuya entidad fuerte es inconsistente.",
                     );
                 if (!diagnostics.noMultipleIdentifyingRelationsPerWeakEntity)
                     messages.push(
-                        "Hay entidades débiles participando en más de una relación identificadora.",
+                        "Hay entidades débiles participando en más de una relación de dependencia por identificación.",
                     );
                 if (!diagnostics.noAttributesInNonNMRelations)
                     messages.push(
@@ -3007,23 +3007,23 @@ export default function App(props) {
                     );
                 if (!diagnostics.noWeakEntitiesWithoutIdentifyingRelation)
                     messages.push(
-                        "Hay entidades débiles sin relación identificadora.",
+                        "Hay entidades débiles sin relación de dependencia por identificación.",
                     );
                 if (!diagnostics.noInvalidIdentifyingRelations)
                     messages.push(
-                        "Hay relaciones identificadoras que no conectan exactamente una entidad débil y una fuerte.",
+                        "Hay relaciones de dependencia por identificación que no conectan exactamente una entidad débil y una fuerte.",
                     );
                 if (!diagnostics.noInvalidIdentifyingCardinalities)
                     messages.push(
-                        "Hay relaciones identificadoras con cardinalidades no válidas.",
+                        "Hay relaciones de dependencia por identificación con cardinalidades no válidas.",
                     );
                 if (!diagnostics.noInconsistentWeakEntityOwnership)
                     messages.push(
-                        "Hay entidades débiles con una entidad propietaria inconsistente.",
+                        "Hay entidades débiles cuya entidad fuerte es inconsistente.",
                     );
                 if (!diagnostics.noMultipleIdentifyingRelationsPerWeakEntity)
                     messages.push(
-                        "Hay entidades débiles participando en más de una relación identificadora.",
+                        "Hay entidades débiles participando en más de una relación de dependencia por identificación.",
                     );
                 if (!diagnostics.noAttributesInNonNMRelations)
                     messages.push(
@@ -3185,25 +3185,25 @@ export default function App(props) {
                             !diagnostics.noWeakEntitiesWithoutIdentifyingRelation
                         )
                             messages.push(
-                                "Hay entidades débiles sin relación identificadora.",
+                                "Hay entidades débiles sin relación de dependencia por identificación.",
                             );
                         if (!diagnostics.noInvalidIdentifyingRelations)
                             messages.push(
-                                "Hay relaciones identificadoras que no conectan exactamente una entidad débil y una fuerte.",
+                                "Hay relaciones de dependencia por identificación que no conectan exactamente una entidad débil y una fuerte.",
                             );
                         if (!diagnostics.noInvalidIdentifyingCardinalities)
                             messages.push(
-                                "Hay relaciones identificadoras con cardinalidades no válidas.",
+                                "Hay relaciones de dependencia por identificación con cardinalidades no válidas.",
                             );
                         if (!diagnostics.noInconsistentWeakEntityOwnership)
                             messages.push(
-                                "Hay entidades débiles con una entidad propietaria inconsistente.",
+                                "Hay entidades débiles cuya entidad fuerte es inconsistente.",
                             );
                         if (
                             !diagnostics.noMultipleIdentifyingRelationsPerWeakEntity
                         )
                             messages.push(
-                                "Hay entidades débiles participando en más de una relación identificadora.",
+                                "Hay entidades débiles participando en más de una relación de dependencia por identificación.",
                             );
                         if (!diagnostics.noAttributesInNonNMRelations)
                             messages.push(
