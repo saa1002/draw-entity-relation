@@ -1340,6 +1340,44 @@ export default function App(props) {
                     }
                 }
             }
+            if (
+                cell.style.includes("shape=rhombus") &&
+                !isIdentifyingRelationDecoratorCell(cell)
+            ) {
+                const relationData = diagramRef.current.relations.find(
+                    (relation) => relation.idMx === cell.id,
+                );
+
+                if (!relationData) return;
+
+                if (
+                    relationData.side1?.entity?.idMx !== "" &&
+                    relationData.side2?.entity?.idMx !== "" &&
+                    relationData.side1?.entity?.idMx ===
+                        relationData.side2?.entity?.idMx
+                ) {
+                    const target = accessCell(relationData.side1.entity.idMx);
+                    const edge1 = accessCell(relationData.side1.edgeId);
+                    const edge2 = accessCell(relationData.side2.edgeId);
+
+                    if (target && edge1 && edge2) {
+                        const x1 =
+                            target.geometry.x + target.geometry.width / 2;
+                        const x2 = cell.geometry.x + cell.geometry.width / 2;
+                        const y1 =
+                            target.geometry.y + target.geometry.height / 2;
+                        const y2 = cell.geometry.y + cell.geometry.height / 2;
+
+                        edge1.geometry.points = [new mxPoint(x2, y1)];
+                        edge2.geometry.points = [new mxPoint(x1, y2)];
+                    }
+                }
+
+                if (relationData.isIdentifying) {
+                    syncIdentifyingRelationDecorator(cell);
+                    syncIdentifyingRelationEdgeDecorator(cell, relationData);
+                }
+            }
         });
 
         refreshGraph();
