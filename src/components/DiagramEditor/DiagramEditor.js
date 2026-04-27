@@ -1110,6 +1110,13 @@ export default function App(props) {
                 return getUnderlyingInteractiveCell(cell);
             };
 
+            const originalDblClick = graph.dblClick;
+
+            graph.dblClick = function (evt, cell) {
+                const interactiveCell = getUnderlyingInteractiveCell(cell);
+                originalDblClick.call(this, evt, interactiveCell);
+            };
+
             recreateGraphFromLocalStorage();
 
             return () => {
@@ -1120,6 +1127,7 @@ export default function App(props) {
                 graph.getCellForEvent = originalGetCellForEvent;
                 graph.graphHandler.getInitialCellForEvent =
                     originalGetInitialCellForEvent;
+                graph.dblClick = originalDblClick;
             };
         }
     }, [graph, onSelected]);
