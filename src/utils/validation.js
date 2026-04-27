@@ -564,6 +564,10 @@ export function inconsistentWeakEntityOwnership(graph) {
     for (const entity of graph.entities) {
         if (!entity.weak) continue;
 
+        if (!entity.identifyingRelationId) {
+            continue;
+        }
+
         const relation = graph.relations.find(
             (rel) => rel.idMx === entity.identifyingRelationId,
         );
