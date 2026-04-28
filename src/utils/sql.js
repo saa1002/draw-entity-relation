@@ -80,6 +80,41 @@ export function filterTables(graph) {
     return tables;
 }
 
+function getEntityPrimaryKeyColumns(entity, graph) {
+    if (!entity?.weak) {
+        return entity.attributes
+            .filter((attr) => attr.key)
+            .map((attr) => ({
+                name: attr.name,
+                referencedColumn: attr.name,
+            }));
+    }
+
+    const partialKeyColumns = entity.attributes
+        .filter((attr) => attr.partialKey)
+        .map((attr) => ({
+            name: attr.name,
+            referencedColumn: attr.name,
+        }));
+
+    const ownerEntity = graph.entities.find(
+        (candidate) => candidate.idMx === entity.ownerEntityId,
+    );
+
+    const ownerKeyColumns = (ownerEntity?.attributes ?? [])
+        .filter((attr) => attr.key)
+        .map((attr) => {
+            const weakTableColumnName = `${attr.name}_${ownerEntity.name}`;
+
+            return {
+                name: weakTableColumnName,
+                referencedColumn: weakTableColumnName,
+            };
+        });
+
+    return [...partialKeyColumns, ...ownerKeyColumns];
+}
+
 function buildEntityTable(entity) {
     return {
         name: entity.name,
@@ -256,7 +291,7 @@ export function process11Relation(relation) {
     return [tableWithoutForeignKey, tableWithForeignKey];
 }
 
-export function processNMRelation(relation) {
+export function processNMRelation(relation, graph) {
     const { side1, side2, attributes } = relation;
 
     // Extract attributes from both sides
@@ -289,27 +324,28 @@ export function processNMRelation(relation) {
         attributes: side2Attributes,
     };
 
-    // Third table for the relation
-    const primaryKeyAttributeSide1 = side1Entity.attributes.find(
-        (attr) => attr.key,
-    );
-    const primaryKeyAttributeSide2 = side2Entity.attributes.find(
-        (attr) => attr.key,
-    );
+    const side1KeyColumns = getEntityPrimaryKeyColumns(side1Entity, graph);
+    const side2KeyColumns = getEntityPrimaryKeyColumns(side2Entity, graph);
+
+    if (side1KeyColumns.length === 0 || side2KeyColumns.length === 0) {
+        throw new Error(
+            `Cannot process N:M relation "${relation.name}" because one side has no key columns.`,
+        );
+    }
 
     const thirdTableAttributes = [
-        {
-            name: `${primaryKeyAttributeSide1.name}_${relation.name}_1`,
+        ...side1KeyColumns.map((keyColumn) => ({
+            name: `${keyColumn.name}_${relation.name}_1`,
             key: true,
             foreign_key: side1Entity.name,
-            foreign_key_column: primaryKeyAttributeSide1.name,
-        },
-        {
-            name: `${primaryKeyAttributeSide2.name}_${relation.name}_2`,
+            foreign_key_column: keyColumn.referencedColumn,
+        })),
+        ...side2KeyColumns.map((keyColumn) => ({
+            name: `${keyColumn.name}_${relation.name}_2`,
             key: true,
             foreign_key: side2Entity.name,
-            foreign_key_column: primaryKeyAttributeSide2.name,
-        },
+            foreign_key_column: keyColumn.referencedColumn,
+        })),
         ...attributes.map((attr) => ({
             name: attr.name,
             key: false,
@@ -544,7 +580,7 @@ export function generateSQL(graph) {
                 processedTablesArray = process1NRelation(table);
                 break;
             case "N:M":
-                processedTablesArray = processNMRelation(table);
+                processedTablesArray = processNMRelation(table, graph);
                 break;
             default:
                 processedTablesArray = [table];
