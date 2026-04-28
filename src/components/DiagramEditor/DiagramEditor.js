@@ -1670,6 +1670,13 @@ export default function App(props) {
         const { entity, attribute: selectedAttribute } =
             selectedEntityAttribute;
 
+        if (entity.weak) {
+            toast.error(
+                "Una entidad débil no puede tener clave primaria. Usa un atributo discriminante.",
+            );
+            return;
+        }
+
         const shouldSetAsKey = !selectedAttribute.key;
 
         entity.attributes.forEach((attribute) => {
@@ -1973,42 +1980,32 @@ export default function App(props) {
 
     const ToggleAttrKeyButton = () => {
         const isAttribute = selected?.style?.includes("shape=ellipse");
-        let isKey;
-        let isFromRelation = false;
 
-        for (const entity of diagramRef.current.entities) {
-            for (const attribute of entity.attributes) {
-                if (attribute.idMx === selected?.id) {
-                    isKey = attribute.key;
-                    break; // Exit the inner loop once the matching attribute is found
-                }
-            }
-
-            if (isKey !== undefined) {
-                break; // Exit the outer loop once the matching attribute is found
-            }
+        if (!isAttribute) {
+            return;
         }
 
-        for (const relation of diagramRef.current.relations) {
-            for (const attribute of relation.attributes) {
-                if (attribute.idMx === selected?.id) {
-                    isFromRelation = true;
-                    break;
-                }
-            }
+        const selectedEntityAttribute = getSelectedEntityAttributeData();
+
+        if (!selectedEntityAttribute) {
+            return;
         }
 
-        if (isAttribute && !isFromRelation) {
-            return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={toggleAttrKey}
-                >
-                    {isKey ? "Quitar clave" : "Convertir en clave"}
-                </button>
-            );
+        const { entity, attribute } = selectedEntityAttribute;
+
+        if (entity.weak) {
+            return;
         }
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={toggleAttrKey}
+            >
+                {attribute.key ? "Quitar clave" : "Convertir en clave"}
+            </button>
+        );
     };
 
     const TogglePartialKeyButton = () => {

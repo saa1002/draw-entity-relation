@@ -1,10 +1,57 @@
 import { expect } from '@playwright/test';
-import fs from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
+
+async function mockSaveFilePicker(page) {
+    await page.evaluate(() => {
+        window.__E2E_SAVED_FILES__ = window.__E2E_SAVED_FILES__ || [];
+
+        Object.defineProperty(window, 'showSaveFilePicker', {
+            configurable: true,
+            writable: true,
+            value: async (options = {}) => ({
+                async createWritable() {
+                    const chunks = [];
+
+                    return {
+                        async write(data) {
+                            if (data instanceof Blob) {
+                                chunks.push(await data.text());
+                                return;
+                            }
+
+                            if (typeof data === 'string') {
+                                chunks.push(data);
+                                return;
+                            }
+
+                            if (data instanceof ArrayBuffer) {
+                                chunks.push(new TextDecoder().decode(data));
+                                return;
+                            }
+
+                            chunks.push(String(data));
+                        },
+
+                        async close() {
+                            window.__E2E_SAVED_FILES__.push({
+                                fileName:
+                                    options.suggestedName ?? 'diagram.json',
+                                content: chunks.join(''),
+                            });
+                        },
+                    };
+                },
+            }),
+        });
+    });
+}
+
 
 export async function exportCurrentDiagram(page) {
-    const downloadPromise = page.waitForEvent('download');
+    await mockSaveFilePicker(page);
+
+    const previousExportsCount = await page.evaluate(
+        () => window.__E2E_SAVED_FILES__.length,
+    );
 
     await page.getByRole('button', { name: 'Exportar JSON' }).click();
 
@@ -15,16 +62,15 @@ export async function exportCurrentDiagram(page) {
 
     await dialog.getByRole('button', { name: 'Aceptar' }).click();
 
-    const download = await downloadPromise;
-    const savePath = path.join(
-        os.tmpdir(),
-        `diagram-${Date.now()}-${download.suggestedFilename()}`,
+    await page.waitForFunction(
+        (count) => window.__E2E_SAVED_FILES__.length > count,
+        previousExportsCount,
     );
 
-    await download.saveAs(savePath);
-
-    const raw = await fs.readFile(savePath, 'utf8');
-
+    const raw = await page.evaluate(
+        () => window.__E2E_SAVED_FILES__.at(-1).content,
+    );
+    
     return JSON.parse(raw);
 }
 
