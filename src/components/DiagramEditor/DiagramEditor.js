@@ -769,6 +769,50 @@ export default function App(props) {
         return null;
     };
 
+    const syncAttributeSemanticRepresentation = (attribute) => {
+        const attributeCell = accessCell(attribute.idMx);
+
+        if (!attributeCell) return;
+
+        graph
+            .getModel()
+            .setStyle(attributeCell, getAttributeStyleString(attribute));
+
+        if (attribute.partialKey) {
+            ensureDiscriminantUnderline(attributeCell);
+        } else {
+            removeDiscriminantUnderline(attribute.idMx);
+        }
+    };
+
+    const convertEntityPrimaryKeyToPartialKey = (entity) => {
+        const discriminantCandidate =
+            entity.attributes.find((attribute) => attribute.key) ??
+            entity.attributes.find((attribute) => attribute.partialKey) ??
+            null;
+
+        entity.attributes.forEach((attribute) => {
+            attribute.key = false;
+            attribute.partialKey =
+                discriminantCandidate?.idMx === attribute.idMx;
+
+            syncAttributeSemanticRepresentation(attribute);
+        });
+    };
+
+    const convertEntityPartialKeyToPrimaryKey = (entity) => {
+        const primaryKeyCandidate =
+            entity.attributes.find((attribute) => attribute.partialKey) ??
+            entity.attributes.find((attribute) => attribute.key) ??
+            null;
+
+        entity.attributes.forEach((attribute) => {
+            attribute.partialKey = false;
+            attribute.key = primaryKeyCandidate?.idMx === attribute.idMx;
+
+            syncAttributeSemanticRepresentation(attribute);
+        });
+    };
     const recreateGraphFromLocalStorage = () => {
         const recreateAttribute = (attribute, source) => {
             let target;
@@ -1677,13 +1721,17 @@ export default function App(props) {
         const entity = getSelectedEntityData();
         if (!entity) return;
 
-        entity.weak = !entity.weak;
+        const shouldBecomeWeak = !entity.weak;
 
-        if (entity.weak) {
+        entity.weak = shouldBecomeWeak;
+
+        if (shouldBecomeWeak) {
+            convertEntityPrimaryKeyToPartialKey(entity);
             ensureWeakEntityDecorator(selected, entity);
             toast.success("Entidad marcada como débil");
         } else {
             clearIdentifyingRelationSemantics(entity.identifyingRelationId);
+            convertEntityPartialKeyToPrimaryKey(entity);
             removeWeakEntityDecorator(entity.idMx);
             toast.success("Entidad marcada como fuerte");
         }
