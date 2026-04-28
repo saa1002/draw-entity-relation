@@ -2789,6 +2789,40 @@ export default function App(props) {
         }
     };
 
+    const saveFileWithPicker = async ({
+        content,
+        fileName,
+        mimeType,
+        pickerTypes,
+    }) => {
+        if (!window.showSaveFilePicker) {
+            toast.error(
+                "Tu navegador no permite elegir dónde guardar el archivo.",
+            );
+            return;
+        }
+
+        try {
+            const fileHandle = await window.showSaveFilePicker({
+                suggestedName: fileName,
+                types: pickerTypes,
+            });
+
+            const writable = await fileHandle.createWritable();
+            await writable.write(new Blob([content], { type: mimeType }));
+            await writable.close();
+
+            toast.success("Archivo guardado correctamente.");
+        } catch (error) {
+            if (error?.name === "AbortError") {
+                toast("Guardado cancelado.");
+                return;
+            }
+
+            toast.error("No se pudo guardar el archivo.");
+        }
+    };
+
     const GenerateSQLButton = () => {
         const [open, setOpen] = React.useState(false);
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
@@ -2883,30 +2917,24 @@ export default function App(props) {
             setOpen(false);
         };
 
-        const handleAccept = () => {
+        const handleAccept = async () => {
             setOpen(false);
+
             const sqlScript = generateSQL(diagramRef.current);
 
-            // Create a blob with the SQL script
-            const blob = new Blob([sqlScript], { type: "text/plain" });
-
-            // Create a link element
-            const link = document.createElement("a");
-
-            // Set the download attribute with a filename
-            link.download = "tables.sql";
-
-            // Create a URL for the blob and set it as the href attribute
-            link.href = window.URL.createObjectURL(blob);
-
-            // Append the link to the body
-            document.body.appendChild(link);
-
-            // Programmatically click the link to trigger the download
-            link.click();
-
-            // Remove the link from the document
-            document.body.removeChild(link);
+            await saveFileWithPicker({
+                content: sqlScript,
+                fileName: "tables.sql",
+                mimeType: "text/plain;charset=utf-8",
+                pickerTypes: [
+                    {
+                        description: "SQL file",
+                        accept: {
+                            "text/plain": [".sql"],
+                        },
+                    },
+                ],
+            });
         };
 
         return (
@@ -3041,30 +3069,24 @@ export default function App(props) {
             setOpen(false);
         };
 
-        const handleAccept = () => {
+        const handleAccept = async () => {
             setOpen(false);
-            const jsonString = JSON.stringify(diagramRef.current);
 
-            // Create a blob with the JSON string
-            const blob = new Blob([jsonString], { type: "application/json" });
+            const jsonString = JSON.stringify(diagramRef.current, null, 2);
 
-            // Create a link element
-            const link = document.createElement("a");
-
-            // Set the download attribute with a filename
-            link.download = "diagram.json";
-
-            // Create a URL for the blob and set it as the href attribute
-            link.href = window.URL.createObjectURL(blob);
-
-            // Append the link to the body
-            document.body.appendChild(link);
-
-            // Programmatically click the link to trigger the download
-            link.click();
-
-            // Remove the link from the document
-            document.body.removeChild(link);
+            await saveFileWithPicker({
+                content: jsonString,
+                fileName: "diagram.json",
+                mimeType: "application/json;charset=utf-8",
+                pickerTypes: [
+                    {
+                        description: "JSON file",
+                        accept: {
+                            "application/json": [".json"],
+                        },
+                    },
+                ],
+            });
         };
 
         return (
