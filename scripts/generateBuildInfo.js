@@ -1,10 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-const buildDate = new Date()
-  .toISOString()
-  .replace("T", " ")
-  .replace(/\.\d{3}Z$/, " UTC");
+const buildDate = new Date().toLocaleString("es-ES", {
+  timeZone: "Europe/Madrid",
+});
 
 const output = `export const BUILD_DATE = "${buildDate}";
 `;
