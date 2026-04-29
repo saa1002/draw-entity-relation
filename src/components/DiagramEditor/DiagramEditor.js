@@ -2442,12 +2442,7 @@ export default function App(props) {
 
         const getAllowedCardinalitiesForSide = (sideKey) => {
             if (!selectedDiag?.isIdentifying) {
-                const oppositeValue = sideKey === "side1" ? side2 : side1;
-
-                return POSSIBLE_CARDINALITIES.filter(
-                    (cardinality) =>
-                        cardinality !== "1:1" || oppositeValue !== "1:1",
-                );
+                return POSSIBLE_CARDINALITIES;
             }
 
             const isWeakSide = sideKey === "side1" ? side1IsWeak : side2IsWeak;

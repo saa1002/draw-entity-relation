@@ -110,12 +110,32 @@ test('toggle discriminant on an entity attribute', async ({ page }) => {
         partialKey: false,
     });
 
-    await page.getByText('Atributo', { exact: true }).click();
+    // Convert the entity into a weak entity.
+    // The previous primary key should become the discriminator.
+    await selectEntity(page, 'Entidad');
 
-    await page.getByRole('button', { name: 'Quitar clave' }).click();
+    await page
+        .getByRole('button', { name: 'Marcar como entidad débil' })
+        .click();
 
     await expect(
-        page.getByText('Clave eliminada del atributo').last(),
+        page.getByText('Entidad marcada como débil').last(),
+    ).toBeVisible();
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+        name: 'Atributo',
+        key: false,
+        partialKey: true,
+    });
+
+    await page.getByText('Atributo', { exact: true }).click();
+
+    await page
+        .getByRole('button', { name: 'Quitar discriminante' })
+        .click();
+
+    await expect(
+        page.getByText('Discriminante eliminado').last(),
     ).toBeVisible();
 
     await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
@@ -136,15 +156,5 @@ test('toggle discriminant on an entity attribute', async ({ page }) => {
         name: 'Atributo',
         key: false,
         partialKey: true,
-    });
-
-    await page.getByRole('button', { name: 'Quitar discriminante' }).click();
-
-    await expect(page.getByText('Discriminante eliminado').last()).toBeVisible();
-
-    await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
-        name: 'Atributo',
-        key: false,
-        partialKey: false,
     });
 });
