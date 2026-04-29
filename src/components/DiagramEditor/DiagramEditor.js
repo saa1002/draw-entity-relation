@@ -1757,6 +1757,14 @@ export default function App(props) {
 
         const { entity, attribute: selectedAttribute } =
             selectedEntityAttribute;
+
+        if (!entity.weak) {
+            toast.error(
+                "Solo las entidades débiles pueden tener atributo discriminante.",
+            );
+            return;
+        }
+
         const shouldSetAsPartialKey = !selectedAttribute.partialKey;
 
         entity.attributes.forEach((attribute) => {
@@ -2016,7 +2024,11 @@ export default function App(props) {
             return;
         }
 
-        const { attribute } = selectedEntityAttribute;
+        const { entity, attribute } = selectedEntityAttribute;
+
+        if (!entity.weak) {
+            return;
+        }
 
         if (attribute.key) {
             return;
