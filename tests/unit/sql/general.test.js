@@ -50,7 +50,9 @@ describe("SQL generation", () => {
     test("should generate SQL for a 1:N relation", () => {
         const sql = generateSQL(oneNGraph)
         const expectedSQL = 
-`CREATE TABLE Entidad (
+`DROP TABLE IF EXISTS Entidad, Entidad_1 CASCADE;
+
+CREATE TABLE Entidad (
   Atributo VARCHAR(40) PRIMARY KEY
 );
 
@@ -68,7 +70,9 @@ ALTER TABLE Entidad_1 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_
         oneOneGraph.relations.at(0).side1.cardinality = "0:1"
         const sql = generateSQL(oneOneGraph)
         const expectedSQL = 
-`CREATE TABLE Entidad_1 (
+`DROP TABLE IF EXISTS Entidad_1, Entidad CASCADE;
+
+CREATE TABLE Entidad_1 (
   Atributo VARCHAR(40) PRIMARY KEY
 );
 
@@ -85,7 +89,9 @@ ALTER TABLE Entidad ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Re
     test("should generate SQL for an N:M relation", () => {
         const sql = generateSQL(nMGraph)
         const expectedSQL = 
-`CREATE TABLE Entidad (
+`DROP TABLE IF EXISTS Entidad, Entidad_1, Relacion CASCADE;
+
+CREATE TABLE Entidad (
   Atributo VARCHAR(40) PRIMARY KEY
 );
 
@@ -111,7 +117,8 @@ ALTER TABLE Relacion ADD CONSTRAINT FK_Atributo_Relacion_2 FOREIGN KEY (Atributo
         const sql = generateSQL(oneNGraphAndEntity)
 
         const expectedSQL = 
-`
+`DROP TABLE IF EXISTS Entidad_1, Entidad_2, Entidad CASCADE;
+
 CREATE TABLE Entidad_1 (
   Atributo VARCHAR(40) PRIMARY KEY
 );

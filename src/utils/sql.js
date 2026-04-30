@@ -127,6 +127,28 @@ function buildEntityTable(entity) {
     };
 }
 
+function buildRelationForeignKeyAttributes({
+    keyColumns,
+    entity,
+    relationName,
+    suffix,
+}) {
+    const foreignKeyGroup = `${relationName}_${entity.idMx}_${suffix}`;
+
+    const constraintName = `${keyColumns
+        .map((keyColumn) => keyColumn.referencedColumn)
+        .join("_")}_${relationName}_${suffix}`;
+
+    return keyColumns.map((keyColumn) => ({
+        name: `${keyColumn.name}_${relationName}_${suffix}`,
+        key: true,
+        foreign_key: entity.name,
+        foreign_key_column: keyColumn.referencedColumn,
+        foreign_key_group: foreignKeyGroup,
+        foreign_key_constraint: constraintName,
+    }));
+}
+
 export function process1NRelation(relation) {
     const { side1, side2 } = relation;
 
@@ -334,18 +356,18 @@ export function processNMRelation(relation, graph) {
     }
 
     const thirdTableAttributes = [
-        ...side1KeyColumns.map((keyColumn) => ({
-            name: `${keyColumn.name}_${relation.name}_1`,
-            key: true,
-            foreign_key: side1Entity.name,
-            foreign_key_column: keyColumn.referencedColumn,
-        })),
-        ...side2KeyColumns.map((keyColumn) => ({
-            name: `${keyColumn.name}_${relation.name}_2`,
-            key: true,
-            foreign_key: side2Entity.name,
-            foreign_key_column: keyColumn.referencedColumn,
-        })),
+        ...buildRelationForeignKeyAttributes({
+            keyColumns: side1KeyColumns,
+            entity: side1Entity,
+            relationName: relation.name,
+            suffix: "1",
+        }),
+        ...buildRelationForeignKeyAttributes({
+            keyColumns: side2KeyColumns,
+            entity: side2Entity,
+            relationName: relation.name,
+            suffix: "2",
+        }),
         ...attributes.map((attr) => ({
             name: attr.name,
             key: false,
@@ -379,6 +401,16 @@ export const normalizeIdentifier = (name) => {
         .replace(/\s+/g, "_");
 };
 
+const createDropTablesSQL = (tables) => {
+    const tableNames = [...new Set([...tables].map((table) => table.name))];
+
+    if (tableNames.length === 0) {
+        return "";
+    }
+
+    return `DROP TABLE IF EXISTS ${tableNames.join(", ")} CASCADE;`;
+};
+
 const createTableSQL = (table) => {
     const primaryKeyAttributes = table.attributes.filter((attr) => attr.key);
     const primaryKeyColumns = primaryKeyAttributes.map((attr) =>
@@ -410,25 +442,50 @@ const createTableSQL = (table) => {
 };
 
 const createForeignKeySQL = (table) => {
-    const foreignKeys = table.attributes
-        .filter((attr) => attr.foreign_key)
-        .map((attr) => {
-            const referencedTable = normalizeIdentifier(attr.foreign_key);
-            const referencedColumn = attr.foreign_key_column
-                ? `(${normalizeIdentifier(attr.foreign_key_column)})`
-                : "";
+    const foreignKeyAttributes = table.attributes.filter(
+        (attr) => attr.foreign_key,
+    );
+
+    const foreignKeyGroups = new Map();
+
+    for (const attr of foreignKeyAttributes) {
+        const groupKey =
+            attr.foreign_key_group ??
+            `${table.name}_${attr.foreign_key}_${attr.name}`;
+
+        if (!foreignKeyGroups.has(groupKey)) {
+            foreignKeyGroups.set(groupKey, []);
+        }
+
+        foreignKeyGroups.get(groupKey).push(attr);
+    }
+
+    return [...foreignKeyGroups.values()]
+        .map((group) => {
+            const firstAttribute = group[0];
+
+            const referencedTable = normalizeIdentifier(
+                firstAttribute.foreign_key,
+            );
+
+            const sourceColumns = group
+                .map((attr) => normalizeIdentifier(attr.name))
+                .join(", ");
+
+            const referencedColumns = group
+                .map((attr) => normalizeIdentifier(attr.foreign_key_column))
+                .join(", ");
+
+            const constraintName = normalizeIdentifier(
+                firstAttribute.foreign_key_constraint ??
+                    group.map((attr) => attr.name).join("_"),
+            );
 
             return `ALTER TABLE ${normalizeIdentifier(
                 table.name,
-            )} ADD CONSTRAINT FK_${normalizeIdentifier(
-                attr.name,
-            )} FOREIGN KEY (${normalizeIdentifier(
-                attr.name,
-            )}) REFERENCES ${referencedTable}${referencedColumn};`;
+            )} ADD CONSTRAINT FK_${constraintName} FOREIGN KEY (${sourceColumns}) REFERENCES ${referencedTable}(${referencedColumns});`;
         })
         .join("\n");
-
-    return foreignKeys;
 };
 
 export function generate1NSQL(tables) {
@@ -517,8 +574,9 @@ function applyWeakEntitySemantics(tableMap, graph) {
             tableMap.set(entity.name, weakTable);
         }
 
-        // En entidades débiles, solo la clave parcial forma parte
-        // de la clave propia de la entidad.
+        // In weak entities, the partial key is marked as part of the primary key.
+        // The owner primary key columns are added afterwards to complete the
+        // composite primary key of the weak entity.
         weakTable.attributes = weakTable.attributes.map((attr) => {
             const sourceAttribute = entity.attributes.find(
                 (candidate) => candidate.name === attr.name,
@@ -627,13 +685,18 @@ export function generateSQL(graph) {
         });
     }
 
-    // Generate SQL script from the table map
-    let sqlScript = "";
-    let foreignKeyScript = "";
-    for (const table of tableMap.values()) {
-        sqlScript += createTableSQL(table) + "\n\n";
-        foreignKeyScript += createForeignKeySQL(table) + "\n";
-    }
+    const finalTables = [...tableMap.values()];
 
-    return sqlScript.trim() + "\n\n" + foreignKeyScript.trim();
+    const dropTablesScript = createDropTablesSQL(finalTables);
+
+    const sqlScript = finalTables.map(createTableSQL).join("\n\n");
+
+    const foreignKeyScript = finalTables
+        .map(createForeignKeySQL)
+        .filter(Boolean)
+        .join("\n");
+
+    return [dropTablesScript, sqlScript, foreignKeyScript]
+        .filter(Boolean)
+        .join("\n\n");
 }
