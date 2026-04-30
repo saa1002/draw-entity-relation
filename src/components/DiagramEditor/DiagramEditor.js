@@ -194,7 +194,7 @@ export default function App(props) {
     const IDENTIFYING_RELATION_DECORATOR_OFFSET = 4;
     const IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX =
         "__identifying_weak_edge_decorator";
-    const IDENTIFYING_RELATION_EDGE_PARALLEL_GAP = 8;
+    const IDENTIFYING_RELATION_EDGE_PARALLEL_GAP = 5;
     const DISCRIMINANT_UNDERLINE_SUFFIX = "__discriminant_underline";
     const DISCRIMINANT_UNDERLINE_MARGIN_X = 16;
     const DISCRIMINANT_UNDERLINE_OFFSET_Y = 12;
@@ -450,6 +450,18 @@ export default function App(props) {
     const getParallelTerminalPointsFromMainEdge = (mainEdge) => {
         if (!mainEdge) return null;
 
+        const source = graph.getModel().getTerminal(mainEdge, true);
+        const target = graph.getModel().getTerminal(mainEdge, false);
+
+        if (source) {
+            graph.view.invalidate(source);
+        }
+
+        if (target) {
+            graph.view.invalidate(target);
+        }
+
+        graph.view.invalidate(mainEdge);
         graph.view.validate();
 
         const state = graph.view.getState(mainEdge);
@@ -499,7 +511,7 @@ export default function App(props) {
             null,
             [
                 `strokeColor=${ER_STROKE}`,
-                "strokeWidth=2",
+                "strokeWidth=1",
                 "endArrow=none",
                 "dashed=0",
                 "editable=0",
@@ -544,14 +556,16 @@ export default function App(props) {
             graph.getModel().setTerminal(edge, null, true);
             graph.getModel().setTerminal(edge, null, false);
 
-            if (!edge.geometry) {
-                edge.geometry = new mxGeometry();
-            }
+            const geometry = edge.geometry
+                ? edge.geometry.clone()
+                : new mxGeometry();
 
-            edge.geometry.relative = false;
-            edge.geometry.points = null;
-            edge.geometry.setTerminalPoint(parallelPoints.source, true);
-            edge.geometry.setTerminalPoint(parallelPoints.target, false);
+            geometry.relative = false;
+            geometry.points = null;
+            geometry.setTerminalPoint(parallelPoints.source, true);
+            geometry.setTerminalPoint(parallelPoints.target, false);
+
+            graph.getModel().setGeometry(edge, geometry);
         } finally {
             graph.getModel().endUpdate();
         }
@@ -1007,6 +1021,9 @@ export default function App(props) {
             defaultEdgeStyle[mxConstants.STYLE_ENDARROW] = "";
             defaultEdgeStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
             defaultEdgeStyle[mxConstants.STYLE_FONTCOLOR] = ER_FONT;
+            defaultEdgeStyle[mxConstants.STYLE_PERIMETER_SPACING] = 0;
+            defaultEdgeStyle[mxConstants.STYLE_SOURCE_PERIMETER_SPACING] = 0;
+            defaultEdgeStyle[mxConstants.STYLE_TARGET_PERIMETER_SPACING] = 0;
 
             graph.getStylesheet().putCellStyle("keyAttrStyle", keyAttrStyle);
             graph

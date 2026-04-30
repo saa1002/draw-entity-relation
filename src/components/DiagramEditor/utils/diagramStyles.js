@@ -56,6 +56,10 @@ export const getAttributeDimensions = (label = "") => {
 export const getEntityStyleString = () =>
     [
         "shape=rectangle",
+        "perimeter=rhombusPerimeter",
+        "perimeterSpacing=0",
+        "sourcePerimeterSpacing=0",
+        "targetPerimeterSpacing=0",
         "rounded=0",
         `fillColor=${ER_FILL}`,
         `strokeColor=${ER_STROKE}`,
@@ -73,6 +77,10 @@ export const getEntityStyleString = () =>
 export const getRelationStyleString = (relation) => {
     const baseStyle = [
         "shape=rhombus",
+        "perimeter=rhombusPerimeter",
+        "perimeterSpacing=0",
+        "sourcePerimeterSpacing=0",
+        "targetPerimeterSpacing=0",
         `fillColor=${ER_FILL}`,
         `strokeColor=${ER_STROKE}`,
         "strokeWidth=1",
