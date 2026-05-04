@@ -154,6 +154,132 @@ function relationConnectsEntity(relation, entityId) {
     );
 }
 
+function getIdentifyingDependency(graph, relation) {
+    const side1EntityId = relation?.side1?.entity?.idMx;
+    const side2EntityId = relation?.side2?.entity?.idMx;
+
+    if (!side1EntityId || !side2EntityId) {
+        return null;
+    }
+
+    // A weak entity cannot identify itself through a reflexive relationship.
+    if (side1EntityId === side2EntityId) {
+        return null;
+    }
+
+    const side1Entity = getEntityById(graph, side1EntityId);
+    const side2Entity = getEntityById(graph, side2EntityId);
+
+    if (!side1Entity || !side2Entity) {
+        return null;
+    }
+
+    const makeDependency = (entity, side, ownerEntity, ownerSide) => ({
+        entity,
+        side,
+        ownerEntity,
+        ownerSide,
+    });
+
+    const side1IsWeak = side1Entity.weak === true;
+    const side2IsWeak = side2Entity.weak === true;
+
+    // Classic case: exactly one weak entity and one owner entity.
+    // The owner may be strong/non-weak. This keeps standalone validation
+    // helpers compatible with tests that only configure relation endpoints.
+    if (side1IsWeak && !side2IsWeak) {
+        return makeDependency(
+            side1Entity,
+            relation.side1,
+            side2Entity,
+            relation.side2,
+        );
+    }
+
+    if (!side1IsWeak && side2IsWeak) {
+        return makeDependency(
+            side2Entity,
+            relation.side2,
+            side1Entity,
+            relation.side1,
+        );
+    }
+
+    // No weak entity means this cannot be an identifying relationship.
+    if (!side1IsWeak && !side2IsWeak) {
+        return null;
+    }
+
+    // Both sides are weak: this is only valid for cascaded weak entities.
+    // Prefer explicit metadata because it identifies which weak entity is
+    // the dependent one.
+    if (
+        side1Entity.identifyingRelationId === relation.idMx &&
+        side2Entity.identifyingRelationId !== relation.idMx
+    ) {
+        return makeDependency(
+            side1Entity,
+            relation.side1,
+            side2Entity,
+            relation.side2,
+        );
+    }
+
+    if (
+        side2Entity.identifyingRelationId === relation.idMx &&
+        side1Entity.identifyingRelationId !== relation.idMx
+    ) {
+        return makeDependency(
+            side2Entity,
+            relation.side2,
+            side1Entity,
+            relation.side1,
+        );
+    }
+
+    // Fallback for weak-weak relations: infer the dependent side from
+    // cardinalities. The dependent weak side must be N, and the owner side
+    // must be 1.
+    const side1Maximum = relation.side1?.cardinality?.split(":")?.[1];
+    const side2Maximum = relation.side2?.cardinality?.split(":")?.[1];
+
+    if (side1Maximum === "N" && side2Maximum === "1") {
+        return makeDependency(
+            side1Entity,
+            relation.side1,
+            side2Entity,
+            relation.side2,
+        );
+    }
+
+    if (side2Maximum === "N" && side1Maximum === "1") {
+        return makeDependency(
+            side2Entity,
+            relation.side2,
+            side1Entity,
+            relation.side1,
+        );
+    }
+
+    return null;
+}
+
+function weakEntityOwnershipHasCycle(graph, entity) {
+    const visitedEntityIds = new Set([entity.idMx]);
+    let currentEntity = entity;
+
+    while (currentEntity?.weak === true && currentEntity.ownerEntityId) {
+        if (visitedEntityIds.has(currentEntity.ownerEntityId)) {
+            return true;
+        }
+
+        visitedEntityIds.add(currentEntity.ownerEntityId);
+        currentEntity = getEntityById(graph, currentEntity.ownerEntityId);
+    }
+
+    return false;
+}
+
 // This function check for repeated entity name, relations
 // can't be repeated also
 // Returns true if there are repeated entity names
@@ -489,29 +615,10 @@ export function identifyingRelationsNotValid(graph) {
     for (const relation of graph.relations) {
         if (!relation.isIdentifying) continue;
 
-        const side1EntityId = relation.side1?.entity?.idMx;
-        const side2EntityId = relation.side2?.entity?.idMx;
-
-        if (!side1EntityId || !side2EntityId) {
-            return true;
-        }
-
-        const entity1 = getEntityById(graph, side1EntityId);
-        const entity2 = getEntityById(graph, side2EntityId);
-
-        if (!entity1 || !entity2) {
-            return true;
-        }
-
-        const weakCount = [entity1, entity2].filter(
-            (entity) => entity.weak === true,
-        ).length;
-
-        const strongCount = [entity1, entity2].filter(
-            (entity) => entity.weak !== true,
-        ).length;
-
-        if (weakCount !== 1 || strongCount !== 1) {
+        // An identifying relationship must have exactly one dependent weak
+        // entity and one different owner entity. The owner may be either
+        // strong or weak, which allows weak-entity cascades.
+        if (!getIdentifyingDependency(graph, relation)) {
             return true;
         }
     }
@@ -523,36 +630,19 @@ export function identifyingRelationCardinalitiesNotValid(graph) {
     for (const relation of graph.relations) {
         if (!relation.isIdentifying) continue;
 
-        const side1EntityId = relation.side1?.entity?.idMx;
-        const side2EntityId = relation.side2?.entity?.idMx;
+        const dependency = getIdentifyingDependency(graph, relation);
 
-        if (!side1EntityId || !side2EntityId) {
-            continue;
-        }
-
-        const entity1 = getEntityById(graph, side1EntityId);
-        const entity2 = getEntityById(graph, side2EntityId);
-
-        if (!entity1 || !entity2) {
-            continue;
-        }
-
-        const side1IsWeak = entity1.weak === true;
-        const side2IsWeak = entity2.weak === true;
-
-        if (side1IsWeak === side2IsWeak) {
-            continue;
-        }
-
-        const weakSide = side1IsWeak ? relation.side1 : relation.side2;
-        const strongSide = side1IsWeak ? relation.side2 : relation.side1;
+        // Invalid identifying endpoints are reported by identifyingRelationsNotValid.
+        if (!dependency) continue;
 
         const weakCardinalityIsValid = ["0:N", "1:N"].includes(
-            weakSide.cardinality,
+            dependency.side.cardinality,
         );
-        const strongCardinalityIsValid = strongSide.cardinality === "1:1";
 
-        if (!weakCardinalityIsValid || !strongCardinalityIsValid) {
+        const ownerCardinalityIsValid =
+            dependency.ownerSide.cardinality === "1:1";
+
+        if (!weakCardinalityIsValid || !ownerCardinalityIsValid) {
             return true;
         }
     }
@@ -572,7 +662,7 @@ export function inconsistentWeakEntityOwnership(graph) {
             (rel) => rel.idMx === entity.identifyingRelationId,
         );
 
-        if (!relation) {
+        if (!relation || relation.isIdentifying !== true) {
             return true;
         }
 
@@ -584,7 +674,7 @@ export function inconsistentWeakEntityOwnership(graph) {
         const side2Id = relation?.side2?.entity?.idMx;
         const ownerId = side1Id === entity.idMx ? side2Id : side1Id;
 
-        if (!ownerId) {
+        if (!ownerId || ownerId === entity.idMx) {
             return true;
         }
 
@@ -594,7 +684,9 @@ export function inconsistentWeakEntityOwnership(graph) {
 
         const ownerEntity = getEntityById(graph, ownerId);
 
-        if (!ownerEntity || ownerEntity.weak) {
+        // The owner may be weak in cascaded weak entities, but it must exist
+        // and the ownership chain must remain acyclic.
+        if (!ownerEntity || weakEntityOwnershipHasCycle(graph, entity)) {
             return true;
         }
     }
@@ -603,21 +695,23 @@ export function inconsistentWeakEntityOwnership(graph) {
 }
 
 export function multipleIdentifyingRelationsPerWeakEntity(graph) {
-    for (const entity of graph.entities) {
-        if (!entity.weak) continue;
+    const dependencyCountByWeakEntityId = new Map();
 
-        const identifyingRelations = graph.relations.filter((relation) => {
-            if (!relation.isIdentifying) return false;
+    for (const relation of graph.relations) {
+        if (!relation.isIdentifying) continue;
 
-            return (
-                relation?.side1?.entity?.idMx === entity.idMx ||
-                relation?.side2?.entity?.idMx === entity.idMx
-            );
-        });
+        const dependency = getIdentifyingDependency(graph, relation);
+        if (!dependency) continue;
 
-        if (identifyingRelations.length > 1) {
+        const weakEntityId = dependency.entity.idMx;
+        const dependencyCount =
+            (dependencyCountByWeakEntityId.get(weakEntityId) ?? 0) + 1;
+
+        if (dependencyCount > 1) {
             return true;
         }
+
+        dependencyCountByWeakEntityId.set(weakEntityId, dependencyCount);
     }
 
     return false;

@@ -390,13 +390,15 @@ export default function App(props) {
     };
 
     const getWeakAndStrongSidesForRelation = (relationData) => {
+        const emptyResult = {
+            weakEntity: null,
+            strongEntity: null,
+            weakSide: null,
+            strongSide: null,
+        };
+
         if (!relationData) {
-            return {
-                weakEntity: null,
-                strongEntity: null,
-                weakSide: null,
-                strongSide: null,
-            };
+            return emptyResult;
         }
 
         const side1Entity =
@@ -410,41 +412,101 @@ export default function App(props) {
             ) ?? null;
 
         if (!side1Entity || !side2Entity) {
-            return {
-                weakEntity: null,
-                strongEntity: null,
-                weakSide: null,
-                strongSide: null,
-            };
+            return emptyResult;
         }
+
+        // Identifying relationships may not be reflexive: a weak entity cannot
+        // identify itself.
+        if (side1Entity.idMx === side2Entity.idMx) {
+            return emptyResult;
+        }
+
+        const makeResult = (weakEntity, ownerEntity, weakSide, ownerSide) => ({
+            weakEntity,
+            // Keep the historical names so the rest of the component needs the
+            // smallest possible change. In cascaded weak entities this value is
+            // the owner entity, not necessarily a strong one.
+            strongEntity: ownerEntity,
+            weakSide,
+            strongSide: ownerSide,
+        });
 
         const side1IsWeak = side1Entity.weak === true;
         const side2IsWeak = side2Entity.weak === true;
 
-        if (side1IsWeak === side2IsWeak) {
-            return {
-                weakEntity: null,
-                strongEntity: null,
-                weakSide: null,
-                strongSide: null,
-            };
+        if (side1IsWeak && !side2IsWeak) {
+            return makeResult(
+                side1Entity,
+                side2Entity,
+                relationData.side1,
+                relationData.side2,
+            );
         }
 
-        if (side1IsWeak) {
-            return {
-                weakEntity: side1Entity,
-                strongEntity: side2Entity,
-                weakSide: relationData.side1,
-                strongSide: relationData.side2,
-            };
+        if (!side1IsWeak && side2IsWeak) {
+            return makeResult(
+                side2Entity,
+                side1Entity,
+                relationData.side2,
+                relationData.side1,
+            );
         }
 
-        return {
-            weakEntity: side2Entity,
-            strongEntity: side1Entity,
-            weakSide: relationData.side2,
-            strongSide: relationData.side1,
-        };
+        if (!side1IsWeak && !side2IsWeak) {
+            return emptyResult;
+        }
+
+        // Both sides are weak: this is valid only for cascaded weak entities.
+        // Infer the dependent weak side from the existing cardinalities. The
+        // dependent side must be N, and the owner side must be 1.
+        const side1Maximum = relationData.side1?.cardinality?.split(":")?.[1];
+        const side2Maximum = relationData.side2?.cardinality?.split(":")?.[1];
+
+        if (side1Maximum === "N" && side2Maximum === "1") {
+            return makeResult(
+                side1Entity,
+                side2Entity,
+                relationData.side1,
+                relationData.side2,
+            );
+        }
+
+        if (side2Maximum === "N" && side1Maximum === "1") {
+            return makeResult(
+                side2Entity,
+                side1Entity,
+                relationData.side2,
+                relationData.side1,
+            );
+        }
+
+        // If the relation is already marked as identifying, the dependent side
+        // can also be recovered from the entity metadata.
+        if (
+            side1Entity.identifyingRelationId === relationData.idMx &&
+            side2Entity.identifyingRelationId !== relationData.idMx
+        ) {
+            return makeResult(
+                side1Entity,
+                side2Entity,
+                relationData.side1,
+                relationData.side2,
+            );
+        }
+
+        if (
+            side2Entity.identifyingRelationId === relationData.idMx &&
+            side1Entity.identifyingRelationId !== relationData.idMx
+        ) {
+            return makeResult(
+                side2Entity,
+                side1Entity,
+                relationData.side2,
+                relationData.side1,
+            );
+        }
+
+        return emptyResult;
     };
 
     const getParallelTerminalPointsFromMainEdge = (mainEdge) => {
@@ -1846,7 +1908,7 @@ export default function App(props) {
 
             if (!weakEntity || !ownerEntity) {
                 toast.error(
-                    "Una relación de dependencia por identificación debe conectar exactamente una entidad débil y una fuerte.",
+                    "Una relación de dependencia por identificación debe conectar una entidad débil dependiente con una entidad propietaria distinta. Si ambas son débiles, configura antes la cardinalidad para que el lado dependiente sea N y el propietario sea 1.",
                 );
                 return;
             }
@@ -2386,7 +2448,7 @@ export default function App(props) {
         const handleAccept = () => {
             if (selectedDiag.isIdentifying && !side1IsWeak && !side2IsWeak) {
                 toast.error(
-                    "The identifying relationship sides could not be resolved.",
+                    "No se pudieron resolver los lados de la relación de dependencia por identificación.",
                 );
                 return;
             }
@@ -2945,7 +3007,7 @@ export default function App(props) {
                     );
                 if (!diagnostics.noInvalidIdentifyingRelations)
                     messages.push(
-                        "Hay relaciones de dependencia por identificación que no conectan exactamente una entidad débil y una fuerte.",
+                        "Hay relaciones de dependencia por identificación que no conectan una entidad débil dependiente con una entidad propietaria distinta.",
                     );
                 if (!diagnostics.noInvalidIdentifyingCardinalities)
                     messages.push(
@@ -2953,11 +3015,11 @@ export default function App(props) {
                     );
                 if (!diagnostics.noInconsistentWeakEntityOwnership)
                     messages.push(
-                        "Hay entidades débiles cuya entidad fuerte es inconsistente.",
+                        "Hay entidades débiles cuya entidad propietaria es inconsistente.",
                     );
                 if (!diagnostics.noMultipleIdentifyingRelationsPerWeakEntity)
                     messages.push(
-                        "Hay entidades débiles participando en más de una relación de dependencia por identificación.",
+                        "Hay entidades débiles con más de una relación de dependencia por identificación como entidad dependiente.",
                     );
                 if (!diagnostics.noAttributesInNonNMRelations)
                     messages.push(
@@ -3097,7 +3159,7 @@ export default function App(props) {
                     );
                 if (!diagnostics.noInvalidIdentifyingRelations)
                     messages.push(
-                        "Hay relaciones de dependencia por identificación que no conectan exactamente una entidad débil y una fuerte.",
+                        "Hay relaciones de dependencia por identificación que no conectan una entidad débil dependiente con una entidad propietaria distinta.",
                     );
                 if (!diagnostics.noInvalidIdentifyingCardinalities)
                     messages.push(
@@ -3105,11 +3167,11 @@ export default function App(props) {
                     );
                 if (!diagnostics.noInconsistentWeakEntityOwnership)
                     messages.push(
-                        "Hay entidades débiles cuya entidad fuerte es inconsistente.",
+                        "Hay entidades débiles cuya entidad propietaria es inconsistente.",
                     );
                 if (!diagnostics.noMultipleIdentifyingRelationsPerWeakEntity)
                     messages.push(
-                        "Hay entidades débiles participando en más de una relación de dependencia por identificación.",
+                        "Hay entidades débiles con más de una relación de dependencia por identificación como entidad dependiente.",
                     );
                 if (!diagnostics.noAttributesInNonNMRelations)
                     messages.push(
@@ -3269,7 +3331,7 @@ export default function App(props) {
                             );
                         if (!diagnostics.noInvalidIdentifyingRelations)
                             messages.push(
-                                "Hay relaciones de dependencia por identificación que no conectan exactamente una entidad débil y una fuerte.",
+                                "Hay relaciones de dependencia por identificación que no conectan una entidad débil dependiente con una entidad propietaria distinta.",
                             );
                         if (!diagnostics.noInvalidIdentifyingCardinalities)
                             messages.push(
@@ -3277,13 +3339,13 @@ export default function App(props) {
                             );
                         if (!diagnostics.noInconsistentWeakEntityOwnership)
                             messages.push(
-                                "Hay entidades débiles cuya entidad fuerte es inconsistente.",
+                                "Hay entidades débiles cuya entidad propietaria es inconsistente.",
                             );
                         if (
                             !diagnostics.noMultipleIdentifyingRelationsPerWeakEntity
                         )
                             messages.push(
-                                "Hay entidades débiles participando en más de una relación de dependencia por identificación.",
+                                "Hay entidades débiles con más de una relación de dependencia por identificación como entidad dependiente.",
                             );
                         if (!diagnostics.noAttributesInNonNMRelations)
                             messages.push(

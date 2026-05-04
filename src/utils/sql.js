@@ -80,7 +80,15 @@ export function filterTables(graph) {
     return tables;
 }
 
-function getEntityPrimaryKeyColumns(entity, graph) {
+function getEntityPrimaryKeyColumns(
+    entity,
+    graph,
+    visitedEntityIds = new Set(),
+) {
+    if (!entity) {
+        return [];
+    }
+
     if (!entity?.weak) {
         return entity.attributes
             .filter((attr) => attr.key)
@@ -89,6 +97,15 @@ function getEntityPrimaryKeyColumns(entity, graph) {
                 referencedColumn: attr.name,
             }));
     }
+
+    if (visitedEntityIds.has(entity.idMx)) {
+        throw new Error(
+            `Cannot resolve primary key columns for weak entity "${entity.name}" because the identifying ownership chain contains a cycle.`,
+        );
+    }
+
+    const nextVisitedEntityIds = new Set(visitedEntityIds);
+    nextVisitedEntityIds.add(entity.idMx);
 
     const partialKeyColumns = entity.attributes
         .filter((attr) => attr.partialKey)
@@ -101,16 +118,18 @@ function getEntityPrimaryKeyColumns(entity, graph) {
         (candidate) => candidate.idMx === entity.ownerEntityId,
     );
 
-    const ownerKeyColumns = (ownerEntity?.attributes ?? [])
-        .filter((attr) => attr.key)
-        .map((attr) => {
-            const weakTableColumnName = `${attr.name}_${ownerEntity.name}`;
+    const ownerKeyColumns = getEntityPrimaryKeyColumns(
+        ownerEntity,
+        graph,
+        nextVisitedEntityIds,
+    ).map((ownerKeyColumn) => {
+        const weakTableColumnName = `${ownerKeyColumn.name}_${ownerEntity.name}`;
 
-            return {
-                name: weakTableColumnName,
-                referencedColumn: weakTableColumnName,
-            };
-        });
+        return {
+            name: weakTableColumnName,
+            referencedColumn: weakTableColumnName,
+        };
+    });
 
     return [...partialKeyColumns, ...ownerKeyColumns];
 }
@@ -596,9 +615,9 @@ function applyWeakEntitySemantics(tableMap, graph) {
             };
         });
 
-        const ownerPrimaryKeys = ownerEntity.attributes.filter(
-            (attr) => attr.key === true,
-        );
+        const ownerPrimaryKeys = getEntityPrimaryKeyColumns(ownerEntity, graph);
+        const foreignKeyGroup = `${entity.idMx}_${ownerEntity.idMx}_identifying_owner`;
+        const foreignKeyConstraint = `${entity.name}_${ownerEntity.name}_identifying_owner`;
 
         for (const ownerPrimaryKey of ownerPrimaryKeys) {
             const foreignKeyName = `${ownerPrimaryKey.name}_${ownerEntity.name}`;
@@ -615,7 +634,9 @@ function applyWeakEntitySemantics(tableMap, graph) {
                 notnull: true,
                 unique: false,
                 foreign_key: ownerEntity.name,
-                foreign_key_column: ownerPrimaryKey.name,
+                foreign_key_column: ownerPrimaryKey.referencedColumn,
+                foreign_key_group: foreignKeyGroup,
+                foreign_key_constraint: foreignKeyConstraint,
             });
         }
     }
