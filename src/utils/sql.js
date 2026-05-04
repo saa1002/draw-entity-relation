@@ -168,7 +168,40 @@ function buildRelationForeignKeyAttributes({
     }));
 }
 
-export function process1NRelation(relation) {
+function buildForeignKeyCopyAttributes({
+    keyColumns,
+    referencedEntity,
+    relationName,
+    suffix,
+    notnull = false,
+    unique = false,
+}) {
+    const suffixPart = suffix ? `_${suffix}` : "";
+    const foreignKeyGroup = `${relationName}_${referencedEntity.idMx}${suffixPart}`;
+
+    const constraintName = `${keyColumns
+        .map((keyColumn) => keyColumn.referencedColumn)
+        .join("_")}_${relationName}${suffixPart}`;
+
+    const shouldUseCompositeUnique = unique && keyColumns.length > 1;
+
+    return keyColumns.map((keyColumn) => ({
+        name: `${keyColumn.name}_${relationName}${suffixPart}`,
+        key: false,
+        notnull,
+        unique,
+        unique_group: shouldUseCompositeUnique ? foreignKeyGroup : undefined,
+        unique_constraint: shouldUseCompositeUnique
+            ? constraintName
+            : undefined,
+        foreign_key: referencedEntity.name,
+        foreign_key_column: keyColumn.referencedColumn,
+        foreign_key_group: foreignKeyGroup,
+        foreign_key_constraint: constraintName,
+    }));
+}
+
+export function process1NRelation(relation, graph) {
     const { side1, side2 } = relation;
 
     let oneSide;
@@ -192,9 +225,12 @@ export function process1NRelation(relation) {
         attributes: oneSide.entity.attributes.map((attr) => ({
             name: attr.name,
             key: attr.key,
-            // notnull: notnull,
+            notnull: false,
+            unique: false,
         })),
     };
+
+    const oneSideKeyColumns = getEntityPrimaryKeyColumns(oneSide.entity, graph);
 
     // Table for the entity with maximum N
     const manySideTable = {
@@ -204,31 +240,63 @@ export function process1NRelation(relation) {
                 name: attr.name,
                 key: attr.key,
                 notnull: false, // Assuming the original notnull property for attributes
+                unique: false,
             })),
-            ...oneSide.entity.attributes
-                .filter((attr) => attr.key) // Only include key attributes
-                .map((attr) => {
-                    return {
-                        name: `${attr.name}_${relation.name}`,
-                        key: false,
-                        notnull: notnull,
-                        foreign_key: oneSide.entity.name,
-                        foreign_key_column: attr.name,
-                    };
-                }),
+            ...buildForeignKeyCopyAttributes({
+                keyColumns: oneSideKeyColumns,
+                referencedEntity: oneSide.entity,
+                relationName: relation.name,
+                suffix: side1.entity.idMx === side2.entity.idMx ? "ref" : "",
+                notnull,
+                unique: false,
+            }),
         ],
     };
 
     // Relación reflexiva, se crea solo una tabla
-    if (side1.entity.name === side2.entity.name) {
+    if (side1.entity.idMx === side2.entity.idMx) {
         return [manySideTable];
     }
 
     return [oneSideTable, manySideTable];
 }
 
-export function process11Relation(relation) {
+export function process11Relation(relation, graph) {
     const { side1, side2 } = relation;
+
+    // Reflexive 1:1 relation: keep a single table and add a role-based copy
+    // of the full PK as a self-referencing FK. The FK columns are UNIQUE
+    // because the relationship has maximum 1 on both sides.
+    if (side1.entity.idMx === side2.entity.idMx) {
+        const notnull =
+            side1.cardinality.minimum === "1" ||
+            side2.cardinality.minimum === "1";
+
+        const keyColumns = getEntityPrimaryKeyColumns(side1.entity, graph);
+
+        const table = {
+            name: side1.entity.name,
+            attributes: [
+                ...side1.entity.attributes.map((attr) => ({
+                    name: attr.name,
+                    key: attr.key,
+                    notnull: false,
+                    unique: false,
+                })),
+                ...buildForeignKeyCopyAttributes({
+                    keyColumns,
+                    referencedEntity: side1.entity,
+                    relationName: relation.name,
+                    suffix: "ref",
+                    notnull,
+                    unique: true,
+                }),
+            ],
+        };
+
+        return [table];
+    }
+
     if (
         side1.cardinality.minimum === "1" &&
         side2.cardinality.minimum === "1" &&
@@ -260,7 +328,9 @@ export function process11Relation(relation) {
         };
 
         return [resultTable];
-    } // Case where one side has (0,1) cardinality or both sides have equal minimum cardinality
+    }
+
+    // Case where one side has (0,1) cardinality or both sides have equal minimum cardinality
     let tableWithForeignKey;
     let tableWithoutForeignKey;
     let foreignKeySide;
@@ -299,20 +369,21 @@ export function process11Relation(relation) {
         }),
     );
 
-    // Add foreign key attribute to the foreign key side
-    const foreignKeyAttribute = primaryKeySide.entity.attributes.find(
-        (attr) => attr.key,
+    const primaryKeyColumns = getEntityPrimaryKeyColumns(
+        primaryKeySide.entity,
+        graph,
     );
-    if (foreignKeyAttribute) {
-        foreignKeyAttributes.push({
-            name: `${foreignKeyAttribute.name}_${relation.name}`,
-            key: false,
-            notnull: notnull,
+
+    foreignKeyAttributes.push(
+        ...buildForeignKeyCopyAttributes({
+            keyColumns: primaryKeyColumns,
+            referencedEntity: primaryKeySide.entity,
+            relationName: relation.name,
+            suffix: "",
+            notnull,
             unique: true,
-            foreign_key: primaryKeySide.entity.name,
-            foreign_key_column: foreignKeyAttribute.name,
-        });
-    }
+        }),
+    );
 
     tableWithForeignKey = {
         name: `${foreignKeySide.entity.name}`,
@@ -325,7 +396,7 @@ export function process11Relation(relation) {
     };
 
     // Si la relación es reflexiva solo se devuelve esta tabla
-    if (side1.entity.name === side2.entity.name) {
+    if (side1.entity.idMx === side2.entity.idMx) {
         return [tableWithForeignKey];
     }
 
@@ -436,6 +507,18 @@ const createTableSQL = (table) => {
         normalizeIdentifier(attr.name),
     );
 
+    const uniqueGroups = new Map();
+
+    for (const attr of table.attributes) {
+        if (!attr.unique_group) continue;
+
+        if (!uniqueGroups.has(attr.unique_group)) {
+            uniqueGroups.set(attr.unique_group, []);
+        }
+
+        uniqueGroups.get(attr.unique_group).push(attr);
+    }
+
     const columns = table.attributes
         .map((attr) => {
             let columnDef = `${normalizeIdentifier(attr.name)} ${getSQLType(
@@ -444,7 +527,7 @@ const createTableSQL = (table) => {
             if (primaryKeyColumns.length === 1 && attr.key) {
                 columnDef += " PRIMARY KEY";
             }
-            if (attr.unique) columnDef += " UNIQUE";
+            if (attr.unique && !attr.unique_group) columnDef += " UNIQUE";
             if (attr.notnull) columnDef += " NOT NULL";
             return columnDef;
         })
@@ -455,9 +538,25 @@ const createTableSQL = (table) => {
             ? `, \n  PRIMARY KEY (${primaryKeyColumns.join(", ")})`
             : "";
 
+    const uniqueClauses = [...uniqueGroups.values()]
+        .map((group) => {
+            const firstAttribute = group[0];
+            const constraintName = normalizeIdentifier(
+                firstAttribute.unique_constraint ??
+                    group.map((attr) => attr.name).join("_"),
+            );
+
+            const uniqueColumns = group
+                .map((attr) => normalizeIdentifier(attr.name))
+                .join(", ");
+
+            return `, \n  CONSTRAINT UQ_${constraintName} UNIQUE (${uniqueColumns})`;
+        })
+        .join("");
+
     return `CREATE TABLE ${normalizeIdentifier(
         table.name,
-    )} (\n  ${columns}${primaryKeyClause}\n);`;
+    )} (\n  ${columns}${primaryKeyClause}${uniqueClauses}\n);`;
 };
 
 const createForeignKeySQL = (table) => {
@@ -653,10 +752,10 @@ export function generateSQL(graph) {
         let processedTablesArray;
         switch (table.type) {
             case "1:1":
-                processedTablesArray = process11Relation(table);
+                processedTablesArray = process11Relation(table, graph);
                 break;
             case "1:N":
-                processedTablesArray = process1NRelation(table);
+                processedTablesArray = process1NRelation(table, graph);
                 break;
             case "N:M":
                 processedTablesArray = processNMRelation(table, graph);
