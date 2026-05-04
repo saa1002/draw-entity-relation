@@ -599,9 +599,17 @@ const createForeignKeySQL = (table) => {
                     group.map((attr) => attr.name).join("_"),
             );
 
+            const onDeleteClause = firstAttribute.foreign_key_on_delete
+                ? ` ON DELETE ${firstAttribute.foreign_key_on_delete}`
+                : "";
+
+            const onUpdateClause = firstAttribute.foreign_key_on_update
+                ? ` ON UPDATE ${firstAttribute.foreign_key_on_update}`
+                : "";
+
             return `ALTER TABLE ${normalizeIdentifier(
                 table.name,
-            )} ADD CONSTRAINT FK_${constraintName} FOREIGN KEY (${sourceColumns}) REFERENCES ${referencedTable}(${referencedColumns});`;
+            )} ADD CONSTRAINT FK_${constraintName} FOREIGN KEY (${sourceColumns}) REFERENCES ${referencedTable}(${referencedColumns})${onDeleteClause}${onUpdateClause};`;
         })
         .join("\n");
 };
@@ -736,6 +744,8 @@ function applyWeakEntitySemantics(tableMap, graph) {
                 foreign_key_column: ownerPrimaryKey.referencedColumn,
                 foreign_key_group: foreignKeyGroup,
                 foreign_key_constraint: foreignKeyConstraint,
+                foreign_key_on_delete: "CASCADE",
+                foreign_key_on_update: "CASCADE",
             });
         }
     }

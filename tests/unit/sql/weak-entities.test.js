@@ -161,8 +161,16 @@ describe('Weak entity SQL generation', () => {
         expect(sql).toContain('numero_linea VARCHAR(40)')
         expect(sql).toContain('id_pedido_Pedido VARCHAR(40)')
         expect(sql).toContain('PRIMARY KEY (numero_linea, id_pedido_Pedido)')
-        expect(sql).toContain(
-            'FOREIGN KEY (id_pedido_Pedido) REFERENCES Pedido(id_pedido)'
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE LineaPedido
+            ADD CONSTRAINT FK_LineaPedido_Pedido_identifying_owner
+            FOREIGN KEY (id_pedido_Pedido)
+            REFERENCES Pedido(id_pedido)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
+            `,
         )
         expect(sql).toContain('cantidad VARCHAR(40)')
     })
@@ -221,6 +229,7 @@ describe('Weak entity SQL generation', () => {
 
         expect(sql).not.toContain('CREATE TABLE Identifica')
     })
+
     test('a cascaded weak entity should inherit the full owner primary key', () => {
         const graph = createCascadedWeakEntitiesGraph()
 
@@ -234,6 +243,18 @@ describe('Weak entity SQL generation', () => {
             A0_Entidad0 VARCHAR(40) NOT NULL,
             PRIMARY KEY (A1, A0_Entidad0)
             );
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Entidad1
+            ADD CONSTRAINT FK_Entidad1_Entidad0_identifying_owner
+            FOREIGN KEY (A0_Entidad0)
+            REFERENCES Entidad0(A0)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
             `,
         )
 
@@ -255,7 +276,9 @@ describe('Weak entity SQL generation', () => {
             ALTER TABLE Entidad2
             ADD CONSTRAINT FK_Entidad2_Entidad1_identifying_owner
             FOREIGN KEY (A1_Entidad1, A0_Entidad0_Entidad1)
-            REFERENCES Entidad1(A1, A0_Entidad0);
+            REFERENCES Entidad1(A1, A0_Entidad0)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
             `,
         )
     })
