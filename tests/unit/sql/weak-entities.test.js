@@ -239,8 +239,8 @@ describe('Weak entity SQL generation', () => {
             sql,
             `
             CREATE TABLE Entidad1 (
-            A1 VARCHAR(40) NOT NULL,
-            A0_Entidad0 VARCHAR(40) NOT NULL,
+            A1 VARCHAR(40),
+            A0_Entidad0 VARCHAR(40),
             PRIMARY KEY (A1, A0_Entidad0)
             );
             `,
@@ -262,9 +262,9 @@ describe('Weak entity SQL generation', () => {
             sql,
             `
             CREATE TABLE Entidad2 (
-            A2 VARCHAR(40) NOT NULL,
-            A1_Entidad1 VARCHAR(40) NOT NULL,
-            A0_Entidad0_Entidad1 VARCHAR(40) NOT NULL,
+            A2 VARCHAR(40),
+            A1_Entidad1 VARCHAR(40),
+            A0_Entidad0_Entidad1 VARCHAR(40),
             PRIMARY KEY (A2, A1_Entidad1, A0_Entidad0_Entidad1)
             );
             `,
@@ -307,9 +307,9 @@ describe('Weak entity SQL generation', () => {
             sql,
             `
             CREATE TABLE Entidad2 (
-            A2 VARCHAR(40) NOT NULL,
-            A1_Entidad1 VARCHAR(40) NOT NULL,
-            A0_Entidad0_Entidad1 VARCHAR(40) NOT NULL,
+            A2 VARCHAR(40),
+            A1_Entidad1 VARCHAR(40),
+            A0_Entidad0_Entidad1 VARCHAR(40),
             A2_Reflex_ref VARCHAR(40) NOT NULL,
             A1_Entidad1_Reflex_ref VARCHAR(40) NOT NULL,
             A0_Entidad0_Entidad1_Reflex_ref VARCHAR(40) NOT NULL,
@@ -369,9 +369,9 @@ describe('Weak entity SQL generation', () => {
             sql,
             `
             CREATE TABLE Entidad2 (
-            A2 VARCHAR(40) NOT NULL,
-            A1_Entidad1 VARCHAR(40) NOT NULL,
-            A0_Entidad0_Entidad1 VARCHAR(40) NOT NULL,
+            A2 VARCHAR(40),
+            A1_Entidad1 VARCHAR(40),
+            A0_Entidad0_Entidad1 VARCHAR(40),
             A2_Reflex_ref VARCHAR(40),
             A1_Entidad1_Reflex_ref VARCHAR(40),
             A0_Entidad0_Entidad1_Reflex_ref VARCHAR(40),

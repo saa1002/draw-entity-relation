@@ -527,8 +527,14 @@ const createTableSQL = (table) => {
             if (primaryKeyColumns.length === 1 && attr.key) {
                 columnDef += " PRIMARY KEY";
             }
-            if (attr.unique && !attr.unique_group) columnDef += " UNIQUE";
-            if (attr.notnull) columnDef += " NOT NULL";
+
+            if (attr.unique && !attr.unique_group) {
+                columnDef += " UNIQUE";
+            }
+
+            if (attr.notnull && !attr.key) {
+                columnDef += " NOT NULL";
+            }
             return columnDef;
         })
         .join(",\n  ");

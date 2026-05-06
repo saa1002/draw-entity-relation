@@ -456,6 +456,45 @@ export default function App(props) {
             return emptyResult;
         }
 
+        // Both sides are weak. If one of them is already identified by a
+        // previous owner, it can act as the owner in a cascaded dependency.
+        // The other weak entity becomes the new dependent entity.
+        if (side1IsWeak && side2IsWeak) {
+            const side1AlreadyHasOwner =
+                !!side1Entity.identifyingRelationId &&
+                !!side1Entity.ownerEntityId;
+
+            const side2AlreadyHasOwner =
+                !!side2Entity.identifyingRelationId &&
+                !!side2Entity.ownerEntityId;
+
+            const side1CanBecomeDependent =
+                !side1Entity.identifyingRelationId ||
+                side1Entity.identifyingRelationId === relationData.idMx;
+
+            const side2CanBecomeDependent =
+                !side2Entity.identifyingRelationId ||
+                side2Entity.identifyingRelationId === relationData.idMx;
+
+            if (side1AlreadyHasOwner && side2CanBecomeDependent) {
+                return makeResult(
+                    side2Entity,
+                    side1Entity,
+                    relationData.side2,
+                    relationData.side1,
+                );
+            }
+
+            if (side2AlreadyHasOwner && side1CanBecomeDependent) {
+                return makeResult(
+                    side1Entity,
+                    side2Entity,
+                    relationData.side1,
+                    relationData.side2,
+                );
+            }
+        }
+
         // Both sides are weak: this is valid only for cascaded weak entities.
         // Infer the dependent weak side from the existing cardinalities. The
         // dependent side must be N, and the owner side must be 1.
@@ -507,6 +546,64 @@ export default function App(props) {
         }
 
         return emptyResult;
+    };
+
+    const getCascadedWeakConversionCandidate = (relationData) => {
+        if (!relationData) return null;
+
+        const side1Entity =
+            diagramRef.current.entities.find(
+                (entity) => entity.idMx === relationData?.side1?.entity?.idMx,
+            ) ?? null;
+
+        const side2Entity =
+            diagramRef.current.entities.find(
+                (entity) => entity.idMx === relationData?.side2?.entity?.idMx,
+            ) ?? null;
+
+        if (!side1Entity || !side2Entity) {
+            return null;
+        }
+
+        if (side1Entity.idMx === side2Entity.idMx) {
+            return null;
+        }
+
+        // This helper only handles the UX case where both entities are still strong.
+        if (side1Entity.weak || side2Entity.weak) {
+            return null;
+        }
+
+        const side1OwnsWeakEntities = diagramRef.current.entities.some(
+            (entity) =>
+                entity.weak === true &&
+                entity.ownerEntityId === side1Entity.idMx &&
+                !!entity.identifyingRelationId,
+        );
+
+        const side2OwnsWeakEntities = diagramRef.current.entities.some(
+            (entity) =>
+                entity.weak === true &&
+                entity.ownerEntityId === side2Entity.idMx &&
+                !!entity.identifyingRelationId,
+        );
+
+        // If none or both can be inferred, do not guess.
+        if (side1OwnsWeakEntities === side2OwnsWeakEntities) {
+            return null;
+        }
+
+        if (side1OwnsWeakEntities) {
+            return {
+                weakEntity: side1Entity,
+                ownerEntity: side2Entity,
+            };
+        }
+
+        return {
+            weakEntity: side2Entity,
+            ownerEntity: side1Entity,
+        };
     };
 
     const getParallelTerminalPointsFromMainEdge = (mainEdge) => {
@@ -1894,8 +1991,10 @@ export default function App(props) {
         const relation = getSelectedRelationData();
         if (!relation) return;
 
-        const { weakEntity, strongEntity: ownerEntity } =
+        let { weakEntity, strongEntity: ownerEntity } =
             getWeakAndStrongSidesForRelation(relation);
+
+        let convertedStrongEntityToWeak = false;
 
         if (!relation.isIdentifying) {
             if (
@@ -1907,10 +2006,27 @@ export default function App(props) {
             }
 
             if (!weakEntity || !ownerEntity) {
-                toast.error(
-                    "Una relación de dependencia por identificación debe conectar una entidad débil dependiente con una entidad propietaria distinta. Si ambas son débiles, configura antes la cardinalidad para que el lado dependiente sea N y el propietario sea 1.",
-                );
-                return;
+                const conversionCandidate =
+                    getCascadedWeakConversionCandidate(relation);
+
+                if (!conversionCandidate) {
+                    toast.error(
+                        "Una relación de dependencia por identificación debe conectar una entidad débil dependiente con una entidad propietaria distinta. Si ambas entidades son fuertes, solo se puede inferir una cascada cuando una de ellas ya actúa como propietaria de otra entidad débil.",
+                    );
+                    return;
+                }
+
+                weakEntity = conversionCandidate.weakEntity;
+                ownerEntity = conversionCandidate.ownerEntity;
+                convertedStrongEntityToWeak = true;
+
+                weakEntity.weak = true;
+                convertEntityPrimaryKeyToPartialKey(weakEntity);
+
+                const weakEntityCell = accessCell(weakEntity.idMx);
+                if (weakEntityCell) {
+                    ensureWeakEntityDecorator(weakEntityCell, weakEntity);
+                }
             }
 
             if (

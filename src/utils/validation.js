@@ -210,13 +210,33 @@ function getIdentifyingDependency(graph, relation) {
         return null;
     }
 
-    // Both sides are weak: this is only valid for cascaded weak entities.
-    // Prefer explicit metadata because it identifies which weak entity is
-    // the dependent one.
-    if (
-        side1Entity.identifyingRelationId === relation.idMx &&
-        side2Entity.identifyingRelationId !== relation.idMx
-    ) {
+    // Both sides are weak. If one of them is already identified by a
+    // previous owner, it can act as the owner in a cascaded dependency.
+    // The other weak entity becomes the new dependent entity.
+    const side1AlreadyHasOwner =
+        !!side1Entity.identifyingRelationId && !!side1Entity.ownerEntityId;
+
+    const side2AlreadyHasOwner =
+        !!side2Entity.identifyingRelationId && !!side2Entity.ownerEntityId;
+
+    const side1CanBecomeDependent =
+        !side1Entity.identifyingRelationId ||
+        side1Entity.identifyingRelationId === relation.idMx;
+
+    const side2CanBecomeDependent =
+        !side2Entity.identifyingRelationId ||
+        side2Entity.identifyingRelationId === relation.idMx;
+
+    if (side1AlreadyHasOwner && side2CanBecomeDependent) {
+        return makeDependency(
+            side2Entity,
+            relation.side2,
+            side1Entity,
+            relation.side1,
+        );
+    }
+
+    if (side2AlreadyHasOwner && side1CanBecomeDependent) {
         return makeDependency(
             side1Entity,
             relation.side1,
@@ -224,19 +244,6 @@ function getIdentifyingDependency(graph, relation) {
             relation.side2,
         );
     }
-
-    if (
-        side2Entity.identifyingRelationId === relation.idMx &&
-        side1Entity.identifyingRelationId !== relation.idMx
-    ) {
-        return makeDependency(
-            side2Entity,
-            relation.side2,
-            side1Entity,
-            relation.side1,
-        );
-    }
-
     // Fallback for weak-weak relations: infer the dependent side from
     // cardinalities. The dependent weak side must be N, and the owner side
     // must be 1.
@@ -670,23 +677,28 @@ export function inconsistentWeakEntityOwnership(graph) {
             return true;
         }
 
-        const side1Id = relation?.side1?.entity?.idMx;
-        const side2Id = relation?.side2?.entity?.idMx;
-        const ownerId = side1Id === entity.idMx ? side2Id : side1Id;
+        const dependency = getIdentifyingDependency(graph, relation);
 
-        if (!ownerId || ownerId === entity.idMx) {
+        if (!dependency) {
             return true;
         }
 
-        if (entity.ownerEntityId !== ownerId) {
+        if (dependency.entity.idMx !== entity.idMx) {
             return true;
         }
 
-        const ownerEntity = getEntityById(graph, ownerId);
+        if (
+            !dependency.ownerEntity ||
+            dependency.ownerEntity.idMx === entity.idMx
+        ) {
+            return true;
+        }
 
-        // The owner may be weak in cascaded weak entities, but it must exist
-        // and the ownership chain must remain acyclic.
-        if (!ownerEntity || weakEntityOwnershipHasCycle(graph, entity)) {
+        if (entity.ownerEntityId !== dependency.ownerEntity.idMx) {
+            return true;
+        }
+
+        if (weakEntityOwnershipHasCycle(graph, entity)) {
             return true;
         }
     }
