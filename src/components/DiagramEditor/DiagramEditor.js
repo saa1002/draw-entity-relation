@@ -17,8 +17,12 @@ import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
 import {
+    ATTRIBUTE_OWNER_TYPES,
+    addAttributeToOwner,
     canRelationHoldAttributes,
-    findAttributeIndexById,
+    convertPartialKeyToPrimaryKey,
+    convertPrimaryKeyToPartialKey,
+    createAttribute,
     findAttributeOwnerById,
     findEntitiesByIdentifyingRelationId,
     findEntityById,
@@ -26,14 +30,26 @@ import {
     findRelationById,
     findRelationIndexById,
     findWeakEntityByIdentifyingRelationId,
+    generateUniqueAttributeName,
+    getDefaultAttributeSemantics,
+    getLastAttribute,
+    isEntityAttributeOwner,
+    isFirstAttributeForOwner,
     isIdentifyingRelation,
     isManyToManyRelation,
+    isPrimaryKeyAttribute,
+    isRelationAttributeOwner,
     isRelationConfigured,
     isSelfRelation,
     isWeakEntity,
     normalizeDiagramData,
     relationHasBothEntitySides,
     relationInvolvesEntity,
+    removeAllAttributesFromOwner,
+    removeAttributeFromOwnerById,
+    toggleExclusivePartialKeyAttribute,
+    toggleExclusivePrimaryKeyAttribute,
+    updateAttributePosition,
 } from "../../domain/er";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
@@ -99,7 +115,6 @@ export default function App(props) {
         React.useState(null);
 
     const [refreshDiagram, setRefreshDiagram] = React.useState(false);
-    const addPrimaryAttrRef = React.useRef(null);
 
     const onSelected = React.useCallback(
         (evt) => {
@@ -123,7 +138,7 @@ export default function App(props) {
             selected?.id,
         );
 
-        if (attributeOwner?.ownerType !== "entity") {
+        if (!isEntityAttributeOwner(attributeOwner)) {
             return null;
         }
 
@@ -797,14 +812,14 @@ export default function App(props) {
     const removeRelationAttributes = (relationData) => {
         if (!relationData) return;
 
+        const removedAttributes = removeAllAttributesFromOwner(relationData);
         const attributeCellsToRemove =
-            relationData.attributes.flatMap(getAttributeCells);
+            removedAttributes.flatMap(getAttributeCells);
 
         if (attributeCellsToRemove.length > 0) {
             graph.removeCells(attributeCellsToRemove);
         }
 
-        relationData.attributes = [];
         relationData.canHoldAttributes = false;
     };
 
@@ -939,32 +954,19 @@ export default function App(props) {
     };
 
     const convertEntityPrimaryKeyToPartialKey = (entity) => {
-        const discriminantCandidate =
-            entity.attributes.find((attribute) => attribute.key) ??
-            entity.attributes.find((attribute) => attribute.partialKey) ??
-            null;
+        const changedAttributes = convertPrimaryKeyToPartialKey(
+            entity?.attributes,
+        );
 
-        entity.attributes.forEach((attribute) => {
-            attribute.key = false;
-            attribute.partialKey =
-                discriminantCandidate?.idMx === attribute.idMx;
-
-            syncAttributeSemanticRepresentation(attribute);
-        });
+        changedAttributes.forEach(syncAttributeSemanticRepresentation);
     };
 
     const convertEntityPartialKeyToPrimaryKey = (entity) => {
-        const primaryKeyCandidate =
-            entity.attributes.find((attribute) => attribute.partialKey) ??
-            entity.attributes.find((attribute) => attribute.key) ??
-            null;
+        const changedAttributes = convertPartialKeyToPrimaryKey(
+            entity?.attributes,
+        );
 
-        entity.attributes.forEach((attribute) => {
-            attribute.partialKey = false;
-            attribute.key = primaryKeyCandidate?.idMx === attribute.idMx;
-
-            syncAttributeSemanticRepresentation(attribute);
-        });
+        changedAttributes.forEach(syncAttributeSemanticRepresentation);
     };
     const recreateGraphFromLocalStorage = () => {
         const recreateAttribute = (attribute, source) => {
@@ -1356,8 +1358,11 @@ export default function App(props) {
                     }
 
                     attr.name = cellDataAttr.value;
-                    attr.position.x = cellDataAttr.geometry.x;
-                    attr.position.y = cellDataAttr.geometry.y;
+                    updateAttributePosition({
+                        attribute: attr,
+                        owner: entity,
+                        position: cellDataAttr.geometry,
+                    });
                     attr.cell = [cellDataAttr.id, cellEdgeAttr.id];
                 }
             });
@@ -1492,8 +1497,11 @@ export default function App(props) {
 
         const { owner, attribute } = attributeOwner;
 
-        attribute.offsetX = selected.geometry.x - owner.position.x;
-        attribute.offsetY = selected.geometry.y - owner.position.y;
+        updateAttributePosition({
+            attribute,
+            owner,
+            position: selected.geometry,
+        });
 
         if (attribute.partialKey) {
             syncDiscriminantUnderline(selected);
@@ -1633,58 +1641,38 @@ export default function App(props) {
 
         if (!selectedDiag) return;
 
-        const isFirstAttribute = (selectedDiag?.attributes?.length ?? 0) === 0;
-        const isWeakSelectedEntity = !isRelation && isWeakEntity(selectedDiag);
+        const ownerType = isRelation
+            ? ATTRIBUTE_OWNER_TYPES.RELATION
+            : ATTRIBUTE_OWNER_TYPES.ENTITY;
 
-        const shouldAddPrimaryKey =
-            isFirstAttribute && !isWeakSelectedEntity && !isRelation;
-        const shouldAddPartialKey = isFirstAttribute && isWeakSelectedEntity;
+        const semantics = getDefaultAttributeSemantics({
+            ownerType,
+            isFirstAttribute: isFirstAttributeForOwner(selectedDiag),
+            isWeakEntityOwner: !isRelation && isWeakEntity(selectedDiag),
+        });
 
-        addPrimaryAttrRef.current = shouldAddPrimaryKey;
         const source = selected;
 
-        // Initial offset
         let offsetX = 120;
         let offsetY = -40;
 
-        if (selectedDiag?.attributes?.length) {
-            const lastAttribute =
-                selectedDiag.attributes[selectedDiag.attributes.length - 1];
+        const lastAttribute = getLastAttribute(selectedDiag.attributes);
+
+        if (lastAttribute) {
             const lastAttrCell = graph.getModel().getCell(lastAttribute.idMx);
-            offsetX = lastAttrCell.geometry.x - source.geometry.x;
-            offsetY = lastAttrCell.geometry.y - source.geometry.y + 20;
+
+            if (lastAttrCell?.geometry) {
+                offsetX = lastAttrCell.geometry.x - source.geometry.x;
+                offsetY = lastAttrCell.geometry.y - source.geometry.y + 20;
+            }
         }
 
         const newX = selected.geometry.x + offsetX;
         const newY = selected.geometry.y + offsetY;
 
-        // Function to generate a unique attribute name
-        const generateUniqueAttributeName = (baseName, existingAttributes) => {
-            let counter = 0;
-            let uniqueName = baseName;
-
-            const nameExists = (name) => {
-                return existingAttributes.some((attr) => attr.name === name);
-            };
-
-            while (nameExists(uniqueName)) {
-                counter++;
-                uniqueName = `${baseName} ${counter}`;
-            }
-
-            return uniqueName;
-        };
-
-        const baseAttributeName = "Atributo";
-        const existingAttributes = selectedDiag.attributes || [];
         const uniqueAttributeName = generateUniqueAttributeName(
-            baseAttributeName,
-            existingAttributes,
+            selectedDiag.attributes,
         );
-        const newAttributeData = {
-            key: shouldAddPrimaryKey,
-            partialKey: shouldAddPartialKey,
-        };
 
         const { width, height } = getAttributeDimensions(uniqueAttributeName);
 
@@ -1696,7 +1684,7 @@ export default function App(props) {
             newY,
             width,
             height,
-            getAttributeStyleString(newAttributeData),
+            getAttributeStyleString(semantics),
         );
 
         const edge = graph.insertEdge(selected, null, null, source, target);
@@ -1706,23 +1694,27 @@ export default function App(props) {
             syncWeakEntityDecorator(selected);
         }
 
-        if (shouldAddPartialKey) {
+        if (semantics.partialKey) {
             ensureDiscriminantUnderline(target);
         }
 
-        selectedDiag.attributes.push({
-            idMx: target.id,
-            name: target.value,
-            position: {
-                x: target.geometry.x,
-                y: target.geometry.y,
-            },
-            key: !isRelation ? shouldAddPrimaryKey : false,
-            partialKey: shouldAddPartialKey,
-            cell: [target.id, edge.id],
-            offsetX: target.geometry.x - selected.geometry.x,
-            offsetY: target.geometry.y - selected.geometry.y,
-        });
+        addAttributeToOwner(
+            selectedDiag,
+            createAttribute({
+                idMx: target.id,
+                name: target.value,
+                position: {
+                    x: target.geometry.x,
+                    y: target.geometry.y,
+                },
+                key: semantics.key,
+                partialKey: semantics.partialKey,
+                cell: [target.id, edge.id],
+                offsetX: target.geometry.x - selected.geometry.x,
+                offsetY: target.geometry.y - selected.geometry.y,
+            }),
+        );
+
         updateDiagramData();
         toast.success("Atributo insertado");
     };
@@ -1777,8 +1769,7 @@ export default function App(props) {
         const selectedEntityAttribute = getSelectedEntityAttributeData();
         if (!selectedEntityAttribute) return;
 
-        const { entity, attribute: selectedAttribute } =
-            selectedEntityAttribute;
+        const { entity } = selectedEntityAttribute;
 
         if (isWeakEntity(entity)) {
             toast.error(
@@ -1787,44 +1778,21 @@ export default function App(props) {
             return;
         }
 
-        const shouldSetAsKey = !selectedAttribute.key;
+        const result = toggleExclusivePrimaryKeyAttribute(
+            entity.attributes,
+            selected.id,
+        );
 
-        entity.attributes.forEach((attribute) => {
-            const attributeCell = accessCell(attribute.idMx);
+        if (!result.updated) return;
 
-            if (attribute.idMx === selected.id) {
-                const wasPartialKey = attribute.partialKey === true;
-
-                attribute.key = shouldSetAsKey;
-
-                if (shouldSetAsKey) {
-                    attribute.partialKey = false;
-
-                    if (wasPartialKey) {
-                        removeDiscriminantUnderline(attribute.idMx);
-                    }
-                }
-            } else if (shouldSetAsKey) {
-                // Solo mantenemos unicidad de PK si estamos activando una nueva clave
-                attribute.key = false;
-            }
-
-            if (attributeCell) {
-                graph
-                    .getModel()
-                    .setStyle(
-                        attributeCell,
-                        getAttributeStyleString(attribute),
-                    );
-            }
-        });
+        result.changedAttributes.forEach(syncAttributeSemanticRepresentation);
 
         refreshGraph();
         updateDiagramData();
         setRefreshDiagram((prevState) => !prevState);
 
         toast.success(
-            shouldSetAsKey
+            result.enabled
                 ? "Atributo marcado como clave"
                 : "Clave eliminada del atributo",
         );
@@ -1865,8 +1833,7 @@ export default function App(props) {
         const selectedEntityAttribute = getSelectedEntityAttributeData();
         if (!selectedEntityAttribute) return;
 
-        const { entity, attribute: selectedAttribute } =
-            selectedEntityAttribute;
+        const { entity } = selectedEntityAttribute;
 
         if (!isWeakEntity(entity)) {
             toast.error(
@@ -1875,43 +1842,21 @@ export default function App(props) {
             return;
         }
 
-        const shouldSetAsPartialKey = !selectedAttribute.partialKey;
+        const result = toggleExclusivePartialKeyAttribute(
+            entity.attributes,
+            selected.id,
+        );
 
-        entity.attributes.forEach((attribute) => {
-            const attributeCell = accessCell(attribute.idMx);
+        if (!result.updated) return;
 
-            if (attribute.idMx === selected.id) {
-                attribute.partialKey = shouldSetAsPartialKey;
-
-                if (shouldSetAsPartialKey) {
-                    attribute.key = false;
-                }
-            } else if (shouldSetAsPartialKey) {
-                attribute.partialKey = false;
-            }
-
-            if (attributeCell) {
-                graph
-                    .getModel()
-                    .setStyle(
-                        attributeCell,
-                        getAttributeStyleString(attribute),
-                    );
-
-                if (attribute.partialKey) {
-                    ensureDiscriminantUnderline(attributeCell);
-                } else {
-                    removeDiscriminantUnderline(attribute.idMx);
-                }
-            }
-        });
+        result.changedAttributes.forEach(syncAttributeSemanticRepresentation);
 
         refreshGraph();
         updateDiagramData();
         setRefreshDiagram((prevState) => !prevState);
 
         toast.success(
-            shouldSetAsPartialKey
+            result.enabled
                 ? "Atributo marcado como discriminante"
                 : "Discriminante eliminado",
         );
@@ -2779,13 +2724,28 @@ export default function App(props) {
 
     const DeleteAttributeButton = () => {
         const isAttribute = selected?.style?.includes("shape=ellipse");
+
+        if (!isAttribute) {
+            return;
+        }
+
         const selectedAttributeOwner = findAttributeOwnerById(
             diagramRef.current,
             selected?.id,
         );
 
-        const isKey = selectedAttributeOwner?.attribute?.key === true;
-        const isFromRelation = selectedAttributeOwner?.ownerType === "relation";
+        if (!selectedAttributeOwner) {
+            return;
+        }
+
+        const isKey = isPrimaryKeyAttribute(selectedAttributeOwner?.attribute);
+        const isFromRelation = isRelationAttributeOwner(selectedAttributeOwner);
+
+        const canDeleteAttribute = isFromRelation || !isKey;
+
+        if (!canDeleteAttribute) {
+            return;
+        }
 
         function deleteAttribute() {
             const attributeOwner = findAttributeOwnerById(
@@ -2795,17 +2755,16 @@ export default function App(props) {
 
             if (!attributeOwner) return;
 
-            const { owner, attribute } = attributeOwner;
-            const attrIndex = findAttributeIndexById(
-                owner.attributes,
+            const { owner } = attributeOwner;
+
+            const removedAttribute = removeAttributeFromOwnerById(
+                owner,
                 selected.id,
             );
 
-            if (attrIndex === -1) return;
+            if (!removedAttribute) return;
 
-            owner.attributes.splice(attrIndex, 1);
-
-            const cells = getAttributeCells(attribute);
+            const cells = getAttributeCells(removedAttribute);
 
             if (cells.length) {
                 graph.removeCells(cells);
