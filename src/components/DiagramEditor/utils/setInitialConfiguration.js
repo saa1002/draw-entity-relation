@@ -1,5 +1,7 @@
-import { mxClient, mxEdgeHandler, mxRubberband, mxUtils } from "mxgraph-js";
+import { default as MxGraph } from "mxgraph";
 import initToolbar from "./initToolbar";
+
+const { mxClient, mxEdgeHandler, mxRubberband, mxUtils } = MxGraph();
 
 export default function setInitialConfiguration(graph, diagramRef, toolbarRef) {
     if (!mxClient.isBrowserSupported()) {

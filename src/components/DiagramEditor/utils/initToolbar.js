@@ -1,5 +1,11 @@
 import { default as MxGraph } from "mxgraph";
-import { addToolbarItem, getStyleStringByObj } from "./";
+import { addToolbarItem } from "./";
+import {
+    getEntityDimensions,
+    getEntityStyleString,
+    getRelationDimensions,
+    getRelationStyleString,
+} from "./diagramStyles";
 
 const {
     mxEvent,
@@ -9,7 +15,6 @@ const {
     mxDivResizer,
     mxGeometry,
     mxCell,
-    mxConstants,
 } = MxGraph();
 
 export default function initToolbar(graph, diagramRef, tbContainer) {
@@ -62,27 +67,23 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
         });
     };
 
-    const baseStyle = { ...graph.getStylesheet().getDefaultVertexStyle() };
+    const entityDims = getEntityDimensions("Entidad");
+    const relationDims = getRelationDimensions("Relación");
 
     addVertex(
         "images/rectangle.png",
-        100,
-        40,
-        getStyleStringByObj({
-            ...baseStyle,
-        }),
+        entityDims.width,
+        entityDims.height,
+        getEntityStyleString(),
         "Entidad",
         true, //addEntityToDiagram
         false, //addRelationToDiagram
     );
     addVertex(
         "images/rhombus.png",
-        100,
-        40,
-        getStyleStringByObj({
-            ...baseStyle,
-            [mxConstants.STYLE_SHAPE]: "rhombus",
-        }),
+        relationDims.width,
+        relationDims.height,
+        getRelationStyleString({ isIdentifying: false }),
         "Relación",
         false, //addEntityToDiagram
         true, //addRelationToDiagram

@@ -1,4 +1,5 @@
 import { default as MxGraph } from "mxgraph";
+import { getEntityDimensions, getRelationDimensions } from "./diagramStyles";
 
 const { mxEvent, mxUtils } = MxGraph();
 
@@ -61,16 +62,29 @@ export default function addToolbarItem(
         // Set the vertex value to the unique name
         vertex.value = uniqueName;
 
+        if (addEntityToDiagram) {
+            const { width, height } = getEntityDimensions(uniqueName);
+            vertex.geometry.width = width;
+            vertex.geometry.height = height;
+        } else if (addRelationToDiagram) {
+            const { width, height } = getRelationDimensions(uniqueName);
+            vertex.geometry.width = width;
+            vertex.geometry.height = height;
+        }
+
         vertex.geometry.x = x;
         vertex.geometry.y = y;
 
         graph.addCell(vertex);
-        graph.setSelectionCell(vertex);
+
         if (addEntityToDiagram) {
             diagramRef.current.entities.push({
                 idMx: vertex.id,
                 name: vertex.value,
                 position: { x: vertex.geometry.x, y: vertex.geometry.y },
+                weak: false,
+                ownerEntityId: null,
+                identifyingRelationId: null,
                 attributes: [],
             });
         }
@@ -94,9 +108,12 @@ export default function addToolbarItem(
                     entity: { idMx: "" },
                 },
                 canHoldAttributes: false,
+                isIdentifying: false,
                 attributes: [],
             });
         }
+
+        graph.setSelectionCell(vertex);
     };
 
     // Creates the image which is used as the drag icon (preview)

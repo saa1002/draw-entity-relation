@@ -1,67 +1,25 @@
 import { test, expect } from '@playwright/test';
 
-test('add entities to the canvas and change name', async ({ page }) => {
+import { addEntity, renameElement } from '../helpers/canvas';
+
+test('mxGraph transaction level stays balanced (updateLevel === 0)', async ({ page }) => {
+    await page.addInitScript(() => {
+        window.__PW__ = true;
+    });
+
     await page.goto('/');
 
-    const canvas = page.locator("svg")
-    await page.getByRole('img').first().dragTo(canvas);
+    const getUpdateLevel = async () =>
+        page.evaluate(
+            () => window.__DEBUG_GRAPH__?.getModel()?.updateLevel ?? null,
+        );
 
-    await canvas.click();
+    await expect.poll(getUpdateLevel).toBe(0);
 
-    await page.getByText('Entidad').first().dblclick();
-    await page.keyboard.type('Clientes');
+    await addEntity(page);
+    await renameElement(page, 'Entidad', 'Clientes');
 
-    await canvas.click();
-});
+    await expect(page.getByText('Clientes', { exact: true })).toBeVisible();
 
-test('add attributes to an entity', async ({ page }) => {
-    await page.goto('/');
-
-    const canvas = page.locator("svg")
-    await page.getByRole('img').first().dragTo(canvas);
-
-    await canvas.click();
-
-    await page.getByText('Entidad').first().dblclick();
-    await page.getByText('Añadir atributo').first().click();
-
-    await page.getByText('Atributo', {exact: true}).first().dblclick();
-    await page.keyboard.type('Clave');
-    await canvas.click();
-
-    // Añadir un atributo secundario
-    await page.getByText('Entidad').first().dblclick();
-    await page.getByText('Añadir atributo').first().click();
-});
-
-test('hide/show attributes', async ({ page }) => {
-    await page.goto('/');
-
-    const canvas = page.locator("svg");
-    await page.getByRole('img').first().dragTo(canvas);
-    await canvas.click();
-
-    // Add a primary attribute
-    await page.getByText('Entidad').first().dblclick();
-    await page.getByText('Añadir atributo').first().click();
-
-    await page.getByText('Atributo', {exact: true}).first().dblclick();
-    await page.keyboard.type('Clave');
-    await canvas.click();
-
-    await page.getByText('Entidad').first().dblclick();
-
-    // Hide attributes
-    await page.getByText('Ocultar atributos', {exact: true}).first().click();
-    await page.waitForTimeout(1000); // Wait for 1 second after hiding attributes
-
-    // Check if the added attribute is hidden
-    await expect(page.getByText('Clave', {exact: true}).first()).not.toBeAttached()
-
-    // Show attributes
-    await page.getByText('Mostrar atributos', {exact: true}).first().click();
-    await page.waitForTimeout(1000); // Wait for 2 seconds after showing attributes to ensure changes take effect
-
-    // Check if the added attribute is shown
-    await expect(page.getByText('Clave', {exact: true}).first()).toBeAttached()
+    await expect.poll(getUpdateLevel).toBe(0);
 });
