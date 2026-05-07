@@ -16,10 +16,10 @@ import {
 import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
+import { normalizeDiagramData } from "../../domain/er";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
-import { normalizeDiagramData } from "./utils/diagramNormalization";
 import {
     ER_FILL,
     ER_FONT,
