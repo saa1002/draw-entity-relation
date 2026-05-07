@@ -16,7 +16,12 @@ import {
 import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
-import { normalizeDiagramData } from "../../domain/er";
+import {
+    findAttributeById,
+    findEntityById,
+    findRelationById,
+    normalizeDiagramData,
+} from "../../domain/er";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
@@ -97,14 +102,13 @@ export default function App(props) {
         return graph.model.cells[idMx];
     }
     const getSelectedEntityData = () =>
-        diagramRef.current.entities.find(
-            (entity) => entity.idMx === selected?.id,
-        );
+        findEntityById(diagramRef.current, selected?.id);
 
     const getSelectedEntityAttributeData = () => {
         for (const entity of diagramRef.current.entities) {
-            const attribute = entity.attributes.find(
-                (attr) => attr.idMx === selected?.id,
+            const attribute = findAttributeById(
+                entity.attributes,
+                selected?.id,
             );
 
             if (attribute) {
@@ -119,9 +123,7 @@ export default function App(props) {
     };
 
     const getSelectedRelationData = () =>
-        diagramRef.current.relations.find(
-            (relation) => relation.idMx === selected?.id,
-        );
+        findRelationById(diagramRef.current, selected?.id) ?? null;
 
     const saveToLocalStorage = () => {
         const diagramData = JSON.stringify(
@@ -305,9 +307,7 @@ export default function App(props) {
     const clearIdentifyingRelationSemantics = (relationId) => {
         if (!relationId) return;
 
-        const relation = diagramRef.current.relations.find(
-            (item) => item.idMx === relationId,
-        );
+        const relation = findRelationById(diagramRef.current, relationId);
 
         if (relation) {
             relation.isIdentifying = false;
@@ -369,13 +369,15 @@ export default function App(props) {
         }
 
         const side1Entity =
-            diagramRef.current.entities.find(
-                (entity) => entity.idMx === relationData?.side1?.entity?.idMx,
+            findEntityById(
+                diagramRef.current,
+                relationData?.side1?.entity?.idMx,
             ) ?? null;
 
         const side2Entity =
-            diagramRef.current.entities.find(
-                (entity) => entity.idMx === relationData?.side2?.entity?.idMx,
+            findEntityById(
+                diagramRef.current,
+                relationData?.side2?.entity?.idMx,
             ) ?? null;
 
         if (!side1Entity || !side2Entity) {
@@ -519,13 +521,15 @@ export default function App(props) {
         if (!relationData) return null;
 
         const side1Entity =
-            diagramRef.current.entities.find(
-                (entity) => entity.idMx === relationData?.side1?.entity?.idMx,
+            findEntityById(
+                diagramRef.current,
+                relationData?.side1?.entity?.idMx,
             ) ?? null;
 
         const side2Entity =
-            diagramRef.current.entities.find(
-                (entity) => entity.idMx === relationData?.side2?.entity?.idMx,
+            findEntityById(
+                diagramRef.current,
+                relationData?.side2?.entity?.idMx,
             ) ?? null;
 
         if (!side1Entity || !side2Entity) {
@@ -893,15 +897,14 @@ export default function App(props) {
 
     const getAttributeDataById = (attributeId) => {
         for (const entity of diagramRef.current.entities) {
-            const attribute = entity.attributes.find(
-                (attr) => attr.idMx === attributeId,
-            );
+            const attribute = findAttributeById(entity.attributes, attributeId);
             if (attribute) return attribute;
         }
 
         for (const relation of diagramRef.current.relations) {
-            const attribute = relation.attributes.find(
-                (attr) => attr.idMx === attributeId,
+            const attribute = findAttributeById(
+                relation.attributes,
+                attributeId,
             );
             if (attribute) return attribute;
         }
@@ -1194,20 +1197,19 @@ export default function App(props) {
                         cell.geometry.width = width;
                         cell.geometry.height = height;
 
-                        const entityData = diagramRef.current.entities.find(
-                            (entity) => entity.idMx === cell.id,
+                        const entityData = findEntityById(
+                            diagramRef.current,
+                            cell.id,
                         );
 
                         if (entityData?.weak) {
                             syncWeakEntityDecorator(cell);
                         }
                         if (entityData?.identifyingRelationId) {
-                            const relationData =
-                                diagramRef.current.relations.find(
-                                    (relation) =>
-                                        relation.idMx ===
-                                        entityData.identifyingRelationId,
-                                );
+                            const relationData = findRelationById(
+                                diagramRef.current,
+                                entityData.identifyingRelationId,
+                            );
                             const relationCell = accessCell(relationData?.idMx);
 
                             if (relationData && relationCell) {
@@ -1225,8 +1227,9 @@ export default function App(props) {
                             getRelationDimensions(newValue);
                         cell.geometry.width = width;
                         cell.geometry.height = height;
-                        const relationData = diagramRef.current.relations.find(
-                            (relation) => relation.idMx === cell.id,
+                        const relationData = findRelationById(
+                            diagramRef.current,
+                            cell.id,
                         );
 
                         if (relationData?.isIdentifying) {
@@ -1385,9 +1388,12 @@ export default function App(props) {
     };
 
     const handleEntityMove = (selected) => {
-        const selectedEntityDiag = diagramRef.current.entities.find(
-            (entity) => entity.idMx === selected.id,
+        const selectedEntityDiag = findEntityById(
+            diagramRef.current,
+            selected.id,
         );
+
+        if (!selectedEntityDiag) return;
 
         selectedEntityDiag?.attributes.forEach((attribute) => {
             const attributeCell = accessCell(attribute.cell.at(0));
@@ -1404,9 +1410,9 @@ export default function App(props) {
         }
 
         if (selectedEntityDiag?.identifyingRelationId) {
-            const relationData = diagramRef.current.relations.find(
-                (relation) =>
-                    relation.idMx === selectedEntityDiag.identifyingRelationId,
+            const relationData = findRelationById(
+                diagramRef.current,
+                selectedEntityDiag.identifyingRelationId,
             );
             const relationCell = accessCell(relationData?.idMx);
 
@@ -1422,9 +1428,13 @@ export default function App(props) {
     };
 
     const handleRelationMove = (selected) => {
-        const selectedRelationDiag = diagramRef.current.relations.find(
-            (relation) => relation.idMx === selected.id,
+        const selectedRelationDiag = findRelationById(
+            diagramRef.current,
+            selected.id,
         );
+
+        if (!selectedRelationDiag) return;
+
         if (selectedRelationDiag.canHoldAttributes) {
             selectedRelationDiag?.attributes.forEach((attribute) => {
                 const attributeCell = accessCell(attribute.cell.at(0));
@@ -1479,8 +1489,9 @@ export default function App(props) {
         }
 
         if (parentEntity) {
-            const attribute = parentEntity.attributes.find(
-                (attr) => attr.idMx === selected.id,
+            const attribute = findAttributeById(
+                parentEntity.attributes,
+                selected.id,
             );
 
             if (attribute) {
@@ -1504,18 +1515,16 @@ export default function App(props) {
                 cell?.style?.includes("shape=rectangle") &&
                 !isWeakEntityDecoratorCell(cell)
             ) {
-                const entityData = diagramRef.current.entities.find(
-                    (entity) => entity.idMx === cell.id,
-                );
+                const entityData = findEntityById(diagramRef.current, cell.id);
 
                 if (entityData?.weak) {
                     syncWeakEntityDecorator(cell);
                 }
 
                 if (entityData?.identifyingRelationId) {
-                    const relationData = diagramRef.current.relations.find(
-                        (relation) =>
-                            relation.idMx === entityData.identifyingRelationId,
+                    const relationData = findRelationById(
+                        diagramRef.current,
+                        entityData.identifyingRelationId,
                     );
                     const relationCell = accessCell(relationData?.idMx);
 
@@ -1531,8 +1540,9 @@ export default function App(props) {
                 cell.style.includes("shape=rhombus") &&
                 !isIdentifyingRelationDecoratorCell(cell)
             ) {
-                const relationData = diagramRef.current.relations.find(
-                    (relation) => relation.idMx === cell.id,
+                const relationData = findRelationById(
+                    diagramRef.current,
+                    cell.id,
                 );
 
                 if (!relationData) return;
@@ -1627,13 +1637,9 @@ export default function App(props) {
             selected?.style?.includes("shape=rectangle") &&
             !isWeakEntityDecoratorCell(selected)
         ) {
-            selectedDiag = diagramRef.current.entities.find(
-                (entity) => entity.idMx === selected.id,
-            );
+            selectedDiag = findEntityById(diagramRef.current, selected.id);
         } else if (selected?.style?.includes("shape=rhombus")) {
-            selectedDiag = diagramRef.current.relations.find(
-                (relation) => relation.idMx === selected.id,
-            );
+            selectedDiag = findRelationById(diagramRef.current, selected.id);
             isRelation = true;
         }
 
@@ -1754,12 +1760,8 @@ export default function App(props) {
 
     const hideAttributes = (isRelationNM) => {
         const selectedEntity = !isRelationNM
-            ? diagramRef.current.entities.find(
-                  ({ idMx }) => idMx === selected.id,
-              )
-            : diagramRef.current.relations.find(
-                  ({ idMx }) => idMx === selected.id,
-              );
+            ? findEntityById(diagramRef.current, selected.id)
+            : findRelationById(diagramRef.current, selected.id);
         selectedEntity.attributes.forEach(({ cell, idMx, partialKey }) => {
             accessCell(cell.at(0)).setVisible(false);
             accessCell(cell.at(1)).setVisible(false);
@@ -1781,12 +1783,8 @@ export default function App(props) {
 
     const showAttributes = (isRelationNM) => {
         const selectedEntity = !isRelationNM
-            ? diagramRef.current.entities.find(
-                  ({ idMx }) => idMx === selected.id,
-              )
-            : diagramRef.current.relations.find(
-                  ({ idMx }) => idMx === selected.id,
-              );
+            ? findEntityById(diagramRef.current, selected.id)
+            : findRelationById(diagramRef.current, selected.id);
         selectedEntity.attributes.forEach(({ cell, idMx, partialKey }) => {
             accessCell(cell.at(0)).setVisible(true);
             accessCell(cell.at(1)).setVisible(true);
@@ -2086,9 +2084,8 @@ export default function App(props) {
     const RelationAddAttributeButton = () => {
         if (
             selected?.style?.includes("shape=rhombus") &&
-            diagramRef.current.relations.find(
-                (entity) => entity.idMx === selected?.id,
-            )?.canHoldAttributes
+            findRelationById(diagramRef.current, selected?.id)
+                ?.canHoldAttributes
         ) {
             return (
                 <button
@@ -2108,9 +2105,8 @@ export default function App(props) {
             !isWeakEntityDecoratorCell(selected);
         const isRelationNM =
             selected?.style?.includes("shape=rhombus") &&
-            diagramRef.current.relations.find(
-                (entity) => entity.idMx === selected?.id,
-            )?.canHoldAttributes;
+            findRelationById(diagramRef.current, selected?.id)
+                ?.canHoldAttributes;
 
         if (isEntity || isRelationNM) {
             if (
@@ -2265,9 +2261,7 @@ export default function App(props) {
 
         const handleAccept = () => {
             const source = selected;
-            const relation = diagramRef.current.relations.find(
-                (relation) => relation.idMx === source.id,
-            );
+            const relation = findRelationById(diagramRef.current, source.id);
 
             if (relation.isIdentifying) {
                 clearIdentifyingRelationSemantics(relation.idMx);
@@ -2368,8 +2362,9 @@ export default function App(props) {
             graph.updateCellSize(cardinality1);
             graph.updateCellSize(cardinality2);
 
-            const selectedDiag = diagramRef.current.relations.find(
-                (entity) => entity.idMx === selected?.id,
+            const selectedDiag = findRelationById(
+                diagramRef.current,
+                selected?.id,
             );
             selectedDiag.side1.idMx = cardinality1.id;
             selectedDiag.side2.idMx = cardinality2.id;
@@ -2512,9 +2507,7 @@ export default function App(props) {
 
     const RelationCardinalitiesButton = () => {
         const isRelation = selected?.style?.includes("shape=rhombus");
-        const selectedDiag = diagramRef.current.relations.find(
-            (entity) => entity.idMx === selected?.id,
-        );
+        const selectedDiag = findRelationById(diagramRef.current, selected?.id);
         const [open, setOpen] = React.useState(false);
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
 
