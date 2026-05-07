@@ -19,8 +19,12 @@ import { BUILD_DATE } from "../../buildInfo";
 import {
     findAttributeIndexById,
     findAttributeOwnerById,
+    findEntitiesByIdentifyingRelationId,
     findEntityById,
+    findEntityIndexById,
     findRelationById,
+    findWeakEntityByIdentifyingRelationId,
+    isWeakEntity,
     normalizeDiagramData,
 } from "../../domain/er";
 import { generateSQL } from "../../utils/sql";
@@ -321,11 +325,12 @@ export default function App(props) {
             }
         }
 
-        diagramRef.current.entities.forEach((entity) => {
-            if (entity.identifyingRelationId === relationId) {
-                entity.identifyingRelationId = null;
-                entity.ownerEntityId = null;
-            }
+        findEntitiesByIdentifyingRelationId(
+            diagramRef.current,
+            relationId,
+        ).forEach((entity) => {
+            entity.identifyingRelationId = null;
+            entity.ownerEntityId = null;
         });
     };
     const isIdentifyingRelationEdgeDecoratorCell = (cell) =>
@@ -336,9 +341,10 @@ export default function App(props) {
         `${relationId}${IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX}`;
 
     const getWeakEntityForIdentifyingRelation = (relation) =>
-        diagramRef.current.entities.find(
-            (entity) => entity.identifyingRelationId === relation?.idMx,
-        ) ?? null;
+        findWeakEntityByIdentifyingRelationId(
+            diagramRef.current,
+            relation?.idMx,
+        );
 
     const getWeakSideOfIdentifyingRelation = (relationData) => {
         const weakEntity = getWeakEntityForIdentifyingRelation(relationData);
@@ -399,8 +405,8 @@ export default function App(props) {
             strongSide: ownerSide,
         });
 
-        const side1IsWeak = side1Entity.weak === true;
-        const side2IsWeak = side2Entity.weak === true;
+        const side1IsWeak = isWeakEntity(side1Entity);
+        const side2IsWeak = isWeakEntity(side2Entity);
 
         if (side1IsWeak && !side2IsWeak) {
             return makeResult(
@@ -540,20 +546,20 @@ export default function App(props) {
         }
 
         // This helper only handles the UX case where both entities are still strong.
-        if (side1Entity.weak || side2Entity.weak) {
+        if (isWeakEntity(side1Entity) || isWeakEntity(side2Entity)) {
             return null;
         }
 
         const side1OwnsWeakEntities = diagramRef.current.entities.some(
             (entity) =>
-                entity.weak === true &&
+                isWeakEntity(entity) &&
                 entity.ownerEntityId === side1Entity.idMx &&
                 !!entity.identifyingRelationId,
         );
 
         const side2OwnsWeakEntities = diagramRef.current.entities.some(
             (entity) =>
-                entity.weak === true &&
+                isWeakEntity(entity) &&
                 entity.ownerEntityId === side2Entity.idMx &&
                 !!entity.identifyingRelationId,
         );
@@ -995,7 +1001,7 @@ export default function App(props) {
                 getEntityStyleString(),
             );
 
-            if (entity.weak) {
+            if (isWeakEntity(entity)) {
                 const decorator = createWeakEntityDecorator(entity);
                 graph.orderCells(false, [decorator]); // Move front the selected entity so the new vertex aren't on top
             }
@@ -1198,7 +1204,7 @@ export default function App(props) {
                             cell.id,
                         );
 
-                        if (entityData?.weak) {
+                        if (isWeakEntity(entityData)) {
                             syncWeakEntityDecorator(cell);
                         }
                         if (entityData?.identifyingRelationId) {
@@ -1401,7 +1407,7 @@ export default function App(props) {
             }
         });
 
-        if (selectedEntityDiag?.weak) {
+        if (isWeakEntity(selectedEntityDiag)) {
             syncWeakEntityDecorator(selected);
         }
 
@@ -1501,7 +1507,7 @@ export default function App(props) {
             ) {
                 const entityData = findEntityById(diagramRef.current, cell.id);
 
-                if (entityData?.weak) {
+                if (isWeakEntity(entityData)) {
                     syncWeakEntityDecorator(cell);
                 }
 
@@ -1627,12 +1633,14 @@ export default function App(props) {
             isRelation = true;
         }
 
+        if (!selectedDiag) return;
+
         const isFirstAttribute = (selectedDiag?.attributes?.length ?? 0) === 0;
-        const isWeakEntity = !isRelation && selectedDiag?.weak === true;
+        const isWeakSelectedEntity = !isRelation && isWeakEntity(selectedDiag);
 
         const shouldAddPrimaryKey =
-            isFirstAttribute && !isWeakEntity && !isRelation;
-        const shouldAddPartialKey = isFirstAttribute && isWeakEntity;
+            isFirstAttribute && !isWeakSelectedEntity && !isRelation;
+        const shouldAddPartialKey = isFirstAttribute && isWeakSelectedEntity;
 
         addPrimaryAttrRef.current = shouldAddPrimaryKey;
         const source = selected;
@@ -1696,7 +1704,7 @@ export default function App(props) {
         const edge = graph.insertEdge(selected, null, null, source, target);
         graph.orderCells(false); // Move front the selected entity so the new vertex aren't on top
 
-        if (!isRelation && selectedDiag?.weak) {
+        if (!isRelation && isWeakEntity(selectedDiag)) {
             syncWeakEntityDecorator(selected);
         }
 
@@ -1704,40 +1712,19 @@ export default function App(props) {
             ensureDiscriminantUnderline(target);
         }
 
-        if (!isRelation) {
-            // Update diagram state
-            diagramRef.current.entities
-                .find((entity) => entity.idMx === selected.id)
-                .attributes.push({
-                    idMx: target.id,
-                    name: target.value,
-                    position: {
-                        x: target.geometry.x,
-                        y: target.geometry.y,
-                    },
-                    key: shouldAddPrimaryKey,
-                    partialKey: shouldAddPartialKey,
-                    cell: [target.id, edge.id],
-                    offsetX: target.geometry.x - selected.geometry.x,
-                    offsetY: target.geometry.y - selected.geometry.y,
-                });
-        } else if (isRelation) {
-            // Update diagram state
-            diagramRef.current.relations
-                .find((relation) => relation.idMx === selected.id)
-                .attributes.push({
-                    idMx: target.id,
-                    name: target.value,
-                    position: {
-                        x: target.geometry.x,
-                        y: target.geometry.y,
-                    },
-                    partialKey: false,
-                    cell: [target.id, edge.id],
-                    offsetX: target.geometry.x - selected.geometry.x,
-                    offsetY: target.geometry.y - selected.geometry.y,
-                });
-        }
+        selectedDiag.attributes.push({
+            idMx: target.id,
+            name: target.value,
+            position: {
+                x: target.geometry.x,
+                y: target.geometry.y,
+            },
+            key: !isRelation ? shouldAddPrimaryKey : false,
+            partialKey: shouldAddPartialKey,
+            cell: [target.id, edge.id],
+            offsetX: target.geometry.x - selected.geometry.x,
+            offsetY: target.geometry.y - selected.geometry.y,
+        });
         updateDiagramData();
         toast.success("Atributo insertado");
     };
@@ -1795,7 +1782,7 @@ export default function App(props) {
         const { entity, attribute: selectedAttribute } =
             selectedEntityAttribute;
 
-        if (entity.weak) {
+        if (isWeakEntity(entity)) {
             toast.error(
                 "Una entidad débil no puede tener clave primaria. Usa un atributo discriminante.",
             );
@@ -1853,7 +1840,7 @@ export default function App(props) {
         const entity = getSelectedEntityData();
         if (!entity) return;
 
-        const shouldBecomeWeak = !entity.weak;
+        const shouldBecomeWeak = !isWeakEntity(entity);
 
         entity.weak = shouldBecomeWeak;
 
@@ -1883,7 +1870,7 @@ export default function App(props) {
         const { entity, attribute: selectedAttribute } =
             selectedEntityAttribute;
 
-        if (!entity.weak) {
+        if (!isWeakEntity(entity)) {
             toast.error(
                 "Solo las entidades débiles pueden tener atributo discriminante.",
             );
@@ -2139,7 +2126,7 @@ export default function App(props) {
 
         const { entity, attribute } = selectedEntityAttribute;
 
-        if (entity.weak) {
+        if (isWeakEntity(entity)) {
             return;
         }
 
@@ -2164,7 +2151,7 @@ export default function App(props) {
 
         const { entity, attribute } = selectedEntityAttribute;
 
-        if (!entity.weak) {
+        if (!isWeakEntity(entity)) {
             return;
         }
 
@@ -2199,7 +2186,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={toggleWeakEntity}
                 >
-                    {selectedEntityDiag.weak
+                    {isWeakEntity(selectedEntityDiag)
                         ? "Quitar entidad débil"
                         : "Marcar como entidad débil"}
                 </button>
@@ -2699,8 +2686,9 @@ export default function App(props) {
             !isWeakEntityDecoratorCell(selected);
         function deleteEntity() {
             // Find the entity in diagramRef.current.entities
-            const entityIndex = diagramRef.current.entities.findIndex(
-                (entity) => entity.idMx === selected.id,
+            const entityIndex = findEntityIndexById(
+                diagramRef.current,
+                selected.id,
             );
 
             if (entityIndex !== -1) {
@@ -2711,7 +2699,7 @@ export default function App(props) {
 
                 // Find the corresponding cell in graph.model.cells
                 const cell = accessCell(entity.idMx);
-                const weakDecorator = entity.weak
+                const weakDecorator = isWeakEntity(entity)
                     ? accessCell(getWeakEntityDecoratorId(entity.idMx))
                     : null;
                 if (cell) {
