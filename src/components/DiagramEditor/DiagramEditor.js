@@ -17,15 +17,23 @@ import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
 import {
+    canRelationHoldAttributes,
     findAttributeIndexById,
     findAttributeOwnerById,
     findEntitiesByIdentifyingRelationId,
     findEntityById,
     findEntityIndexById,
     findRelationById,
+    findRelationIndexById,
     findWeakEntityByIdentifyingRelationId,
+    isIdentifyingRelation,
+    isManyToManyRelation,
+    isRelationConfigured,
+    isSelfRelation,
     isWeakEntity,
     normalizeDiagramData,
+    relationHasBothEntitySides,
+    relationInvolvesEntity,
 } from "../../domain/er";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
@@ -1025,7 +1033,7 @@ export default function App(props) {
                 getRelationStyleString(relation),
             );
 
-            if (relation.isIdentifying) {
+            if (isIdentifyingRelation(relation)) {
                 ensureIdentifyingRelationDecorator(source, relation);
             }
 
@@ -1033,7 +1041,7 @@ export default function App(props) {
                 recreateAttribute(attribute, source);
             }
 
-            if (relation.side1.idMx !== "" && relation.side2.idMx !== "") {
+            if (isRelationConfigured(relation)) {
                 const target1 = accessCell(relation.side1.entity.idMx);
                 const target2 = accessCell(relation.side2.entity.idMx);
 
@@ -1094,7 +1102,7 @@ export default function App(props) {
                         edge2.geometry.points = [new mxPoint(x1, y2)];
                     }
                 }
-                if (relation.isIdentifying) {
+                if (isIdentifyingRelation(relation)) {
                     ensureIdentifyingRelationEdgeDecorator(source, relation);
                 }
                 graph.orderCells(true, [edge1, edge2]); // Move front the selected entity so the new vertex aren't on top
@@ -1234,7 +1242,7 @@ export default function App(props) {
                             cell.id,
                         );
 
-                        if (relationData?.isIdentifying) {
+                        if (isIdentifyingRelation(relationData)) {
                             syncIdentifyingRelationDecorator(cell);
                             syncIdentifyingRelationEdgeDecorator(
                                 cell,
@@ -1437,7 +1445,7 @@ export default function App(props) {
 
         if (!selectedRelationDiag) return;
 
-        if (selectedRelationDiag.canHoldAttributes) {
+        if (canRelationHoldAttributes(selectedRelationDiag)) {
             selectedRelationDiag?.attributes.forEach((attribute) => {
                 const attributeCell = accessCell(attribute.cell.at(0));
                 attributeCell.geometry.x =
@@ -1451,12 +1459,7 @@ export default function App(props) {
             });
             refreshGraph();
         }
-        if (
-            selectedRelationDiag.side1.entity.idMx !== "" &&
-            selectedRelationDiag.side2.entity.idMx !== "" &&
-            selectedRelationDiag.side1.entity.idMx ===
-                selectedRelationDiag.side2.entity.idMx
-        ) {
+        if (isSelfRelation(selectedRelationDiag)) {
             const target1 = accessCell(selectedRelationDiag.side1.entity.idMx);
             const source = selected;
             const edge1 = accessCell(selectedRelationDiag.side1.edgeId);
@@ -1470,7 +1473,7 @@ export default function App(props) {
             edge1.geometry.points = [new mxPoint(x2, y1)];
             edge2.geometry.points = [new mxPoint(x1, y2)];
         }
-        if (selectedRelationDiag?.isIdentifying) {
+        if (isIdentifyingRelation(selectedRelationDiag)) {
             syncIdentifyingRelationDecorator(selected);
             syncIdentifyingRelationEdgeDecorator(
                 selected,
@@ -1537,12 +1540,7 @@ export default function App(props) {
 
                 if (!relationData) return;
 
-                if (
-                    relationData.side1?.entity?.idMx !== "" &&
-                    relationData.side2?.entity?.idMx !== "" &&
-                    relationData.side1?.entity?.idMx ===
-                        relationData.side2?.entity?.idMx
-                ) {
+                if (isSelfRelation(relationData)) {
                     const target = accessCell(relationData.side1.entity.idMx);
                     const edge1 = accessCell(relationData.side1.edgeId);
                     const edge2 = accessCell(relationData.side2.edgeId);
@@ -1560,7 +1558,7 @@ export default function App(props) {
                     }
                 }
 
-                if (relationData.isIdentifying) {
+                if (isIdentifyingRelation(relationData)) {
                     syncIdentifyingRelationDecorator(cell);
                     syncIdentifyingRelationEdgeDecorator(cell, relationData);
                 }
@@ -1930,11 +1928,8 @@ export default function App(props) {
         let { weakEntity, strongEntity: ownerEntity } =
             getWeakAndStrongSidesForRelation(relation);
 
-        if (!relation.isIdentifying) {
-            if (
-                !relation.side1?.entity?.idMx ||
-                !relation.side2?.entity?.idMx
-            ) {
+        if (!isIdentifyingRelation(relation)) {
+            if (!relationHasBothEntitySides(relation)) {
                 toast.error("Configura primero los dos lados de la relación.");
                 return;
             }
@@ -2050,9 +2045,9 @@ export default function App(props) {
 
     const RelationAddAttributeButton = () => {
         if (
-            selected?.style?.includes("shape=rhombus") &&
-            findRelationById(diagramRef.current, selected?.id)
-                ?.canHoldAttributes
+            canRelationHoldAttributes(
+                findRelationById(diagramRef.current, selected?.id),
+            )
         ) {
             return (
                 <button
@@ -2072,8 +2067,9 @@ export default function App(props) {
             !isWeakEntityDecoratorCell(selected);
         const isRelationNM =
             selected?.style?.includes("shape=rhombus") &&
-            findRelationById(diagramRef.current, selected?.id)
-                ?.canHoldAttributes;
+            canRelationHoldAttributes(
+                findRelationById(diagramRef.current, selected?.id),
+            );
 
         if (isEntity || isRelationNM) {
             if (
@@ -2205,7 +2201,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={toggleIdentifyingRelation}
                 >
-                    {selectedRelationDiag.isIdentifying
+                    {isIdentifyingRelation(selectedRelationDiag)
                         ? "Desmarcar como dependencia por identificación"
                         : "Marcar como dependencia por identificación"}
                 </button>
@@ -2230,11 +2226,14 @@ export default function App(props) {
             const source = selected;
             const relation = findRelationById(diagramRef.current, source.id);
 
-            if (relation.isIdentifying) {
+            if (!relation) return;
+            if (!side1?.idMx || !side2?.idMx) return;
+
+            if (isIdentifyingRelation(relation)) {
                 clearIdentifyingRelationSemantics(relation.idMx);
             }
 
-            if (relation.side1.idMx !== "" && relation.side2.idMx !== "") {
+            if (isRelationConfigured(relation)) {
                 // Find the previous edges
                 const cardinality1 = accessCell(relation.side1.idMx);
                 const cardinality2 = accessCell(relation.side2.idMx);
@@ -2476,13 +2475,17 @@ export default function App(props) {
         };
 
         const handleAccept = () => {
-            if (selectedDiag.isIdentifying && !side1IsWeak && !side2IsWeak) {
+            if (
+                isIdentifyingRelation(selectedDiag) &&
+                !side1IsWeak &&
+                !side2IsWeak
+            ) {
                 toast.error(
                     "No se pudieron resolver los lados de la relación de dependencia por identificación.",
                 );
                 return;
             }
-            if (selectedDiag.isIdentifying) {
+            if (isIdentifyingRelation(selectedDiag)) {
                 if (side1IsWeak) {
                     selectedDiag.side1.cardinality = side1;
                     selectedDiag.side2.cardinality = "1:1";
@@ -2496,7 +2499,7 @@ export default function App(props) {
                 selectedDiag.side1.cardinality = side1;
                 selectedDiag.side2.cardinality = side2;
 
-                if (side1.endsWith(":N") && side2.endsWith(":N")) {
+                if (isManyToManyRelation(selectedDiag)) {
                     selectedDiag.canHoldAttributes = true;
                 } else {
                     removeRelationAttributes(selectedDiag);
@@ -2534,23 +2537,23 @@ export default function App(props) {
             getWeakAndStrongSidesForRelation(selectedDiag);
 
         const side1IsWeak =
-            selectedDiag?.isIdentifying &&
+            isIdentifyingRelation(selectedDiag) &&
             weakSide?.entity?.idMx === selectedDiag?.side1?.entity?.idMx;
 
         const side2IsWeak =
-            selectedDiag?.isIdentifying &&
+            isIdentifyingRelation(selectedDiag) &&
             weakSide?.entity?.idMx === selectedDiag?.side2?.entity?.idMx;
 
         const side1IsStrong =
-            selectedDiag?.isIdentifying &&
+            isIdentifyingRelation(selectedDiag) &&
             strongSide?.entity?.idMx === selectedDiag?.side1?.entity?.idMx;
 
         const side2IsStrong =
-            selectedDiag?.isIdentifying &&
+            isIdentifyingRelation(selectedDiag) &&
             strongSide?.entity?.idMx === selectedDiag?.side2?.entity?.idMx;
 
         const getAllowedCardinalitiesForSide = (sideKey) => {
-            if (!selectedDiag?.isIdentifying) {
+            if (!isIdentifyingRelation(selectedDiag)) {
                 return POSSIBLE_CARDINALITIES;
             }
 
@@ -2564,9 +2567,7 @@ export default function App(props) {
         };
 
         if (isRelation) {
-            const isConfigured =
-                selectedDiag?.side1.idMx !== "" &&
-                selectedDiag?.side2.idMx !== "";
+            const isConfigured = isRelationConfigured(selectedDiag);
 
             const side1EntityName =
                 accessCell(selectedDiag?.side1?.entity?.idMx)?.value ??
@@ -2618,8 +2619,9 @@ export default function App(props) {
                                             label={side1EntityName}
                                             onChange={handleChangeSide1}
                                             disabled={
-                                                selectedDiag?.isIdentifying &&
-                                                side1IsStrong
+                                                isIdentifyingRelation(
+                                                    selectedDiag,
+                                                ) && side1IsStrong
                                             }
                                         >
                                             {getAllowedCardinalitiesForSide(
@@ -2645,8 +2647,9 @@ export default function App(props) {
                                             label={side2EntityName}
                                             onChange={handleChangeSide2}
                                             disabled={
-                                                selectedDiag?.isIdentifying &&
-                                                side2IsStrong
+                                                isIdentifyingRelation(
+                                                    selectedDiag,
+                                                ) && side2IsStrong
                                             }
                                         >
                                             {getAllowedCardinalitiesForSide(
@@ -2715,10 +2718,7 @@ export default function App(props) {
                     );
                     // Check and remove relations involving this entity
                     diagramRef.current.relations.forEach((relation, index) => {
-                        if (
-                            relation.side1.entity.idMx === entity.idMx ||
-                            relation.side2.entity.idMx === entity.idMx
-                        ) {
+                        if (relationInvolvesEntity(relation, entity.idMx)) {
                             clearIdentifyingRelationSemantics(relation.idMx);
 
                             // Find the corresponding cells in graph.model.cells for the relation
@@ -2835,8 +2835,9 @@ export default function App(props) {
 
         function deleteRelation() {
             // Find the relation in diagramRef.current.relations
-            const relationIndex = diagramRef.current.relations.findIndex(
-                (relation) => relation.idMx === selected.id,
+            const relationIndex = findRelationIndexById(
+                diagramRef.current,
+                selected.id,
             );
 
             if (relationIndex !== -1) {
