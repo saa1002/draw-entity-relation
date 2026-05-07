@@ -746,24 +746,6 @@ export default function App(props) {
         }
     };
 
-    const removeRelationAttributes = (relationData) => {
-        if (!relationData) return;
-
-        const attributeCellsToRemove = relationData.attributes
-            .flatMap((attribute) => [
-                accessCell(attribute?.cell?.[0]),
-                accessCell(attribute?.cell?.[1]),
-            ])
-            .filter(Boolean);
-
-        if (attributeCellsToRemove.length > 0) {
-            graph.removeCells(attributeCellsToRemove);
-        }
-
-        relationData.attributes = [];
-        relationData.canHoldAttributes = false;
-    };
-
     const applyIdentifyingRelationCardinalities = (relationData) => {
         const { weakSide, strongSide } =
             getWeakAndStrongSidesForRelation(relationData);
@@ -783,6 +765,34 @@ export default function App(props) {
 
     const getDiscriminantUnderlineId = (attributeId) =>
         `${attributeId}${DISCRIMINANT_UNDERLINE_SUFFIX}`;
+
+    const getAttributeCells = (attribute) => {
+        if (!attribute) return [];
+
+        const attributeCells = (attribute.cell ?? [])
+            .map((cellId) => accessCell(cellId))
+            .filter(Boolean);
+
+        const underlineCell = attribute.idMx
+            ? accessCell(getDiscriminantUnderlineId(attribute.idMx))
+            : null;
+
+        return [...attributeCells, underlineCell].filter(Boolean);
+    };
+
+    const removeRelationAttributes = (relationData) => {
+        if (!relationData) return;
+
+        const attributeCellsToRemove =
+            relationData.attributes.flatMap(getAttributeCells);
+
+        if (attributeCellsToRemove.length > 0) {
+            graph.removeCells(attributeCellsToRemove);
+        }
+
+        relationData.attributes = [];
+        relationData.canHoldAttributes = false;
+    };
 
     const getDiscriminantUnderlinePoints = (attributeCell) => {
         if (!attributeCell?.geometry) return null;
@@ -2243,7 +2253,6 @@ export default function App(props) {
                 const cardinality2 = accessCell(relation.side2.idMx);
                 const edge1 = accessCell(relation.side1.edgeId);
                 const edge2 = accessCell(relation.side2.edgeId);
-                let attributesToDelete = [];
 
                 // Remove the previous edges from the graph
                 if (cardinality1) {
@@ -2259,20 +2268,8 @@ export default function App(props) {
                 if (edge2) {
                     graph.removeCells([edge2]);
                 }
-                if (relation.canHoldAttributes) {
-                    for (const attribute of relation.attributes) {
-                        attributesToDelete.push(
-                            accessCell(attribute.cell.at(0)),
-                        );
-                        attributesToDelete.push(
-                            accessCell(attribute.cell.at(1)),
-                        );
-                    }
-                    graph.removeCells(attributesToDelete);
 
-                    relation.canHoldAttributes = false;
-                    relation.attributes = [];
-                }
+                removeRelationAttributes(relation);
 
                 relation.side1 = {
                     cardinality: "X:X",
@@ -2719,12 +2716,8 @@ export default function App(props) {
                     : null;
                 if (cell) {
                     // Collect the attribute cells to delete
-                    const attributeCells = entity.attributes
-                        .flatMap((attr) => [
-                            accessCell(attr.cell.at(0)),
-                            accessCell(getDiscriminantUnderlineId(attr.idMx)),
-                        ])
-                        .filter(Boolean);
+                    const attributeCells =
+                        entity.attributes.flatMap(getAttributeCells);
 
                     // Remove the entity's cell and its attributes from the graph
                     graph.removeCells(
@@ -2747,14 +2740,8 @@ export default function App(props) {
                             const edge2Cell = accessCell(relation.side2.edgeId);
 
                             // Collect the relation's attribute cells to delete
-                            const relationAttributeCells = relation.attributes
-                                .flatMap((attr) => [
-                                    accessCell(attr.cell.at(0)),
-                                    accessCell(
-                                        getDiscriminantUnderlineId(attr.idMx),
-                                    ),
-                                ])
-                                .filter(Boolean);
+                            const relationAttributeCells =
+                                relation.attributes.flatMap(getAttributeCells);
 
                             // Remove the relation's cells and its attributes from the graph
                             graph.removeCells([
@@ -2830,10 +2817,7 @@ export default function App(props) {
 
             owner.attributes.splice(attrIndex, 1);
 
-            const cells = [
-                ...attribute.cell.map((cellId) => graph.model.cells[cellId]),
-                accessCell(getDiscriminantUnderlineId(attribute.idMx)),
-            ].filter(Boolean);
+            const cells = getAttributeCells(attribute);
 
             if (cells.length) {
                 graph.removeCells(cells);
@@ -2879,12 +2863,8 @@ export default function App(props) {
 
                 if (cell) {
                     // Remove the attributes associated with the entity
-                    const attributeCells = relation.attributes
-                        .flatMap((attr) => [
-                            accessCell(attr.cell.at(0)),
-                            accessCell(getDiscriminantUnderlineId(attr.idMx)),
-                        ])
-                        .filter(Boolean);
+                    const attributeCells =
+                        relation.attributes.flatMap(getAttributeCells);
 
                     // Remove the cell and its attributes from the graph
                     graph.removeCells([cell, ...attributeCells]);
