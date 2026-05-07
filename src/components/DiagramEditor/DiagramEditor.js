@@ -16,6 +16,7 @@ import {
 import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
+import { normalizeDiagramData } from "../../utils/diagramNormalization";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
@@ -151,42 +152,6 @@ export default function App(props) {
 
         return baseStyle;
     };
-
-    const normalizeAttribute = (attribute) => ({
-        ...attribute,
-        key: attribute.key ?? false,
-        partialKey: attribute.partialKey ?? false,
-        cell: Array.isArray(attribute.cell)
-            ? [attribute.cell[0] ?? attribute.idMx, attribute.cell[1] ?? null]
-            : [attribute.idMx, null],
-    });
-
-    const normalizeEntity = (entity) => ({
-        ...entity,
-        weak: entity.weak ?? false,
-        ownerEntityId: entity.ownerEntityId ?? null,
-        identifyingRelationId: entity.identifyingRelationId ?? null,
-        attributes: (entity.attributes || []).map(normalizeAttribute),
-    });
-
-    const normalizeRelationAttribute = (attribute) => ({
-        ...attribute,
-        partialKey: attribute.partialKey ?? false,
-        cell: Array.isArray(attribute.cell)
-            ? [attribute.cell[0] ?? attribute.idMx, attribute.cell[1] ?? null]
-            : [attribute.idMx, null],
-    });
-
-    const normalizeRelation = (relation) => ({
-        ...relation,
-        isIdentifying: relation.isIdentifying ?? false,
-        attributes: (relation.attributes || []).map(normalizeRelationAttribute),
-    });
-
-    const normalizeDiagramData = (diagramData) => ({
-        entities: (diagramData?.entities || []).map(normalizeEntity),
-        relations: (diagramData?.relations || []).map(normalizeRelation),
-    });
 
     const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
     const WEAK_ENTITY_DECORATOR_OFFSET = 4;
