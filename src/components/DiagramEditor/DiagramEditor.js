@@ -17,7 +17,8 @@ import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
 import {
-    findAttributeById,
+    findAttributeIndexById,
+    findAttributeOwnerById,
     findEntityById,
     findRelationById,
     normalizeDiagramData,
@@ -105,21 +106,19 @@ export default function App(props) {
         findEntityById(diagramRef.current, selected?.id);
 
     const getSelectedEntityAttributeData = () => {
-        for (const entity of diagramRef.current.entities) {
-            const attribute = findAttributeById(
-                entity.attributes,
-                selected?.id,
-            );
+        const attributeOwner = findAttributeOwnerById(
+            diagramRef.current,
+            selected?.id,
+        );
 
-            if (attribute) {
-                return {
-                    entity,
-                    attribute,
-                };
-            }
+        if (attributeOwner?.ownerType !== "entity") {
+            return null;
         }
 
-        return null;
+        return {
+            entity: attributeOwner.owner,
+            attribute: attributeOwner.attribute,
+        };
     };
 
     const getSelectedRelationData = () =>
@@ -895,22 +894,9 @@ export default function App(props) {
         }
     };
 
-    const getAttributeDataById = (attributeId) => {
-        for (const entity of diagramRef.current.entities) {
-            const attribute = findAttributeById(entity.attributes, attributeId);
-            if (attribute) return attribute;
-        }
-
-        for (const relation of diagramRef.current.relations) {
-            const attribute = findAttributeById(
-                relation.attributes,
-                attributeId,
-            );
-            if (attribute) return attribute;
-        }
-
-        return null;
-    };
+    const getAttributeDataById = (attributeId) =>
+        findAttributeOwnerById(diagramRef.current, attributeId)?.attribute ??
+        null;
 
     const syncAttributeSemanticRepresentation = (attribute) => {
         const attributeCell = accessCell(attribute.idMx);
@@ -1478,32 +1464,20 @@ export default function App(props) {
     };
 
     const handleAttributeMove = (selected) => {
-        let parentEntity = diagramRef.current.entities.find((entity) =>
-            entity.attributes.some((attr) => attr.idMx === selected.id),
+        const attributeOwner = findAttributeOwnerById(
+            diagramRef.current,
+            selected.id,
         );
-        // If no parent entity found, check if it's an N:M relation
-        if (!parentEntity) {
-            parentEntity = diagramRef.current.relations.find((relation) =>
-                relation.attributes.some((attr) => attr.idMx === selected.id),
-            );
-        }
 
-        if (parentEntity) {
-            const attribute = findAttributeById(
-                parentEntity.attributes,
-                selected.id,
-            );
+        if (!attributeOwner) return;
 
-            if (attribute) {
-                // Update offset
-                attribute.offsetX =
-                    selected.geometry.x - parentEntity.position.x;
-                attribute.offsetY =
-                    selected.geometry.y - parentEntity.position.y;
-                if (attribute.partialKey) {
-                    syncDiscriminantUnderline(selected);
-                }
-            }
+        const { owner, attribute } = attributeOwner;
+
+        attribute.offsetX = selected.geometry.x - owner.position.x;
+        attribute.offsetY = selected.geometry.y - owner.position.y;
+
+        if (attribute.partialKey) {
+            syncDiscriminantUnderline(selected);
         }
     };
 
@@ -1959,8 +1933,6 @@ export default function App(props) {
         let { weakEntity, strongEntity: ownerEntity } =
             getWeakAndStrongSidesForRelation(relation);
 
-        let convertedStrongEntityToWeak = false;
-
         if (!relation.isIdentifying) {
             if (
                 !relation.side1?.entity?.idMx ||
@@ -1983,8 +1955,6 @@ export default function App(props) {
 
                 weakEntity = conversionCandidate.weakEntity;
                 ownerEntity = conversionCandidate.ownerEntity;
-                convertedStrongEntityToWeak = true;
-
                 weakEntity.weak = true;
                 convertEntityPrimaryKeyToPartialKey(weakEntity);
 
@@ -2834,101 +2804,41 @@ export default function App(props) {
 
     const DeleteAttributeButton = () => {
         const isAttribute = selected?.style?.includes("shape=ellipse");
-        let isKey;
-        let isFromRelation = false;
+        const selectedAttributeOwner = findAttributeOwnerById(
+            diagramRef.current,
+            selected?.id,
+        );
 
-        for (const entity of diagramRef.current.entities) {
-            for (const attribute of entity.attributes) {
-                if (attribute.idMx === selected?.id) {
-                    isKey = attribute.key;
-                    break; // Exit the inner loop once the matching attribute is found
-                }
+        const isKey = selectedAttributeOwner?.attribute?.key === true;
+        const isFromRelation = selectedAttributeOwner?.ownerType === "relation";
+
+        function deleteAttribute() {
+            const attributeOwner = findAttributeOwnerById(
+                diagramRef.current,
+                selected.id,
+            );
+
+            if (!attributeOwner) return;
+
+            const { owner, attribute } = attributeOwner;
+            const attrIndex = findAttributeIndexById(
+                owner.attributes,
+                selected.id,
+            );
+
+            if (attrIndex === -1) return;
+
+            owner.attributes.splice(attrIndex, 1);
+
+            const cells = [
+                ...attribute.cell.map((cellId) => graph.model.cells[cellId]),
+                accessCell(getDiscriminantUnderlineId(attribute.idMx)),
+            ].filter(Boolean);
+
+            if (cells.length) {
+                graph.removeCells(cells);
             }
 
-            if (isKey !== undefined) {
-                break; // Exit the outer loop once the matching attribute is found
-            }
-        }
-
-        for (const relation of diagramRef.current.relations) {
-            for (const attribute of relation.attributes) {
-                if (attribute.idMx === selected?.id) {
-                    isFromRelation = true;
-                    break;
-                }
-            }
-        }
-
-        function deleteAttribute(isRelation) {
-            if (!isRelation) {
-                // Find the entity that contains the attribute
-                const entity = diagramRef.current.entities.find((entity) =>
-                    entity.attributes.some((attr) => attr.idMx === selected.id),
-                );
-
-                if (entity) {
-                    // Find the attribute index
-                    const attrIndex = entity.attributes.findIndex(
-                        (attr) => attr.idMx === selected.id,
-                    );
-
-                    if (attrIndex !== -1) {
-                        const attribute = entity.attributes[attrIndex];
-
-                        // Remove the attribute from the entity
-                        entity.attributes.splice(attrIndex, 1);
-
-                        const cells = [
-                            ...attribute.cell.map(
-                                (cellId) => graph.model.cells[cellId],
-                            ),
-                            accessCell(
-                                getDiscriminantUnderlineId(attribute.idMx),
-                            ),
-                        ].filter(Boolean);
-
-                        if (cells.length) {
-                            // Remove the cells from the graph
-                            graph.removeCells(cells);
-                        }
-                    }
-                }
-            } else {
-                // Find the relation that contains the attribute
-                const relation = diagramRef.current.relations.find((relation) =>
-                    relation.attributes.some(
-                        (attr) => attr.idMx === selected.id,
-                    ),
-                );
-
-                if (relation) {
-                    // Find the attribute index
-                    const attrIndex = relation.attributes.findIndex(
-                        (attr) => attr.idMx === selected.id,
-                    );
-
-                    if (attrIndex !== -1) {
-                        const attribute = relation.attributes[attrIndex];
-
-                        // Remove the attribute from the relation
-                        relation.attributes.splice(attrIndex, 1);
-
-                        const cells = [
-                            ...attribute.cell.map(
-                                (cellId) => graph.model.cells[cellId],
-                            ),
-                            accessCell(
-                                getDiscriminantUnderlineId(attribute.idMx),
-                            ),
-                        ].filter(Boolean);
-
-                        if (cells.length) {
-                            // Remove the cells from the graph
-                            graph.removeCells(cells);
-                        }
-                    }
-                }
-            }
             updateDiagramData();
         }
 
@@ -2940,7 +2850,7 @@ export default function App(props) {
                 <button
                     type="button"
                     className="button-toolbar-action"
-                    onClick={() => deleteAttribute(isFromRelation)}
+                    onClick={deleteAttribute}
                 >
                     Borrar
                 </button>
