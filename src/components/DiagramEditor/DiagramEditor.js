@@ -16,10 +16,10 @@ import {
 import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
-import { normalizeDiagramData } from "../../utils/diagramNormalization";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
+import { normalizeDiagramData } from "./utils/diagramNormalization";
 import {
     ER_FILL,
     ER_FONT,
@@ -124,7 +124,9 @@ export default function App(props) {
         );
 
     const saveToLocalStorage = () => {
-        const diagramData = JSON.stringify(diagramRef.current);
+        const diagramData = JSON.stringify(
+            normalizeDiagramData(diagramRef.current),
+        );
         localStorage.setItem("diagramData", diagramData);
     };
 
@@ -3284,7 +3286,11 @@ export default function App(props) {
         const handleAccept = async () => {
             setOpen(false);
 
-            const jsonString = JSON.stringify(diagramRef.current, null, 2);
+            const jsonString = JSON.stringify(
+                normalizeDiagramData(diagramRef.current),
+                null,
+                2,
+            );
 
             await saveFileWithPicker({
                 content: jsonString,
@@ -3359,7 +3365,9 @@ export default function App(props) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
-                        const importedDiagram = JSON.parse(e.target.result);
+                        const rawImportedDiagram = JSON.parse(e.target.result);
+                        const importedDiagram =
+                            normalizeDiagramData(rawImportedDiagram);
                         const diagnostics = validateGraph(importedDiagram);
                         const messages = [
                             "No se ha podido importar el diagrama por los siguientes errores:",
