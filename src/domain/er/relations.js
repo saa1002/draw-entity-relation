@@ -256,3 +256,22 @@ export const getCascadedWeakConversionCandidate = (diagram, relationData) => {
         ownerEntity: side1Entity,
     };
 };
+
+export const applyIdentifyingRelationCardinalities = (
+    diagram,
+    relationData,
+) => {
+    const { weakSide, strongSide } = getWeakAndStrongSidesForRelation(
+        diagram,
+        relationData,
+    );
+
+    if (!weakSide || !strongSide) {
+        return false;
+    }
+
+    weakSide.cardinality = "0:N";
+    strongSide.cardinality = "1:1";
+
+    return true;
+};

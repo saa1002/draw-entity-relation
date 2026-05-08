@@ -19,6 +19,7 @@ import { BUILD_DATE } from "../../buildInfo";
 import {
     ATTRIBUTE_OWNER_TYPES,
     addAttributeToOwner,
+    applyIdentifyingRelationCardinalities,
     canRelationHoldAttributes,
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
@@ -259,25 +260,6 @@ export default function App(props) {
             graph.model.setValue(side2Label, relationData.side2.cardinality);
             graph.updateCellSize(side2Label);
         }
-    };
-
-    const applyIdentifyingRelationCardinalities = (relationData) => {
-        const { weakSide, strongSide } = getWeakAndStrongSidesForRelation(
-            diagramRef.current,
-            relationData,
-        );
-
-        if (!weakSide || !strongSide) {
-            return false;
-        }
-
-        weakSide.cardinality = "0:N";
-        strongSide.cardinality = "1:1";
-
-        removeRelationAttributes(relationData);
-        syncRelationCardinalityLabels(relationData);
-
-        return true;
     };
 
     const removeRelationAttributes = (relationData) => {
@@ -1220,7 +1202,10 @@ export default function App(props) {
             weakEntity.ownerEntityId = ownerEntity.idMx;
 
             const identifyingCardinalitiesApplied =
-                applyIdentifyingRelationCardinalities(relation);
+                applyIdentifyingRelationCardinalities(
+                    diagramRef.current,
+                    relation,
+                );
 
             if (!identifyingCardinalitiesApplied) {
                 relation.isIdentifying = false;
@@ -1232,6 +1217,9 @@ export default function App(props) {
                 );
                 return;
             }
+
+            removeRelationAttributes(relation);
+            syncRelationCardinalityLabels(relation);
 
             ensureIdentifyingRelationDecorator(selected, relation);
             ensureIdentifyingRelationEdgeDecorator(selected, relation);
