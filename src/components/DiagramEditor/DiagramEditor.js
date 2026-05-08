@@ -45,7 +45,6 @@ import {
     isRelationConfigured,
     isSelfRelation,
     isWeakEntity,
-    normalizeDiagramData,
     relationHasBothEntitySides,
     relationInvolvesEntity,
     removeAllAttributesFromOwner,
@@ -78,6 +77,15 @@ import {
     createEntityRenderingHelpers,
     isWeakEntityDecoratorCell,
 } from "./utils/entityRendering";
+import {
+    SAVE_FILE_RESULT,
+    clearDiagramLocalStorage,
+    exportDiagramToJsonFile,
+    exportSqlScriptToFile,
+    loadDiagramFromLocalStorage,
+    readDiagramJsonFile,
+    saveDiagramToLocalStorage,
+} from "./utils/filePersistence";
 import {
     IDENTIFYING_RELATION_DECORATOR_SUFFIX,
     IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX,
@@ -171,10 +179,28 @@ export default function App(props) {
         findRelationById(diagramRef.current, selected?.id) ?? null;
 
     const saveToLocalStorage = () => {
-        const diagramData = JSON.stringify(
-            normalizeDiagramData(diagramRef.current),
-        );
-        localStorage.setItem("diagramData", diagramData);
+        saveDiagramToLocalStorage(diagramRef.current);
+    };
+
+    const showSaveFileResultToast = (result) => {
+        if (result === SAVE_FILE_RESULT.SAVED) {
+            toast.success("Archivo guardado correctamente.");
+            return;
+        }
+
+        if (result === SAVE_FILE_RESULT.CANCELLED) {
+            toast("Guardado cancelado.");
+            return;
+        }
+
+        if (result === SAVE_FILE_RESULT.UNSUPPORTED) {
+            toast.error(
+                "Tu navegador no permite elegir dónde guardar el archivo.",
+            );
+            return;
+        }
+
+        toast.error("No se pudo guardar el archivo.");
     };
 
     const {
@@ -428,10 +454,10 @@ export default function App(props) {
             }
         };
 
-        // Recreate the graph
-        if (localStorage.getItem("diagramData")) {
-            const savedData = JSON.parse(localStorage.getItem("diagramData"));
-            diagramRef.current = normalizeDiagramData(savedData); // Deep clone the saved data
+        const savedData = loadDiagramFromLocalStorage();
+
+        if (savedData) {
+            diagramRef.current = savedData; // Deep clone the saved data
 
             for (const entity of diagramRef.current.entities) {
                 recreateEntity(entity);
@@ -2122,40 +2148,6 @@ export default function App(props) {
         }
     };
 
-    const saveFileWithPicker = async ({
-        content,
-        fileName,
-        mimeType,
-        pickerTypes,
-    }) => {
-        if (!window.showSaveFilePicker) {
-            toast.error(
-                "Tu navegador no permite elegir dónde guardar el archivo.",
-            );
-            return;
-        }
-
-        try {
-            const fileHandle = await window.showSaveFilePicker({
-                suggestedName: fileName,
-                types: pickerTypes,
-            });
-
-            const writable = await fileHandle.createWritable();
-            await writable.write(new Blob([content], { type: mimeType }));
-            await writable.close();
-
-            toast.success("Archivo guardado correctamente.");
-        } catch (error) {
-            if (error?.name === "AbortError") {
-                toast("Guardado cancelado.");
-                return;
-            }
-
-            toast.error("No se pudo guardar el archivo.");
-        }
-    };
-
     const GenerateSQLButton = () => {
         const [open, setOpen] = React.useState(false);
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
@@ -2182,19 +2174,9 @@ export default function App(props) {
 
             const sqlScript = generateSQL(diagramRef.current);
 
-            await saveFileWithPicker({
-                content: sqlScript,
-                fileName: "tables.sql",
-                mimeType: "text/plain;charset=utf-8",
-                pickerTypes: [
-                    {
-                        description: "SQL file",
-                        accept: {
-                            "text/plain": [".sql"],
-                        },
-                    },
-                ],
-            });
+            const result = await exportSqlScriptToFile(sqlScript);
+
+            showSaveFileResultToast(result);
         };
 
         return (
@@ -2260,25 +2242,9 @@ export default function App(props) {
         const handleAccept = async () => {
             setOpen(false);
 
-            const jsonString = JSON.stringify(
-                normalizeDiagramData(diagramRef.current),
-                null,
-                2,
-            );
+            const result = await exportDiagramToJsonFile(diagramRef.current);
 
-            await saveFileWithPicker({
-                content: jsonString,
-                fileName: "diagram.json",
-                mimeType: "application/json;charset=utf-8",
-                pickerTypes: [
-                    {
-                        description: "JSON file",
-                        accept: {
-                            "application/json": [".json"],
-                        },
-                    },
-                ],
-            });
+            showSaveFileResultToast(result);
         };
 
         return (
@@ -2334,46 +2300,37 @@ export default function App(props) {
             setOpen(false);
         };
 
-        const handleFileChange = (event) => {
+        const handleFileChange = async (event) => {
             const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const rawImportedDiagram = JSON.parse(e.target.result);
-                        const importedDiagram =
-                            normalizeDiagramData(rawImportedDiagram);
-                        const diagnostics = validateGraph(importedDiagram);
 
-                        setValidationMessages(
-                            getValidationDialogMessages(
-                                diagnostics,
-                                "importJson",
-                            ),
-                        );
+            if (!file) return;
 
-                        if (diagnostics.isValid) {
-                            resetCanvas();
-                            localStorage.setItem(
-                                "diagramData",
-                                JSON.stringify(importedDiagram),
-                            );
-                            recreateGraphFromLocalStorage();
-                            setOpen(false);
-                            toast.success("Diagrama importado con éxito.");
-                        } else {
-                            toast.error(
-                                "El diagrama no se ha podido importar porque no es válido.",
-                            );
-                        }
-                    } catch (error) {
-                        setValidationMessages([
-                            "No se ha podido importar el diagrama porque el archivo JSON no es válido.",
-                        ]);
-                        toast.error("El diagrama no se ha podido importar.");
-                    }
-                };
-                reader.readAsText(file);
+            try {
+                const importedDiagram = await readDiagramJsonFile(file);
+                const diagnostics = validateGraph(importedDiagram);
+
+                setValidationMessages(
+                    getValidationDialogMessages(diagnostics, "importJson"),
+                );
+
+                if (diagnostics.isValid) {
+                    resetCanvas();
+                    saveDiagramToLocalStorage(importedDiagram);
+                    recreateGraphFromLocalStorage();
+                    setOpen(false);
+                    toast.success("Diagrama importado con éxito.");
+                } else {
+                    toast.error(
+                        "El diagrama no se ha podido importar porque no es válido.",
+                    );
+                }
+            } catch (error) {
+                setValidationMessages([
+                    "No se ha podido importar el diagrama porque el archivo JSON no es válido.",
+                ]);
+                toast.error("El diagrama no se ha podido importar.");
+            } finally {
+                event.target.value = "";
             }
         };
 
@@ -2418,7 +2375,7 @@ export default function App(props) {
     const resetCanvas = () => {
         diagramRef.current.entities = [];
         diagramRef.current.relations = [];
-        localStorage.removeItem("diagramData");
+        clearDiagramLocalStorage();
 
         // Filter out cells that aren't key 0 or 1
         const cellsToRemove = Object.keys(graph.model.cells)
