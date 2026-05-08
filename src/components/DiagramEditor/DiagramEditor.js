@@ -21,11 +21,11 @@ import {
     addAttributeToOwner,
     applyIdentifyingRelationCardinalities,
     canRelationHoldAttributes,
+    clearIdentifyingRelationDomainSemantics,
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
     createAttribute,
     findAttributeOwnerById,
-    findEntitiesByIdentifyingRelationId,
     findEntityById,
     findEntityIndexById,
     findRelationById,
@@ -219,30 +219,23 @@ export default function App(props) {
     });
 
     const clearIdentifyingRelationSemantics = (relationId) => {
-        if (!relationId) return;
-
-        const relation = findRelationById(diagramRef.current, relationId);
-
-        if (relation) {
-            relation.isIdentifying = false;
-            removeIdentifyingRelationDecorator(relation.idMx);
-            removeIdentifyingRelationEdgeDecorator(relation.idMx);
-
-            const relationCell = accessCell(relation.idMx);
-            if (relationCell) {
-                graph
-                    .getModel()
-                    .setStyle(relationCell, getRelationStyleString(relation));
-            }
-        }
-
-        findEntitiesByIdentifyingRelationId(
+        const { relation } = clearIdentifyingRelationDomainSemantics(
             diagramRef.current,
             relationId,
-        ).forEach((entity) => {
-            entity.identifyingRelationId = null;
-            entity.ownerEntityId = null;
-        });
+        );
+
+        if (!relation) return;
+
+        removeIdentifyingRelationDecorator(relation.idMx);
+        removeIdentifyingRelationEdgeDecorator(relation.idMx);
+
+        const relationCell = accessCell(relation.idMx);
+
+        if (relationCell) {
+            graph
+                .getModel()
+                .setStyle(relationCell, getRelationStyleString(relation));
+        }
     };
 
     const syncRelationCardinalityLabels = (relationData) => {

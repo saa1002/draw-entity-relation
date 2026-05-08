@@ -1,4 +1,5 @@
 import {
+    findEntitiesByIdentifyingRelationId,
     findEntityById,
     findWeakEntityByIdentifyingRelationId,
     isWeakEntity,
@@ -274,4 +275,37 @@ export const applyIdentifyingRelationCardinalities = (
     strongSide.cardinality = "1:1";
 
     return true;
+};
+
+export const clearIdentifyingRelationDomainSemantics = (
+    diagram,
+    relationId,
+) => {
+    if (!relationId) {
+        return {
+            relation: null,
+            affectedEntities: [],
+        };
+    }
+
+    const relation = findRelationById(diagram, relationId) ?? null;
+
+    if (relation) {
+        relation.isIdentifying = false;
+    }
+
+    const affectedEntities = findEntitiesByIdentifyingRelationId(
+        diagram,
+        relationId,
+    );
+
+    affectedEntities.forEach((entity) => {
+        entity.identifyingRelationId = null;
+        entity.ownerEntityId = null;
+    });
+
+    return {
+        relation,
+        affectedEntities,
+    };
 };
