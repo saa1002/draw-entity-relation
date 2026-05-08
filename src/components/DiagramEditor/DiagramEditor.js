@@ -60,6 +60,7 @@ import {
     createAttributeRenderingHelpers,
     getAttributeStyleString,
 } from "./utils/attributeRendering";
+import { syncDiagramDataFromGraph } from "./utils/diagramGraphSync";
 import { reconstructDiagramGraph } from "./utils/diagramReconstruction";
 import {
     getAttributeDimensions,
@@ -413,65 +414,14 @@ export default function App(props) {
         }
     }, [graph, onSelected]);
 
-    const updateEntityAttributes = (entity) => {
-        if (entity.attributes) {
-            entity.attributes.forEach((attr) => {
-                if (graph.model.cells.hasOwnProperty(attr.idMx)) {
-                    const cellDataAttr = accessCell(attr.idMx);
-
-                    let cellEdgeAttr = null;
-                    const storedEdgeId = attr?.cell?.[1];
-
-                    if (storedEdgeId) {
-                        cellEdgeAttr = accessCell(storedEdgeId);
-                    }
-
-                    if (!cellEdgeAttr && cellDataAttr) {
-                        const connectedEdges =
-                            graph.getEdges(cellDataAttr) || [];
-                        cellEdgeAttr = connectedEdges[0] ?? null;
-                    }
-
-                    if (!cellDataAttr || !cellEdgeAttr) {
-                        return;
-                    }
-
-                    attr.name = cellDataAttr.value;
-                    updateAttributePosition({
-                        attribute: attr,
-                        owner: entity,
-                        position: cellDataAttr.geometry,
-                    });
-                    attr.cell = [cellDataAttr.id, cellEdgeAttr.id];
-                }
-            });
-        }
-    };
-
     const updateDiagramData = () => {
-        diagramRef.current.entities.forEach((entity) => {
-            if (graph.model.cells.hasOwnProperty(entity.idMx)) {
-                const cellData = accessCell(entity.idMx);
-
-                entity.name = cellData.value;
-                entity.position.x = cellData.geometry.x;
-                entity.position.y = cellData.geometry.y;
-
-                updateEntityAttributes(entity);
-            }
+        syncDiagramDataFromGraph({
+            diagram: diagramRef.current,
+            graph,
+            accessCell,
+            updateAttributePosition,
         });
 
-        diagramRef.current.relations.forEach((relation) => {
-            if (graph.model.cells.hasOwnProperty(relation.idMx)) {
-                const cellData = accessCell(relation.idMx);
-
-                relation.name = cellData.value;
-                relation.position.x = cellData.geometry.x;
-                relation.position.y = cellData.geometry.y;
-
-                updateEntityAttributes(relation);
-            }
-        });
         saveToLocalStorage();
     };
 
