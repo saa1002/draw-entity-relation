@@ -85,6 +85,7 @@ import {
     isIdentifyingRelationDecoratorCell,
     isIdentifyingRelationEdgeDecoratorCell,
 } from "./utils/relationRendering";
+import { getValidationDialogMessages } from "./utils/validationMessages";
 
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 
@@ -2162,86 +2163,13 @@ export default function App(props) {
 
         const handleClickOpen = () => {
             setRefreshDiagram((prevState) => !prevState);
+
             const diagnostics = validateGraph(diagramRef.current);
 
-            if (diagnostics.isValid) {
-                setAcceptDisabled(false);
-                setValidationMessages([
-                    "¿Deseas pasar a tablas el diagrama E-R?",
-                ]);
-            } else {
-                setAcceptDisabled(true);
-                const messages = [
-                    "No se ha podido generar el script SQL por los siguientes errores:",
-                ];
-                if (!diagnostics.notEmpty)
-                    messages.push("El diagrama está vacío.");
-                if (!diagnostics.noRepeatedNames)
-                    messages.push(
-                        "Hay entidades o relaciones con nombres repetidos.",
-                    );
-                if (!diagnostics.noRepeatedAttrNames)
-                    messages.push("Hay atributos repetidos en una entidad.");
-                if (!diagnostics.noEntitiesWithoutAttributes)
-                    messages.push("Hay entidades sin atributos.");
-                if (!diagnostics.noEntitiesWithoutPK)
-                    messages.push("Hay entidades sin clave primaria.");
-                if (!diagnostics.noWeakEntitiesWithPrimaryKey)
-                    messages.push(
-                        "Hay entidades débiles con clave primaria normal.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithoutPartialKey)
-                    messages.push(
-                        "Hay entidades débiles sin atributo discriminante.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithMoreThanOnePartialKey)
-                    messages.push(
-                        "Hay entidades débiles con más de un atributo discriminante.",
-                    );
-                if (!diagnostics.noStrongEntitiesWithPartialKey)
-                    messages.push(
-                        "Hay entidades fuertes con atributo discriminante.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithoutIdentifyingRelation)
-                    messages.push(
-                        "Hay entidades débiles sin relación de dependencia por identificación.",
-                    );
-                if (!diagnostics.noInvalidIdentifyingRelations)
-                    messages.push(
-                        "Hay relaciones de dependencia por identificación que no conectan una entidad débil dependiente con una entidad propietaria distinta.",
-                    );
-                if (!diagnostics.noInvalidIdentifyingCardinalities)
-                    messages.push(
-                        "Hay relaciones de dependencia por identificación con cardinalidades no válidas.",
-                    );
-                if (!diagnostics.noInconsistentWeakEntityOwnership)
-                    messages.push(
-                        "Hay entidades débiles cuya entidad propietaria es inconsistente.",
-                    );
-                if (!diagnostics.noMultipleIdentifyingRelationsPerWeakEntity)
-                    messages.push(
-                        "Hay entidades débiles con más de una relación de dependencia por identificación como entidad dependiente.",
-                    );
-                if (!diagnostics.noAttributesInNonNMRelations)
-                    messages.push(
-                        "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
-                    );
-                if (!diagnostics.noUnconnectedRelations)
-                    messages.push("Hay relaciones desconectadas.");
-                if (!diagnostics.noSQLIdentifierCollisions)
-                    messages.push(
-                        "Hay nombres que colisionan al normalizar identificadores SQL.",
-                    );
-                if (!diagnostics.noBrokenRelationEntityReferences)
-                    messages.push(
-                        "Hay relaciones que apuntan a entidades inexistentes.",
-                    );
-                if (!diagnostics.noNotValidCardinalities)
-                    messages.push(
-                        "Hay cardinalidades no válidas en las relaciones.",
-                    );
-                setValidationMessages(messages);
-            }
+            setAcceptDisabled(!diagnostics.isValid);
+            setValidationMessages(
+                getValidationDialogMessages(diagnostics, "sql"),
+            );
             setOpen(true);
         };
 
@@ -2318,82 +2246,10 @@ export default function App(props) {
             setRefreshDiagram((prevState) => !prevState);
             const diagnostics = validateGraph(diagramRef.current);
 
-            if (diagnostics.isValid) {
-                setAcceptDisabled(false);
-                setValidationMessages([
-                    "¿Deseas exportar el diagrama en formato JSON?",
-                ]);
-            } else {
-                setAcceptDisabled(true);
-                const messages = [
-                    "No se ha podido exportar el diagrama en formato JSON por los siguientes errores:",
-                ];
-                if (!diagnostics.notEmpty)
-                    messages.push("El diagrama está vacío.");
-                if (!diagnostics.noRepeatedNames)
-                    messages.push("Hay entidades con nombres repetidos.");
-                if (!diagnostics.noRepeatedAttrNames)
-                    messages.push("Hay atributos repetidos en una entidad.");
-                if (!diagnostics.noEntitiesWithoutAttributes)
-                    messages.push("Hay entidades sin atributos.");
-                if (!diagnostics.noEntitiesWithoutPK)
-                    messages.push("Hay entidades sin clave primaria.");
-                if (!diagnostics.noWeakEntitiesWithPrimaryKey)
-                    messages.push(
-                        "Hay entidades débiles con clave primaria normal.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithoutPartialKey)
-                    messages.push(
-                        "Hay entidades débiles sin atributo discriminante.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithMoreThanOnePartialKey)
-                    messages.push(
-                        "Hay entidades débiles con más de un atributo discriminante.",
-                    );
-                if (!diagnostics.noStrongEntitiesWithPartialKey)
-                    messages.push(
-                        "Hay entidades fuertes con atributo discriminante.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithoutIdentifyingRelation)
-                    messages.push(
-                        "Hay entidades débiles sin relación de dependencia por identificación.",
-                    );
-                if (!diagnostics.noInvalidIdentifyingRelations)
-                    messages.push(
-                        "Hay relaciones de dependencia por identificación que no conectan una entidad débil dependiente con una entidad propietaria distinta.",
-                    );
-                if (!diagnostics.noInvalidIdentifyingCardinalities)
-                    messages.push(
-                        "Hay relaciones de dependencia por identificación con cardinalidades no válidas.",
-                    );
-                if (!diagnostics.noInconsistentWeakEntityOwnership)
-                    messages.push(
-                        "Hay entidades débiles cuya entidad propietaria es inconsistente.",
-                    );
-                if (!diagnostics.noMultipleIdentifyingRelationsPerWeakEntity)
-                    messages.push(
-                        "Hay entidades débiles con más de una relación de dependencia por identificación como entidad dependiente.",
-                    );
-                if (!diagnostics.noAttributesInNonNMRelations)
-                    messages.push(
-                        "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
-                    );
-                if (!diagnostics.noUnconnectedRelations)
-                    messages.push("Hay relaciones desconectadas.");
-                if (!diagnostics.noSQLIdentifierCollisions)
-                    messages.push(
-                        "Hay nombres que colisionan al normalizar identificadores SQL.",
-                    );
-                if (!diagnostics.noBrokenRelationEntityReferences)
-                    messages.push(
-                        "Hay relaciones que apuntan a entidades inexistentes.",
-                    );
-                if (!diagnostics.noNotValidCardinalities)
-                    messages.push(
-                        "Hay cardinalidades no válidas en las relaciones.",
-                    );
-                setValidationMessages(messages);
-            }
+            setAcceptDisabled(!diagnostics.isValid);
+            setValidationMessages(
+                getValidationDialogMessages(diagnostics, "exportJson"),
+            );
             setOpen(true);
         };
 
@@ -2470,6 +2326,7 @@ export default function App(props) {
         const [validationMessages, setValidationMessages] = React.useState([]);
 
         const handleClickOpen = () => {
+            setValidationMessages([]);
             setOpen(true);
         };
 
@@ -2487,92 +2344,13 @@ export default function App(props) {
                         const importedDiagram =
                             normalizeDiagramData(rawImportedDiagram);
                         const diagnostics = validateGraph(importedDiagram);
-                        const messages = [
-                            "No se ha podido importar el diagrama por los siguientes errores:",
-                        ];
-                        if (!diagnostics.notEmpty)
-                            messages.push("El diagrama está vacío.");
-                        if (!diagnostics.noRepeatedNames)
-                            messages.push(
-                                "Hay entidades con nombres repetidos.",
-                            );
-                        if (!diagnostics.noRepeatedAttrNames)
-                            messages.push(
-                                "Hay atributos repetidos en una entidad.",
-                            );
-                        if (!diagnostics.noEntitiesWithoutAttributes)
-                            messages.push("Hay entidades sin atributos.");
-                        if (!diagnostics.noEntitiesWithoutPK)
-                            messages.push("Hay entidades sin clave primaria.");
-                        if (!diagnostics.noEntitiesWithMoreThanOnePK)
-                            messages.push(
-                                "Hay entidades con más de una clave primaria.",
-                            );
-                        if (!diagnostics.noNMRelationsWithPK)
-                            messages.push(
-                                "Hay relaciones N-M con clave primaria.",
-                            );
-                        if (!diagnostics.noWeakEntitiesWithPrimaryKey)
-                            messages.push(
-                                "Hay entidades débiles con clave primaria normal.",
-                            );
-                        if (!diagnostics.noWeakEntitiesWithoutPartialKey)
-                            messages.push(
-                                "Hay entidades débiles sin atributo discriminante.",
-                            );
-                        if (
-                            !diagnostics.noWeakEntitiesWithMoreThanOnePartialKey
-                        )
-                            messages.push(
-                                "Hay entidades débiles con más de un atributo discriminante.",
-                            );
-                        if (!diagnostics.noStrongEntitiesWithPartialKey)
-                            messages.push(
-                                "Hay entidades fuertes con atributo discriminante.",
-                            );
-                        if (
-                            !diagnostics.noWeakEntitiesWithoutIdentifyingRelation
-                        )
-                            messages.push(
-                                "Hay entidades débiles sin relación de dependencia por identificación.",
-                            );
-                        if (!diagnostics.noInvalidIdentifyingRelations)
-                            messages.push(
-                                "Hay relaciones de dependencia por identificación que no conectan una entidad débil dependiente con una entidad propietaria distinta.",
-                            );
-                        if (!diagnostics.noInvalidIdentifyingCardinalities)
-                            messages.push(
-                                "Hay relaciones de dependencia por identificación con cardinalidades no válidas.",
-                            );
-                        if (!diagnostics.noInconsistentWeakEntityOwnership)
-                            messages.push(
-                                "Hay entidades débiles cuya entidad propietaria es inconsistente.",
-                            );
-                        if (
-                            !diagnostics.noMultipleIdentifyingRelationsPerWeakEntity
-                        )
-                            messages.push(
-                                "Hay entidades débiles con más de una relación de dependencia por identificación como entidad dependiente.",
-                            );
-                        if (!diagnostics.noAttributesInNonNMRelations)
-                            messages.push(
-                                "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
-                            );
-                        if (!diagnostics.noUnconnectedRelations)
-                            messages.push("Hay relaciones desconectadas.");
-                        if (!diagnostics.noSQLIdentifierCollisions)
-                            messages.push(
-                                "Hay nombres que colisionan al normalizar identificadores SQL.",
-                            );
-                        if (!diagnostics.noBrokenRelationEntityReferences)
-                            messages.push(
-                                "Hay relaciones que apuntan a entidades inexistentes.",
-                            );
-                        if (!diagnostics.noNotValidCardinalities)
-                            messages.push(
-                                "Hay cardinalidades no válidas en las relaciones.",
-                            );
-                        setValidationMessages(messages);
+
+                        setValidationMessages(
+                            getValidationDialogMessages(
+                                diagnostics,
+                                "importJson",
+                            ),
+                        );
 
                         if (diagnostics.isValid) {
                             resetCanvas();
@@ -2585,10 +2363,13 @@ export default function App(props) {
                             toast.success("Diagrama importado con éxito.");
                         } else {
                             toast.error(
-                                "El diagrama no se ha podido porque no es válido.",
+                                "El diagrama no se ha podido importar porque no es válido.",
                             );
                         }
                     } catch (error) {
+                        setValidationMessages([
+                            "No se ha podido importar el diagrama porque el archivo JSON no es válido.",
+                        ]);
                         toast.error("El diagrama no se ha podido importar.");
                     }
                 };
