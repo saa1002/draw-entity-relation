@@ -30,6 +30,7 @@ import {
     findRelationById,
     findRelationIndexById,
     generateUniqueAttributeName,
+    getCascadedWeakConversionCandidate,
     getDefaultAttributeSemantics,
     getLastAttribute,
     getWeakAndStrongSidesForRelation,
@@ -241,66 +242,6 @@ export default function App(props) {
             entity.identifyingRelationId = null;
             entity.ownerEntityId = null;
         });
-    };
-
-    const getCascadedWeakConversionCandidate = (relationData) => {
-        if (!relationData) return null;
-
-        const side1Entity =
-            findEntityById(
-                diagramRef.current,
-                relationData?.side1?.entity?.idMx,
-            ) ?? null;
-
-        const side2Entity =
-            findEntityById(
-                diagramRef.current,
-                relationData?.side2?.entity?.idMx,
-            ) ?? null;
-
-        if (!side1Entity || !side2Entity) {
-            return null;
-        }
-
-        if (side1Entity.idMx === side2Entity.idMx) {
-            return null;
-        }
-
-        // This helper only handles the UX case where both entities are still strong.
-        if (isWeakEntity(side1Entity) || isWeakEntity(side2Entity)) {
-            return null;
-        }
-
-        const side1OwnsWeakEntities = diagramRef.current.entities.some(
-            (entity) =>
-                isWeakEntity(entity) &&
-                entity.ownerEntityId === side1Entity.idMx &&
-                !!entity.identifyingRelationId,
-        );
-
-        const side2OwnsWeakEntities = diagramRef.current.entities.some(
-            (entity) =>
-                isWeakEntity(entity) &&
-                entity.ownerEntityId === side2Entity.idMx &&
-                !!entity.identifyingRelationId,
-        );
-
-        // If none or both can be inferred, do not guess.
-        if (side1OwnsWeakEntities === side2OwnsWeakEntities) {
-            return null;
-        }
-
-        if (side1OwnsWeakEntities) {
-            return {
-                weakEntity: side1Entity,
-                ownerEntity: side2Entity,
-            };
-        }
-
-        return {
-            weakEntity: side2Entity,
-            ownerEntity: side1Entity,
-        };
     };
 
     const syncRelationCardinalityLabels = (relationData) => {
@@ -1242,8 +1183,10 @@ export default function App(props) {
             }
 
             if (!weakEntity || !ownerEntity) {
-                const conversionCandidate =
-                    getCascadedWeakConversionCandidate(relation);
+                const conversionCandidate = getCascadedWeakConversionCandidate(
+                    diagramRef.current,
+                    relation,
+                );
 
                 if (!conversionCandidate) {
                     toast.error(

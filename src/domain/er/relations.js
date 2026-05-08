@@ -202,3 +202,57 @@ export const getWeakAndStrongSidesForRelation = (diagram, relationData) => {
 
     return emptyResult;
 };
+
+export const getCascadedWeakConversionCandidate = (diagram, relationData) => {
+    if (!relationData) return null;
+
+    const side1Entity =
+        findEntityById(diagram, relationData?.side1?.entity?.idMx) ?? null;
+
+    const side2Entity =
+        findEntityById(diagram, relationData?.side2?.entity?.idMx) ?? null;
+
+    if (!side1Entity || !side2Entity) {
+        return null;
+    }
+
+    if (side1Entity.idMx === side2Entity.idMx) {
+        return null;
+    }
+
+    // This helper only handles the UX case where both entities are still strong.
+    if (isWeakEntity(side1Entity) || isWeakEntity(side2Entity)) {
+        return null;
+    }
+
+    const side1OwnsWeakEntities = diagram.entities.some(
+        (entity) =>
+            isWeakEntity(entity) &&
+            entity.ownerEntityId === side1Entity.idMx &&
+            !!entity.identifyingRelationId,
+    );
+
+    const side2OwnsWeakEntities = diagram.entities.some(
+        (entity) =>
+            isWeakEntity(entity) &&
+            entity.ownerEntityId === side2Entity.idMx &&
+            !!entity.identifyingRelationId,
+    );
+
+    // If none or both can be inferred, do not guess.
+    if (side1OwnsWeakEntities === side2OwnsWeakEntities) {
+        return null;
+    }
+
+    if (side1OwnsWeakEntities) {
+        return {
+            weakEntity: side1Entity,
+            ownerEntity: side2Entity,
+        };
+    }
+
+    return {
+        weakEntity: side2Entity,
+        ownerEntity: side1Entity,
+    };
+};
