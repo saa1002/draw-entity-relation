@@ -312,12 +312,10 @@ export default function App(props) {
         changedAttributes.forEach(syncAttributeVisualRepresentation);
     };
 
-    const recreateGraphFromLocalStorage = () => {
-        const savedData = loadDiagramFromLocalStorage();
+    const recreateGraphFromDiagram = (diagramData) => {
+        if (!diagramData) return;
 
-        if (!savedData) return;
-
-        diagramRef.current = savedData;
+        diagramRef.current = diagramData;
 
         reconstructDiagramGraph({
             graph,
@@ -329,6 +327,12 @@ export default function App(props) {
             ensureIdentifyingRelationDecorator,
             ensureIdentifyingRelationEdgeDecorator,
         });
+    };
+
+    const recreateGraphFromLocalStorage = () => {
+        const savedData = loadDiagramFromLocalStorage();
+
+        recreateGraphFromDiagram(savedData);
     };
 
     React.useEffect(() => {
@@ -2178,7 +2182,7 @@ export default function App(props) {
                 if (diagnostics.isValid) {
                     resetCanvas();
                     saveDiagramToLocalStorage(importedDiagram);
-                    recreateGraphFromLocalStorage();
+                    recreateGraphFromDiagram(importedDiagram);
                     setOpen(false);
                     toast.success("Diagrama importado con éxito.");
                 } else {
