@@ -57,10 +57,8 @@ import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
 import {
-    DISCRIMINANT_UNDERLINE_SUFFIX,
     createAttributeRenderingHelpers,
     getAttributeStyleString,
-    isDiscriminantUnderlineCell,
 } from "./utils/attributeRendering";
 import { reconstructDiagramGraph } from "./utils/diagramReconstruction";
 import {
@@ -72,7 +70,6 @@ import {
     installDiagramEditorStyles,
 } from "./utils/diagramStyles";
 import {
-    WEAK_ENTITY_DECORATOR_SUFFIX,
     createEntityRenderingHelpers,
     isWeakEntityDecoratorCell,
 } from "./utils/entityRendering";
@@ -86,12 +83,10 @@ import {
     saveDiagramToLocalStorage,
 } from "./utils/filePersistence";
 import { clearGraphCanvas } from "./utils/graphCanvas";
+import { installGraphInteractionOverrides } from "./utils/graphInteractionOverrides";
 import {
-    IDENTIFYING_RELATION_DECORATOR_SUFFIX,
-    IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX,
     createRelationRenderingHelpers,
     isIdentifyingRelationDecoratorCell,
-    isIdentifyingRelationEdgeDecoratorCell,
 } from "./utils/relationRendering";
 import { getValidationDialogMessages } from "./utils/validationMessages";
 
@@ -312,21 +307,6 @@ export default function App(props) {
             setGraph(new mxGraph(containerRef.current));
         }
         if (graph) {
-            // Override the isCellSelectable function
-            mxGraph.prototype.isCellSelectable = function (cell) {
-                if (
-                    this.model.isEdge(cell) ||
-                    isWeakEntityDecoratorCell(cell) ||
-                    isIdentifyingRelationDecoratorCell(cell) ||
-                    isIdentifyingRelationEdgeDecoratorCell(cell) ||
-                    isDiscriminantUnderlineCell(cell)
-                ) {
-                    return false;
-                }
-                // Default behavior for other cells
-                return this.isCellsSelectable() && !this.isCellLocked(cell);
-            };
-
             // Expose mxGraph instance only for Playwright E2E
             if (typeof window !== "undefined" && window.__PW__) {
                 window.__DEBUG_GRAPH__ = graph;
@@ -337,6 +317,13 @@ export default function App(props) {
             graph.getSelectionModel().addListener(mxEvent.CHANGE, onSelected);
 
             installDiagramEditorStyles({ graph, mxConstants });
+
+            const cleanupGraphInteractionOverrides =
+                installGraphInteractionOverrides({
+                    graph,
+                    mxGraph,
+                    accessCell,
+                });
 
             const originalCellLabelChanged = graph.cellLabelChanged;
 
@@ -414,66 +401,6 @@ export default function App(props) {
                 this.refresh(cell);
             };
 
-            const getUnderlyingInteractiveCell = (cell) => {
-                if (!cell?.id) return cell;
-
-                const id = String(cell.id);
-
-                if (id.endsWith(WEAK_ENTITY_DECORATOR_SUFFIX)) {
-                    return accessCell(
-                        id.slice(0, -WEAK_ENTITY_DECORATOR_SUFFIX.length),
-                    );
-                }
-
-                if (id.endsWith(IDENTIFYING_RELATION_DECORATOR_SUFFIX)) {
-                    return accessCell(
-                        id.slice(
-                            0,
-                            -IDENTIFYING_RELATION_DECORATOR_SUFFIX.length,
-                        ),
-                    );
-                }
-
-                if (id.endsWith(IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX)) {
-                    return accessCell(
-                        id.slice(
-                            0,
-                            -IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX.length,
-                        ),
-                    );
-                }
-
-                if (id.endsWith(DISCRIMINANT_UNDERLINE_SUFFIX)) {
-                    return accessCell(
-                        id.slice(0, -DISCRIMINANT_UNDERLINE_SUFFIX.length),
-                    );
-                }
-
-                return cell;
-            };
-
-            const originalGetCellForEvent = graph.getCellForEvent;
-
-            graph.getCellForEvent = function (evt) {
-                const cell = originalGetCellForEvent.call(this, evt);
-                return getUnderlyingInteractiveCell(cell);
-            };
-
-            const originalGetInitialCellForEvent =
-                graph.graphHandler.getInitialCellForEvent;
-
-            graph.graphHandler.getInitialCellForEvent = function (me) {
-                const cell = originalGetInitialCellForEvent.call(this, me);
-                return getUnderlyingInteractiveCell(cell);
-            };
-
-            const originalDblClick = graph.dblClick;
-
-            graph.dblClick = function (evt, cell) {
-                const interactiveCell = getUnderlyingInteractiveCell(cell);
-                originalDblClick.call(this, evt, interactiveCell);
-            };
-
             recreateGraphFromLocalStorage();
 
             return () => {
@@ -481,10 +408,7 @@ export default function App(props) {
                     .getSelectionModel()
                     .removeListener(mxEvent.CHANGE, onSelected);
                 graph.cellLabelChanged = originalCellLabelChanged;
-                graph.getCellForEvent = originalGetCellForEvent;
-                graph.graphHandler.getInitialCellForEvent =
-                    originalGetInitialCellForEvent;
-                graph.dblClick = originalDblClick;
+                cleanupGraphInteractionOverrides();
             };
         }
     }, [graph, onSelected]);
