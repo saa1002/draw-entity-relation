@@ -302,6 +302,17 @@ export default function App(props) {
         recreateGraphFromDiagram(savedData);
     };
 
+    const updateDiagramData = () => {
+        syncDiagramDataFromGraph({
+            diagram: diagramRef.current,
+            graph,
+            accessCell,
+            updateAttributePosition,
+        });
+
+        saveToLocalStorage();
+    };
+
     React.useEffect(() => {
         if (!graph) {
             mxEvent.disableContextMenu(containerRef.current);
@@ -400,6 +411,7 @@ export default function App(props) {
                 }
 
                 this.refresh(cell);
+                updateDiagramData();
             };
 
             recreateGraphFromLocalStorage();
@@ -413,17 +425,6 @@ export default function App(props) {
             };
         }
     }, [graph, onSelected]);
-
-    const updateDiagramData = () => {
-        syncDiagramDataFromGraph({
-            diagram: diagramRef.current,
-            graph,
-            accessCell,
-            updateAttributePosition,
-        });
-
-        saveToLocalStorage();
-    };
 
     const refreshGraph = () => {
         const graphView = graph.getDefaultParent();
