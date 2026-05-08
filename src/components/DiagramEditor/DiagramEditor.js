@@ -65,8 +65,6 @@ import { reconstructDiagramGraph } from "./utils/diagramReconstruction";
 import {
     getAttributeDimensions,
     getCardinalityStyleString,
-    getEntityDimensions,
-    getRelationDimensions,
     getRelationStyleString,
     installDiagramEditorStyles,
 } from "./utils/diagramStyles";
@@ -85,6 +83,7 @@ import {
 } from "./utils/filePersistence";
 import { clearGraphCanvas } from "./utils/graphCanvas";
 import { installGraphInteractionOverrides } from "./utils/graphInteractionOverrides";
+import { installGraphLabelEditingHandler } from "./utils/graphLabelEditing";
 import {
     createRelationRenderingHelpers,
     isIdentifyingRelationDecoratorCell,
@@ -337,82 +336,24 @@ export default function App(props) {
                     accessCell,
                 });
 
-            const originalCellLabelChanged = graph.cellLabelChanged;
-
-            graph.cellLabelChanged = function (cell, newValue, autoSize) {
-                originalCellLabelChanged.call(this, cell, newValue, autoSize);
-
-                if (!cell?.style) return;
-
-                this.getModel().beginUpdate();
-                try {
-                    if (cell.style.includes("shape=ellipse")) {
-                        const { width, height } =
-                            getAttributeDimensions(newValue);
-                        cell.geometry.width = width;
-                        cell.geometry.height = height;
-                        const attributeData = getAttributeDataById(cell.id);
-                        if (attributeData?.partialKey) {
-                            syncDiscriminantUnderline(cell);
-                        }
-                    } else if (
-                        cell.style.includes("shape=rectangle") &&
-                        !isWeakEntityDecoratorCell(cell)
-                    ) {
-                        const { width, height } = getEntityDimensions(newValue);
-                        cell.geometry.width = width;
-                        cell.geometry.height = height;
-
-                        const entityData = findEntityById(
-                            diagramRef.current,
-                            cell.id,
-                        );
-
-                        if (isWeakEntity(entityData)) {
-                            syncWeakEntityDecorator(cell);
-                        }
-                        if (entityData?.identifyingRelationId) {
-                            const relationData = findRelationById(
-                                diagramRef.current,
-                                entityData.identifyingRelationId,
-                            );
-                            const relationCell = accessCell(relationData?.idMx);
-
-                            if (relationData && relationCell) {
-                                syncIdentifyingRelationEdgeDecorator(
-                                    relationCell,
-                                    relationData,
-                                );
-                            }
-                        }
-                    } else if (
-                        cell.style.includes("shape=rhombus") &&
-                        !isIdentifyingRelationDecoratorCell(cell)
-                    ) {
-                        const { width, height } =
-                            getRelationDimensions(newValue);
-                        cell.geometry.width = width;
-                        cell.geometry.height = height;
-                        const relationData = findRelationById(
-                            diagramRef.current,
-                            cell.id,
-                        );
-
-                        if (isIdentifyingRelation(relationData)) {
-                            syncIdentifyingRelationDecorator(cell);
-                            syncIdentifyingRelationEdgeDecorator(
-                                cell,
-                                relationData,
-                            );
-                        }
-                    }
-                } finally {
-                    this.getModel().endUpdate();
-                }
-
-                this.refresh(cell);
-                updateDiagramData();
-            };
+            const cleanupGraphLabelEditingHandler =
+                installGraphLabelEditingHandler({
+                    graph,
+                    getDiagram: () => diagramRef.current,
+                    accessCell,
+                    isWeakEntity,
+                    isIdentifyingRelation,
+                    isWeakEntityDecoratorCell,
+                    isIdentifyingRelationDecoratorCell,
+                    findEntityById,
+                    findRelationById,
+                    getAttributeDataById,
+                    syncDiscriminantUnderline,
+                    syncWeakEntityDecorator,
+                    syncIdentifyingRelationDecorator,
+                    syncIdentifyingRelationEdgeDecorator,
+                    updateDiagramData,
+                });
 
             recreateGraphFromLocalStorage();
 
@@ -420,7 +361,7 @@ export default function App(props) {
                 graph
                     .getSelectionModel()
                     .removeListener(mxEvent.CHANGE, onSelected);
-                graph.cellLabelChanged = originalCellLabelChanged;
+                cleanupGraphLabelEditingHandler();
                 cleanupGraphInteractionOverrides();
             };
         }
