@@ -301,7 +301,7 @@ export default function App(props) {
         recreateGraphFromDiagram(savedData);
     };
 
-    const updateDiagramData = () => {
+    const syncAndPersistDiagramData = () => {
         syncDiagramDataFromGraph({
             diagram: diagramRef.current,
             graph,
@@ -352,7 +352,7 @@ export default function App(props) {
                     syncWeakEntityDecorator,
                     syncIdentifyingRelationDecorator,
                     syncIdentifyingRelationEdgeDecorator,
-                    updateDiagramData,
+                    updateDiagramData: syncAndPersistDiagramData,
                 });
 
             recreateGraphFromLocalStorage();
@@ -528,7 +528,7 @@ export default function App(props) {
         });
 
         refreshGraph();
-        updateDiagramData();
+        syncAndPersistDiagramData();
     };
 
     const onCellsMoved = (_evt) => {
@@ -548,7 +548,7 @@ export default function App(props) {
             }
         }
         // Ensure that the diagram is updated before
-        updateDiagramData();
+        syncAndPersistDiagramData();
     };
 
     React.useEffect(() => {
@@ -566,7 +566,7 @@ export default function App(props) {
             graph.addListener(mxEvent.CELLS_MOVED, handleCellsMoved);
             graph.addListener(mxEvent.CELLS_RESIZED, handleCellsResized);
 
-            updateDiagramData();
+            syncAndPersistDiagramData();
 
             // Cleanup function to remove the listener
             return () => {
@@ -669,7 +669,7 @@ export default function App(props) {
             }),
         );
 
-        updateDiagramData();
+        syncAndPersistDiagramData();
         toast.success("Atributo insertado");
     };
 
@@ -721,7 +721,7 @@ export default function App(props) {
         result.changedAttributes.forEach(syncAttributeVisualRepresentation);
 
         refreshGraph();
-        updateDiagramData();
+        syncAndPersistDiagramData();
         setRefreshDiagram((prevState) => !prevState);
 
         toast.success(
@@ -755,7 +755,7 @@ export default function App(props) {
         }
 
         refreshGraph();
-        updateDiagramData();
+        syncAndPersistDiagramData();
         setRefreshDiagram((prevState) => !prevState);
     };
 
@@ -785,7 +785,7 @@ export default function App(props) {
         result.changedAttributes.forEach(syncAttributeVisualRepresentation);
 
         refreshGraph();
-        updateDiagramData();
+        syncAndPersistDiagramData();
         setRefreshDiagram((prevState) => !prevState);
 
         toast.success(
@@ -888,7 +888,7 @@ export default function App(props) {
         }
 
         refreshGraph();
-        updateDiagramData();
+        syncAndPersistDiagramData();
         setRefreshDiagram((prevState) => !prevState);
     };
 
@@ -1227,7 +1227,7 @@ export default function App(props) {
             }
             graph.orderCells(true, [edge1, edge2]); // Move the new edges to the back
 
-            saveToLocalStorage();
+            syncAndPersistDiagramData();
 
             setOpen(false);
             setSide1("");
@@ -1398,7 +1398,7 @@ export default function App(props) {
             setSide1("");
             setSide2("");
             setOpen(false);
-            updateDiagramData();
+            syncAndPersistDiagramData();
         };
 
         const [side1, setSide1] = React.useState("");
@@ -1652,7 +1652,7 @@ export default function App(props) {
                     });
                 }
             }
-            updateDiagramData();
+            syncAndPersistDiagramData();
         }
         if (isEntity) {
             return (
@@ -1711,7 +1711,7 @@ export default function App(props) {
 
             removeAttributesCells([removedAttribute]);
 
-            updateDiagramData();
+            syncAndPersistDiagramData();
         }
 
         if (
@@ -1760,7 +1760,7 @@ export default function App(props) {
                     graph.removeCells([cell, ...attributeCells]);
                 }
             }
-            updateDiagramData();
+            syncAndPersistDiagramData();
         }
 
         if (isRelation) {
