@@ -55,10 +55,13 @@ import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
 import {
-    ER_FILL,
+    DISCRIMINANT_UNDERLINE_SUFFIX,
+    createAttributeRenderingHelpers,
+    getAttributeStyleString,
+    isDiscriminantUnderlineCell,
+} from "./utils/attributeRendering";
+import {
     ER_FONT,
-    ER_FONT_FAMILY,
-    ER_FONT_SIZE,
     ER_STROKE,
     getAttributeDimensions,
     getCardinalityStyleString,
@@ -158,30 +161,20 @@ export default function App(props) {
         localStorage.setItem("diagramData", diagramData);
     };
 
-    const getAttributeStyleString = (attribute) => {
-        const baseStyle = [
-            "shape=ellipse",
-            "perimeter=ellipsePerimeter",
-            "align=center",
-            "verticalAlign=middle",
-            "spacing=0",
-            "whiteSpace=wrap",
-            "overflow=hidden",
-            "resizable=0",
-            `fillColor=${ER_FILL}`,
-            `strokeColor=${ER_STROKE}`,
-            "strokeWidth=1",
-            `fontColor=${ER_FONT}`,
-            `fontSize=${ER_FONT_SIZE}`,
-            `fontFamily=${ER_FONT_FAMILY}`,
-        ].join(";");
-
-        if (attribute?.key) {
-            return `${baseStyle};keyAttrStyle`;
-        }
-
-        return baseStyle;
-    };
+    const {
+        getAttributesCells,
+        removeAttributesCells,
+        syncOwnerAttributePositions,
+        syncDiscriminantUnderline,
+        ensureDiscriminantUnderline,
+        syncAttributeVisualRepresentation,
+        setOwnerAttributesVisible,
+    } = createAttributeRenderingHelpers({
+        graph,
+        accessCell,
+        mxPoint,
+        mxGeometry,
+    });
 
     const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
     const WEAK_ENTITY_DECORATOR_OFFSET = 4;
@@ -190,15 +183,9 @@ export default function App(props) {
     const IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX =
         "__identifying_weak_edge_decorator";
     const IDENTIFYING_RELATION_EDGE_PARALLEL_GAP = 5;
-    const DISCRIMINANT_UNDERLINE_SUFFIX = "__discriminant_underline";
-    const DISCRIMINANT_UNDERLINE_MARGIN_X = 16;
-    const DISCRIMINANT_UNDERLINE_OFFSET_Y = 12;
 
     const isWeakEntityDecoratorCell = (cell) =>
         !!cell?.id && String(cell.id).endsWith(WEAK_ENTITY_DECORATOR_SUFFIX);
-
-    const isDiscriminantUnderlineCell = (cell) =>
-        !!cell?.id && String(cell.id).endsWith(DISCRIMINANT_UNDERLINE_SUFFIX);
 
     const syncWeakEntityDecorator = (entityCell) => {
         if (!entityCell) return;
@@ -792,173 +779,26 @@ export default function App(props) {
         return true;
     };
 
-    const getDiscriminantUnderlineId = (attributeId) =>
-        `${attributeId}${DISCRIMINANT_UNDERLINE_SUFFIX}`;
-
-    const getAttributeCells = (attribute) => {
-        if (!attribute) return [];
-
-        const attributeCells = (attribute.cell ?? [])
-            .map((cellId) => accessCell(cellId))
-            .filter(Boolean);
-
-        const underlineCell = attribute.idMx
-            ? accessCell(getDiscriminantUnderlineId(attribute.idMx))
-            : null;
-
-        return [...attributeCells, underlineCell].filter(Boolean);
-    };
-
     const removeRelationAttributes = (relationData) => {
         if (!relationData) return;
 
         const removedAttributes = removeAllAttributesFromOwner(relationData);
-        const attributeCellsToRemove =
-            removedAttributes.flatMap(getAttributeCells);
 
-        if (attributeCellsToRemove.length > 0) {
-            graph.removeCells(attributeCellsToRemove);
-        }
+        removeAttributesCells(removedAttributes);
 
         relationData.canHoldAttributes = false;
-    };
-
-    const getDiscriminantUnderlinePoints = (attributeCell) => {
-        if (!attributeCell?.geometry) return null;
-
-        const { x, y, width, height } = attributeCell.geometry;
-
-        const startX = x + DISCRIMINANT_UNDERLINE_MARGIN_X;
-        const endX =
-            x +
-            Math.max(
-                DISCRIMINANT_UNDERLINE_MARGIN_X + 1,
-                width - DISCRIMINANT_UNDERLINE_MARGIN_X,
-            );
-        const underlineY = y + height / 2 + DISCRIMINANT_UNDERLINE_OFFSET_Y;
-
-        return {
-            source: new mxPoint(startX, underlineY),
-            target: new mxPoint(endX, underlineY),
-        };
-    };
-
-    const createDiscriminantUnderline = (attributeCell) => {
-        const points = getDiscriminantUnderlinePoints(attributeCell);
-        if (!points) return null;
-
-        const edge = graph.insertEdge(
-            null,
-            getDiscriminantUnderlineId(attributeCell.id),
-            null,
-            null,
-            null,
-            [
-                `strokeColor=${ER_FONT}`,
-                "strokeWidth=2",
-                "endArrow=none",
-                "dashed=1",
-                "editable=0",
-                "movable=0",
-                "resizable=0",
-                "rounded=0",
-                "pointerEvents=0",
-                "edgeStyle=none",
-            ].join(";"),
-        );
-
-        if (!edge.geometry) {
-            edge.geometry = new mxGeometry();
-        }
-
-        edge.geometry.relative = false;
-        edge.geometry.points = null;
-        edge.geometry.setTerminalPoint(points.source, true);
-        edge.geometry.setTerminalPoint(points.target, false);
-
-        graph.orderCells(false, [edge]);
-        return edge;
-    };
-
-    const syncDiscriminantUnderline = (attributeCell) => {
-        if (!attributeCell) return;
-
-        const underline = accessCell(
-            getDiscriminantUnderlineId(attributeCell.id),
-        );
-        if (!underline) return;
-
-        const points = getDiscriminantUnderlinePoints(attributeCell);
-        if (!points) return;
-
-        graph.getModel().beginUpdate();
-        try {
-            graph.getModel().setTerminal(underline, null, true);
-            graph.getModel().setTerminal(underline, null, false);
-
-            if (!underline.geometry) {
-                underline.geometry = new mxGeometry();
-            }
-
-            underline.geometry.relative = false;
-            underline.geometry.points = null;
-            underline.geometry.setTerminalPoint(points.source, true);
-            underline.geometry.setTerminalPoint(points.target, false);
-        } finally {
-            graph.getModel().endUpdate();
-        }
-
-        graph.refresh(underline);
-        graph.orderCells(false, [underline]);
-    };
-
-    const ensureDiscriminantUnderline = (attributeCell) => {
-        const existingUnderline = accessCell(
-            getDiscriminantUnderlineId(attributeCell.id),
-        );
-
-        if (existingUnderline) {
-            syncDiscriminantUnderline(attributeCell);
-            return;
-        }
-
-        createDiscriminantUnderline(attributeCell);
-        syncDiscriminantUnderline(attributeCell);
-    };
-
-    const removeDiscriminantUnderline = (attributeId) => {
-        const underline = accessCell(getDiscriminantUnderlineId(attributeId));
-        if (underline) {
-            graph.removeCells([underline]);
-        }
     };
 
     const getAttributeDataById = (attributeId) =>
         findAttributeOwnerById(diagramRef.current, attributeId)?.attribute ??
         null;
 
-    const syncAttributeSemanticRepresentation = (attribute) => {
-        const attributeCell = accessCell(attribute.idMx);
-
-        if (!attributeCell) return;
-
-        graph
-            .getModel()
-            .setStyle(attributeCell, getAttributeStyleString(attribute));
-
-        if (attribute.partialKey) {
-            ensureDiscriminantUnderline(attributeCell);
-        } else {
-            removeDiscriminantUnderline(attribute.idMx);
-        }
-    };
-
     const convertEntityPrimaryKeyToPartialKey = (entity) => {
         const changedAttributes = convertPrimaryKeyToPartialKey(
             entity?.attributes,
         );
 
-        changedAttributes.forEach(syncAttributeSemanticRepresentation);
+        changedAttributes.forEach(syncAttributeVisualRepresentation);
     };
 
     const convertEntityPartialKeyToPrimaryKey = (entity) => {
@@ -966,7 +806,7 @@ export default function App(props) {
             entity?.attributes,
         );
 
-        changedAttributes.forEach(syncAttributeSemanticRepresentation);
+        changedAttributes.forEach(syncAttributeVisualRepresentation);
     };
     const recreateGraphFromLocalStorage = () => {
         const recreateAttribute = (attribute, source) => {
@@ -1410,15 +1250,7 @@ export default function App(props) {
 
         if (!selectedEntityDiag) return;
 
-        selectedEntityDiag?.attributes.forEach((attribute) => {
-            const attributeCell = accessCell(attribute.cell.at(0));
-            attributeCell.geometry.x = selected.geometry.x + attribute.offsetX;
-            attributeCell.geometry.y = selected.geometry.y + attribute.offsetY;
-
-            if (attribute.partialKey) {
-                syncDiscriminantUnderline(attributeCell);
-            }
-        });
+        syncOwnerAttributePositions(selectedEntityDiag, selected);
 
         if (isWeakEntity(selectedEntityDiag)) {
             syncWeakEntityDecorator(selected);
@@ -1451,19 +1283,10 @@ export default function App(props) {
         if (!selectedRelationDiag) return;
 
         if (canRelationHoldAttributes(selectedRelationDiag)) {
-            selectedRelationDiag?.attributes.forEach((attribute) => {
-                const attributeCell = accessCell(attribute.cell.at(0));
-                attributeCell.geometry.x =
-                    selected.geometry.x + attribute.offsetX;
-                attributeCell.geometry.y =
-                    selected.geometry.y + attribute.offsetY;
-
-                if (attribute.partialKey) {
-                    syncDiscriminantUnderline(attributeCell);
-                }
-            });
+            syncOwnerAttributePositions(selectedRelationDiag, selected);
             refreshGraph();
         }
+
         if (isSelfRelation(selectedRelationDiag)) {
             const target1 = accessCell(selectedRelationDiag.side1.entity.idMx);
             const source = selected;
@@ -1719,50 +1542,29 @@ export default function App(props) {
         toast.success("Atributo insertado");
     };
 
-    const hideAttributes = (isRelationNM) => {
-        const selectedEntity = !isRelationNM
+    const setAttributesVisibility = (isRelationNM, visible) => {
+        const selectedOwner = !isRelationNM
             ? findEntityById(diagramRef.current, selected.id)
             : findRelationById(diagramRef.current, selected.id);
-        selectedEntity.attributes.forEach(({ cell, idMx, partialKey }) => {
-            accessCell(cell.at(0)).setVisible(false);
-            accessCell(cell.at(1)).setVisible(false);
 
-            if (partialKey) {
-                const underline = accessCell(getDiscriminantUnderlineId(idMx));
-                if (underline) {
-                    underline.setVisible(false);
-                }
-            }
-        });
+        if (!selectedOwner) return;
 
-        const updatedAttributesHidden = { ...entityWithAttributesHidden };
-        updatedAttributesHidden[selected.id] = true;
-        setEntityWithAttributesHidden(updatedAttributesHidden);
+        setOwnerAttributesVisible(selectedOwner, visible);
+
+        setEntityWithAttributesHidden((currentAttributesHidden) => ({
+            ...(currentAttributesHidden ?? {}),
+            [selected.id]: !visible,
+        }));
 
         refreshGraph();
     };
 
+    const hideAttributes = (isRelationNM) => {
+        setAttributesVisibility(isRelationNM, false);
+    };
+
     const showAttributes = (isRelationNM) => {
-        const selectedEntity = !isRelationNM
-            ? findEntityById(diagramRef.current, selected.id)
-            : findRelationById(diagramRef.current, selected.id);
-        selectedEntity.attributes.forEach(({ cell, idMx, partialKey }) => {
-            accessCell(cell.at(0)).setVisible(true);
-            accessCell(cell.at(1)).setVisible(true);
-
-            if (partialKey) {
-                const underline = accessCell(getDiscriminantUnderlineId(idMx));
-                if (underline) {
-                    underline.setVisible(true);
-                }
-            }
-        });
-
-        const updatedAttributesHidden = { ...entityWithAttributesHidden };
-        updatedAttributesHidden[selected.id] = false;
-        setEntityWithAttributesHidden(updatedAttributesHidden);
-
-        refreshGraph();
+        setAttributesVisibility(isRelationNM, true);
     };
 
     const toggleAttrKey = () => {
@@ -1785,7 +1587,7 @@ export default function App(props) {
 
         if (!result.updated) return;
 
-        result.changedAttributes.forEach(syncAttributeSemanticRepresentation);
+        result.changedAttributes.forEach(syncAttributeVisualRepresentation);
 
         refreshGraph();
         updateDiagramData();
@@ -1849,7 +1651,7 @@ export default function App(props) {
 
         if (!result.updated) return;
 
-        result.changedAttributes.forEach(syncAttributeSemanticRepresentation);
+        result.changedAttributes.forEach(syncAttributeVisualRepresentation);
 
         refreshGraph();
         updateDiagramData();
@@ -2652,8 +2454,9 @@ export default function App(props) {
                     : null;
                 if (cell) {
                     // Collect the attribute cells to delete
-                    const attributeCells =
-                        entity.attributes.flatMap(getAttributeCells);
+                    const attributeCells = getAttributesCells(
+                        entity.attributes,
+                    );
 
                     // Remove the entity's cell and its attributes from the graph
                     graph.removeCells(
@@ -2673,8 +2476,9 @@ export default function App(props) {
                             const edge2Cell = accessCell(relation.side2.edgeId);
 
                             // Collect the relation's attribute cells to delete
-                            const relationAttributeCells =
-                                relation.attributes.flatMap(getAttributeCells);
+                            const relationAttributeCells = getAttributesCells(
+                                relation.attributes,
+                            );
 
                             // Remove the relation's cells and its attributes from the graph
                             graph.removeCells([
@@ -2764,11 +2568,7 @@ export default function App(props) {
 
             if (!removedAttribute) return;
 
-            const cells = getAttributeCells(removedAttribute);
-
-            if (cells.length) {
-                graph.removeCells(cells);
-            }
+            removeAttributesCells([removedAttribute]);
 
             updateDiagramData();
         }
@@ -2811,8 +2611,9 @@ export default function App(props) {
 
                 if (cell) {
                     // Remove the attributes associated with the entity
-                    const attributeCells =
-                        relation.attributes.flatMap(getAttributeCells);
+                    const attributeCells = getAttributesCells(
+                        relation.attributes,
+                    );
 
                     // Remove the cell and its attributes from the graph
                     graph.removeCells([cell, ...attributeCells]);
