@@ -70,6 +70,11 @@ import {
     getRelationDimensions,
     getRelationStyleString,
 } from "./utils/diagramStyles";
+import {
+    WEAK_ENTITY_DECORATOR_SUFFIX,
+    createEntityRenderingHelpers,
+    isWeakEntityDecoratorCell,
+} from "./utils/entityRendering";
 
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 
@@ -162,6 +167,17 @@ export default function App(props) {
     };
 
     const {
+        getWeakEntityDecoratorId,
+        createWeakEntityDecorator,
+        syncWeakEntityDecorator,
+        ensureWeakEntityDecorator,
+        removeWeakEntityDecorator,
+    } = createEntityRenderingHelpers({
+        graph,
+        accessCell,
+    });
+
+    const {
         getAttributesCells,
         removeAttributesCells,
         syncOwnerAttributePositions,
@@ -176,76 +192,11 @@ export default function App(props) {
         mxGeometry,
     });
 
-    const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
-    const WEAK_ENTITY_DECORATOR_OFFSET = 4;
     const IDENTIFYING_RELATION_DECORATOR_SUFFIX = "__identifying_decorator";
     const IDENTIFYING_RELATION_DECORATOR_OFFSET = 4;
     const IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX =
         "__identifying_weak_edge_decorator";
     const IDENTIFYING_RELATION_EDGE_PARALLEL_GAP = 5;
-
-    const isWeakEntityDecoratorCell = (cell) =>
-        !!cell?.id && String(cell.id).endsWith(WEAK_ENTITY_DECORATOR_SUFFIX);
-
-    const syncWeakEntityDecorator = (entityCell) => {
-        if (!entityCell) return;
-
-        const decorator = accessCell(getWeakEntityDecoratorId(entityCell.id));
-        if (!decorator || !decorator.geometry || !entityCell.geometry) return;
-
-        decorator.geometry.x =
-            entityCell.geometry.x + WEAK_ENTITY_DECORATOR_OFFSET;
-        decorator.geometry.y =
-            entityCell.geometry.y + WEAK_ENTITY_DECORATOR_OFFSET;
-        decorator.geometry.width = Math.max(
-            1,
-            entityCell.geometry.width - WEAK_ENTITY_DECORATOR_OFFSET * 2,
-        );
-        decorator.geometry.height = Math.max(
-            1,
-            entityCell.geometry.height - WEAK_ENTITY_DECORATOR_OFFSET * 2,
-        );
-
-        graph.refresh(decorator);
-        graph.orderCells(false, [decorator]);
-    };
-
-    const getWeakEntityDecoratorId = (entityId) =>
-        `${entityId}${WEAK_ENTITY_DECORATOR_SUFFIX}`;
-
-    const createWeakEntityDecorator = (entity) => {
-        const { width, height } = getEntityDimensions(entity.name);
-        return graph.insertVertex(
-            null,
-            getWeakEntityDecoratorId(entity.idMx),
-            "",
-            entity.position.x + WEAK_ENTITY_DECORATOR_OFFSET,
-            entity.position.y + WEAK_ENTITY_DECORATOR_OFFSET,
-            Math.max(1, width - WEAK_ENTITY_DECORATOR_OFFSET * 2),
-            Math.max(1, height - WEAK_ENTITY_DECORATOR_OFFSET * 2),
-            "weakEntityDecoratorStyle;shape=rectangle",
-        );
-    };
-    const ensureWeakEntityDecorator = (entityCell, entityData) => {
-        const existingDecorator = accessCell(
-            getWeakEntityDecoratorId(entityCell.id),
-        );
-
-        if (existingDecorator) {
-            syncWeakEntityDecorator(entityCell);
-            return;
-        }
-
-        createWeakEntityDecorator(entityData);
-        syncWeakEntityDecorator(entityCell);
-    };
-
-    const removeWeakEntityDecorator = (entityId) => {
-        const decorator = accessCell(getWeakEntityDecoratorId(entityId));
-        if (decorator) {
-            graph.removeCells([decorator]);
-        }
-    };
 
     const isIdentifyingRelationDecoratorCell = (cell) =>
         !!cell?.id &&
