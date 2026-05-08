@@ -107,3 +107,56 @@ export const getCardinalityStyleString = () =>
         "rounded=0",
         "spacing=0",
     ].join(";");
+
+export const installDiagramEditorStyles = ({ graph, mxConstants }) => {
+    if (!graph || !mxConstants) return;
+
+    const keyAttrStyle = {};
+    keyAttrStyle[mxConstants.STYLE_FONTSTYLE] = mxConstants.FONT_UNDERLINE;
+
+    const notResizeableStyle = {};
+    notResizeableStyle[mxConstants.STYLE_RESIZABLE] = 0;
+
+    const weakEntityDecoratorStyle = {};
+    weakEntityDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
+    weakEntityDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
+    weakEntityDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
+    weakEntityDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
+    weakEntityDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
+    weakEntityDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
+    weakEntityDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
+    weakEntityDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
+
+    const identifyingRelationDecoratorStyle = {};
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKECOLOR] =
+        ER_STROKE;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
+    identifyingRelationDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
+
+    const defaultEdgeStyle = graph.getStylesheet().getDefaultEdgeStyle();
+    defaultEdgeStyle[mxConstants.STYLE_ENDARROW] = "";
+    defaultEdgeStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
+    defaultEdgeStyle[mxConstants.STYLE_FONTCOLOR] = ER_FONT;
+    defaultEdgeStyle[mxConstants.STYLE_PERIMETER_SPACING] = 0;
+    defaultEdgeStyle[mxConstants.STYLE_SOURCE_PERIMETER_SPACING] = 0;
+    defaultEdgeStyle[mxConstants.STYLE_TARGET_PERIMETER_SPACING] = 0;
+
+    graph.getStylesheet().putCellStyle("keyAttrStyle", keyAttrStyle);
+    graph
+        .getStylesheet()
+        .putCellStyle("weakEntityDecoratorStyle", weakEntityDecoratorStyle);
+    graph
+        .getStylesheet()
+        .putCellStyle(
+            "identifyingRelationDecoratorStyle",
+            identifyingRelationDecoratorStyle,
+        );
+    graph
+        .getStylesheet()
+        .putCellStyle("notResizeableStyle", notResizeableStyle);
+};

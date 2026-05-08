@@ -64,13 +64,12 @@ import {
 } from "./utils/attributeRendering";
 import { reconstructDiagramGraph } from "./utils/diagramReconstruction";
 import {
-    ER_FONT,
-    ER_STROKE,
     getAttributeDimensions,
     getCardinalityStyleString,
     getEntityDimensions,
     getRelationDimensions,
     getRelationStyleString,
+    installDiagramEditorStyles,
 } from "./utils/diagramStyles";
 import {
     WEAK_ENTITY_DECORATOR_SUFFIX,
@@ -99,35 +98,6 @@ import { getValidationDialogMessages } from "./utils/validationMessages";
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 
 export default function App(props) {
-    // Apply font underline to the key attribute label text
-    const keyAttrStyle = {};
-    keyAttrStyle[mxConstants.STYLE_FONTSTYLE] = mxConstants.FONT_UNDERLINE;
-
-    // Define a style that makes a cell non-resizable and non-movable
-    const notResizeableStyle = {};
-    notResizeableStyle[mxConstants.STYLE_RESIZABLE] = 0; // Makes the cell non-resizable
-
-    const weakEntityDecoratorStyle = {};
-    weakEntityDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
-    weakEntityDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
-    weakEntityDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
-    weakEntityDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
-    weakEntityDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
-    weakEntityDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
-    weakEntityDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
-    weakEntityDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
-
-    const identifyingRelationDecoratorStyle = {};
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKECOLOR] =
-        ER_STROKE;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
-
     const BUILD_LABEL = `Build: ${BUILD_DATE}`;
 
     const containerRef = React.useRef(null);
@@ -366,32 +336,7 @@ export default function App(props) {
 
             graph.getSelectionModel().addListener(mxEvent.CHANGE, onSelected);
 
-            const defaultEdgeStyle = graph
-                .getStylesheet()
-                .getDefaultEdgeStyle();
-            defaultEdgeStyle[mxConstants.STYLE_ENDARROW] = "";
-            defaultEdgeStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
-            defaultEdgeStyle[mxConstants.STYLE_FONTCOLOR] = ER_FONT;
-            defaultEdgeStyle[mxConstants.STYLE_PERIMETER_SPACING] = 0;
-            defaultEdgeStyle[mxConstants.STYLE_SOURCE_PERIMETER_SPACING] = 0;
-            defaultEdgeStyle[mxConstants.STYLE_TARGET_PERIMETER_SPACING] = 0;
-
-            graph.getStylesheet().putCellStyle("keyAttrStyle", keyAttrStyle);
-            graph
-                .getStylesheet()
-                .putCellStyle(
-                    "weakEntityDecoratorStyle",
-                    weakEntityDecoratorStyle,
-                );
-            graph
-                .getStylesheet()
-                .putCellStyle(
-                    "identifyingRelationDecoratorStyle",
-                    identifyingRelationDecoratorStyle,
-                );
-            graph
-                .getStylesheet()
-                .putCellStyle("notResizeableStyle", notResizeableStyle);
+            installDiagramEditorStyles({ graph, mxConstants });
 
             const originalCellLabelChanged = graph.cellLabelChanged;
 
