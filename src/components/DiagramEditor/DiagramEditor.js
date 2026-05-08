@@ -86,6 +86,7 @@ import {
     readDiagramJsonFile,
     saveDiagramToLocalStorage,
 } from "./utils/filePersistence";
+import { clearGraphCanvas } from "./utils/graphCanvas";
 import {
     IDENTIFYING_RELATION_DECORATOR_SUFFIX,
     IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX,
@@ -2242,14 +2243,7 @@ export default function App(props) {
         diagramRef.current.entities = [];
         diagramRef.current.relations = [];
         clearDiagramLocalStorage();
-
-        // Filter out cells that aren't key 0 or 1
-        const cellsToRemove = Object.keys(graph.model.cells)
-            .filter((key) => key !== "0" && key !== "1")
-            .map((key) => graph.model.cells[key]);
-
-        // Remove the filtered cells
-        graph.removeCells(cellsToRemove);
+        clearGraphCanvas(graph);
     };
 
     const ResetCanvasButton = () => {
