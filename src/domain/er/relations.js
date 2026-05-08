@@ -1,3 +1,5 @@
+import { findWeakEntityByIdentifyingRelationId } from "./entities";
+
 const getRelations = (diagram) =>
     Array.isArray(diagram?.relations) ? diagram.relations : [];
 
@@ -34,3 +36,25 @@ export const relationInvolvesEntity = (relation, entityId) =>
 export const isManyToManyRelation = (relation) =>
     relation?.side1?.cardinality?.endsWith(":N") === true &&
     relation?.side2?.cardinality?.endsWith(":N") === true;
+
+export const findWeakEntityForIdentifyingRelation = (diagram, relation) =>
+    findWeakEntityByIdentifyingRelationId(diagram, relation?.idMx);
+
+export const getWeakSideOfIdentifyingRelation = (diagram, relationData) => {
+    const weakEntity = findWeakEntityForIdentifyingRelation(
+        diagram,
+        relationData,
+    );
+
+    if (!weakEntity) return null;
+
+    if (relationData?.side1?.entity?.idMx === weakEntity.idMx) {
+        return relationData.side1;
+    }
+
+    if (relationData?.side2?.entity?.idMx === weakEntity.idMx) {
+        return relationData.side2;
+    }
+
+    return null;
+};

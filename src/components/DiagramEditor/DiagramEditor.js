@@ -29,10 +29,10 @@ import {
     findEntityIndexById,
     findRelationById,
     findRelationIndexById,
-    findWeakEntityByIdentifyingRelationId,
     generateUniqueAttributeName,
     getDefaultAttributeSemantics,
     getLastAttribute,
+    getWeakSideOfIdentifyingRelation,
     isEntityAttributeOwner,
     isFirstAttributeForOwner,
     isIdentifyingRelation,
@@ -197,7 +197,7 @@ export default function App(props) {
         mxPoint,
         mxGeometry,
         getWeakSideOfIdentifyingRelation: (relationData) =>
-            getWeakSideOfIdentifyingRelation(relationData),
+            getWeakSideOfIdentifyingRelation(diagramRef.current, relationData),
     });
 
     const {
@@ -240,27 +240,6 @@ export default function App(props) {
             entity.identifyingRelationId = null;
             entity.ownerEntityId = null;
         });
-    };
-
-    const getWeakEntityForIdentifyingRelation = (relation) =>
-        findWeakEntityByIdentifyingRelationId(
-            diagramRef.current,
-            relation?.idMx,
-        );
-
-    const getWeakSideOfIdentifyingRelation = (relationData) => {
-        const weakEntity = getWeakEntityForIdentifyingRelation(relationData);
-        if (!weakEntity) return null;
-
-        if (relationData?.side1?.entity?.idMx === weakEntity.idMx) {
-            return relationData.side1;
-        }
-
-        if (relationData?.side2?.entity?.idMx === weakEntity.idMx) {
-            return relationData.side2;
-        }
-
-        return null;
     };
 
     const getWeakAndStrongSidesForRelation = (relationData) => {
