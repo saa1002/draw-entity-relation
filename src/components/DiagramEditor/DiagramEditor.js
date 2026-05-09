@@ -55,8 +55,6 @@ import {
 } from "../../domain/er";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
-import { syncDiagramDataFromGraph } from "./utils/diagramGraphSync";
-import { reconstructDiagramGraph } from "./utils/diagramReconstruction";
 import {
     SAVE_FILE_RESULT,
     clearDiagramLocalStorage,
@@ -88,6 +86,8 @@ import {
     createRelationRenderingHelpers,
     isIdentifyingRelationDecoratorCell,
 } from "./utils/rendering/relationRendering";
+import { syncDiagramDataFromGraph } from "./utils/sync/diagramGraphSync";
+import { reconstructDiagramGraph } from "./utils/sync/diagramReconstruction";
 import { getValidationDialogMessages } from "./utils/validationMessages";
 
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
