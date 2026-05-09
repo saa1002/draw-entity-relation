@@ -1,0 +1,38 @@
+// This function checks for repeated attributes in an entity,
+// relations N:M (these are the ones that have a key `canHoldAttributes`
+// set to true) are also treated as entities.
+// Returns true if there are repeated attribute names in any entity
+// false if there are no repetitions.
+// NOTE: Every entity should be treated differently; there can be repeated
+// attributes in different entities.
+export function repeatedAttributesInEntity(graph) {
+    const hasRepeatedAttributes = (attributes) => {
+        const attributeNames = new Set();
+        for (const attribute of attributes) {
+            if (attributeNames.has(attribute.name)) {
+                return true;
+            }
+            attributeNames.add(attribute.name);
+        }
+        return false;
+    };
+
+    // Check entities for repeated attributes
+    for (const entity of graph.entities) {
+        if (hasRepeatedAttributes(entity.attributes)) {
+            return true;
+        }
+    }
+
+    // Check N:M relations for repeated attributes
+    for (const relation of graph.relations) {
+        if (
+            relation.canHoldAttributes &&
+            hasRepeatedAttributes(relation.attributes)
+        ) {
+            return true;
+        }
+    }
+
+    return false; // No repeated attributes found in any entity or N:M relation
+}

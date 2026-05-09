@@ -1,0 +1,110 @@
+import {
+    brokenRelationEntityReferences,
+    cardinalitiesNotValid,
+    entitiesWithMoreThanOnePK,
+    entitiesWithoutAttributes,
+    entitiesWithoutPK,
+    identifyingRelationCardinalitiesNotValid,
+    identifyingRelationsNotValid,
+    inconsistentWeakEntityOwnership,
+    multipleIdentifyingRelationsPerWeakEntity,
+    nmRelationsWithPK,
+    notNMRelationsWithAttributes,
+    relationsUnconnected,
+    repeatedAttributesInEntity,
+    repeatedEntities,
+    sqlIdentifierCollisions,
+    strongEntitiesWithPartialKey,
+    weakEntitiesWithMoreThanOnePartialKey,
+    weakEntitiesWithPrimaryKey,
+    weakEntitiesWithoutIdentifyingRelation,
+    weakEntitiesWithoutPartialKey,
+} from "./rules";
+
+export const VALIDATION_RULES = [
+    {
+        diagnostic: "notEmpty",
+        fails: (graph) =>
+            graph.entities.length === 0 && graph.relations.length === 0,
+    },
+    {
+        diagnostic: "noRepeatedNames",
+        fails: repeatedEntities,
+    },
+    {
+        diagnostic: "noRepeatedAttrNames",
+        fails: repeatedAttributesInEntity,
+    },
+    {
+        diagnostic: "noEntitiesWithoutAttributes",
+        fails: entitiesWithoutAttributes,
+    },
+    {
+        diagnostic: "noEntitiesWithoutPK",
+        fails: entitiesWithoutPK,
+    },
+    {
+        diagnostic: "noEntitiesWithMoreThanOnePK",
+        fails: entitiesWithMoreThanOnePK,
+    },
+    {
+        diagnostic: "noNMRelationsWithPK",
+        fails: nmRelationsWithPK,
+    },
+    {
+        diagnostic: "noAttributesInNonNMRelations",
+        fails: notNMRelationsWithAttributes,
+    },
+    {
+        diagnostic: "noUnconnectedRelations",
+        fails: relationsUnconnected,
+    },
+    {
+        diagnostic: "noNotValidCardinalities",
+        fails: cardinalitiesNotValid,
+    },
+    {
+        diagnostic: "noBrokenRelationEntityReferences",
+        fails: brokenRelationEntityReferences,
+    },
+    {
+        diagnostic: "noSQLIdentifierCollisions",
+        fails: sqlIdentifierCollisions,
+    },
+    {
+        diagnostic: "noWeakEntitiesWithoutPartialKey",
+        fails: weakEntitiesWithoutPartialKey,
+    },
+    {
+        diagnostic: "noWeakEntitiesWithMoreThanOnePartialKey",
+        fails: weakEntitiesWithMoreThanOnePartialKey,
+    },
+    {
+        diagnostic: "noWeakEntitiesWithPrimaryKey",
+        fails: weakEntitiesWithPrimaryKey,
+    },
+    {
+        diagnostic: "noStrongEntitiesWithPartialKey",
+        fails: strongEntitiesWithPartialKey,
+    },
+    {
+        diagnostic: "noWeakEntitiesWithoutIdentifyingRelation",
+        fails: weakEntitiesWithoutIdentifyingRelation,
+    },
+    {
+        diagnostic: "noInvalidIdentifyingRelations",
+        fails: identifyingRelationsNotValid,
+    },
+    {
+        diagnostic: "noInvalidIdentifyingCardinalities",
+        fails: identifyingRelationCardinalitiesNotValid,
+    },
+    {
+        diagnostic: "noInconsistentWeakEntityOwnership",
+        fails: inconsistentWeakEntityOwnership,
+    },
+    {
+        diagnostic: "noMultipleIdentifyingRelationsPerWeakEntity",
+        fails: multipleIdentifyingRelationsPerWeakEntity,
+    },
+];
