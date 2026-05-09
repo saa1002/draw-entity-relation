@@ -1,5 +1,7 @@
 import { normalizeIdentifier } from "../domain/relational/naming";
 
+export { normalizeIdentifier };
+
 // This function takes the graph and prepares the relations
 // for the extractTables function
 export function filterTables(graph) {
@@ -697,59 +699,69 @@ function applyWeakEntitySemantics(tableMap, graph) {
     }
 }
 
-// Generate SQL
-export function generateSQL(graph) {
+function mergeProcessedTable(tableMap, processedTable) {
+    if (tableMap.has(processedTable.name)) {
+        const existingTable = tableMap.get(processedTable.name);
+        const existingAttributes = new Set(
+            existingTable.attributes.map((attr) => attr.name),
+        );
+
+        processedTable.attributes.forEach((attr) => {
+            if (!existingAttributes.has(attr.name)) {
+                existingTable.attributes.push(attr);
+            }
+        });
+
+        return;
+    }
+
+    tableMap.set(processedTable.name, processedTable);
+}
+
+function processRelationalTable(table, graph) {
+    switch (table.type) {
+        case "1:1":
+            return process11Relation(table, graph);
+        case "1:N":
+            return process1NRelation(table, graph);
+        case "N:M":
+            return processNMRelation(table, graph);
+        default:
+            return [table];
+    }
+}
+
+function buildRelationalTables(graph) {
     const tables = filterTables(graph);
     const tableMap = new Map(); // Track processed tables and their attributes
 
     applyWeakEntitySemantics(tableMap, graph);
 
     for (const table of tables) {
-        let processedTablesArray;
-        switch (table.type) {
-            case "1:1":
-                processedTablesArray = process11Relation(table, graph);
-                break;
-            case "1:N":
-                processedTablesArray = process1NRelation(table, graph);
-                break;
-            case "N:M":
-                processedTablesArray = processNMRelation(table, graph);
-                break;
-            default:
-                processedTablesArray = [table];
-                break;
-        }
+        const processedTables = processRelationalTable(table, graph);
 
-        // Add the processed tables to the map, merging attributes if needed
-        for (const processedTable of processedTablesArray) {
-            if (tableMap.has(processedTable.name)) {
-                const existingTable = tableMap.get(processedTable.name);
-                const existingAttributes = new Set(
-                    existingTable.attributes.map((attr) => attr.name),
-                );
-                processedTable.attributes.forEach((attr) => {
-                    if (!existingAttributes.has(attr.name)) {
-                        existingTable.attributes.push(attr);
-                    }
-                });
-            } else {
-                tableMap.set(processedTable.name, processedTable);
-            }
+        for (const processedTable of processedTables) {
+            mergeProcessedTable(tableMap, processedTable);
         }
     }
 
-    for (const table of tableMap.values()) {
+    return [...tableMap.values()];
+}
+
+function normalizeRelationalTableIdentifiers(tables) {
+    for (const table of tables) {
         table.name = normalizeIdentifier(table.name);
 
         const attributeNames = new Set();
+
         table.attributes.forEach((attr) => {
-            let baseName = normalizeIdentifier(attr.name);
+            const baseName = normalizeIdentifier(attr.name);
             let uniqueName = baseName;
 
             if (attributeNames.has(uniqueName)) {
                 let counter = 1;
                 uniqueName = `${baseName}_${counter}`;
+
                 while (attributeNames.has(uniqueName)) {
                     counter++;
                     uniqueName = `${baseName}_${counter}`;
@@ -761,18 +773,29 @@ export function generateSQL(graph) {
         });
     }
 
-    const finalTables = [...tableMap.values()];
+    return tables;
+}
 
-    const dropTablesScript = createDropTablesSQL(finalTables);
+function renderSqlScript(tables) {
+    const dropTablesScript = createDropTablesSQL(tables);
 
-    const sqlScript = finalTables.map(createTableSQL).join("\n\n");
+    const createTablesScript = tables.map(createTableSQL).join("\n\n");
 
-    const foreignKeyScript = finalTables
+    const foreignKeyScript = tables
         .map(createForeignKeySQL)
         .filter(Boolean)
         .join("\n");
 
-    return [dropTablesScript, sqlScript, foreignKeyScript]
+    return [dropTablesScript, createTablesScript, foreignKeyScript]
         .filter(Boolean)
         .join("\n\n");
+}
+
+// Generate SQL
+export function generateSQL(graph) {
+    const relationalTables = buildRelationalTables(graph);
+    const normalizedTables =
+        normalizeRelationalTableIdentifiers(relationalTables);
+
+    return renderSqlScript(normalizedTables);
 }
