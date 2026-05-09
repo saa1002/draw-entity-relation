@@ -1,4 +1,4 @@
-import { normalizeDiagramData } from "../../../domain/er";
+import { normalizeDiagramData } from "../../../../domain/er";
 
 export const SAVE_FILE_RESULT = {
     SAVED: "saved",

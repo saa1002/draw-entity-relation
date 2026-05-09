@@ -55,15 +55,6 @@ import {
 } from "../../domain/er";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
-import {
-    SAVE_FILE_RESULT,
-    clearDiagramLocalStorage,
-    exportDiagramToJsonFile,
-    exportSqlScriptToFile,
-    loadDiagramFromLocalStorage,
-    readDiagramJsonFile,
-    saveDiagramToLocalStorage,
-} from "./utils/filePersistence";
 import { clearGraphCanvas } from "./utils/graph/graphCanvas";
 import { installGraphInteractionOverrides } from "./utils/graph/graphInteractionOverrides";
 import { installGraphLabelEditingHandler } from "./utils/graph/graphLabelEditing";
@@ -74,6 +65,15 @@ import {
     getRelationStyleString,
     installDiagramEditorStyles,
 } from "./utils/mxStyles/diagramStyles";
+import {
+    SAVE_FILE_RESULT,
+    clearDiagramLocalStorage,
+    exportDiagramToJsonFile,
+    exportSqlScriptToFile,
+    loadDiagramFromLocalStorage,
+    readDiagramJsonFile,
+    saveDiagramToLocalStorage,
+} from "./utils/persistence/filePersistence";
 import {
     createAttributeRenderingHelpers,
     getAttributeStyleString,
@@ -88,7 +88,7 @@ import {
 } from "./utils/rendering/relationRendering";
 import { syncDiagramDataFromGraph } from "./utils/sync/diagramGraphSync";
 import { reconstructDiagramGraph } from "./utils/sync/diagramReconstruction";
-import { getValidationDialogMessages } from "./utils/validationMessages";
+import { getValidationDialogMessages } from "./utils/validation/validationMessages";
 
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 
