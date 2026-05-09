@@ -18,6 +18,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
 import {
     ATTRIBUTE_OWNER_TYPES,
+    POSSIBLE_CARDINALITIES,
     addAttributeToOwner,
     applyIdentifyingRelationCardinalities,
     canRelationHoldAttributes,
@@ -52,9 +53,9 @@ import {
     toggleExclusivePartialKeyAttribute,
     toggleExclusivePrimaryKeyAttribute,
     updateAttributePosition,
+    validateGraph,
 } from "../../domain/er";
 import { generateSQL } from "../../utils/sql";
-import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { clearGraphCanvas } from "./utils/graph/graphCanvas";
 import { installGraphInteractionOverrides } from "./utils/graph/graphInteractionOverrides";
 import { installGraphLabelEditingHandler } from "./utils/graph/graphLabelEditing";

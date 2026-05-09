@@ -1,4 +1,4 @@
-import { normalizeIdentifier } from "../domain/relational/naming";
+import { normalizeIdentifier } from "../relational/naming";
 
 export function validateGraph(graph) {
     const diagnostics = {
