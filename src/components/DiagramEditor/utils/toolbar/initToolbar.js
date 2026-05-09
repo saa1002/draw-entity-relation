@@ -1,11 +1,11 @@
 import { default as MxGraph } from "mxgraph";
-import { addToolbarItem } from "./";
 import {
     getEntityDimensions,
     getEntityStyleString,
     getRelationDimensions,
     getRelationStyleString,
-} from "./mxStyles/diagramStyles";
+} from "../mxStyles/diagramStyles";
+import addToolbarItem from "./addToolbarItem";
 
 const {
     mxEvent,

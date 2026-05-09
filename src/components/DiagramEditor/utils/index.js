@@ -1,8 +1,8 @@
-import addToolbarItem from "./addToolbarItem";
 import getStyleByKey from "./getStyleByKey";
 import getStyleStringByObj from "./getStyleStringByObj";
-import initToolbar from "./initToolbar";
 import setInitialConfiguration from "./setInitialConfiguration";
+import addToolbarItem from "./toolbar/addToolbarItem";
+import initToolbar from "./toolbar/initToolbar";
 
 export {
     addToolbarItem,

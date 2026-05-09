@@ -2,7 +2,7 @@ import { default as MxGraph } from "mxgraph";
 import {
     getEntityDimensions,
     getRelationDimensions,
-} from "./mxStyles/diagramStyles";
+} from "../mxStyles/diagramStyles";
 
 const { mxEvent, mxUtils } = MxGraph();
 
