@@ -1,5 +1,5 @@
 import { default as MxGraph } from "mxgraph";
-import initToolbar from "./toolbar/initToolbar";
+import initToolbar from "../toolbar/initToolbar";
 
 const { mxClient, mxEdgeHandler, mxRubberband, mxUtils } = MxGraph();
 

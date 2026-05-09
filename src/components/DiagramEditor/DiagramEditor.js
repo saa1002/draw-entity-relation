@@ -55,7 +55,6 @@ import {
 } from "../../domain/er";
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
-import { setInitialConfiguration } from "./utils";
 import { syncDiagramDataFromGraph } from "./utils/diagramGraphSync";
 import { reconstructDiagramGraph } from "./utils/diagramReconstruction";
 import {
@@ -67,9 +66,10 @@ import {
     readDiagramJsonFile,
     saveDiagramToLocalStorage,
 } from "./utils/filePersistence";
-import { clearGraphCanvas } from "./utils/graphCanvas";
-import { installGraphInteractionOverrides } from "./utils/graphInteractionOverrides";
-import { installGraphLabelEditingHandler } from "./utils/graphLabelEditing";
+import { clearGraphCanvas } from "./utils/graph/graphCanvas";
+import { installGraphInteractionOverrides } from "./utils/graph/graphInteractionOverrides";
+import { installGraphLabelEditingHandler } from "./utils/graph/graphLabelEditing";
+import setInitialConfiguration from "./utils/graph/setInitialConfiguration";
 import {
     getAttributeDimensions,
     getCardinalityStyleString,
