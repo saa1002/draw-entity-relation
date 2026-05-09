@@ -5,7 +5,7 @@ import {
     nmRelationsWithPK,
     sqlIdentifierCollisions,
     validateGraph,
-} from '../../../src/utils/validation'
+} from '../../../src/domain/er/validation'
 
 let graph
 

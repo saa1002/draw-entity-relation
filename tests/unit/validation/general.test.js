@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
-import { validateGraph, sqlIdentifierCollisions } from '../../../src/utils/validation'
+import { validateGraph, sqlIdentifierCollisions } from '../../../src/domain/er/validation'
 
 let graph
 

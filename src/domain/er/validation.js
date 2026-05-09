@@ -1,143 +1,126 @@
 import { normalizeIdentifier } from "../relational/naming";
 
+const DEFAULT_DIAGNOSTICS = {
+    noRepeatedNames: true,
+    noRepeatedAttrNames: true,
+    noEntitiesWithoutAttributes: true,
+    noEntitiesWithoutPK: true,
+    noEntitiesWithMoreThanOnePK: true,
+    noNMRelationsWithPK: true,
+    noUnconnectedRelations: true,
+    noAttributesInNonNMRelations: true,
+    noBrokenRelationEntityReferences: true,
+    noNotValidCardinalities: true,
+    noSQLIdentifierCollisions: true,
+    noWeakEntitiesWithoutPartialKey: true,
+    noWeakEntitiesWithMoreThanOnePartialKey: true,
+    noWeakEntitiesWithPrimaryKey: true,
+    noStrongEntitiesWithPartialKey: true,
+    noWeakEntitiesWithoutIdentifyingRelation: true,
+    noInvalidIdentifyingRelations: true,
+    noInvalidIdentifyingCardinalities: true,
+    noInconsistentWeakEntityOwnership: true,
+    noMultipleIdentifyingRelationsPerWeakEntity: true,
+    notEmpty: true,
+    isValid: true,
+};
+
+const VALIDATION_RULES = [
+    {
+        diagnostic: "notEmpty",
+        fails: (graph) =>
+            graph.entities.length === 0 && graph.relations.length === 0,
+    },
+    {
+        diagnostic: "noRepeatedNames",
+        fails: repeatedEntities,
+    },
+    {
+        diagnostic: "noRepeatedAttrNames",
+        fails: repeatedAttributesInEntity,
+    },
+    {
+        diagnostic: "noEntitiesWithoutAttributes",
+        fails: entitiesWithoutAttributes,
+    },
+    {
+        diagnostic: "noEntitiesWithoutPK",
+        fails: entitiesWithoutPK,
+    },
+    {
+        diagnostic: "noEntitiesWithMoreThanOnePK",
+        fails: entitiesWithMoreThanOnePK,
+    },
+    {
+        diagnostic: "noNMRelationsWithPK",
+        fails: nmRelationsWithPK,
+    },
+    {
+        diagnostic: "noAttributesInNonNMRelations",
+        fails: notNMRelationsWithAttributes,
+    },
+    {
+        diagnostic: "noUnconnectedRelations",
+        fails: relationsUnconnected,
+    },
+    {
+        diagnostic: "noNotValidCardinalities",
+        fails: cardinalitiesNotValid,
+    },
+    {
+        diagnostic: "noBrokenRelationEntityReferences",
+        fails: brokenRelationEntityReferences,
+    },
+    {
+        diagnostic: "noSQLIdentifierCollisions",
+        fails: sqlIdentifierCollisions,
+    },
+    {
+        diagnostic: "noWeakEntitiesWithoutPartialKey",
+        fails: weakEntitiesWithoutPartialKey,
+    },
+    {
+        diagnostic: "noWeakEntitiesWithMoreThanOnePartialKey",
+        fails: weakEntitiesWithMoreThanOnePartialKey,
+    },
+    {
+        diagnostic: "noWeakEntitiesWithPrimaryKey",
+        fails: weakEntitiesWithPrimaryKey,
+    },
+    {
+        diagnostic: "noStrongEntitiesWithPartialKey",
+        fails: strongEntitiesWithPartialKey,
+    },
+    {
+        diagnostic: "noWeakEntitiesWithoutIdentifyingRelation",
+        fails: weakEntitiesWithoutIdentifyingRelation,
+    },
+    {
+        diagnostic: "noInvalidIdentifyingRelations",
+        fails: identifyingRelationsNotValid,
+    },
+    {
+        diagnostic: "noInvalidIdentifyingCardinalities",
+        fails: identifyingRelationCardinalitiesNotValid,
+    },
+    {
+        diagnostic: "noInconsistentWeakEntityOwnership",
+        fails: inconsistentWeakEntityOwnership,
+    },
+    {
+        diagnostic: "noMultipleIdentifyingRelationsPerWeakEntity",
+        fails: multipleIdentifyingRelationsPerWeakEntity,
+    },
+];
+
 export function validateGraph(graph) {
-    const diagnostics = {
-        noRepeatedNames: true,
-        noRepeatedAttrNames: true,
-        noEntitiesWithoutAttributes: true,
-        noEntitiesWithoutPK: true,
-        noEntitiesWithMoreThanOnePK: true,
-        noNMRelationsWithPK: true,
-        noUnconnectedRelations: true,
-        noAttributesInNonNMRelations: true,
-        noBrokenRelationEntityReferences: true,
-        noNotValidCardinalities: true,
-        noSQLIdentifierCollisions: true,
-        noWeakEntitiesWithoutPartialKey: true,
-        noWeakEntitiesWithMoreThanOnePartialKey: true,
-        noWeakEntitiesWithPrimaryKey: true,
-        noStrongEntitiesWithPartialKey: true,
-        noWeakEntitiesWithoutIdentifyingRelation: true,
-        noInvalidIdentifyingRelations: true,
-        noInvalidIdentifyingCardinalities: true,
-        noInconsistentWeakEntityOwnership: true,
-        noMultipleIdentifyingRelationsPerWeakEntity: true,
-        notEmpty: true,
-        isValid: true,
-    };
+    const diagnostics = { ...DEFAULT_DIAGNOSTICS };
 
-    // The graph is empty
-    if (graph.entities.length === 0 && graph.relations.length === 0) {
-        diagnostics.notEmpty = false;
-        diagnostics.isValid = false;
-    }
-
-    // Check for repeated entity names
-    if (repeatedEntities(graph)) {
-        diagnostics.noRepeatedNames = false;
-        diagnostics.isValid = false;
-    }
-
-    // Check for repeated attribute names in the same entity
-    if (repeatedAttributesInEntity(graph)) {
-        diagnostics.noRepeatedAttrNames = false;
-        diagnostics.isValid = false;
-    }
-
-    // Check for entities without attributes
-    if (entitiesWithoutAttributes(graph)) {
-        diagnostics.noEntitiesWithoutAttributes = false;
-        diagnostics.isValid = false;
-    }
-
-    // Check for entities without a primary key attribute
-    if (entitiesWithoutPK(graph)) {
-        diagnostics.noEntitiesWithoutPK = false;
-        diagnostics.isValid = false;
-    }
-
-    // Check for entities with more than one primary key
-    if (entitiesWithMoreThanOnePK(graph)) {
-        diagnostics.noEntitiesWithMoreThanOnePK = false;
-        diagnostics.isValid = false;
-    }
-
-    // Check for NM relations with a primary key
-    if (nmRelationsWithPK(graph)) {
-        diagnostics.noNMRelationsWithPK = false;
-        diagnostics.isValid = false;
-    }
-
-    if (notNMRelationsWithAttributes(graph)) {
-        diagnostics.noAttributesInNonNMRelations = false;
-        diagnostics.isValid = false;
-    }
-
-    // Check for unconnected relations
-    if (relationsUnconnected(graph)) {
-        diagnostics.noUnconnectedRelations = false;
-        diagnostics.isValid = false;
-    }
-
-    // Check for relations with invalid cardinalities
-    if (cardinalitiesNotValid(graph)) {
-        diagnostics.noNotValidCardinalities = false;
-        diagnostics.isValid = false;
-    }
-
-    if (brokenRelationEntityReferences(graph)) {
-        diagnostics.noBrokenRelationEntityReferences = false;
-        diagnostics.isValid = false;
-    }
-
-    if (sqlIdentifierCollisions(graph)) {
-        diagnostics.noSQLIdentifierCollisions = false;
-        diagnostics.isValid = false;
-    }
-
-    if (weakEntitiesWithoutPartialKey(graph)) {
-        diagnostics.noWeakEntitiesWithoutPartialKey = false;
-        diagnostics.isValid = false;
-    }
-
-    if (weakEntitiesWithMoreThanOnePartialKey(graph)) {
-        diagnostics.noWeakEntitiesWithMoreThanOnePartialKey = false;
-        diagnostics.isValid = false;
-    }
-
-    if (weakEntitiesWithPrimaryKey(graph)) {
-        diagnostics.noWeakEntitiesWithPrimaryKey = false;
-        diagnostics.isValid = false;
-    }
-
-    if (strongEntitiesWithPartialKey(graph)) {
-        diagnostics.noStrongEntitiesWithPartialKey = false;
-        diagnostics.isValid = false;
-    }
-
-    if (weakEntitiesWithoutIdentifyingRelation(graph)) {
-        diagnostics.noWeakEntitiesWithoutIdentifyingRelation = false;
-        diagnostics.isValid = false;
-    }
-
-    if (identifyingRelationsNotValid(graph)) {
-        diagnostics.noInvalidIdentifyingRelations = false;
-        diagnostics.isValid = false;
-    }
-
-    if (identifyingRelationCardinalitiesNotValid(graph)) {
-        diagnostics.noInvalidIdentifyingCardinalities = false;
-        diagnostics.isValid = false;
-    }
-
-    if (inconsistentWeakEntityOwnership(graph)) {
-        diagnostics.noInconsistentWeakEntityOwnership = false;
-        diagnostics.isValid = false;
-    }
-
-    if (multipleIdentifyingRelationsPerWeakEntity(graph)) {
-        diagnostics.noMultipleIdentifyingRelationsPerWeakEntity = false;
-        diagnostics.isValid = false;
+    for (const rule of VALIDATION_RULES) {
+        if (rule.fails(graph)) {
+            diagnostics[rule.diagnostic] = false;
+            diagnostics.isValid = false;
+        }
     }
 
     return diagnostics;
@@ -244,6 +227,7 @@ function getIdentifyingDependency(graph, relation) {
             relation.side2,
         );
     }
+
     // Fallback for weak-weak relations: infer the dependent side from
     // cardinalities. The dependent weak side must be N, and the owner side
     // must be 1.
@@ -357,7 +341,9 @@ export function entitiesWithoutPK(graph) {
     // Check entities
     for (const entity of graph.entities) {
         if (entity.weak) continue;
+
         let hasPrimaryKey = false;
+
         for (const attribute of entity.attributes) {
             // Check if there is at least one attribute with key set to true
             if (attribute.key) {
@@ -365,11 +351,13 @@ export function entitiesWithoutPK(graph) {
                 break;
             }
         }
+
         // If no primary key found for the current entity, return true
         if (!hasPrimaryKey) {
             return true;
         }
     }
+
     // If all entities have at least one primary key, return false
     return false;
 }
@@ -378,9 +366,11 @@ export function entitiesWithoutPK(graph) {
 export function entitiesWithMoreThanOnePK(graph) {
     for (const entity of graph.entities) {
         let primaryKeyCount = 0;
+
         for (const attribute of entity.attributes) {
             if (attribute.key) {
                 primaryKeyCount++;
+
                 // If more than one primary key is found, return true
                 if (primaryKeyCount > 1) {
                     return true;
@@ -388,6 +378,7 @@ export function entitiesWithMoreThanOnePK(graph) {
             }
         }
     }
+
     // If no entity with more than one primary key is found, return false
     return false;
 }
@@ -405,6 +396,7 @@ export function nmRelationsWithPK(graph) {
             }
         }
     }
+
     // If no N:M relation with a key is found, return false
     return false;
 }
@@ -431,6 +423,7 @@ export function relationsUnconnected(graph) {
             return true; // Found an unconnected relation
         }
     }
+
     return false; // All relations are connected
 }
 
@@ -461,6 +454,7 @@ export function notNMRelationsWithAttributes(graph) {
             return true; // Found an relation that cant hold attributes that holds them
         }
     }
+
     return false;
 }
 
@@ -479,6 +473,7 @@ export function cardinalitiesNotValid(graph) {
             return true; // Found an invalid cardinality
         }
     }
+
     return false; // All cardinalities are valid
 }
 
@@ -488,17 +483,21 @@ export function sqlIdentifierCollisions(graph) {
     // Entidades y relaciones comparten namespace de tablas
     for (const entity of graph.entities) {
         const normalized = normalizeIdentifier(entity.name);
+
         if (normalizedNames.has(normalized)) {
             return true;
         }
+
         normalizedNames.add(normalized);
     }
 
     for (const relation of graph.relations) {
         const normalized = normalizeIdentifier(relation.name);
+
         if (normalizedNames.has(normalized)) {
             return true;
         }
+
         normalizedNames.add(normalized);
     }
 
@@ -507,9 +506,11 @@ export function sqlIdentifierCollisions(graph) {
 
         for (const attribute of attributes) {
             const normalized = normalizeIdentifier(attribute.name);
+
             if (normalizedAttrNames.has(normalized)) {
                 return true;
             }
+
             normalizedAttrNames.add(normalized);
         }
 

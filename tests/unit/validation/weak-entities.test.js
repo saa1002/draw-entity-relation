@@ -12,7 +12,7 @@ import {
     inconsistentWeakEntityOwnership,
     multipleIdentifyingRelationsPerWeakEntity,
     weakEntitiesWithPrimaryKey,
-} from '../../../src/utils/validation'
+} from '../../../src/domain/er/validation'
 
 let graph
 
