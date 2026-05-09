@@ -5,7 +5,7 @@ import {
     getEntityStyleString,
     getRelationDimensions,
     getRelationStyleString,
-} from "./diagramStyles";
+} from "./mxStyles/diagramStyles";
 
 const {
     mxEvent,

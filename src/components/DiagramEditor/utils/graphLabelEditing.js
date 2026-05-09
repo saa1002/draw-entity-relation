@@ -2,7 +2,7 @@ import {
     getAttributeDimensions,
     getEntityDimensions,
     getRelationDimensions,
-} from "./diagramStyles";
+} from "./mxStyles/diagramStyles";
 
 export const installGraphLabelEditingHandler = ({
     graph,

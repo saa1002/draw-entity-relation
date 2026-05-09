@@ -11,7 +11,7 @@ import {
     getEntityStyleString,
     getRelationDimensions,
     getRelationStyleString,
-} from "./diagramStyles";
+} from "./mxStyles/diagramStyles";
 
 export const reconstructDiagramGraph = ({
     graph,

@@ -1,5 +1,8 @@
 import { default as MxGraph } from "mxgraph";
-import { getEntityDimensions, getRelationDimensions } from "./diagramStyles";
+import {
+    getEntityDimensions,
+    getRelationDimensions,
+} from "./mxStyles/diagramStyles";
 
 const { mxEvent, mxUtils } = MxGraph();
 

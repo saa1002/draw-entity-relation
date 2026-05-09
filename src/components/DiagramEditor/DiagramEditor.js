@@ -63,12 +63,6 @@ import {
 import { syncDiagramDataFromGraph } from "./utils/diagramGraphSync";
 import { reconstructDiagramGraph } from "./utils/diagramReconstruction";
 import {
-    getAttributeDimensions,
-    getCardinalityStyleString,
-    getRelationStyleString,
-    installDiagramEditorStyles,
-} from "./utils/diagramStyles";
-import {
     createEntityRenderingHelpers,
     isWeakEntityDecoratorCell,
 } from "./utils/entityRendering";
@@ -84,6 +78,12 @@ import {
 import { clearGraphCanvas } from "./utils/graphCanvas";
 import { installGraphInteractionOverrides } from "./utils/graphInteractionOverrides";
 import { installGraphLabelEditingHandler } from "./utils/graphLabelEditing";
+import {
+    getAttributeDimensions,
+    getCardinalityStyleString,
+    getRelationStyleString,
+    installDiagramEditorStyles,
+} from "./utils/mxStyles/diagramStyles";
 import {
     createRelationRenderingHelpers,
     isIdentifyingRelationDecoratorCell,
