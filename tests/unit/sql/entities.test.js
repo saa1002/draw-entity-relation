@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { generateSQL } from '../../../src/utils/sql'
+import { generateSQL } from '../../../src/services/sql'
 
 describe('Standalone entity SQL generation', () => {
     test('a standalone strong entity should generate a single table with its primary key', () => {

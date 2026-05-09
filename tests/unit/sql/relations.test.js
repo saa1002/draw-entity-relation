@@ -4,7 +4,7 @@ import {
     filterTables,
     process1NRelation,
     process11Relation,
-} from '../../../src/utils/sql'
+} from '../../../src/services/sql'
 
 let oneNGraph
 let oneOneGraph

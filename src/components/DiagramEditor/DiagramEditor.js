@@ -55,7 +55,7 @@ import {
     updateAttributePosition,
     validateGraph,
 } from "../../domain/er";
-import { generateSQL } from "../../utils/sql";
+import { generateSQL } from "../../services/sql";
 import { clearGraphCanvas } from "./utils/graph/graphCanvas";
 import { installGraphInteractionOverrides } from "./utils/graph/graphInteractionOverrides";
 import { installGraphLabelEditingHandler } from "./utils/graph/graphLabelEditing";

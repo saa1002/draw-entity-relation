@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { generateSQL } from '../../../src/utils/sql'
+import { generateSQL } from '../../../src/services/sql'
 
 const compactSQL = (sql) => sql.replace(/\s+/g, '')
 

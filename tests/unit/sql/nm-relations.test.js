@@ -3,7 +3,7 @@ import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     filterTables,
     processNMRelation,
-} from '../../../src/utils/sql'
+} from '../../../src/services/sql'
 
 let nMGraph
 

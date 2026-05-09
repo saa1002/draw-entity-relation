@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
-import { generateSQL, filterTables } from '../../../src/utils/sql'
+import { generateSQL, filterTables } from '../../../src/services/sql'
 
 let oneNGraph
 let oneOneGraph
