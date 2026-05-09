@@ -4,7 +4,7 @@ import {
     ER_FONT_FAMILY,
     ER_FONT_SIZE,
     ER_STROKE,
-} from "./mxStyles/diagramStyles";
+} from "../mxStyles/diagramStyles";
 
 export const DISCRIMINANT_UNDERLINE_SUFFIX = "__discriminant_underline";
 

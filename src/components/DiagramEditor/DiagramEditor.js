@@ -56,16 +56,8 @@ import {
 import { generateSQL } from "../../utils/sql";
 import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
 import { setInitialConfiguration } from "./utils";
-import {
-    createAttributeRenderingHelpers,
-    getAttributeStyleString,
-} from "./utils/attributeRendering";
 import { syncDiagramDataFromGraph } from "./utils/diagramGraphSync";
 import { reconstructDiagramGraph } from "./utils/diagramReconstruction";
-import {
-    createEntityRenderingHelpers,
-    isWeakEntityDecoratorCell,
-} from "./utils/entityRendering";
 import {
     SAVE_FILE_RESULT,
     clearDiagramLocalStorage,
@@ -85,9 +77,17 @@ import {
     installDiagramEditorStyles,
 } from "./utils/mxStyles/diagramStyles";
 import {
+    createAttributeRenderingHelpers,
+    getAttributeStyleString,
+} from "./utils/rendering/attributeRendering";
+import {
+    createEntityRenderingHelpers,
+    isWeakEntityDecoratorCell,
+} from "./utils/rendering/entityRendering";
+import {
     createRelationRenderingHelpers,
     isIdentifyingRelationDecoratorCell,
-} from "./utils/relationRendering";
+} from "./utils/rendering/relationRendering";
 import { getValidationDialogMessages } from "./utils/validationMessages";
 
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();

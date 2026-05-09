@@ -1,4 +1,4 @@
-import { getEntityDimensions } from "./mxStyles/diagramStyles";
+import { getEntityDimensions } from "../mxStyles/diagramStyles";
 
 export const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
 

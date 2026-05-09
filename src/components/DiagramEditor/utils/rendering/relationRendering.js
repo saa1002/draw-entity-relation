@@ -1,4 +1,4 @@
-import { ER_STROKE, getRelationDimensions } from "./mxStyles/diagramStyles";
+import { ER_STROKE, getRelationDimensions } from "../mxStyles/diagramStyles";
 
 export const IDENTIFYING_RELATION_DECORATOR_SUFFIX = "__identifying_decorator";
 

@@ -3,7 +3,6 @@ import {
     isRelationConfigured,
     isWeakEntity,
 } from "../../../domain/er";
-import { getAttributeStyleString } from "./attributeRendering";
 import {
     getAttributeDimensions,
     getCardinalityStyleString,
@@ -12,6 +11,7 @@ import {
     getRelationDimensions,
     getRelationStyleString,
 } from "./mxStyles/diagramStyles";
+import { getAttributeStyleString } from "./rendering/attributeRendering";
 
 export const reconstructDiagramGraph = ({
     graph,

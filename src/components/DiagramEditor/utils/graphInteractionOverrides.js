@@ -1,17 +1,17 @@
 import {
     DISCRIMINANT_UNDERLINE_SUFFIX,
     isDiscriminantUnderlineCell,
-} from "./attributeRendering";
+} from "./rendering/attributeRendering";
 import {
     WEAK_ENTITY_DECORATOR_SUFFIX,
     isWeakEntityDecoratorCell,
-} from "./entityRendering";
+} from "./rendering/entityRendering";
 import {
     IDENTIFYING_RELATION_DECORATOR_SUFFIX,
     IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX,
     isIdentifyingRelationDecoratorCell,
     isIdentifyingRelationEdgeDecoratorCell,
-} from "./relationRendering";
+} from "./rendering/relationRendering";
 
 const getUnderlyingInteractiveCell = ({ cell, accessCell }) => {
     if (!cell?.id) return cell;
