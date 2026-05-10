@@ -74,6 +74,40 @@ export const findAttributeOwnerById = (diagram, attributeId) => {
     return null;
 };
 
+export const findAttributeTreeOwnerById = (diagram, attributeId) => {
+    for (const entity of getEntities(diagram)) {
+        const node = findAttributeNodeInTreeById(
+            entity.attributes,
+            attributeId,
+        );
+
+        if (node) {
+            return {
+                owner: entity,
+                ownerType: ATTRIBUTE_OWNER_TYPES.ENTITY,
+                ...node,
+            };
+        }
+    }
+
+    for (const relation of getRelations(diagram)) {
+        const node = findAttributeNodeInTreeById(
+            relation.attributes,
+            attributeId,
+        );
+
+        if (node) {
+            return {
+                owner: relation,
+                ownerType: ATTRIBUTE_OWNER_TYPES.RELATION,
+                ...node,
+            };
+        }
+    }
+
+    return null;
+};
+
 export const isPrimaryKeyAttribute = (attribute) => attribute?.key === true;
 
 export const isPartialKeyAttribute = (attribute) =>

@@ -2,6 +2,8 @@ import { describe, expect, test } from 'vitest'
 import {
     findAttributeInTreeById,
     findAttributeNodeInTreeById,
+    findAttributeTreeOwnerById,
+    ATTRIBUTE_OWNER_TYPES,
     flattenAttributeTree,
     getAttributeChildren,
     getLeafAttributes,
@@ -141,6 +143,34 @@ describe("Hierarchical attribute helpers", () => {
         expect(findAttributeNodeInTreeById(attributes, "attr-2")).toMatchObject({
             attribute: attributes[0].children[0],
             parent: attributes[0],
+            depth: 1,
+            index: 0,
+        })
+    })
+
+    test("findAttributeTreeOwnerById should return owner and nested attribute context", () => {
+        const diagram = {
+            entities: [
+                {
+                    idMx: "entity-1",
+                    attributes: [
+                        {
+                            idMx: "attr-1",
+                            children: [
+                                { idMx: "attr-2" },
+                            ],
+                        },
+                    ],
+                },
+            ],
+            relations: [],
+        }
+
+        expect(findAttributeTreeOwnerById(diagram, "attr-2")).toMatchObject({
+            owner: diagram.entities[0],
+            ownerType: ATTRIBUTE_OWNER_TYPES.ENTITY,
+            attribute: diagram.entities[0].attributes[0].children[0],
+            parent: diagram.entities[0].attributes[0],
             depth: 1,
             index: 0,
         })
