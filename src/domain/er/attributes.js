@@ -414,20 +414,35 @@ export const isCompositeAttribute = (attribute) =>
 export const isLeafAttribute = (attribute) =>
     !!attribute && !isCompositeAttribute(attribute);
 
+export const isMultivaluedAttribute = (attribute) =>
+    attribute?.multivalued === true;
+
+export const isCompositeMultivaluedAttribute = (attribute) =>
+    isCompositeAttribute(attribute) && isMultivaluedAttribute(attribute);
+
 export const walkAttributeTree = (attributes, visitor) => {
     if (typeof visitor !== "function") {
         return;
     }
 
-    const visit = (currentAttributes, parent = null, depth = 0) => {
+    const visit = (
+        currentAttributes,
+        parent = null,
+        depth = 0,
+        ancestors = [],
+    ) => {
         getAttributes(currentAttributes).forEach((attribute, index) => {
             visitor(attribute, {
                 parent,
                 depth,
                 index,
+                ancestors,
             });
 
-            visit(getAttributeChildren(attribute), attribute, depth + 1);
+            visit(getAttributeChildren(attribute), attribute, depth + 1, [
+                ...ancestors,
+                attribute,
+            ]);
         });
     };
 
