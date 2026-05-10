@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
+    isCompositeMultivaluedAttribute,
+    isMultivaluedAttribute,
     findAttributeInTreeById,
     findAttributeNodeInTreeById,
     findAttributeTreeOwnerById,
@@ -97,17 +99,21 @@ describe("Hierarchical attribute helpers", () => {
         expect(findAttributeInTreeById(attributes, "missing")).toBe(null)
     })
 
-    test("walkAttributeTree should expose parent, depth and sibling index", () => {
+    test("walkAttributeTree should expose parent, depth, sibling index and ancestors", () => {
         const attributes = [
             {
                 idMx: "attr-1",
                 name: "address",
                 children: [
-                    { idMx: "attr-2", name: "street" },
-                    { idMx: "attr-3", name: "city" },
+                    {
+                        idMx: "attr-2",
+                        name: "location",
+                        children: [
+                            { idMx: "attr-3", name: "city" },
+                        ],
+                    },
                 ],
             },
-            { idMx: "attr-4", name: "email" },
         ]
 
         const visited = []
@@ -118,14 +124,32 @@ describe("Hierarchical attribute helpers", () => {
                 parentId: context.parent?.idMx ?? null,
                 depth: context.depth,
                 index: context.index,
+                ancestorIds: context.ancestors.map((ancestor) => ancestor.idMx),
             })
         })
 
         expect(visited).toEqual([
-            { idMx: "attr-1", parentId: null, depth: 0, index: 0 },
-            { idMx: "attr-2", parentId: "attr-1", depth: 1, index: 0 },
-            { idMx: "attr-3", parentId: "attr-1", depth: 1, index: 1 },
-            { idMx: "attr-4", parentId: null, depth: 0, index: 1 },
+            {
+                idMx: "attr-1",
+                parentId: null,
+                depth: 0,
+                index: 0,
+                ancestorIds: [],
+            },
+            {
+                idMx: "attr-2",
+                parentId: "attr-1",
+                depth: 1,
+                index: 0,
+                ancestorIds: ["attr-1"],
+            },
+            {
+                idMx: "attr-3",
+                parentId: "attr-2",
+                depth: 2,
+                index: 0,
+                ancestorIds: ["attr-1", "attr-2"],
+            },
         ])
     })
 
@@ -174,6 +198,28 @@ describe("Hierarchical attribute helpers", () => {
             depth: 1,
             index: 0,
         })
+    })
+    test("multivalued attribute helpers should detect multiplicity independently from composition", () => {
+        const simpleMultivaluedAttribute = {
+            idMx: "attr-1",
+            name: "phone",
+            multivalued: true,
+        }
+
+        const compositeMultivaluedAttribute = {
+            idMx: "attr-2",
+            name: "address",
+            multivalued: true,
+            children: [
+                { idMx: "attr-3", name: "street" },
+            ],
+        }
+
+        expect(isMultivaluedAttribute(simpleMultivaluedAttribute)).toBe(true)
+        expect(isCompositeMultivaluedAttribute(simpleMultivaluedAttribute)).toBe(false)
+
+        expect(isMultivaluedAttribute(compositeMultivaluedAttribute)).toBe(true)
+        expect(isCompositeMultivaluedAttribute(compositeMultivaluedAttribute)).toBe(true)
     })
 })
 
