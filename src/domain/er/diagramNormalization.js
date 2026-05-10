@@ -21,6 +21,7 @@ export const normalizeAttribute = (attribute = {}) => ({
     cell: normalizeAttributeCell(attribute.cell, attribute.idMx),
     offsetX: typeof attribute.offsetX === "number" ? attribute.offsetX : 0,
     offsetY: typeof attribute.offsetY === "number" ? attribute.offsetY : 0,
+    ...normalizeAttributeChildren(attribute, normalizeAttribute),
 });
 
 export const normalizeRelationAttribute = (attribute = {}) => ({
@@ -33,6 +34,7 @@ export const normalizeRelationAttribute = (attribute = {}) => ({
     cell: normalizeAttributeCell(attribute.cell, attribute.idMx),
     offsetX: typeof attribute.offsetX === "number" ? attribute.offsetX : 0,
     offsetY: typeof attribute.offsetY === "number" ? attribute.offsetY : 0,
+    ...normalizeAttributeChildren(attribute, normalizeRelationAttribute),
 });
 
 export const normalizeEntity = (entity = {}) => ({
@@ -82,3 +84,15 @@ export const normalizeDiagramData = (diagramData = {}) => ({
         ? diagramData.relations.map(normalizeRelation)
         : [],
 });
+
+const normalizeAttributeChildren = (attribute, normalizeChild) => {
+    if (!Object.prototype.hasOwnProperty.call(attribute, "children")) {
+        return {};
+    }
+
+    return {
+        children: Array.isArray(attribute.children)
+            ? attribute.children.map(normalizeChild)
+            : [],
+    };
+};
