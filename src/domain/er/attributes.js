@@ -417,3 +417,18 @@ export const findAttributeInTreeById = (attributes, attributeId) =>
     flattenAttributeTree(attributes).find(
         (attribute) => attribute.idMx === attributeId,
     ) ?? null;
+
+export const findAttributeNodeInTreeById = (attributes, attributeId) => {
+    let foundNode = null;
+
+    walkAttributeTree(attributes, (attribute, context) => {
+        if (!foundNode && attribute.idMx === attributeId) {
+            foundNode = {
+                attribute,
+                ...context,
+            };
+        }
+    });
+
+    return foundNode;
+};

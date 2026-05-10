@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
     findAttributeInTreeById,
+    findAttributeNodeInTreeById,
     flattenAttributeTree,
     getAttributeChildren,
     getLeafAttributes,
@@ -125,4 +126,24 @@ describe("Hierarchical attribute helpers", () => {
             { idMx: "attr-4", parentId: null, depth: 0, index: 1 },
         ])
     })
+
+    test("findAttributeNodeInTreeById should return nested attribute context", () => {
+        const attributes = [
+            {
+                idMx: "attr-1",
+                name: "address",
+                children: [
+                    { idMx: "attr-2", name: "street" },
+                ],
+            },
+        ]
+
+        expect(findAttributeNodeInTreeById(attributes, "attr-2")).toMatchObject({
+            attribute: attributes[0].children[0],
+            parent: attributes[0],
+            depth: 1,
+            index: 0,
+        })
+    })
 })
+
