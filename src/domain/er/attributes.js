@@ -370,3 +370,50 @@ export const convertPartialKeyToPrimaryKey = (attributes) => {
 
     return changedAttributes;
 };
+
+export const getAttributeChildren = (attribute) =>
+    getAttributes(attribute?.children);
+
+export const isCompositeAttribute = (attribute) =>
+    !!attribute && getAttributeChildren(attribute).length > 0;
+
+export const isLeafAttribute = (attribute) =>
+    !!attribute && !isCompositeAttribute(attribute);
+
+export const walkAttributeTree = (attributes, visitor) => {
+    if (typeof visitor !== "function") {
+        return;
+    }
+
+    const visit = (currentAttributes, parent = null, depth = 0) => {
+        getAttributes(currentAttributes).forEach((attribute, index) => {
+            visitor(attribute, {
+                parent,
+                depth,
+                index,
+            });
+
+            visit(getAttributeChildren(attribute), attribute, depth + 1);
+        });
+    };
+
+    visit(attributes);
+};
+
+export const flattenAttributeTree = (attributes) => {
+    const flattenedAttributes = [];
+
+    walkAttributeTree(attributes, (attribute) => {
+        flattenedAttributes.push(attribute);
+    });
+
+    return flattenedAttributes;
+};
+
+export const getLeafAttributes = (attributes) =>
+    flattenAttributeTree(attributes).filter(isLeafAttribute);
+
+export const findAttributeInTreeById = (attributes, attributeId) =>
+    flattenAttributeTree(attributes).find(
+        (attribute) => attribute.idMx === attributeId,
+    ) ?? null;
