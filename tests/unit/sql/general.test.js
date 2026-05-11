@@ -155,4 +155,35 @@ ALTER TABLE Entidad_2 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_
             "FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad(Atributo)"
         );
     });
+    
+    test("should generate leaf columns for composite attributes in an N:M relation", () => {
+        nMGraph.relations.at(0).attributes = [
+            {
+                idMx: "13",
+                name: "periodo",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "14",
+                        name: "inicio",
+                        key: false,
+                        partialKey: false,
+                    },
+                    {
+                        idMx: "15",
+                        name: "fin",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        const sql = generateSQL(nMGraph);
+
+        expect(sql).toContain("periodo_inicio VARCHAR(40)");
+        expect(sql).toContain("periodo_fin VARCHAR(40)");
+        expect(sql).not.toContain("periodo VARCHAR(40)");
+    });
 });

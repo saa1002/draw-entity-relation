@@ -127,5 +127,45 @@ describe("N:M relation extraction", () => {
                 (attr) => attr.foreign_key_column,
             ),
         ).toEqual(["codigo_serie", "codigo_numero"]);
+    });
+    test("should project composite relation attributes in the junction table", () => {
+        nMGraph.relations.at(0).attributes = [
+            {
+                idMx: "13",
+                name: "periodo",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "14",
+                        name: "inicio",
+                        key: false,
+                        partialKey: false,
+                    },
+                    {
+                        idMx: "15",
+                        name: "fin",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        const filteredTables = filterTables(nMGraph);
+        const tables = processNMRelation(filteredTables.at(0));
+
+        const junctionTable = tables.at(2);
+
+        expect(junctionTable.attributes.map((attr) => attr.name)).toEqual([
+            "Atributo_Relación_1",
+            "Atributo_Relación_2",
+            "periodo_inicio",
+            "periodo_fin",
+        ]);
+
+        expect(
+            junctionTable.attributes.some((attr) => attr.name === "periodo"),
+        ).toBe(false);
     });        
 })

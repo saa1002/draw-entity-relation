@@ -155,6 +155,13 @@ function buildEntityTable(entity) {
     };
 }
 
+function buildRelationAttributes(attributes) {
+    return projectAttributeTreeToColumns(attributes).map((attr) => ({
+        name: attr.name,
+        key: false,
+    }));
+}
+
 function buildRelationForeignKeyAttributes({
     keyColumns,
     entity,
@@ -412,10 +419,7 @@ export function processNMRelation(relation, graph) {
             relationName: relation.name,
             suffix: "2",
         }),
-        ...attributes.map((attr) => ({
-            name: attr.name,
-            key: false,
-        })),
+        ...buildRelationAttributes(attributes),
     ];
 
     const thirdTable = {
