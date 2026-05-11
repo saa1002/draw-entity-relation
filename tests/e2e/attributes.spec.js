@@ -8,6 +8,8 @@ import {
     renameElement,
 } from '../helpers/canvas';
 
+import { seedSavedDiagram } from '../helpers/persistence';
+
 test('add attributes to an entity', async ({ page }) => {
     await page.goto('/');
 
@@ -157,4 +159,80 @@ test('toggle discriminant on an entity attribute', async ({ page }) => {
         key: false,
         partialKey: true,
     });
+});
+
+test('hide/show attributes also affects nested attribute trees', async ({ page }) => {
+    const diagram = {
+        entities: [
+            {
+                idMx: '10',
+                name: 'Documento',
+                position: { x: 100, y: 100 },
+                weak: false,
+                ownerEntityId: null,
+                identifyingRelationId: null,
+                attributes: [
+                    {
+                        idMx: '20',
+                        name: 'codigo',
+                        position: { x: 220, y: 100 },
+                        key: true,
+                        partialKey: false,
+                        cell: ['20', 'edge_attr_codigo'],
+                        offsetX: 120,
+                        offsetY: 0,
+                        children: [
+                            {
+                                idMx: '21',
+                                name: 'serie',
+                                position: { x: 340, y: 70 },
+                                key: false,
+                                partialKey: false,
+                                cell: ['21', 'edge_attr_serie'],
+                                offsetX: 120,
+                                offsetY: -30,
+                            },
+                            {
+                                idMx: '22',
+                                name: 'numero',
+                                position: { x: 340, y: 130 },
+                                key: false,
+                                partialKey: false,
+                                cell: ['22', 'edge_attr_numero'],
+                                offsetX: 120,
+                                offsetY: 30,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+        relations: [],
+    };
+
+    await seedSavedDiagram(page, diagram);
+
+    await page.goto('/');
+
+    await expect(page.getByText('codigo', { exact: true })).toBeVisible();
+    await expect(page.getByText('serie', { exact: true })).toBeVisible();
+    await expect(page.getByText('numero', { exact: true })).toBeVisible();
+
+    await selectEntity(page, 'Documento');
+
+    await page
+        .getByRole('button', { name: 'Ocultar atributos' })
+        .click();
+
+    await expect(page.getByText('codigo', { exact: true })).toBeHidden();
+    await expect(page.getByText('serie', { exact: true })).toBeHidden();
+    await expect(page.getByText('numero', { exact: true })).toBeHidden();
+
+    await page
+        .getByRole('button', { name: 'Mostrar atributos' })
+        .click();
+
+    await expect(page.getByText('codigo', { exact: true })).toBeVisible();
+    await expect(page.getByText('serie', { exact: true })).toBeVisible();
+    await expect(page.getByText('numero', { exact: true })).toBeVisible();
 });
