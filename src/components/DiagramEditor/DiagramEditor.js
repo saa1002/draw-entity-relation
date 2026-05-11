@@ -27,6 +27,7 @@ import {
     convertPrimaryKeyToPartialKey,
     createAttribute,
     findAttributeOwnerById,
+    findAttributeTreeOwnerById,
     findEntityById,
     findEntityIndexById,
     findRelationById,
@@ -50,6 +51,7 @@ import {
     relationInvolvesEntity,
     removeAllAttributesFromOwner,
     removeAttributeFromOwnerById,
+    removeAttributeFromOwnerTreeById,
     toggleExclusivePartialKeyAttribute,
     toggleExclusivePrimaryKeyAttribute,
     updateAttributePosition,
@@ -260,8 +262,8 @@ export default function App(props) {
     };
 
     const getAttributeDataById = (attributeId) =>
-        findAttributeOwnerById(diagramRef.current, attributeId)?.attribute ??
-        null;
+        findAttributeTreeOwnerById(diagramRef.current, attributeId)
+            ?.attribute ?? null;
 
     const convertEntityPrimaryKeyToPartialKey = (entity) => {
         const changedAttributes = convertPrimaryKeyToPartialKey(
@@ -443,18 +445,19 @@ export default function App(props) {
     };
 
     const handleAttributeMove = (selected) => {
-        const attributeOwner = findAttributeOwnerById(
+        const attributeOwner = findAttributeTreeOwnerById(
             diagramRef.current,
             selected.id,
         );
 
         if (!attributeOwner) return;
 
-        const { owner, attribute } = attributeOwner;
+        const { owner, parent, attribute } = attributeOwner;
+        const positionOwner = parent ?? owner;
 
         updateAttributePosition({
             attribute,
-            owner,
+            owner: positionOwner,
             position: selected.geometry,
         });
 
@@ -1675,7 +1678,7 @@ export default function App(props) {
             return;
         }
 
-        const selectedAttributeOwner = findAttributeOwnerById(
+        const selectedAttributeOwner = findAttributeTreeOwnerById(
             diagramRef.current,
             selected?.id,
         );
@@ -1694,7 +1697,7 @@ export default function App(props) {
         }
 
         function deleteAttribute() {
-            const attributeOwner = findAttributeOwnerById(
+            const attributeOwner = findAttributeTreeOwnerById(
                 diagramRef.current,
                 selected.id,
             );
@@ -1703,7 +1706,7 @@ export default function App(props) {
 
             const { owner } = attributeOwner;
 
-            const removedAttribute = removeAttributeFromOwnerById(
+            const removedAttribute = removeAttributeFromOwnerTreeById(
                 owner,
                 selected.id,
             );

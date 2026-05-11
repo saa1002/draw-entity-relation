@@ -235,6 +235,44 @@ export const removeAttributeFromOwnerById = (owner, attributeId) => {
     return removedAttribute ?? null;
 };
 
+const removeAttributeFromListById = (attributes, attributeId) => {
+    const attributeIndex = findAttributeIndexById(attributes, attributeId);
+
+    if (attributeIndex !== -1) {
+        const [removedAttribute] = attributes.splice(attributeIndex, 1);
+
+        return removedAttribute ?? null;
+    }
+
+    for (const attribute of getAttributes(attributes)) {
+        if (!Array.isArray(attribute.children)) {
+            continue;
+        }
+
+        const removedAttribute = removeAttributeFromListById(
+            attribute.children,
+            attributeId,
+        );
+
+        if (removedAttribute) {
+            return removedAttribute;
+        }
+    }
+
+    return null;
+};
+
+export const removeAttributeFromOwnerTreeById = (owner, attributeId) => {
+    if (!owner) {
+        return null;
+    }
+
+    return removeAttributeFromListById(
+        ensureOwnerAttributes(owner),
+        attributeId,
+    );
+};
+
 export const removeAllAttributesFromOwner = (owner) => {
     if (!owner) {
         return [];

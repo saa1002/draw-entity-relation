@@ -11,6 +11,7 @@ import {
     getLeafAttributes,
     isCompositeAttribute,
     isLeafAttribute,
+    removeAttributeFromOwnerTreeById,
     walkAttributeTree,
 } from '../../../src/domain/er/attributes'
 
@@ -220,6 +221,32 @@ describe("Hierarchical attribute helpers", () => {
 
         expect(isMultivaluedAttribute(compositeMultivaluedAttribute)).toBe(true)
         expect(isCompositeMultivaluedAttribute(compositeMultivaluedAttribute)).toBe(true)
+    })
+    test("removeAttributeFromOwnerTreeById should remove nested attributes", () => {
+        const owner = {
+            attributes: [
+                {
+                    idMx: "attr-1",
+                    name: "address",
+                    children: [
+                        { idMx: "attr-2", name: "street" },
+                        { idMx: "attr-3", name: "city" },
+                    ],
+                },
+                { idMx: "attr-4", name: "email" },
+            ],
+        }
+
+        const removedAttribute = removeAttributeFromOwnerTreeById(
+            owner,
+            "attr-2",
+        )
+
+        expect(removedAttribute).toEqual({ idMx: "attr-2", name: "street" })
+        expect(owner.attributes[0].children.map((attribute) => attribute.idMx))
+            .toEqual(["attr-3"])
+        expect(owner.attributes.map((attribute) => attribute.idMx))
+            .toEqual(["attr-1", "attr-4"])
     })
 })
 
