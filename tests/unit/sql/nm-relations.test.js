@@ -84,5 +84,48 @@ describe("N:M relation extraction", () => {
         expect(
             leftEntityTable.attributes.some((attr) => attr.name === "direccion"),
         ).toBe(false);
-    });    
+    });
+    
+    test("should use all leaf columns from a composite primary key in the junction table", () => {
+        nMGraph.entities.at(0).attributes = [
+            {
+                idMx: "3",
+                name: "codigo",
+                key: true,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "7",
+                        name: "serie",
+                        key: false,
+                        partialKey: false,
+                    },
+                    {
+                        idMx: "8",
+                        name: "numero",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        const filteredTables = filterTables(nMGraph);
+        const tables = processNMRelation(filteredTables.at(0));
+
+        const junctionTable = tables.at(2);
+
+        expect(junctionTable.attributes.map((attr) => attr.name)).toEqual([
+            "codigo_serie_Relación_1",
+            "codigo_numero_Relación_1",
+            "Atributo_Relación_2",
+            "Atributo",
+        ]);
+
+        expect(
+            junctionTable.attributes.slice(0, 2).map(
+                (attr) => attr.foreign_key_column,
+            ),
+        ).toEqual(["codigo_serie", "codigo_numero"]);
+    });        
 })

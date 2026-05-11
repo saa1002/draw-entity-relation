@@ -94,7 +94,7 @@ function getEntityPrimaryKeyColumns(
     }
 
     if (!entity?.weak) {
-        return entity.attributes
+        return projectAttributeTreeToColumns(entity.attributes)
             .filter((attr) => attr.key)
             .map((attr) => ({
                 name: attr.name,
@@ -111,7 +111,7 @@ function getEntityPrimaryKeyColumns(
     const nextVisitedEntityIds = new Set(visitedEntityIds);
     nextVisitedEntityIds.add(entity.idMx);
 
-    const partialKeyColumns = entity.attributes
+    const partialKeyColumns = projectAttributeTreeToColumns(entity.attributes)
         .filter((attr) => attr.partialKey)
         .map((attr) => ({
             name: attr.name,

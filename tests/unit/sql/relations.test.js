@@ -90,6 +90,44 @@ describe("1:N relation extraction", () => {
             targetTable.attributes.some((attr) => attr.name === "direccion"),
         ).toBe(false);
     });
+
+    test("should copy all leaf columns from a composite primary key in a 1:N relation", () => {
+        oneNGraph.entities.at(0).attributes = [
+            {
+                idMx: "3",
+                name: "codigo",
+                key: true,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "7",
+                        name: "serie",
+                        key: false,
+                        partialKey: false,
+                    },
+                    {
+                        idMx: "8",
+                        name: "numero",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        const tables = extract1NTables();
+        const targetTable = tables.at(1);
+
+        expect(targetTable.attributes.map((attr) => attr.name)).toEqual([
+            "Atributo",
+            "codigo_serie_Relación",
+            "codigo_numero_Relación",
+        ]);
+
+        expect(
+            targetTable.attributes.slice(1).map((attr) => attr.foreign_key_column),
+        ).toEqual(["codigo_serie", "codigo_numero"]);
+    });
 })
 
 describe("1:1 relation extraction", () => {
