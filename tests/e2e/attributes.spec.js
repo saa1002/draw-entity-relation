@@ -312,3 +312,40 @@ test('create a composite attribute with multiple child attributes from the edito
     await expect(page.getByText('serie', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
 });
+
+test('delete a UI-created child attribute and clean up the parent children list', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+
+    await renameElement(page, 'Atributo', 'codigo');
+
+    await page.getByText('codigo', { exact: true }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+
+    await renameElement(page, 'Atributo', 'serie');
+
+    page.on('dialog', async (dialog) => {
+        await dialog.accept();
+    });
+
+    await page.getByText('serie', { exact: true }).click();
+    await page.getByRole('button', { name: 'Borrar' }).click();
+
+    await expect(page.getByText('codigo', { exact: true })).toBeVisible();
+    await expect(page.getByText('serie', { exact: true })).toHaveCount(0);
+
+    await expect
+        .poll(async () => {
+            const entity = await getSavedEntity(page, 'Entidad');
+
+            return entity?.attributes?.[0];
+        })
+        .toEqual(
+            expect.not.objectContaining({
+                children: expect.any(Array),
+            }),
+        );
+});
