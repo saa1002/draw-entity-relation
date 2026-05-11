@@ -265,3 +265,50 @@ test('add child attributes to an existing attribute', async ({ page }) => {
         })
         .toEqual(['serie']);
 });
+
+test('create a composite attribute with multiple child attributes from the editor', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+
+    await renameElement(page, 'Atributo', 'codigo');
+
+    await page.getByText('codigo', { exact: true }).click();
+
+    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await renameElement(page, 'Atributo', 'serie');
+
+    await page.getByText('codigo', { exact: true }).click();
+
+    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await renameElement(page, 'Atributo', 'numero');
+
+    await expect
+        .poll(async () => {
+            const entity = await getSavedEntity(page, 'Entidad');
+
+            return entity?.attributes?.[0];
+        })
+        .toMatchObject({
+            name: 'codigo',
+            key: true,
+            children: [
+                {
+                    name: 'serie',
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    name: 'numero',
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+
+    await expect(page.getByText('codigo', { exact: true })).toBeVisible();
+    await expect(page.getByText('serie', { exact: true })).toBeVisible();
+    await expect(page.getByText('numero', { exact: true })).toBeVisible();
+});
