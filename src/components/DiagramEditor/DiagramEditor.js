@@ -207,6 +207,7 @@ export default function App(props) {
         syncDiscriminantUnderline,
         ensureDiscriminantUnderline,
         syncAttributeVisualRepresentation,
+        syncAttributeChildrenPositions,
         setOwnerAttributesVisible,
     } = createAttributeRenderingHelpers({
         graph,
@@ -461,6 +462,8 @@ export default function App(props) {
             owner: positionOwner,
             position: selected.geometry,
         });
+
+        syncAttributeChildrenPositions(attribute, selected);
 
         if (attribute.partialKey) {
             syncDiscriminantUnderline(selected);

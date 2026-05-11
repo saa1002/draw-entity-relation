@@ -259,6 +259,24 @@ export const createAttributeRenderingHelpers = ({
         });
     };
 
+    const syncAttributeChildrenPositions = (attribute, attributeCell) => {
+        if (!attributeCell?.geometry) return;
+
+        graph.getModel().beginUpdate();
+
+        try {
+            getAttributeChildren(attribute).forEach((childAttribute) => {
+                syncAttributePositionFromParent(childAttribute, attributeCell);
+            });
+        } finally {
+            graph.getModel().endUpdate();
+        }
+
+        getAttributesCells(getAttributeChildren(attribute)).forEach((cell) => {
+            graph.refresh(cell);
+        });
+    };
+
     return {
         getAttributesCells,
         removeAttributesCells,
@@ -266,6 +284,7 @@ export const createAttributeRenderingHelpers = ({
         syncDiscriminantUnderline,
         ensureDiscriminantUnderline,
         syncAttributeVisualRepresentation,
+        syncAttributeChildrenPositions,
         setOwnerAttributesVisible,
     };
 };
