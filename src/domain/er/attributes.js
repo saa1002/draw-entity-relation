@@ -261,7 +261,8 @@ const removeAttributeFromListById = (attributes, attributeId) => {
         return removedAttribute ?? null;
     }
 
-    for (const attribute of getAttributes(attributes)) {
+    for (let index = 0; index < getAttributes(attributes).length; index += 1) {
+        const attribute = attributes[index];
         if (!Array.isArray(attribute.children)) {
             continue;
         }
