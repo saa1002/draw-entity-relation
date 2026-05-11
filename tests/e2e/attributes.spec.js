@@ -4,6 +4,7 @@ import {
     addAttributeToSelectedEntity,
     addEntity,
     expectSavedEntityAttributeToMatch,
+    getSavedEntity,
     selectEntity,
     renameElement,
 } from '../helpers/canvas';
@@ -235,4 +236,32 @@ test('hide/show attributes also affects nested attribute trees', async ({ page }
     await expect(page.getByText('codigo', { exact: true })).toBeVisible();
     await expect(page.getByText('serie', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
+});
+
+test('add child attributes to an existing attribute', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+
+    await renameElement(page, 'Atributo', 'codigo');
+
+    await page.getByText('codigo', { exact: true }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+
+    await expect(page.getByText('Subatributo insertado').last()).toBeVisible();
+    await expect(page.getByText('Atributo', { exact: true })).toBeVisible();
+
+    await renameElement(page, 'Atributo', 'serie');
+
+    await expect
+        .poll(async () => {
+            const entity = await getSavedEntity(page, 'Entidad');
+
+            return entity?.attributes?.[0]?.children?.map(
+                (attribute) => attribute.name,
+            );
+        })
+        .toEqual(['serie']);
 });

@@ -218,6 +218,23 @@ export const addAttributeToOwner = (owner, attribute) => {
     return attribute;
 };
 
+export const addChildAttributeToAttribute = (
+    parentAttribute,
+    childAttribute,
+) => {
+    if (!parentAttribute || !childAttribute) {
+        return null;
+    }
+
+    if (!Array.isArray(parentAttribute.children)) {
+        parentAttribute.children = [];
+    }
+
+    parentAttribute.children.push(childAttribute);
+
+    return childAttribute;
+};
+
 export const removeAttributeFromOwnerById = (owner, attributeId) => {
     if (!owner) {
         return null;

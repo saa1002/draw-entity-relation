@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
+    addChildAttributeToAttribute,
     isCompositeMultivaluedAttribute,
     isMultivaluedAttribute,
     findAttributeInTreeById,
@@ -247,6 +248,19 @@ describe("Hierarchical attribute helpers", () => {
             .toEqual(["attr-3"])
         expect(owner.attributes.map((attribute) => attribute.idMx))
             .toEqual(["attr-1", "attr-4"])
+    })
+    
+    test("addChildAttributeToAttribute should initialize children and append the child", () => {
+        const parentAttribute = { idMx: "attr-1", name: "address" }
+        const childAttribute = { idMx: "attr-2", name: "street" }
+
+        const addedAttribute = addChildAttributeToAttribute(
+            parentAttribute,
+            childAttribute,
+        )
+
+        expect(addedAttribute).toBe(childAttribute)
+        expect(parentAttribute.children).toEqual([childAttribute])
     })
 })
 

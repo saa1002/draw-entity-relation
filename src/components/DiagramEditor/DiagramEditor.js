@@ -20,6 +20,7 @@ import {
     ATTRIBUTE_OWNER_TYPES,
     POSSIBLE_CARDINALITIES,
     addAttributeToOwner,
+    addChildAttributeToAttribute,
     applyIdentifyingRelationCardinalities,
     canRelationHoldAttributes,
     clearIdentifyingRelationDomainSemantics,
@@ -584,6 +585,39 @@ export default function App(props) {
         graph.orderCells(moveBack);
     };
 
+    const createAttributeVertex = ({
+        name,
+        source,
+        offsetX,
+        offsetY,
+        semantics,
+    }) => {
+        const newX = source.geometry.x + offsetX;
+        const newY = source.geometry.y + offsetY;
+        const { width, height } = getAttributeDimensions(name);
+
+        const target = graph.insertVertex(
+            null,
+            null,
+            name,
+            newX,
+            newY,
+            width,
+            height,
+            getAttributeStyleString(semantics),
+        );
+
+        const edge = graph.insertEdge(source, null, null, source, target);
+
+        graph.orderCells(false);
+
+        if (semantics.partialKey) {
+            ensureDiscriminantUnderline(target);
+        }
+
+        return { target, edge };
+    };
+
     const addAttribute = () => {
         let selectedDiag;
         let isRelation = false;
@@ -625,35 +659,20 @@ export default function App(props) {
             }
         }
 
-        const newX = selected.geometry.x + offsetX;
-        const newY = selected.geometry.y + offsetY;
-
         const uniqueAttributeName = generateUniqueAttributeName(
             selectedDiag.attributes,
         );
 
-        const { width, height } = getAttributeDimensions(uniqueAttributeName);
-
-        const target = graph.insertVertex(
-            null,
-            null,
-            uniqueAttributeName, // Unique attribute name as placeholder
-            newX,
-            newY,
-            width,
-            height,
-            getAttributeStyleString(semantics),
-        );
-
-        const edge = graph.insertEdge(selected, null, null, source, target);
-        graph.orderCells(false); // Move front the selected entity so the new vertex aren't on top
+        const { target, edge } = createAttributeVertex({
+            name: uniqueAttributeName,
+            source,
+            offsetX,
+            offsetY,
+            semantics,
+        });
 
         if (!isRelation && isWeakEntity(selectedDiag)) {
             syncWeakEntityDecorator(selected);
-        }
-
-        if (semantics.partialKey) {
-            ensureDiscriminantUnderline(target);
         }
 
         addAttributeToOwner(
@@ -675,6 +694,74 @@ export default function App(props) {
 
         syncAndPersistDiagramData();
         toast.success("Atributo insertado");
+    };
+
+    const addChildAttribute = () => {
+        if (!selected?.style?.includes("shape=ellipse")) return;
+
+        const attributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected.id,
+        );
+
+        if (!attributeOwner) return;
+
+        const parentAttribute = attributeOwner.attribute;
+        const childAttributes = parentAttribute.children ?? [];
+
+        const semantics = {
+            key: false,
+            partialKey: false,
+        };
+
+        const source = selected;
+
+        let offsetX = 120;
+        let offsetY = -40;
+
+        const lastChildAttribute = getLastAttribute(childAttributes);
+
+        if (lastChildAttribute) {
+            const lastChildCell = graph
+                .getModel()
+                .getCell(lastChildAttribute.idMx);
+
+            if (lastChildCell?.geometry) {
+                offsetX = lastChildCell.geometry.x - source.geometry.x;
+                offsetY = lastChildCell.geometry.y - source.geometry.y + 20;
+            }
+        }
+
+        const uniqueAttributeName =
+            generateUniqueAttributeName(childAttributes);
+
+        const { target, edge } = createAttributeVertex({
+            name: uniqueAttributeName,
+            source,
+            offsetX,
+            offsetY,
+            semantics,
+        });
+
+        addChildAttributeToAttribute(
+            parentAttribute,
+            createAttribute({
+                idMx: target.id,
+                name: target.value,
+                position: {
+                    x: target.geometry.x,
+                    y: target.geometry.y,
+                },
+                key: false,
+                partialKey: false,
+                cell: [target.id, edge.id],
+                offsetX,
+                offsetY,
+            }),
+        );
+
+        syncAndPersistDiagramData();
+        toast.success("Subatributo insertado");
     };
 
     const setAttributesVisibility = (isRelationNM, visible) => {
@@ -949,6 +1036,31 @@ export default function App(props) {
                 </button>
             );
         }
+    };
+
+    const AddChildAttributeButton = () => {
+        if (!selected?.style?.includes("shape=ellipse")) {
+            return;
+        }
+
+        const selectedAttributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected?.id,
+        );
+
+        if (!selectedAttributeOwner) {
+            return;
+        }
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={addChildAttribute}
+            >
+                Añadir subatributo
+            </button>
+        );
     };
 
     const ToggleAttributesButton = () => {
@@ -2071,6 +2183,7 @@ export default function App(props) {
 
                 <div>{AddAttributeButton()}</div>
                 <div>{RelationAddAttributeButton()}</div>
+                <div>{AddChildAttributeButton()}</div>
                 <div>{ToggleAttributesButton()}</div>
                 <div>{ToggleAttrKeyButton()}</div>
                 <div>{TogglePartialKeyButton()}</div>
