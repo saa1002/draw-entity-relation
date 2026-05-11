@@ -1,4 +1,5 @@
 import {
+    getAttributeChildren,
     isIdentifyingRelation,
     isRelationConfigured,
     isWeakEntity,
@@ -56,6 +57,10 @@ export const reconstructDiagramGraph = ({
         }
 
         graph.orderCells(true, [edge]);
+
+        for (const childAttribute of getAttributeChildren(attribute)) {
+            recreateAttribute(childAttribute, target);
+        }
     };
 
     const recreateEntity = (entity) => {
