@@ -262,5 +262,37 @@ describe("Hierarchical attribute helpers", () => {
         expect(addedAttribute).toBe(childAttribute)
         expect(parentAttribute.children).toEqual([childAttribute])
     })
+
+    test("removeAttributeFromOwnerTreeById should delete empty children arrays", () => {
+        const owner = {
+            attributes: [
+                {
+                    idMx: "attr-1",
+                    name: "codigo",
+                    children: [
+                        {
+                            idMx: "attr-2",
+                            name: "serie",
+                        },
+                    ],
+                },
+            ],
+        }
+
+        const removedAttribute = removeAttributeFromOwnerTreeById(
+            owner,
+            "attr-2",
+        )
+
+        expect(removedAttribute).toEqual({
+            idMx: "attr-2",
+            name: "serie",
+        })
+
+        expect(owner.attributes[0]).toEqual({
+            idMx: "attr-1",
+            name: "codigo",
+        })
+    })
 })
 

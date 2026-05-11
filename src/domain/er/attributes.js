@@ -272,6 +272,12 @@ const removeAttributeFromListById = (attributes, attributeId) => {
         );
 
         if (removedAttribute) {
+            if (attribute.children.length === 0) {
+                const { children, ...attributeWithoutChildren } = attribute;
+
+                attributes[index] = attributeWithoutChildren;
+            }
+
             return removedAttribute;
         }
     }
