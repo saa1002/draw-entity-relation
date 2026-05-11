@@ -1,3 +1,4 @@
+import { projectAttributeTreeToColumns } from "./attributeProjection";
 import { normalizeIdentifier } from "./naming";
 
 // This function takes the graph and prepares the relations
@@ -137,15 +138,20 @@ function getEntityPrimaryKeyColumns(
     return [...partialKeyColumns, ...ownerKeyColumns];
 }
 
+function buildEntityAttributes(entity) {
+    return projectAttributeTreeToColumns(entity.attributes).map((attr) => ({
+        name: attr.name,
+        key: attr.key ?? false,
+        partialKey: attr.partialKey ?? false,
+        notnull: false,
+        unique: false,
+    }));
+}
+
 function buildEntityTable(entity) {
     return {
         name: entity.name,
-        attributes: entity.attributes.map((attr) => ({
-            name: attr.name,
-            key: attr.key ?? false,
-            notnull: false,
-            unique: false,
-        })),
+        attributes: buildEntityAttributes(entity),
     };
 }
 
@@ -577,7 +583,7 @@ function processRelationalTable(table, graph) {
         case "N:M":
             return processNMRelation(table, graph);
         default:
-            return [table];
+            return table.type ? [table] : [buildEntityTable(table)];
     }
 }
 
