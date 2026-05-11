@@ -73,6 +73,64 @@ describe("Partial keys", () => {
             validateGraph(graph).noWeakEntitiesWithMoreThanOnePartialKey
         ).toBe(false);
     });
+
+    test("A weak entity with a nested partial key should pass partial key presence validation", () => {
+        const weakEntity = graph.entities.at(0);
+
+        weakEntity.weak = true;
+        weakEntity.attributes = [
+            {
+                idMx: "attr-composite",
+                name: "codigo",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-nested-partial-key",
+                        name: "serie",
+                        key: false,
+                        partialKey: true,
+                    },
+                ],
+            },
+        ];
+
+        expect(weakEntitiesWithoutPartialKey(graph)).toBe(false);
+        expect(validateGraph(graph).noWeakEntitiesWithoutPartialKey).toBe(true);
+    });
+
+    test("A nested partial key should count toward partial key uniqueness validation", () => {
+        const weakEntity = graph.entities.at(0);
+
+        weakEntity.weak = true;
+        weakEntity.attributes = [
+            {
+                idMx: "attr-top-level-partial-key",
+                name: "numero",
+                key: false,
+                partialKey: true,
+            },
+            {
+                idMx: "attr-composite",
+                name: "codigo",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-nested-partial-key",
+                        name: "serie",
+                        key: false,
+                        partialKey: true,
+                    },
+                ],
+            },
+        ];
+
+        expect(weakEntitiesWithMoreThanOnePartialKey(graph)).toBe(true);
+        expect(
+            validateGraph(graph).noWeakEntitiesWithMoreThanOnePartialKey,
+        ).toBe(false);
+    });
 });
 
 describe("Partial keys in strong entities", () => {
@@ -96,6 +154,56 @@ describe("Partial keys in strong entities", () => {
 
         expect(strongEntitiesWithPartialKey(graph)).toBe(true);
         expect(validateGraph(graph).noStrongEntitiesWithPartialKey).toBe(false);
+    });
+
+    test("A strong entity cannot have a nested partial key", () => {
+        const strongEntity = graph.entities.at(0);
+
+        strongEntity.weak = false;
+        strongEntity.attributes = [
+            {
+                idMx: "attr-composite",
+                name: "codigo",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-nested-partial-key",
+                        name: "serie",
+                        key: false,
+                        partialKey: true,
+                    },
+                ],
+            },
+        ];
+
+        expect(strongEntitiesWithPartialKey(graph)).toBe(true);
+        expect(validateGraph(graph).noStrongEntitiesWithPartialKey).toBe(false);
+    });
+    
+    test("A weak entity cannot have a nested regular primary key", () => {
+        const weakEntity = graph.entities.at(0);
+
+        weakEntity.weak = true;
+        weakEntity.attributes = [
+            {
+                idMx: "attr-composite",
+                name: "datos",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-nested-key",
+                        name: "id",
+                        key: true,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        expect(weakEntitiesWithPrimaryKey(graph)).toBe(true);
+        expect(validateGraph(graph).noWeakEntitiesWithPrimaryKey).toBe(false);
     });
 });
 

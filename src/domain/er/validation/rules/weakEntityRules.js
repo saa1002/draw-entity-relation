@@ -1,3 +1,4 @@
+import { flattenAttributeTree } from "../../attributes";
 import {
     getIdentifyingDependency,
     relationConnectsEntity,
@@ -8,9 +9,9 @@ export function weakEntitiesWithoutPartialKey(graph) {
     for (const entity of graph.entities) {
         if (!entity.weak) continue;
 
-        const hasPartialKey = entity.attributes?.some(
-            (attribute) => attribute.partialKey,
-        );
+        const hasPartialKey = flattenAttributeTree(
+            entity.attributes ?? [],
+        ).some((attribute) => attribute.partialKey === true);
 
         if (!hasPartialKey) {
             return true;
@@ -24,9 +25,9 @@ export function weakEntitiesWithMoreThanOnePartialKey(graph) {
     for (const entity of graph.entities) {
         if (!entity.weak) continue;
 
-        const partialKeyCount = (entity.attributes ?? []).filter(
-            (attribute) => attribute.partialKey === true,
-        ).length;
+        const partialKeyCount = flattenAttributeTree(
+            entity.attributes ?? [],
+        ).filter((attribute) => attribute.partialKey === true).length;
 
         if (partialKeyCount > 1) {
             return true;
@@ -40,9 +41,9 @@ export function weakEntitiesWithPrimaryKey(graph) {
     for (const entity of graph.entities) {
         if (!entity.weak) continue;
 
-        const hasPrimaryKey = entity.attributes?.some(
-            (attribute) => attribute.key === true,
-        );
+        const hasPrimaryKey = flattenAttributeTree(
+            entity.attributes ?? [],
+        ).some((attribute) => attribute.key === true);
 
         if (hasPrimaryKey) {
             return true;
@@ -56,9 +57,9 @@ export function strongEntitiesWithPartialKey(graph) {
     for (const entity of graph.entities) {
         if (entity.weak) continue;
 
-        const hasPartialKey = entity.attributes?.some(
-            (attribute) => attribute.partialKey === true,
-        );
+        const hasPartialKey = flattenAttributeTree(
+            entity.attributes ?? [],
+        ).some((attribute) => attribute.partialKey === true);
 
         if (hasPartialKey) {
             return true;
