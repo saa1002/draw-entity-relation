@@ -1,3 +1,5 @@
+import { getAttributeChildren } from "../../attributes";
+
 // This function checks for repeated attributes in an entity,
 // relations N:M (these are the ones that have a key `canHoldAttributes`
 // set to true) are also treated as entities.
@@ -8,11 +10,17 @@
 export function repeatedAttributesInEntity(graph) {
     const hasRepeatedAttributes = (attributes) => {
         const attributeNames = new Set();
+
         for (const attribute of attributes) {
             if (attributeNames.has(attribute.name)) {
                 return true;
             }
+
             attributeNames.add(attribute.name);
+
+            if (hasRepeatedAttributes(getAttributeChildren(attribute))) {
+                return true;
+            }
         }
         return false;
     };

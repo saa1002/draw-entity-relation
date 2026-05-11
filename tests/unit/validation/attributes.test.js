@@ -37,7 +37,68 @@ describe("Attribute name uniqueness", () => {
         graph.relations.at(0).attributes.at(1).name = graph.relations.at(0).attributes.at(0).name
         expect(repeatedAttributesInEntity(graph)).toBe(true);
         expect(validateGraph(graph).noRepeatedAttrNames).toBe(false)
-    })    
+    })
+    test("Composite attributes can't have repeated sibling attribute names", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-composite",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    idMx: "attr-street-1",
+                    name: "calle",
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    idMx: "attr-street-2",
+                    name: "calle",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        expect(repeatedAttributesInEntity(graph)).toBe(true);
+        expect(validateGraph(graph).noRepeatedAttrNames).toBe(false);
+    });
+    
+    test("Attributes in different composite branches may reuse the same leaf name", () => {
+        graph.entities.at(0).attributes.push(
+            {
+                idMx: "attr-address",
+                name: "direccion",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-address-street",
+                        name: "calle",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+            {
+                idMx: "attr-billing-address",
+                name: "direccion_facturacion",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-billing-street",
+                        name: "calle",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        );
+
+        expect(repeatedAttributesInEntity(graph)).toBe(false);
+        expect(validateGraph(graph).noRepeatedAttrNames).toBe(true);
+    });    
 })
 
 describe("N:M relation attribute constraints", ()=> {
