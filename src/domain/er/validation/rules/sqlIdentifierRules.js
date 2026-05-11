@@ -1,3 +1,4 @@
+import { projectAttributeTreeToColumns } from "../../../relational/attributeProjection";
 import { normalizeIdentifier } from "../../../relational/naming";
 
 export function sqlIdentifierCollisions(graph) {
@@ -27,7 +28,7 @@ export function sqlIdentifierCollisions(graph) {
     const hasNormalizedAttributeCollision = (attributes) => {
         const normalizedAttrNames = new Set();
 
-        for (const attribute of attributes) {
+        for (const attribute of projectAttributeTreeToColumns(attributes)) {
             const normalized = normalizeIdentifier(attribute.name);
 
             if (normalizedAttrNames.has(normalized)) {

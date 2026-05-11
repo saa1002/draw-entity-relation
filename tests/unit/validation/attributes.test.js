@@ -71,4 +71,32 @@ describe("SQL identifier normalization", () => {
         expect(sqlIdentifierCollisions(graph)).toBe(true)
         expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false)
     })
+    
+    test("Composite attribute projections that normalize to the same SQL column should be invalid", () => {
+        graph.entities.at(0).attributes = [
+            {
+                idMx: "attr-1",
+                name: "direccion",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-2",
+                        name: "código",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+            {
+                idMx: "attr-3",
+                name: "direccion_codigo",
+                key: true,
+                partialKey: false,
+            },
+        ];
+
+        expect(sqlIdentifierCollisions(graph)).toBe(true);
+        expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false);
+    });
 })
