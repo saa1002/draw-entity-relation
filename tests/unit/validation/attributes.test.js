@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     repeatedAttributesInEntity,
+    emptyCompositeAttributes,
     nmRelationsWithPK,
     sqlIdentifierCollisions,
     validateGraph,
@@ -161,3 +162,39 @@ describe("SQL identifier normalization", () => {
         expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false);
     });
 })
+
+describe("Composite attribute structure", () => {
+    test("Explicit empty composite attributes should be invalid", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-empty-composite",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+            children: [],
+        });
+
+        expect(emptyCompositeAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noEmptyCompositeAttributes).toBe(false);
+    });
+
+    test("Nested explicit empty composite attributes should be invalid", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-composite",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    idMx: "attr-empty-nested-composite",
+                    name: "ubicacion",
+                    key: false,
+                    partialKey: false,
+                    children: [],
+                },
+            ],
+        });
+
+        expect(emptyCompositeAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noEmptyCompositeAttributes).toBe(false);
+    });
+});

@@ -29,6 +29,10 @@ const VALIDATION_MESSAGE_DEFINITIONS = [
         message: "Hay atributos repetidos en una entidad.",
     },
     {
+        key: "noEmptyCompositeAttributes",
+        message: "Hay atributos compuestos sin subatributos.",
+    },
+    {
         key: "noEntitiesWithoutAttributes",
         message: "Hay entidades sin atributos.",
     },

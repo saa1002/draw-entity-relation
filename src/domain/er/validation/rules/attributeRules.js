@@ -44,3 +44,39 @@ export function repeatedAttributesInEntity(graph) {
 
     return false; // No repeated attributes found in any entity or N:M relation
 }
+
+export function emptyCompositeAttributes(graph) {
+    const hasEmptyCompositeAttribute = (attributes = []) => {
+        for (const attribute of attributes) {
+            if (
+                Array.isArray(attribute.children) &&
+                attribute.children.length === 0
+            ) {
+                return true;
+            }
+
+            if (hasEmptyCompositeAttribute(getAttributeChildren(attribute))) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    for (const entity of graph.entities) {
+        if (hasEmptyCompositeAttribute(entity.attributes)) {
+            return true;
+        }
+    }
+
+    for (const relation of graph.relations) {
+        if (
+            relation.canHoldAttributes &&
+            hasEmptyCompositeAttribute(relation.attributes)
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}

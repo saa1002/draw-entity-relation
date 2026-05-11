@@ -1,6 +1,7 @@
 import {
     brokenRelationEntityReferences,
     cardinalitiesNotValid,
+    emptyCompositeAttributes,
     entitiesWithMoreThanOnePK,
     entitiesWithoutAttributes,
     entitiesWithoutPK,
@@ -34,6 +35,10 @@ export const VALIDATION_RULES = [
     {
         diagnostic: "noRepeatedAttrNames",
         fails: repeatedAttributesInEntity,
+    },
+    {
+        diagnostic: "noEmptyCompositeAttributes",
+        fails: emptyCompositeAttributes,
     },
     {
         diagnostic: "noEntitiesWithoutAttributes",
