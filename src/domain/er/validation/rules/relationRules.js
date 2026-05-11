@@ -1,3 +1,4 @@
+import { flattenAttributeTree } from "../../attributes";
 import { getEntityById } from "../helpers";
 
 export const POSSIBLE_CARDINALITIES = ["0:1", "0:N", "1:1", "1:N"];
@@ -6,16 +7,18 @@ export const POSSIBLE_CARDINALITIES = ["0:1", "0:N", "1:1", "1:N"];
 export function nmRelationsWithPK(graph) {
     for (const relation of graph.relations) {
         // Check if the relation is of type N:M
-        if (relation.canHoldAttributes) {
-            for (const attribute of relation.attributes) {
-                // If any attribute has key set to true, return true
-                if (attribute.key) {
-                    return true;
-                }
-            }
+        if (!relation.canHoldAttributes) {
+            continue;
+        }
+
+        const hasPrimaryKey = flattenAttributeTree(
+            relation.attributes ?? [],
+        ).some((attribute) => attribute.key === true);
+
+        if (hasPrimaryKey) {
+            return true;
         }
     }
-
     // If no N:M relation with a key is found, return false
     return false;
 }

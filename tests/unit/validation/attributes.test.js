@@ -120,7 +120,30 @@ describe("N:M relation attribute constraints", ()=> {
         expect(nmRelationsWithPK(graph)).toBe(true);
         expect(validateGraph(graph).noNMRelationsWithPK).toBe(false);
     })
+    
+    test("N:M relations can't have nested primary key attributes", () => {
+        expect(nmRelationsWithPK(graph)).toBe(false);
 
+        graph.relations.at(0).attributes = [
+            {
+                idMx: "attr-composite",
+                name: "periodo",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-nested-key",
+                        name: "id",
+                        key: true,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        expect(nmRelationsWithPK(graph)).toBe(true);
+        expect(validateGraph(graph).noNMRelationsWithPK).toBe(false);
+    });
 })
 
 describe("SQL identifier normalization", () => {
