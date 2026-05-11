@@ -1,4 +1,9 @@
 import {
+    flattenAttributeTree,
+    getAttributeChildren,
+} from "../../../../domain/er";
+
+import {
     ER_FILL,
     ER_FONT,
     ER_FONT_FAMILY,
@@ -63,7 +68,7 @@ export const createAttributeRenderingHelpers = ({
     };
 
     const getAttributesCells = (attributes = []) =>
-        attributes.flatMap(getAttributeCells);
+        flattenAttributeTree(attributes).flatMap(getAttributeCells);
 
     const removeAttributesCells = (attributes = []) => {
         const cells = getAttributesCells(attributes);
@@ -214,30 +219,43 @@ export const createAttributeRenderingHelpers = ({
         graph.getModel().beginUpdate();
 
         try {
-            owner.attributes.forEach((attribute) => {
-                getAttributeCells(attribute).forEach((cell) => {
-                    cell.setVisible(visible);
-                });
+            getAttributesCells(owner.attributes).forEach((cell) => {
+                cell.setVisible(visible);
             });
         } finally {
             graph.getModel().endUpdate();
         }
     };
 
+    const syncAttributePositionFromParent = (attribute, parentCell) => {
+        const attributeCell = accessCell(
+            attribute.cell?.at(0) ?? attribute.idMx,
+        );
+
+        if (!attributeCell?.geometry || !parentCell?.geometry) return;
+
+        const offsetX =
+            typeof attribute.offsetX === "number" ? attribute.offsetX : 0;
+        const offsetY =
+            typeof attribute.offsetY === "number" ? attribute.offsetY : 0;
+
+        attributeCell.geometry.x = parentCell.geometry.x + offsetX;
+        attributeCell.geometry.y = parentCell.geometry.y + offsetY;
+
+        if (attribute.partialKey) {
+            syncDiscriminantUnderline(attributeCell);
+        }
+
+        getAttributeChildren(attribute).forEach((childAttribute) => {
+            syncAttributePositionFromParent(childAttribute, attributeCell);
+        });
+    };
+
     const syncOwnerAttributePositions = (owner, ownerCell) => {
         if (!owner?.attributes || !ownerCell?.geometry) return;
 
         owner.attributes.forEach((attribute) => {
-            const attributeCell = accessCell(attribute.cell?.at(0));
-
-            if (!attributeCell?.geometry) return;
-
-            attributeCell.geometry.x = ownerCell.geometry.x + attribute.offsetX;
-            attributeCell.geometry.y = ownerCell.geometry.y + attribute.offsetY;
-
-            if (attribute.partialKey) {
-                syncDiscriminantUnderline(attributeCell);
-            }
+            syncAttributePositionFromParent(attribute, ownerCell);
         });
     };
 

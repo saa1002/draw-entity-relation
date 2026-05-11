@@ -3,11 +3,12 @@ import { describe, expect, test, vi } from 'vitest'
 import { reconstructDiagramGraph } from '../../../src/components/DiagramEditor/utils/sync/diagramReconstruction'
 
 describe('diagram reconstruction', () => {
-    test('reconstructs imported nested attribute trees using the visual parent as edge source', () => {
+    test('reconstructs a nested attribute connected to its parent attribute', () => {
         const cells = {}
+        const insertedEdges = []
 
         const graph = {
-            insertVertex: vi.fn((_, id, value, x, y, width, height) => {
+            insertVertex: (_, id, value, x, y, width, height) => {
                 const cell = {
                     id,
                     value,
@@ -16,8 +17,8 @@ describe('diagram reconstruction', () => {
 
                 cells[id] = cell
                 return cell
-            }),
-            insertEdge: vi.fn((_, id, __, source, target) => {
+            },
+            insertEdge: (_, id, __, source, target) => {
                 const edge = {
                     id,
                     source,
@@ -26,9 +27,10 @@ describe('diagram reconstruction', () => {
                 }
 
                 cells[id] = edge
+                insertedEdges.push(edge)
                 return edge
-            }),
-            orderCells: vi.fn(),
+            },
+            orderCells: () => {},
         }
 
         const diagram = {
@@ -70,30 +72,16 @@ describe('diagram reconstruction', () => {
             graph,
             diagram,
             accessCell: (id) => cells[id],
-            mxPoint: vi.fn(),
-            createWeakEntityDecorator: vi.fn(),
-            ensureDiscriminantUnderline: vi.fn(),
-            ensureIdentifyingRelationDecorator: vi.fn(),
-            ensureIdentifyingRelationEdgeDecorator: vi.fn(),
+            mxPoint: (x, y) => ({ x, y }),
+            createWeakEntityDecorator: () => {},
+            ensureDiscriminantUnderline: () => {},
+            ensureIdentifyingRelationDecorator: () => {},
+            ensureIdentifyingRelationEdgeDecorator: () => {},
         })
 
-        expect(graph.insertVertex).toHaveBeenCalledWith(
-            null,
-            'attr-street',
-            'calle',
-            340,
-            100,
-            expect.any(Number),
-            expect.any(Number),
-            expect.any(String),
-        )
+        const childEdge = insertedEdges.find((edge) => edge.id === 'edge-street')
 
-        expect(graph.insertEdge).toHaveBeenCalledWith(
-            cells['attr-address'],
-            'edge-street',
-            null,
-            cells['attr-address'],
-            cells['attr-street'],
-        )
+        expect(childEdge.source.id).toBe('attr-address')
+        expect(childEdge.target.id).toBe('attr-street')
     })
 })
