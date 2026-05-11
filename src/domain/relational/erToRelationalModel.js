@@ -228,29 +228,14 @@ export function process1NRelation(relation, graph) {
     // Determine the notnull property
     const notnull = oneSide.cardinality.minimum === "1";
 
-    // Table for the entity with maximum 1
-    const oneSideTable = {
-        name: oneSide.entity.name,
-        attributes: oneSide.entity.attributes.map((attr) => ({
-            name: attr.name,
-            key: attr.key,
-            notnull: false,
-            unique: false,
-        })),
-    };
+    const oneSideTable = buildEntityTable(oneSide.entity);
 
     const oneSideKeyColumns = getEntityPrimaryKeyColumns(oneSide.entity, graph);
 
-    // Table for the entity with maximum N
     const manySideTable = {
         name: manySide.entity.name,
         attributes: [
-            ...manySide.entity.attributes.map((attr) => ({
-                name: attr.name,
-                key: attr.key,
-                notnull: false, // Assuming the original notnull property for attributes
-                unique: false,
-            })),
+            ...buildEntityAttributes(manySide.entity),
             ...buildForeignKeyCopyAttributes({
                 keyColumns: oneSideKeyColumns,
                 referencedEntity: oneSide.entity,
@@ -286,12 +271,7 @@ export function process11Relation(relation, graph) {
         const table = {
             name: side1.entity.name,
             attributes: [
-                ...side1.entity.attributes.map((attr) => ({
-                    name: attr.name,
-                    key: attr.key,
-                    notnull: false,
-                    unique: false,
-                })),
+                ...buildEntityAttributes(side1.entity),
                 ...buildForeignKeyCopyAttributes({
                     keyColumns,
                     referencedEntity: side1.entity,
@@ -312,20 +292,21 @@ export function process11Relation(relation, graph) {
         side1.cardinality.maximum === "1" &&
         side2.cardinality.maximum === "1"
     ) {
-        // Extract attributes from both sides
-        const side1Attributes = side1.entity.attributes.map((attr) => ({
-            name: `${attr.name}_${relation.name}`,
-            key: attr.key,
-            notnull: false,
-            unique: false,
-        }));
+        const side1Attributes = buildEntityAttributes(side1.entity).map(
+            (attr) => ({
+                ...attr,
+                name: `${attr.name}_${relation.name}`,
+            }),
+        );
 
-        const side2Attributes = side2.entity.attributes.map((attr) => ({
-            name: `${attr.name}_${relation.name}`,
-            key: false,
-            notnull: attr.key,
-            unique: attr.key,
-        }));
+        const side2Attributes = buildEntityAttributes(side2.entity).map(
+            (attr) => ({
+                name: `${attr.name}_${relation.name}`,
+                key: false,
+                notnull: attr.key,
+                unique: attr.key,
+            }),
+        );
 
         // Merge attributes, ensuring PKs are correctly set
         const mergedAttributes = [...side1Attributes, ...side2Attributes];
@@ -360,23 +341,9 @@ export function process11Relation(relation, graph) {
         primaryKeySide = side1.cardinality.minimum === "0" ? side2 : side1;
     }
 
-    const primaryKeyAttributes = primaryKeySide.entity.attributes.map(
-        (attr) => ({
-            name: attr.name,
-            key: attr.key,
-            notnull: false,
-            unique: false,
-        }),
-    );
+    const primaryKeyAttributes = buildEntityAttributes(primaryKeySide.entity);
 
-    const foreignKeyAttributes = foreignKeySide.entity.attributes.map(
-        (attr) => ({
-            name: attr.name,
-            key: attr.key,
-            notnull: false,
-            unique: false,
-        }),
-    );
+    const foreignKeyAttributes = buildEntityAttributes(foreignKeySide.entity);
 
     const primaryKeyColumns = getEntityPrimaryKeyColumns(
         primaryKeySide.entity,
@@ -419,31 +386,9 @@ export function processNMRelation(relation, graph) {
     const side1Entity = side1.entity;
     const side2Entity = side2.entity;
 
-    const side1Attributes = side1Entity.attributes.map((attr) => ({
-        name: attr.name,
-        key: attr.key,
-        notnull: false,
-        unique: false,
-    }));
+    const firstTable = buildEntityTable(side1Entity);
 
-    const side2Attributes = side2Entity.attributes.map((attr) => ({
-        name: attr.name,
-        key: attr.key,
-        notnull: false,
-        unique: false,
-    }));
-
-    // First table for side1 entity
-    const firstTable = {
-        name: side1Entity.name,
-        attributes: side1Attributes,
-    };
-
-    // Second table for side2 entity
-    const secondTable = {
-        name: side2Entity.name,
-        attributes: side2Attributes,
-    };
+    const secondTable = buildEntityTable(side2Entity);
 
     const side1KeyColumns = getEntityPrimaryKeyColumns(side1Entity, graph);
     const side2KeyColumns = getEntityPrimaryKeyColumns(side2Entity, graph);

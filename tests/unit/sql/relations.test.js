@@ -54,6 +54,42 @@ describe("1:N relation extraction", () => {
         expect(foreignKey.name).toBe("Atributo_Relación")
         expect(foreignKey.notnull).toBe(true)
     })
+
+    test("should project composite attributes in related entity tables", () => {
+        oneNGraph.entities.at(1).attributes.push({
+            idMx: "7",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    idMx: "8",
+                    name: "calle",
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    idMx: "9",
+                    name: "ciudad",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        const tables = extract1NTables();
+        const targetTable = tables.at(1);
+
+        expect(targetTable.attributes.map((attr) => attr.name)).toEqual([
+            "Atributo",
+            "direccion_calle",
+            "direccion_ciudad",
+            "Atributo_Relación",
+        ]);
+        expect(
+            targetTable.attributes.some((attr) => attr.name === "direccion"),
+        ).toBe(false);
+    });
 })
 
 describe("1:1 relation extraction", () => {
@@ -110,4 +146,40 @@ describe("1:1 relation extraction", () => {
         expect(mergedTable.attributes.at(1).notnull).toBe(true)
         expect(mergedTable.attributes.at(1).unique).toBe(true)
     })
+    
+    test("should project composite attributes when a mandatory 1:1 relation merges both entities", () => {
+        oneOneGraph.entities.at(0).attributes.push({
+            idMx: "7",
+            name: "nombre",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    idMx: "8",
+                    name: "primero",
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    idMx: "9",
+                    name: "segundo",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        const tables = extract11Tables();
+        const mergedTable = tables.at(0);
+
+        expect(mergedTable.attributes.map((attr) => attr.name)).toContain(
+            "nombre_primero_Relación",
+        );
+        expect(mergedTable.attributes.map((attr) => attr.name)).toContain(
+            "nombre_segundo_Relación",
+        );
+        expect(mergedTable.attributes.map((attr) => attr.name)).not.toContain(
+            "nombre_Relación",
+        );
+    });
 })

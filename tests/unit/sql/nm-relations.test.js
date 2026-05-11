@@ -48,4 +48,41 @@ describe("N:M relation extraction", () => {
         expect(relationAttribute.name).toBe("Atributo")
         expect(relationAttribute.key).toBe(false)
     })
+
+    test("should project composite attributes in participating entity tables", () => {
+        nMGraph.entities.at(0).attributes.push({
+            idMx: "7",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    idMx: "8",
+                    name: "calle",
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    idMx: "9",
+                    name: "ciudad",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        const filteredTables = filterTables(nMGraph);
+        const tables = processNMRelation(filteredTables.at(0));
+
+        const leftEntityTable = tables.at(0);
+
+        expect(leftEntityTable.attributes.map((attr) => attr.name)).toEqual([
+            "Atributo",
+            "direccion_calle",
+            "direccion_ciudad",
+        ]);
+        expect(
+            leftEntityTable.attributes.some((attr) => attr.name === "direccion"),
+        ).toBe(false);
+    });    
 })
