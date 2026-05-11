@@ -1,5 +1,62 @@
+import { getAttributeChildren } from "../../../../domain/er";
+
 const hasGraphCell = (graph, idMx) =>
     Object.prototype.hasOwnProperty.call(graph.model.cells, idMx);
+
+const findConnectedAttributeEdge = (graph, attributeCell) => {
+    const connectedEdges = graph.getEdges(attributeCell) || [];
+
+    return (
+        connectedEdges.find((edge) => edge?.target?.id === attributeCell.id) ??
+        connectedEdges[0] ??
+        null
+    );
+};
+
+const syncAttributeFromGraph = ({
+    attribute,
+    owner,
+    graph,
+    accessCell,
+    updateAttributePosition,
+}) => {
+    if (!hasGraphCell(graph, attribute.idMx)) return;
+
+    const attributeCell = accessCell(attribute.idMx);
+
+    let edgeCell = null;
+    const storedEdgeId = attribute?.cell?.[1];
+
+    if (storedEdgeId) {
+        edgeCell = accessCell(storedEdgeId);
+    }
+
+    if (!edgeCell && attributeCell) {
+        edgeCell = findConnectedAttributeEdge(graph, attributeCell);
+    }
+
+    if (!attributeCell || !edgeCell) return;
+
+    attribute.name = attributeCell.value;
+
+    updateAttributePosition({
+        attribute,
+        owner,
+        position: attributeCell.geometry,
+    });
+
+    attribute.cell = [attributeCell.id, edgeCell.id];
+
+    getAttributeChildren(attribute).forEach((childAttribute) => {
+        syncAttributeFromGraph({
+            attribute: childAttribute,
+            owner: attribute,
+            graph,
+            accessCell,
+            updateAttributePosition,
+        });
+    });
+};
 
 const syncOwnerAttributesFromGraph = ({
     owner,
@@ -10,33 +67,13 @@ const syncOwnerAttributesFromGraph = ({
     if (!owner?.attributes) return;
 
     owner.attributes.forEach((attribute) => {
-        if (!hasGraphCell(graph, attribute.idMx)) return;
-
-        const attributeCell = accessCell(attribute.idMx);
-
-        let edgeCell = null;
-        const storedEdgeId = attribute?.cell?.[1];
-
-        if (storedEdgeId) {
-            edgeCell = accessCell(storedEdgeId);
-        }
-
-        if (!edgeCell && attributeCell) {
-            const connectedEdges = graph.getEdges(attributeCell) || [];
-            edgeCell = connectedEdges[0] ?? null;
-        }
-
-        if (!attributeCell || !edgeCell) return;
-
-        attribute.name = attributeCell.value;
-
-        updateAttributePosition({
+        syncAttributeFromGraph({
             attribute,
             owner,
-            position: attributeCell.geometry,
+            graph,
+            accessCell,
+            updateAttributePosition,
         });
-
-        attribute.cell = [attributeCell.id, edgeCell.id];
     });
 };
 
