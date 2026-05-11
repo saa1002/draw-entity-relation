@@ -452,24 +452,11 @@ function applyWeakEntitySemantics(tableMap, graph) {
         // In weak entities, the partial key is marked as part of the primary key.
         // The owner primary key columns are added afterwards to complete the
         // composite primary key of the weak entity.
-        weakTable.attributes = weakTable.attributes.map((attr) => {
-            const sourceAttribute = entity.attributes.find(
-                (candidate) => candidate.name === attr.name,
-            );
-
-            if (!sourceAttribute) {
-                return attr;
-            }
-
-            return {
-                ...attr,
-                key: sourceAttribute.partialKey === true,
-                notnull:
-                    sourceAttribute.partialKey === true
-                        ? true
-                        : attr.notnull ?? false,
-            };
-        });
+        weakTable.attributes = weakTable.attributes.map((attr) => ({
+            ...attr,
+            key: attr.partialKey === true,
+            notnull: attr.partialKey === true ? true : attr.notnull ?? false,
+        }));
 
         const ownerPrimaryKeys = getEntityPrimaryKeyColumns(ownerEntity, graph);
         const foreignKeyGroup = `${entity.idMx}_${ownerEntity.idMx}_identifying_owner`;

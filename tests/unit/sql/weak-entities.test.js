@@ -478,5 +478,86 @@ describe('Weak entity SQL generation', () => {
             REFERENCES Entidad2(A2, A1_Entidad1, A0_Entidad0_Entidad1);
             `,
         )
+    })
+    test('a weak entity should project a composite partial key to leaf columns', () => {
+        const graph = {
+            entities: [
+                {
+                    idMx: '1',
+                    name: 'Pedido',
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: '2',
+                            name: 'id_pedido',
+                            key: true,
+                            partialKey: false,
+                        },
+                    ],
+                },
+                {
+                    idMx: '3',
+                    name: 'LineaPedido',
+                    weak: true,
+                    ownerEntityId: '1',
+                    identifyingRelationId: '4',
+                    attributes: [
+                        {
+                            idMx: '5',
+                            name: 'codigo',
+                            key: false,
+                            partialKey: true,
+                            children: [
+                                {
+                                    idMx: '6',
+                                    name: 'serie',
+                                    key: false,
+                                    partialKey: false,
+                                },
+                                {
+                                    idMx: '7',
+                                    name: 'numero',
+                                    key: false,
+                                    partialKey: false,
+                                },
+                            ],
+                        },
+                        {
+                            idMx: '8',
+                            name: 'cantidad',
+                            key: false,
+                            partialKey: false,
+                        },
+                    ],
+                },
+            ],
+            relations: [
+                {
+                    idMx: '4',
+                    name: 'Identifica',
+                    isIdentifying: true,
+                    attributes: [],
+                    side1: {
+                        cardinality: '1:N',
+                        entity: { idMx: '3' },
+                    },
+                    side2: {
+                        cardinality: '1:1',
+                        entity: { idMx: '1' },
+                    },
+                },
+            ],
+        }
+
+        const sql = generateSQL(graph)
+
+        expect(sql).toContain('CREATE TABLE LineaPedido')
+        expect(sql).toContain('codigo_serie VARCHAR(40)')
+        expect(sql).toContain('codigo_numero VARCHAR(40)')
+        expect(sql).toContain('id_pedido_Pedido VARCHAR(40)')
+        expect(sql).toContain(
+            'PRIMARY KEY (codigo_serie, codigo_numero, id_pedido_Pedido)',
+        )
+        expect(sql).not.toContain('codigo VARCHAR(40)')
     })    
 })
