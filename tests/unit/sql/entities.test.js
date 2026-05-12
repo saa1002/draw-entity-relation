@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import { generateSQL } from '../../../src/services/sql'
 
+const compactSQL = (sql) => sql.replace(/\s+/g, '')
+
+const expectSQLToContain = (actual, expectedFragment) => {
+    expect(compactSQL(actual)).toContain(compactSQL(expectedFragment))
+}
+
 describe('Standalone entity SQL generation', () => {
     test('a standalone strong entity should generate a single table with its primary key', () => {
         const graph = {
@@ -170,5 +176,87 @@ describe('Standalone entity SQL generation', () => {
         )
 
         expect(sql).not.toContain('telefono VARCHAR(40),\n  PRIMARY KEY')
+    })
+    
+    test('a simple multivalued attribute should reference every column of a composite owner key', () => {
+        const graph = {
+            entities: [
+                {
+                    idMx: '1',
+                    name: 'Documento',
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: '2',
+                            name: 'codigo',
+                            key: true,
+                            partialKey: false,
+                            children: [
+                                {
+                                    idMx: '3',
+                                    name: 'serie',
+                                    key: false,
+                                    partialKey: false,
+                                },
+                                {
+                                    idMx: '4',
+                                    name: 'numero',
+                                    key: false,
+                                    partialKey: false,
+                                },
+                            ],
+                        },
+                        {
+                            idMx: '5',
+                            name: 'etiqueta',
+                            key: false,
+                            partialKey: false,
+                            multivalued: true,
+                        },
+                    ],
+                },
+            ],
+            relations: [],
+        }
+
+        const sql = generateSQL(graph)
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Documento (
+              codigo_serie VARCHAR(40),
+              codigo_numero VARCHAR(40),
+              PRIMARY KEY (codigo_serie, codigo_numero)
+            );
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Documento_etiqueta (
+              codigo_serie VARCHAR(40),
+              codigo_numero VARCHAR(40),
+              etiqueta VARCHAR(40),
+              PRIMARY KEY (codigo_serie, codigo_numero, etiqueta)
+            );
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Documento_etiqueta
+            ADD CONSTRAINT FK_Documento_etiqueta_Documento_owner
+            FOREIGN KEY (codigo_serie, codigo_numero)
+            REFERENCES Documento(codigo_serie, codigo_numero)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
+            `,
+        )
+
+        expect(sql).not.toContain('codigo VARCHAR(40)')
+        expect(sql).not.toContain('etiqueta VARCHAR(40) PRIMARY KEY')
     })
 })
