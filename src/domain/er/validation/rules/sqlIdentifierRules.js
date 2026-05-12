@@ -2,6 +2,122 @@ import { projectAttributeTreeToColumns } from "../../../relational/attributeProj
 import { normalizeIdentifier } from "../../../relational/naming";
 import { isMultivaluedAttribute } from "../../attributes";
 
+function isMandatoryOneToOneMergeRelation(relation) {
+    if (relation.isIdentifying) {
+        return false;
+    }
+
+    if (relation.side1.entity.idMx === relation.side2.entity.idMx) {
+        return false;
+    }
+
+    return (
+        relation.side1.cardinality === "1:1" &&
+        relation.side2.cardinality === "1:1"
+    );
+}
+
+function findMandatoryOneToOneMergeRelationForEntity(entity, graph) {
+    return graph.relations.find(
+        (relation) =>
+            isMandatoryOneToOneMergeRelation(relation) &&
+            (relation.side1.entity.idMx === entity.idMx ||
+                relation.side2.entity.idMx === entity.idMx),
+    );
+}
+
+function getEntityPrimaryKeyColumnNames(
+    entity,
+    graph,
+    visitedEntityIds = new Set(),
+) {
+    if (!entity) {
+        return [];
+    }
+
+    if (!entity.weak) {
+        return projectAttributeTreeToColumns(entity.attributes ?? [])
+            .filter((attribute) => attribute.key)
+            .map((attribute) => attribute.name);
+    }
+
+    if (visitedEntityIds.has(entity.idMx)) {
+        return [];
+    }
+
+    const nextVisitedEntityIds = new Set(visitedEntityIds);
+    nextVisitedEntityIds.add(entity.idMx);
+
+    const partialKeyColumns = projectAttributeTreeToColumns(
+        entity.attributes ?? [],
+    )
+        .filter((attribute) => attribute.partialKey)
+        .map((attribute) => attribute.name);
+
+    const ownerEntity = graph.entities.find(
+        (candidate) => candidate.idMx === entity.ownerEntityId,
+    );
+
+    const ownerKeyColumns = getEntityPrimaryKeyColumnNames(
+        ownerEntity,
+        graph,
+        nextVisitedEntityIds,
+    ).map((ownerKeyColumn) => `${ownerKeyColumn}_${ownerEntity.name}`);
+
+    return [...partialKeyColumns, ...ownerKeyColumns];
+}
+
+function getMultivaluedAuxiliaryOwnerColumnNames(entity, graph) {
+    const ownerColumnNames = getEntityPrimaryKeyColumnNames(entity, graph);
+    const mergeRelation = findMandatoryOneToOneMergeRelationForEntity(
+        entity,
+        graph,
+    );
+
+    if (!mergeRelation) {
+        return ownerColumnNames;
+    }
+
+    return ownerColumnNames.map(
+        (columnName) => `${columnName}_${mergeRelation.name}`,
+    );
+}
+
+function hasNormalizedNameCollision(names) {
+    const normalizedNames = new Set();
+
+    for (const name of names) {
+        const normalized = normalizeIdentifier(name);
+
+        if (normalizedNames.has(normalized)) {
+            return true;
+        }
+
+        normalizedNames.add(normalized);
+    }
+
+    return false;
+}
+
+function hasMultivaluedAuxiliaryTableColumnCollision(entity, graph) {
+    const ownerColumnNames = getMultivaluedAuxiliaryOwnerColumnNames(
+        entity,
+        graph,
+    );
+
+    for (const attribute of entity.attributes ?? []) {
+        if (!isMultivaluedAttribute(attribute)) {
+            continue;
+        }
+
+        if (hasNormalizedNameCollision([...ownerColumnNames, attribute.name])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 export function sqlIdentifierCollisions(graph) {
     const normalizedNames = new Set();
 
@@ -62,6 +178,12 @@ export function sqlIdentifierCollisions(graph) {
 
     for (const entity of graph.entities) {
         if (hasNormalizedAttributeCollision(entity.attributes || [])) {
+            return true;
+        }
+    }
+
+    for (const entity of graph.entities) {
+        if (hasMultivaluedAuxiliaryTableColumnCollision(entity, graph)) {
             return true;
         }
     }

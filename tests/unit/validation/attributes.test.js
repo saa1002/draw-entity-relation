@@ -264,6 +264,112 @@ describe("SQL identifier normalization", () => {
         expect(sqlIdentifierCollisions(graph)).toBe(true);
         expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false);
     });
+
+    test("Multivalued auxiliary table columns should not collide with composite owner key columns", () => {
+        const diagram = {
+            entities: [
+                {
+                    idMx: "entity-documento",
+                    name: "Documento",
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: "attr-codigo",
+                            name: "codigo",
+                            key: true,
+                            partialKey: false,
+                            children: [
+                                {
+                                    idMx: "attr-serie",
+                                    name: "serie",
+                                    key: false,
+                                    partialKey: false,
+                                },
+                                {
+                                    idMx: "attr-numero",
+                                    name: "numero",
+                                    key: false,
+                                    partialKey: false,
+                                },
+                            ],
+                        },
+                        {
+                            idMx: "attr-codigo-numero",
+                            name: "codigo_numero",
+                            key: false,
+                            partialKey: false,
+                            multivalued: true,
+                        },
+                    ],
+                },
+            ],
+            relations: [],
+        };
+
+        expect(sqlIdentifierCollisions(diagram)).toBe(true);
+        expect(validateGraph(diagram).noSQLIdentifierCollisions).toBe(false);
+    });
+
+    test("Multivalued auxiliary table columns should not collide with weak owner key columns", () => {
+        const diagram = {
+            entities: [
+                {
+                    idMx: "entity-pedido",
+                    name: "Pedido",
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: "attr-id-pedido",
+                            name: "id_pedido",
+                            key: true,
+                            partialKey: false,
+                        },
+                    ],
+                },
+                {
+                    idMx: "entity-linea-pedido",
+                    name: "LineaPedido",
+                    weak: true,
+                    ownerEntityId: "entity-pedido",
+                    identifyingRelationId: "relation-identifica",
+                    attributes: [
+                        {
+                            idMx: "attr-numero-linea",
+                            name: "numero_linea",
+                            key: false,
+                            partialKey: true,
+                        },
+                        {
+                            idMx: "attr-id-pedido-pedido",
+                            name: "id_pedido_Pedido",
+                            key: false,
+                            partialKey: false,
+                            multivalued: true,
+                        },
+                    ],
+                },
+            ],
+            relations: [
+                {
+                    idMx: "relation-identifica",
+                    name: "Identifica",
+                    isIdentifying: true,
+                    attributes: [],
+                    side1: {
+                        cardinality: "1:N",
+                        entity: { idMx: "entity-linea-pedido" },
+                    },
+                    side2: {
+                        cardinality: "1:1",
+                        entity: { idMx: "entity-pedido" },
+                    },
+                },
+            ],
+        };
+
+        expect(sqlIdentifierCollisions(diagram)).toBe(true);
+        expect(validateGraph(diagram).noSQLIdentifierCollisions).toBe(false);
+    });    
 })
 
 describe("Composite attribute structure", () => {
