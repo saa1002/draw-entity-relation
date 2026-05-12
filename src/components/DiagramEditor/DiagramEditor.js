@@ -39,10 +39,12 @@ import {
     getLastAttribute,
     getWeakAndStrongSidesForRelation,
     getWeakSideOfIdentifyingRelation,
+    isCompositeAttribute,
     isEntityAttributeOwner,
     isFirstAttributeForOwner,
     isIdentifyingRelation,
     isManyToManyRelation,
+    isMultivaluedAttribute,
     isPrimaryKeyAttribute,
     isRelationAttributeOwner,
     isRelationConfigured,
@@ -998,6 +1000,36 @@ export default function App(props) {
         setRefreshDiagram((prevState) => !prevState);
     };
 
+    const toggleMultivaluedAttribute = () => {
+        if (!selected) return;
+        if (!selected?.style?.includes("shape=ellipse")) return;
+
+        const selectedEntityAttribute = getSelectedEntityAttributeData();
+
+        if (!selectedEntityAttribute) return;
+
+        const { attribute } = selectedEntityAttribute;
+        const shouldBecomeMultivalued = !isMultivaluedAttribute(attribute);
+
+        if (shouldBecomeMultivalued) {
+            attribute.multivalued = true;
+        } else {
+            attribute.multivalued = undefined;
+        }
+
+        syncAttributeVisualRepresentation(attribute);
+
+        refreshGraph();
+        syncAndPersistDiagramData();
+        setRefreshDiagram((prevState) => !prevState);
+
+        toast.success(
+            shouldBecomeMultivalued
+                ? "Atributo marcado como multivaluado"
+                : "Multivaluado eliminado del atributo",
+        );
+    };
+
     const MoveBackAndFrontButtons = () =>
         selected && (
             <React.Fragment>
@@ -1181,6 +1213,37 @@ export default function App(props) {
                 {attribute.partialKey
                     ? "Quitar discriminante"
                     : "Convertir en discriminante"}
+            </button>
+        );
+    };
+
+    const ToggleMultivaluedAttributeButton = () => {
+        const isAttribute = selected?.style?.includes("shape=ellipse");
+        const selectedEntityAttribute = getSelectedEntityAttributeData();
+
+        if (!isAttribute || !selectedEntityAttribute) {
+            return;
+        }
+
+        const { attribute } = selectedEntityAttribute;
+
+        if (
+            attribute.key ||
+            attribute.partialKey ||
+            isCompositeAttribute(attribute)
+        ) {
+            return;
+        }
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={toggleMultivaluedAttribute}
+            >
+                {isMultivaluedAttribute(attribute)
+                    ? "Quitar multivaluado"
+                    : "Marcar multivaluado"}
             </button>
         );
     };
@@ -2202,6 +2265,7 @@ export default function App(props) {
                 <div>{ToggleAttributesButton()}</div>
                 <div>{ToggleAttrKeyButton()}</div>
                 <div>{TogglePartialKeyButton()}</div>
+                <div>{ToggleMultivaluedAttributeButton()}</div>
                 <div>{ToggleWeakEntityButton()}</div>
                 <div>{ToggleIdentifyingRelationButton()}</div>
 
