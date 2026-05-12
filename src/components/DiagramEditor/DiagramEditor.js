@@ -724,6 +724,12 @@ export default function App(props) {
         if (!attributeOwner) return;
 
         const parentAttribute = attributeOwner.attribute;
+        if (isMultivaluedAttribute(parentAttribute)) {
+            toast.error(
+                "Los atributos multivaluados compuestos se implementarán más adelante.",
+            );
+            return;
+        }
         const childAttributes = parentAttribute.children ?? [];
 
         const semantics = {
@@ -810,7 +816,12 @@ export default function App(props) {
         const selectedEntityAttribute = getSelectedEntityAttributeData();
         if (!selectedEntityAttribute) return;
 
-        const { entity } = selectedEntityAttribute;
+        const { entity, attribute } = selectedEntityAttribute;
+
+        if (isMultivaluedAttribute(attribute)) {
+            toast.error("Una clave no puede ser multivaluada.");
+            return;
+        }
 
         if (isWeakEntity(entity)) {
             toast.error(
@@ -874,12 +885,17 @@ export default function App(props) {
         const selectedEntityAttribute = getSelectedEntityAttributeData();
         if (!selectedEntityAttribute) return;
 
-        const { entity } = selectedEntityAttribute;
+        const { entity, attribute } = selectedEntityAttribute;
 
         if (!isWeakEntity(entity)) {
             toast.error(
                 "Solo las entidades débiles pueden tener atributo discriminante.",
             );
+            return;
+        }
+
+        if (isMultivaluedAttribute(attribute)) {
+            toast.error("Un discriminante no puede ser multivaluado.");
             return;
         }
 
@@ -1004,11 +1020,45 @@ export default function App(props) {
         if (!selected) return;
         if (!selected?.style?.includes("shape=ellipse")) return;
 
-        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        const attributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected.id,
+        );
 
-        if (!selectedEntityAttribute) return;
+        if (!attributeOwner) return;
 
-        const { attribute } = selectedEntityAttribute;
+        if (isRelationAttributeOwner(attributeOwner)) {
+            toast.error(
+                "Los atributos multivaluados en relaciones no están soportados todavía.",
+            );
+            return;
+        }
+
+        if (!isEntityAttributeOwner(attributeOwner)) return;
+
+        const { attribute, depth } = attributeOwner;
+
+        if (depth > 0) {
+            return;
+        }
+
+        if (attribute.key) {
+            toast.error("Una clave no puede ser multivaluada.");
+            return;
+        }
+
+        if (attribute.partialKey) {
+            toast.error("Un discriminante no puede ser multivaluado.");
+            return;
+        }
+
+        if (isCompositeAttribute(attribute)) {
+            toast.error(
+                "Los atributos multivaluados compuestos se implementarán más adelante.",
+            );
+            return;
+        }
+
         const shouldBecomeMultivalued = !isMultivaluedAttribute(attribute);
 
         if (shouldBecomeMultivalued) {
@@ -1099,6 +1149,10 @@ export default function App(props) {
             return;
         }
 
+        if (isMultivaluedAttribute(selectedAttributeOwner.attribute)) {
+            return;
+        }
+
         return (
             <button
                 type="button"
@@ -1171,6 +1225,10 @@ export default function App(props) {
 
         const { entity, attribute } = selectedEntityAttribute;
 
+        if (isMultivaluedAttribute(attribute)) {
+            return;
+        }
+
         if (isWeakEntity(entity)) {
             return;
         }
@@ -1195,6 +1253,10 @@ export default function App(props) {
         }
 
         const { entity, attribute } = selectedEntityAttribute;
+
+        if (isMultivaluedAttribute(attribute)) {
+            return;
+        }
 
         if (!isWeakEntity(entity)) {
             return;
