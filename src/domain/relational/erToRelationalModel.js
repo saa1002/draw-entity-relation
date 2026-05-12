@@ -160,26 +160,87 @@ function getSimpleMultivaluedEntityAttributes(entity) {
     return (entity.attributes ?? []).filter(isMultivaluedAttribute);
 }
 
-function buildMultivaluedAttributeTables(entity, graph) {
-    const keyColumns = getEntityPrimaryKeyColumns(entity, graph);
+function isMandatoryOneToOneMergeRelation(relation) {
+    if (relation.isIdentifying) {
+        return false;
+    }
+
+    if (relation.side1.entity.idMx === relation.side2.entity.idMx) {
+        return false;
+    }
+
+    return (
+        relation.side1.cardinality === "1:1" &&
+        relation.side2.cardinality === "1:1"
+    );
+}
+
+function findMandatoryOneToOneMergeRelationForEntity(entity, graph) {
+    return graph.relations.find(
+        (relation) =>
+            isMandatoryOneToOneMergeRelation(relation) &&
+            (relation.side1.entity.idMx === entity.idMx ||
+                relation.side2.entity.idMx === entity.idMx),
+    );
+}
+
+function getMultivaluedAttributeOwnerReference(entity, graph, tableMap) {
+    if (tableMap.has(entity.name)) {
+        return {
+            tableName: entity.name,
+            keyColumns: getEntityPrimaryKeyColumns(entity, graph),
+        };
+    }
+
+    const mergeRelation = findMandatoryOneToOneMergeRelationForEntity(
+        entity,
+        graph,
+    );
+
+    if (mergeRelation && tableMap.has(mergeRelation.name)) {
+        return {
+            tableName: mergeRelation.name,
+            keyColumns: getEntityPrimaryKeyColumns(entity, graph).map(
+                (keyColumn) => ({
+                    name: `${keyColumn.name}_${mergeRelation.name}`,
+                    referencedColumn: `${keyColumn.referencedColumn}_${mergeRelation.name}`,
+                }),
+            ),
+        };
+    }
+
+    return {
+        tableName: entity.name,
+        keyColumns: getEntityPrimaryKeyColumns(entity, graph),
+    };
+}
+
+function buildMultivaluedAttributeTables(entity, graph, tableMap) {
+    const ownerReference = getMultivaluedAttributeOwnerReference(
+        entity,
+        graph,
+        tableMap,
+    );
 
     return getSimpleMultivaluedEntityAttributes(entity).map((attribute) => {
         const tableName = `${entity.name}_${attribute.name}`;
         const foreignKeyGroup = `${entity.idMx}_${attribute.idMx}_multivalued`;
-        const foreignKeyConstraint = `${tableName}_${entity.name}_owner`;
+        const foreignKeyConstraint = `${tableName}_${ownerReference.tableName}_owner`;
 
-        const ownerKeyAttributes = keyColumns.map((keyColumn) => ({
-            name: keyColumn.name,
-            key: true,
-            notnull: true,
-            unique: false,
-            foreign_key: entity.name,
-            foreign_key_column: keyColumn.referencedColumn,
-            foreign_key_group: foreignKeyGroup,
-            foreign_key_constraint: foreignKeyConstraint,
-            foreign_key_on_delete: "CASCADE",
-            foreign_key_on_update: "CASCADE",
-        }));
+        const ownerKeyAttributes = ownerReference.keyColumns.map(
+            (keyColumn) => ({
+                name: keyColumn.name,
+                key: true,
+                notnull: true,
+                unique: false,
+                foreign_key: ownerReference.tableName,
+                foreign_key_column: keyColumn.referencedColumn,
+                foreign_key_group: foreignKeyGroup,
+                foreign_key_constraint: foreignKeyConstraint,
+                foreign_key_on_delete: "CASCADE",
+                foreign_key_on_update: "CASCADE",
+            }),
+        );
 
         return {
             name: tableName,
@@ -580,7 +641,7 @@ function buildRelationalTables(graph) {
     }
 
     const multivaluedAttributeTables = graph.entities.flatMap((entity) =>
-        buildMultivaluedAttributeTables(entity, graph),
+        buildMultivaluedAttributeTables(entity, graph, tableMap),
     );
 
     return [...tableMap.values(), ...multivaluedAttributeTables];

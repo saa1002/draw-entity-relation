@@ -274,4 +274,44 @@ describe("1:1 relation extraction", () => {
             "nombre_Relación",
         );
     });
+    
+    test("should reference the merged table for a multivalued attribute in a mandatory 1:1 relation", () => {
+        oneOneGraph.relations.at(0).side1.cardinality = "1:1";
+        oneOneGraph.relations.at(0).side2.cardinality = "1:1";
+
+        oneOneGraph.entities.at(0).attributes.push({
+            idMx: "attr-phone",
+            name: "telefono",
+            key: false,
+            partialKey: false,
+            multivalued: true,
+        });
+
+        const sql = generateSQL(oneOneGraph);
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Entidad_telefono (
+              Atributo_Relacion VARCHAR(40),
+              telefono VARCHAR(40),
+              PRIMARY KEY (Atributo_Relacion, telefono)
+            );
+            `,
+        );
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Entidad_telefono
+            ADD CONSTRAINT FK_Entidad_telefono_Relacion_owner
+            FOREIGN KEY (Atributo_Relacion)
+            REFERENCES Relacion(Atributo_Relacion)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
+            `,
+        );
+
+        expect(sql).not.toContain("REFERENCES Entidad(Atributo)");
+    });
 })
