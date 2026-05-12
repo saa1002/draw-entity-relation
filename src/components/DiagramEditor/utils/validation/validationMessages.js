@@ -33,6 +33,11 @@ const VALIDATION_MESSAGE_DEFINITIONS = [
         message: "Hay atributos compuestos sin subatributos.",
     },
     {
+        key: "noUnsupportedMultivaluedAttributes",
+        message:
+            "Solo se soportan atributos multivaluados simples de entidad, sin clave ni discriminante.",
+    },
+    {
         key: "noEntitiesWithoutAttributes",
         message: "Hay entidades sin atributos.",
     },

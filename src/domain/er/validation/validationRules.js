@@ -16,6 +16,7 @@ import {
     repeatedEntities,
     sqlIdentifierCollisions,
     strongEntitiesWithPartialKey,
+    unsupportedMultivaluedAttributes,
     weakEntitiesWithMoreThanOnePartialKey,
     weakEntitiesWithPrimaryKey,
     weakEntitiesWithoutIdentifyingRelation,
@@ -39,6 +40,10 @@ export const VALIDATION_RULES = [
     {
         diagnostic: "noEmptyCompositeAttributes",
         fails: emptyCompositeAttributes,
+    },
+    {
+        diagnostic: "noUnsupportedMultivaluedAttributes",
+        fails: unsupportedMultivaluedAttributes,
     },
     {
         diagnostic: "noEntitiesWithoutAttributes",

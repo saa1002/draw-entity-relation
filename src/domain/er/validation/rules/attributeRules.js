@@ -1,4 +1,9 @@
-import { getAttributeChildren } from "../../attributes";
+import {
+    getAttributeChildren,
+    isCompositeAttribute,
+    isMultivaluedAttribute,
+    walkAttributeTree,
+} from "../../attributes";
 
 // This function checks for repeated attributes in an entity,
 // relations N:M (these are the ones that have a key `canHoldAttributes`
@@ -74,6 +79,55 @@ export function emptyCompositeAttributes(graph) {
             relation.canHoldAttributes &&
             hasEmptyCompositeAttribute(relation.attributes)
         ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function unsupportedMultivaluedAttributes(graph) {
+    const hasUnsupportedEntityMultivaluedAttribute = (attributes = []) => {
+        let hasUnsupportedAttribute = false;
+
+        walkAttributeTree(attributes, (attribute, { depth }) => {
+            if (hasUnsupportedAttribute || !isMultivaluedAttribute(attribute)) {
+                return;
+            }
+
+            if (
+                depth > 0 ||
+                attribute.key ||
+                attribute.partialKey ||
+                isCompositeAttribute(attribute)
+            ) {
+                hasUnsupportedAttribute = true;
+            }
+        });
+
+        return hasUnsupportedAttribute;
+    };
+
+    const hasAnyMultivaluedAttribute = (attributes = []) => {
+        let hasMultivaluedAttribute = false;
+
+        walkAttributeTree(attributes, (attribute) => {
+            if (isMultivaluedAttribute(attribute)) {
+                hasMultivaluedAttribute = true;
+            }
+        });
+
+        return hasMultivaluedAttribute;
+    };
+
+    for (const entity of graph.entities) {
+        if (hasUnsupportedEntityMultivaluedAttribute(entity.attributes)) {
+            return true;
+        }
+    }
+
+    for (const relation of graph.relations) {
+        if (hasAnyMultivaluedAttribute(relation.attributes)) {
             return true;
         }
     }
