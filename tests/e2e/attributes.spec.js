@@ -349,3 +349,90 @@ test('delete a UI-created child attribute and clean up the parent children list'
             }),
         );
 });
+
+test('toggle simple multivalued attributes and persist across reloads', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+
+    await addAttributeToSelectedEntity(page);
+
+    await page.getByText('Atributo', { exact: true }).click();
+    await expect(
+        page.getByRole('button', { name: 'Marcar multivaluado' }),
+    ).toHaveCount(0);
+
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
+        name: 'Atributo 1',
+        key: false,
+        partialKey: false,
+    });
+
+    await page.getByText('Atributo 1', { exact: true }).click();
+
+    await page.getByRole('button', { name: 'Marcar multivaluado' }).click();
+
+    await expect(
+        page.getByText('Atributo marcado como multivaluado').last(),
+    ).toBeVisible();
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
+        name: 'Atributo 1',
+        key: false,
+        partialKey: false,
+        multivalued: true,
+    });
+
+    await expect(
+        page.getByRole('button', { name: 'Quitar multivaluado' }),
+    ).toBeVisible();
+
+    await expect(
+        page.getByRole('button', { name: 'Añadir subatributo' }),
+    ).toHaveCount(0);
+
+    await page.reload();
+
+    await expect(page.getByText('Atributo 1', { exact: true })).toBeVisible();
+
+    await page.getByText('Atributo 1', { exact: true }).click();
+
+    await expect(
+        page.getByRole('button', { name: 'Quitar multivaluado' }),
+    ).toBeVisible();
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
+        name: 'Atributo 1',
+        key: false,
+        partialKey: false,
+        multivalued: true,
+    });
+
+    await page.getByRole('button', { name: 'Quitar multivaluado' }).click();
+
+    await expect(
+        page.getByText('Multivaluado eliminado del atributo').last(),
+    ).toBeVisible();
+
+    await expect
+        .poll(async () => {
+            const entity = await getSavedEntity(page, 'Entidad');
+            const attribute = entity?.attributes?.[1];
+
+            return {
+                multivalued: attribute?.multivalued,
+                hasMultivaluedFlag: Object.prototype.hasOwnProperty.call(
+                    attribute ?? {},
+                    'multivalued',
+                ),
+            };
+        })
+        .toEqual({
+            multivalued: undefined,
+            hasMultivaluedFlag: false,
+        });
+});
