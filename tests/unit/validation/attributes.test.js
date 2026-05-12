@@ -185,6 +185,85 @@ describe("SQL identifier normalization", () => {
         expect(sqlIdentifierCollisions(graph)).toBe(true);
         expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false);
     });
+
+    test("Multivalued auxiliary table names should not collide with entity table names", () => {
+        graph.entities.at(0).name = "Cliente";
+        graph.entities.at(0).attributes = [
+            {
+                idMx: "attr-id-cliente",
+                name: "id_cliente",
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-telefono",
+                name: "telefono",
+                key: false,
+                partialKey: false,
+                multivalued: true,
+            },
+        ];
+
+        graph.entities.push({
+            idMx: "entity-cliente-telefono",
+            name: "Cliente_telefono",
+            weak: false,
+            attributes: [
+                {
+                    idMx: "attr-id-tabla",
+                    name: "id",
+                    key: true,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        expect(sqlIdentifierCollisions(graph)).toBe(true);
+        expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false);
+    });
+
+    test("Multivalued auxiliary table names should not collide with other auxiliary table names", () => {
+        graph.entities.at(0).name = "Cliente";
+        graph.entities.at(0).attributes = [
+            {
+                idMx: "attr-id-cliente",
+                name: "id_cliente",
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-telefono-movil",
+                name: "telefono_movil",
+                key: false,
+                partialKey: false,
+                multivalued: true,
+            },
+        ];
+
+        graph.entities.push({
+            idMx: "entity-cliente-telefono",
+            name: "Cliente_telefono",
+            weak: false,
+            attributes: [
+                {
+                    idMx: "attr-id-cliente-telefono",
+                    name: "id_cliente_telefono",
+                    key: true,
+                    partialKey: false,
+                },
+                {
+                    idMx: "attr-movil",
+                    name: "movil",
+                    key: false,
+                    partialKey: false,
+                    multivalued: true,
+                },
+            ],
+        });
+
+        expect(sqlIdentifierCollisions(graph)).toBe(true);
+        expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false);
+    });
 })
 
 describe("Composite attribute structure", () => {

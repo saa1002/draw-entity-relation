@@ -1,5 +1,6 @@
 import { projectAttributeTreeToColumns } from "../../../relational/attributeProjection";
 import { normalizeIdentifier } from "../../../relational/naming";
+import { isMultivaluedAttribute } from "../../attributes";
 
 export function sqlIdentifierCollisions(graph) {
     const normalizedNames = new Set();
@@ -23,6 +24,24 @@ export function sqlIdentifierCollisions(graph) {
         }
 
         normalizedNames.add(normalized);
+    }
+
+    for (const entity of graph.entities) {
+        for (const attribute of entity.attributes ?? []) {
+            if (!isMultivaluedAttribute(attribute)) {
+                continue;
+            }
+
+            const normalized = normalizeIdentifier(
+                `${entity.name}_${attribute.name}`,
+            );
+
+            if (normalizedNames.has(normalized)) {
+                return true;
+            }
+
+            normalizedNames.add(normalized);
+        }
     }
 
     const hasNormalizedAttributeCollision = (attributes) => {
