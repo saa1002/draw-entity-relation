@@ -2,10 +2,17 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     filterTables,
+    generateSQL,
     processNMRelation,
 } from '../../../src/services/sql'
 
 let nMGraph
+
+const compactSQL = (sql) => sql.replace(/\s+/g, '')
+
+const expectSQLToContain = (actual, expectedFragment) => {
+    expect(compactSQL(actual)).toContain(compactSQL(expectedFragment))
+}
 
 beforeEach(() => {
     nMGraph = loadGraphFixture('n-m-relation.json')
@@ -167,5 +174,54 @@ describe("N:M relation extraction", () => {
         expect(
             junctionTable.attributes.some((attr) => attr.name === "periodo"),
         ).toBe(false);
-    });        
+    });
+    
+    test("should generate a separate table for a simple multivalued attribute on an N:M related entity", () => {
+        nMGraph.entities.at(0).attributes.push({
+            idMx: "attr-email",
+            name: "email",
+            key: false,
+            partialKey: false,
+            multivalued: true,
+        });
+
+        const sql = generateSQL(nMGraph);
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Entidad_email (
+              Atributo VARCHAR(40),
+              email VARCHAR(40),
+              PRIMARY KEY (Atributo, email)
+            );
+            `,
+        );
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Entidad_email
+            ADD CONSTRAINT FK_Entidad_email_Entidad_owner
+            FOREIGN KEY (Atributo)
+            REFERENCES Entidad(Atributo)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
+            `,
+        );
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Relacion (
+              Atributo_Relacion_1 VARCHAR(40),
+              Atributo_Relacion_2 VARCHAR(40),
+              Atributo VARCHAR(40),
+              PRIMARY KEY (Atributo_Relacion_1, Atributo_Relacion_2)
+            );
+            `,
+        );
+
+        expect(sql).not.toContain("email_Relacion");
+    });
 })

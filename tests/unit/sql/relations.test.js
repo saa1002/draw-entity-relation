@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     filterTables,
+    generateSQL,
     process1NRelation,
     process11Relation,
 } from '../../../src/services/sql'
@@ -17,6 +18,12 @@ const extract1NTables = () => {
 const extract11Tables = () => {
     const filteredTables = filterTables(oneOneGraph)
     return process11Relation(filteredTables.at(0))
+}
+
+const compactSQL = (sql) => sql.replace(/\s+/g, '')
+
+const expectSQLToContain = (actual, expectedFragment) => {
+    expect(compactSQL(actual)).toContain(compactSQL(expectedFragment))
 }
 
 beforeEach(() => {
@@ -127,6 +134,53 @@ describe("1:N relation extraction", () => {
         expect(
             targetTable.attributes.slice(1).map((attr) => attr.foreign_key_column),
         ).toEqual(["codigo_serie", "codigo_numero"]);
+    });
+    
+    test("should generate a separate table for a simple multivalued attribute on a 1:N related entity", () => {
+        oneNGraph.entities.at(1).attributes.push({
+            idMx: "attr-phones",
+            name: "telefono",
+            key: false,
+            partialKey: false,
+            multivalued: true,
+        });
+
+        const sql = generateSQL(oneNGraph);
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Entidad_1_telefono (
+              Atributo VARCHAR(40),
+              telefono VARCHAR(40),
+              PRIMARY KEY (Atributo, telefono)
+            );
+            `,
+        );
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Entidad_1_telefono
+            ADD CONSTRAINT FK_Entidad_1_telefono_Entidad_1_owner
+            FOREIGN KEY (Atributo)
+            REFERENCES Entidad_1(Atributo)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
+            `,
+        );
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Entidad_1 (
+              Atributo VARCHAR(40) PRIMARY KEY,
+              Atributo_Relacion VARCHAR(40)
+            );
+            `,
+        );
+
+        expect(sql).not.toContain("telefono VARCHAR(40) PRIMARY KEY");
     });
 })
 
