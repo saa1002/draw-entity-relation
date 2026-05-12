@@ -206,6 +206,8 @@ export default function App(props) {
         syncOwnerAttributePositions,
         syncDiscriminantUnderline,
         ensureDiscriminantUnderline,
+        syncMultivaluedAttributeDecorator,
+        ensureMultivaluedAttributeDecorator,
         syncAttributeVisualRepresentation,
         syncAttributeChildrenPositions,
         setOwnerAttributesVisible,
@@ -295,6 +297,7 @@ export default function App(props) {
             mxPoint,
             createWeakEntityDecorator,
             ensureDiscriminantUnderline,
+            ensureMultivaluedAttributeDecorator,
             ensureIdentifyingRelationDecorator,
             ensureIdentifyingRelationEdgeDecorator,
         });
@@ -354,6 +357,7 @@ export default function App(props) {
                     findRelationById,
                     getAttributeDataById,
                     syncDiscriminantUnderline,
+                    syncMultivaluedAttributeDecorator,
                     syncWeakEntityDecorator,
                     syncIdentifyingRelationDecorator,
                     syncIdentifyingRelationEdgeDecorator,
@@ -464,6 +468,10 @@ export default function App(props) {
         });
 
         syncAttributeChildrenPositions(attribute, selected);
+
+        if (attribute.multivalued) {
+            syncMultivaluedAttributeDecorator(selected);
+        }
 
         if (attribute.partialKey) {
             syncDiscriminantUnderline(selected);
@@ -613,6 +621,10 @@ export default function App(props) {
         const edge = graph.insertEdge(source, null, null, source, target);
 
         graph.orderCells(false);
+
+        if (semantics.multivalued) {
+            ensureMultivaluedAttributeDecorator(target);
+        }
 
         if (semantics.partialKey) {
             ensureDiscriminantUnderline(target);

@@ -1,6 +1,7 @@
 import {
     flattenAttributeTree,
     getAttributeChildren,
+    isMultivaluedAttribute,
 } from "../../../../domain/er";
 
 import {
@@ -12,15 +13,24 @@ import {
 } from "../mxStyles/diagramStyles";
 
 export const DISCRIMINANT_UNDERLINE_SUFFIX = "__discriminant_underline";
+export const MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX = "__multivalued_decorator";
 
 const DISCRIMINANT_UNDERLINE_MARGIN_X = 16;
 const DISCRIMINANT_UNDERLINE_OFFSET_Y = 12;
+const MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET = 4;
 
 export const getDiscriminantUnderlineId = (attributeId) =>
     `${attributeId}${DISCRIMINANT_UNDERLINE_SUFFIX}`;
 
+export const getMultivaluedAttributeDecoratorId = (attributeId) =>
+    `${attributeId}${MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX}`;
+
 export const isDiscriminantUnderlineCell = (cell) =>
     !!cell?.id && String(cell.id).endsWith(DISCRIMINANT_UNDERLINE_SUFFIX);
+
+export const isMultivaluedAttributeDecoratorCell = (cell) =>
+    !!cell?.id &&
+    String(cell.id).endsWith(MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX);
 
 export const getAttributeStyleString = (attribute) => {
     const baseStyle = [
@@ -60,11 +70,17 @@ export const createAttributeRenderingHelpers = ({
             .map((cellId) => accessCell(cellId))
             .filter(Boolean);
 
+        const decoratorCell = attribute.idMx
+            ? accessCell(getMultivaluedAttributeDecoratorId(attribute.idMx))
+            : null;
+
         const underlineCell = attribute.idMx
             ? accessCell(getDiscriminantUnderlineId(attribute.idMx))
             : null;
 
-        return [...attributeCells, underlineCell].filter(Boolean);
+        return [...attributeCells, decoratorCell, underlineCell].filter(
+            Boolean,
+        );
     };
 
     const getAttributesCells = (attributes = []) =>
@@ -197,6 +213,79 @@ export const createAttributeRenderingHelpers = ({
         }
     };
 
+    const syncMultivaluedAttributeDecorator = (attributeCell) => {
+        if (!attributeCell?.id) return;
+
+        const decorator = accessCell(
+            getMultivaluedAttributeDecoratorId(attributeCell.id),
+        );
+
+        if (!decorator || !decorator.geometry || !attributeCell.geometry) {
+            return;
+        }
+
+        decorator.geometry.x =
+            attributeCell.geometry.x + MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET;
+        decorator.geometry.y =
+            attributeCell.geometry.y + MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET;
+        decorator.geometry.width = Math.max(
+            1,
+            attributeCell.geometry.width -
+                MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET * 2,
+        );
+        decorator.geometry.height = Math.max(
+            1,
+            attributeCell.geometry.height -
+                MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET * 2,
+        );
+
+        graph.refresh(decorator);
+        graph.orderCells(false, [decorator]);
+    };
+
+    const createMultivaluedAttributeDecorator = (attributeCell) => {
+        if (!attributeCell?.id || !attributeCell.geometry) return null;
+
+        const { x, y, width, height } = attributeCell.geometry;
+
+        return graph.insertVertex(
+            null,
+            getMultivaluedAttributeDecoratorId(attributeCell.id),
+            "",
+            x + MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET,
+            y + MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET,
+            Math.max(1, width - MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET * 2),
+            Math.max(1, height - MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET * 2),
+            "multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter",
+        );
+    };
+
+    const ensureMultivaluedAttributeDecorator = (attributeCell) => {
+        if (!attributeCell?.id) return;
+
+        const existingDecorator = accessCell(
+            getMultivaluedAttributeDecoratorId(attributeCell.id),
+        );
+
+        if (existingDecorator) {
+            syncMultivaluedAttributeDecorator(attributeCell);
+            return;
+        }
+
+        createMultivaluedAttributeDecorator(attributeCell);
+        syncMultivaluedAttributeDecorator(attributeCell);
+    };
+
+    const removeMultivaluedAttributeDecorator = (attributeId) => {
+        const decorator = accessCell(
+            getMultivaluedAttributeDecoratorId(attributeId),
+        );
+
+        if (decorator) {
+            graph.removeCells([decorator]);
+        }
+    };
+
     const syncAttributeVisualRepresentation = (attribute) => {
         const attributeCell = accessCell(attribute.idMx);
 
@@ -205,6 +294,12 @@ export const createAttributeRenderingHelpers = ({
         graph
             .getModel()
             .setStyle(attributeCell, getAttributeStyleString(attribute));
+
+        if (isMultivaluedAttribute(attribute)) {
+            ensureMultivaluedAttributeDecorator(attributeCell);
+        } else {
+            removeMultivaluedAttributeDecorator(attribute.idMx);
+        }
 
         if (attribute.partialKey) {
             ensureDiscriminantUnderline(attributeCell);
@@ -241,6 +336,10 @@ export const createAttributeRenderingHelpers = ({
 
         attributeCell.geometry.x = parentCell.geometry.x + offsetX;
         attributeCell.geometry.y = parentCell.geometry.y + offsetY;
+
+        if (isMultivaluedAttribute(attribute)) {
+            syncMultivaluedAttributeDecorator(attributeCell);
+        }
 
         if (attribute.partialKey) {
             syncDiscriminantUnderline(attributeCell);
@@ -283,6 +382,8 @@ export const createAttributeRenderingHelpers = ({
         syncOwnerAttributePositions,
         syncDiscriminantUnderline,
         ensureDiscriminantUnderline,
+        syncMultivaluedAttributeDecorator,
+        ensureMultivaluedAttributeDecorator,
         syncAttributeVisualRepresentation,
         syncAttributeChildrenPositions,
         setOwnerAttributesVisible,

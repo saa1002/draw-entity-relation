@@ -1,6 +1,8 @@
 import {
     DISCRIMINANT_UNDERLINE_SUFFIX,
+    MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX,
     isDiscriminantUnderlineCell,
+    isMultivaluedAttributeDecoratorCell,
 } from "../rendering/attributeRendering";
 import {
     WEAK_ENTITY_DECORATOR_SUFFIX,
@@ -38,6 +40,12 @@ const getUnderlyingInteractiveCell = ({ cell, accessCell }) => {
         return accessCell(id.slice(0, -DISCRIMINANT_UNDERLINE_SUFFIX.length));
     }
 
+    if (id.endsWith(MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX)) {
+        return accessCell(
+            id.slice(0, -MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX.length),
+        );
+    }
+
     return cell;
 };
 
@@ -56,7 +64,8 @@ export const installGraphInteractionOverrides = ({
             isWeakEntityDecoratorCell(cell) ||
             isIdentifyingRelationDecoratorCell(cell) ||
             isIdentifyingRelationEdgeDecoratorCell(cell) ||
-            isDiscriminantUnderlineCell(cell)
+            isDiscriminantUnderlineCell(cell) ||
+            isMultivaluedAttributeDecoratorCell(cell)
         ) {
             return false;
         }

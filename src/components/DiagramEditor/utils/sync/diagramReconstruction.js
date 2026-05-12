@@ -21,6 +21,7 @@ export const reconstructDiagramGraph = ({
     mxPoint,
     createWeakEntityDecorator,
     ensureDiscriminantUnderline,
+    ensureMultivaluedAttributeDecorator,
     ensureIdentifyingRelationDecorator,
     ensureIdentifyingRelationEdgeDecorator,
 }) => {
@@ -54,6 +55,10 @@ export const reconstructDiagramGraph = ({
 
         if (attribute.partialKey) {
             ensureDiscriminantUnderline(target);
+        }
+
+        if (attribute.multivalued) {
+            ensureMultivaluedAttributeDecorator(target);
         }
 
         graph.orderCells(true, [edge]);

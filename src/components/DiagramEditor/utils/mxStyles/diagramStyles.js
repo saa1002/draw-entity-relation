@@ -127,6 +127,17 @@ export const installDiagramEditorStyles = ({ graph, mxConstants }) => {
     weakEntityDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
     weakEntityDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
 
+    const multivaluedAttributeDecoratorStyle = {};
+    multivaluedAttributeDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
+    multivaluedAttributeDecoratorStyle[mxConstants.STYLE_STROKECOLOR] =
+        ER_STROKE;
+    multivaluedAttributeDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 1;
+    multivaluedAttributeDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
+    multivaluedAttributeDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
+    multivaluedAttributeDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
+    multivaluedAttributeDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
+    multivaluedAttributeDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
+
     const identifyingRelationDecoratorStyle = {};
     identifyingRelationDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
     identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKECOLOR] =
@@ -150,6 +161,12 @@ export const installDiagramEditorStyles = ({ graph, mxConstants }) => {
     graph
         .getStylesheet()
         .putCellStyle("weakEntityDecoratorStyle", weakEntityDecoratorStyle);
+    graph
+        .getStylesheet()
+        .putCellStyle(
+            "multivaluedAttributeDecoratorStyle",
+            multivaluedAttributeDecoratorStyle,
+        );
     graph
         .getStylesheet()
         .putCellStyle(

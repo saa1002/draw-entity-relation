@@ -16,6 +16,7 @@ export const installGraphLabelEditingHandler = ({
     findRelationById,
     getAttributeDataById,
     syncDiscriminantUnderline,
+    syncMultivaluedAttributeDecorator,
     syncWeakEntityDecorator,
     syncIdentifyingRelationDecorator,
     syncIdentifyingRelationEdgeDecorator,
@@ -61,6 +62,10 @@ export const installGraphLabelEditingHandler = ({
                 });
 
                 const attributeData = getAttributeDataById(cell.id);
+
+                if (attributeData?.multivalued) {
+                    syncMultivaluedAttributeDecorator(cell);
+                }
 
                 if (attributeData?.partialKey) {
                     syncDiscriminantUnderline(cell);
