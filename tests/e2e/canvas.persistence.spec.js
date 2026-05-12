@@ -286,6 +286,7 @@ test('export/import round-trip preserves nested attribute trees', async ({ page 
                         position: { x: 220, y: 180 },
                         key: false,
                         partialKey: false,
+                        multivalued: true,
                         cell: ['23', 'edge_attr_descripcion'],
                         offsetX: 120,
                         offsetY: 80,
@@ -317,6 +318,11 @@ test('export/import round-trip preserves nested attribute trees', async ({ page 
     expect(exportedBefore.entities[0].attributes[0].children.map(
         (attribute) => attribute.cell[1],
     )).toEqual(['edge_attr_serie', 'edge_attr_numero']);
+
+    expect(exportedBefore.entities[0].attributes[1]).toMatchObject({
+        name: 'descripcion',
+        multivalued: true,
+    });
 
     await resetDiagram(page);
 

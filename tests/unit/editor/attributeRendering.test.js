@@ -97,7 +97,7 @@ describe('attribute rendering helpers', () => {
                 width: 82,
                 height: 32,
             },
-            style: 'multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter',
+            style: 'multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0',
         })
     })
 

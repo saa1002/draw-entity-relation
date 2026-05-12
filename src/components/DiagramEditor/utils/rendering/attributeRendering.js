@@ -213,6 +213,22 @@ export const createAttributeRenderingHelpers = ({
         }
     };
 
+    const disablePointerEventsForCell = (cell) => {
+        const state = graph.view?.getState?.(cell);
+
+        const nodes = [state?.shape?.node, state?.text?.node].filter(Boolean);
+
+        nodes.forEach((node) => {
+            node.setAttribute("pointer-events", "none");
+            node.style.pointerEvents = "none";
+
+            node.querySelectorAll?.("*").forEach((childNode) => {
+                childNode.setAttribute("pointer-events", "none");
+                childNode.style.pointerEvents = "none";
+            });
+        });
+    };
+
     const syncMultivaluedAttributeDecorator = (attributeCell) => {
         if (!attributeCell?.id) return;
 
@@ -241,6 +257,7 @@ export const createAttributeRenderingHelpers = ({
 
         graph.refresh(decorator);
         graph.orderCells(false, [decorator]);
+        disablePointerEventsForCell(decorator);
     };
 
     const createMultivaluedAttributeDecorator = (attributeCell) => {
@@ -256,7 +273,7 @@ export const createAttributeRenderingHelpers = ({
             y + MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET,
             Math.max(1, width - MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET * 2),
             Math.max(1, height - MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET * 2),
-            "multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter",
+            "multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0",
         );
     };
 
