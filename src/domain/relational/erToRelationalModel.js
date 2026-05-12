@@ -1,3 +1,4 @@
+import { isMultivaluedAttribute } from "../er/attributes";
 import { projectAttributeTreeToColumns } from "./attributeProjection";
 import { normalizeIdentifier } from "./naming";
 
@@ -153,6 +154,47 @@ function buildEntityTable(entity) {
         name: entity.name,
         attributes: buildEntityAttributes(entity),
     };
+}
+
+function getSimpleMultivaluedEntityAttributes(entity) {
+    return (entity.attributes ?? []).filter(isMultivaluedAttribute);
+}
+
+function buildMultivaluedAttributeTables(entity, graph) {
+    const keyColumns = getEntityPrimaryKeyColumns(entity, graph);
+
+    return getSimpleMultivaluedEntityAttributes(entity).map((attribute) => {
+        const tableName = `${entity.name}_${attribute.name}`;
+        const foreignKeyGroup = `${entity.idMx}_${attribute.idMx}_multivalued`;
+        const foreignKeyConstraint = `${tableName}_${entity.name}_owner`;
+
+        const ownerKeyAttributes = keyColumns.map((keyColumn) => ({
+            name: keyColumn.name,
+            key: true,
+            notnull: true,
+            unique: false,
+            foreign_key: entity.name,
+            foreign_key_column: keyColumn.referencedColumn,
+            foreign_key_group: foreignKeyGroup,
+            foreign_key_constraint: foreignKeyConstraint,
+            foreign_key_on_delete: "CASCADE",
+            foreign_key_on_update: "CASCADE",
+        }));
+
+        return {
+            name: tableName,
+            attributes: [
+                ...ownerKeyAttributes,
+                {
+                    name: attribute.name,
+                    key: true,
+                    partialKey: false,
+                    notnull: true,
+                    unique: false,
+                },
+            ],
+        };
+    });
 }
 
 function buildRelationAttributes(attributes) {
@@ -537,7 +579,11 @@ function buildRelationalTables(graph) {
         }
     }
 
-    return [...tableMap.values()];
+    const multivaluedAttributeTables = graph.entities.flatMap((entity) =>
+        buildMultivaluedAttributeTables(entity, graph),
+    );
+
+    return [...tableMap.values(), ...multivaluedAttributeTables];
 }
 
 function normalizeRelationalTableIdentifiers(tables) {

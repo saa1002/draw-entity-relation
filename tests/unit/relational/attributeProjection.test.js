@@ -160,4 +160,29 @@ describe('Attribute relational projection', () => {
             },
         ])
     })
+    test('simple multivalued attributes should not project as regular columns', () => {
+        const attributes = [
+            {
+                idMx: 'attr-1',
+                name: 'id_cliente',
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: 'attr-2',
+                name: 'telefono',
+                key: false,
+                partialKey: false,
+                multivalued: true,
+            },
+        ]
+
+        expect(projectAttributeTreeToColumns(attributes)).toEqual([
+            {
+                name: 'id_cliente',
+                key: true,
+                partialKey: false,
+            },
+        ])
+    })
 })

@@ -1,5 +1,6 @@
 import {
     isLeafAttribute,
+    isMultivaluedAttribute,
     isPartialKeyAttribute,
     isPrimaryKeyAttribute,
     walkAttributeTree,
@@ -12,7 +13,7 @@ export const projectAttributeTreeToColumns = (attributes) => {
     const columns = [];
 
     walkAttributeTree(attributes, (attribute, { ancestors }) => {
-        if (!isLeafAttribute(attribute)) {
+        if (!isLeafAttribute(attribute) || isMultivaluedAttribute(attribute)) {
             return;
         }
 
