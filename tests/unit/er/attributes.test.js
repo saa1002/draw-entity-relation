@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
     addChildAttributeToAttribute,
+    createAttribute,
     isCompositeMultivaluedAttribute,
     isMultivaluedAttribute,
     findAttributeInTreeById,
@@ -293,6 +294,37 @@ describe("Hierarchical attribute helpers", () => {
             idMx: "attr-1",
             name: "codigo",
         })
+    })
+    test("createAttribute should preserve an enabled multivalued flag", () => {
+        const attribute = createAttribute({
+            idMx: "attr-1",
+            name: "phone",
+            position: { x: 10, y: 20 },
+            multivalued: true,
+            cell: ["attr-1", "edge-1"],
+        })
+
+        expect(attribute).toMatchObject({
+            idMx: "attr-1",
+            name: "phone",
+            position: { x: 10, y: 20 },
+            key: false,
+            partialKey: false,
+            multivalued: true,
+            cell: ["attr-1", "edge-1"],
+            offsetX: 0,
+            offsetY: 0,
+        })
+    })
+
+    test("createAttribute should omit disabled multivalued flags for compatibility", () => {
+        const attribute = createAttribute({
+            idMx: "attr-1",
+            name: "name",
+        })
+
+        expect(attribute).not.toHaveProperty("multivalued")
+        expect(isMultivaluedAttribute(attribute)).toBe(false)
     })
 })
 
