@@ -174,6 +174,108 @@ describe('Weak entity SQL generation', () => {
         )
         expect(sql).toContain('cantidad VARCHAR(40)')
     })
+
+    test('a weak entity should generate a separate table for a simple multivalued attribute', () => {
+        const graph = {
+            entities: [
+                {
+                    idMx: '1',
+                    name: 'Pedido',
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: '2',
+                            name: 'id_pedido',
+                            key: true,
+                            partialKey: false,
+                        },
+                    ],
+                },
+                {
+                    idMx: '3',
+                    name: 'LineaPedido',
+                    weak: true,
+                    ownerEntityId: '1',
+                    identifyingRelationId: '4',
+                    attributes: [
+                        {
+                            idMx: '5',
+                            name: 'numero_linea',
+                            key: false,
+                            partialKey: true,
+                        },
+                        {
+                            idMx: '6',
+                            name: 'cantidad',
+                            key: false,
+                            partialKey: false,
+                        },
+                        {
+                            idMx: '7',
+                            name: 'etiqueta',
+                            key: false,
+                            partialKey: false,
+                            multivalued: true,
+                        },
+                    ],
+                },
+            ],
+            relations: [
+                {
+                    idMx: '4',
+                    name: 'Identifica',
+                    isIdentifying: true,
+                    attributes: [],
+                    side1: {
+                        cardinality: '1:N',
+                        entity: { idMx: '3' },
+                    },
+                    side2: {
+                        cardinality: '1:1',
+                        entity: { idMx: '1' },
+                    },
+                },
+            ],
+        }
+
+        const sql = generateSQL(graph)
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE LineaPedido (
+              numero_linea VARCHAR(40),
+              cantidad VARCHAR(40),
+              id_pedido_Pedido VARCHAR(40),
+              PRIMARY KEY (numero_linea, id_pedido_Pedido)
+            );
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE LineaPedido_etiqueta (
+              numero_linea VARCHAR(40),
+              id_pedido_Pedido VARCHAR(40),
+              etiqueta VARCHAR(40),
+              PRIMARY KEY (numero_linea, id_pedido_Pedido, etiqueta)
+            );
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE LineaPedido_etiqueta
+            ADD CONSTRAINT FK_LineaPedido_etiqueta_LineaPedido_owner
+            FOREIGN KEY (numero_linea, id_pedido_Pedido)
+            REFERENCES LineaPedido(numero_linea, id_pedido_Pedido)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
+            `,
+        )
+    })    
     
     test('an identifying relation should not generate a standalone table', () => {
         const graph = {
