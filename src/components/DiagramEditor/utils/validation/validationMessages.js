@@ -35,7 +35,7 @@ const VALIDATION_MESSAGE_DEFINITIONS = [
     {
         key: "noUnsupportedMultivaluedAttributes",
         message:
-            "Solo se soportan atributos multivaluados simples de entidad, sin clave ni discriminante.",
+            "Solo se soportan atributos multivaluados top-level de entidad, simples o compuestos, sin clave ni discriminante.",
     },
     {
         key: "noEntitiesWithoutAttributes",
