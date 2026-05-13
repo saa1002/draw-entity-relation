@@ -1,4 +1,5 @@
 import {
+    getAttributeChildren,
     isLeafAttribute,
     isMultivaluedAttribute,
     isPartialKeyAttribute,
@@ -8,6 +9,37 @@ import {
 
 const buildColumnNameFromPath = (path) =>
     path.map((attribute) => attribute.name).join("_");
+
+export const projectMultivaluedAttributeToColumns = (attribute) => {
+    if (isLeafAttribute(attribute)) {
+        return [
+            {
+                name: buildColumnNameFromPath([attribute]),
+            },
+        ];
+    }
+
+    const columns = [];
+
+    walkAttributeTree(
+        getAttributeChildren(attribute),
+        (leafAttribute, { ancestors }) => {
+            if (!isLeafAttribute(leafAttribute)) {
+                return;
+            }
+
+            columns.push({
+                name: buildColumnNameFromPath([
+                    attribute,
+                    ...ancestors,
+                    leafAttribute,
+                ]),
+            });
+        },
+    );
+
+    return columns;
+};
 
 export const projectAttributeTreeToColumns = (attributes) => {
     const columns = [];

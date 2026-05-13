@@ -259,4 +259,83 @@ describe('Standalone entity SQL generation', () => {
         expect(sql).not.toContain('codigo VARCHAR(40)')
         expect(sql).not.toContain('etiqueta VARCHAR(40) PRIMARY KEY')
     })
+    
+    test('a standalone entity should generate a separate table for a composite multivalued attribute', () => {
+        const graph = {
+            entities: [
+                {
+                    idMx: '1',
+                    name: 'Cliente',
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: '2',
+                            name: 'id_cliente',
+                            key: true,
+                            partialKey: false,
+                        },
+                        {
+                            idMx: '3',
+                            name: 'telefonos',
+                            key: false,
+                            partialKey: false,
+                            multivalued: true,
+                            children: [
+                                {
+                                    idMx: '4',
+                                    name: 'prefijo',
+                                    key: false,
+                                    partialKey: false,
+                                },
+                                {
+                                    idMx: '5',
+                                    name: 'numero',
+                                    key: false,
+                                    partialKey: false,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+            relations: [],
+        }
+
+        const sql = generateSQL(graph)
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Cliente (
+              id_cliente VARCHAR(40) PRIMARY KEY
+            );
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Cliente_telefonos (
+              id_cliente VARCHAR(40),
+              telefonos_prefijo VARCHAR(40),
+              telefonos_numero VARCHAR(40),
+              PRIMARY KEY (id_cliente, telefonos_prefijo, telefonos_numero)
+            );
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Cliente_telefonos
+            ADD CONSTRAINT FK_Cliente_telefonos_Cliente_owner
+            FOREIGN KEY (id_cliente)
+            REFERENCES Cliente(id_cliente)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
+            `,
+        )
+
+        expect(sql).not.toContain('telefonos VARCHAR(40)')
+    })
 })

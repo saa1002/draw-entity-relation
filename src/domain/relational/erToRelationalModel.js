@@ -1,5 +1,8 @@
 import { isMultivaluedAttribute } from "../er/attributes";
-import { projectAttributeTreeToColumns } from "./attributeProjection";
+import {
+    projectAttributeTreeToColumns,
+    projectMultivaluedAttributeToColumns,
+} from "./attributeProjection";
 import { normalizeIdentifier } from "./naming";
 
 // This function takes the graph and prepares the relations
@@ -156,8 +159,18 @@ function buildEntityTable(entity) {
     };
 }
 
-function getSimpleMultivaluedEntityAttributes(entity) {
+function getMultivaluedEntityAttributes(entity) {
     return (entity.attributes ?? []).filter(isMultivaluedAttribute);
+}
+
+function buildMultivaluedValueAttributes(attribute) {
+    return projectMultivaluedAttributeToColumns(attribute).map((column) => ({
+        name: column.name,
+        key: true,
+        partialKey: false,
+        notnull: true,
+        unique: false,
+    }));
 }
 
 function isMandatoryOneToOneMergeRelation(relation) {
@@ -222,7 +235,7 @@ function buildMultivaluedAttributeTables(entity, graph, tableMap) {
         tableMap,
     );
 
-    return getSimpleMultivaluedEntityAttributes(entity).map((attribute) => {
+    return getMultivaluedEntityAttributes(entity).map((attribute) => {
         const tableName = `${entity.name}_${attribute.name}`;
         const foreignKeyGroup = `${entity.idMx}_${attribute.idMx}_multivalued`;
         const foreignKeyConstraint = `${tableName}_${ownerReference.tableName}_owner`;
@@ -246,13 +259,7 @@ function buildMultivaluedAttributeTables(entity, graph, tableMap) {
             name: tableName,
             attributes: [
                 ...ownerKeyAttributes,
-                {
-                    name: attribute.name,
-                    key: true,
-                    partialKey: false,
-                    notnull: true,
-                    unique: false,
-                },
+                ...buildMultivaluedValueAttributes(attribute),
             ],
         };
     });
