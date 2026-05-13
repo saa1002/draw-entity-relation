@@ -800,6 +800,8 @@ export default function App(props) {
             }),
         );
 
+        syncAttributeVisualRepresentation(parentAttribute);
+
         syncAndPersistDiagramData();
         toast.success("Subatributo insertado");
     };
