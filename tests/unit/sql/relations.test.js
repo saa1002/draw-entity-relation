@@ -182,6 +182,69 @@ describe("1:N relation extraction", () => {
 
         expect(sql).not.toContain("telefono VARCHAR(40) PRIMARY KEY");
     });
+
+    test("should generate a separate table for a composite multivalued attribute on a 1:N related entity", () => {
+        oneNGraph.entities.at(1).attributes.push({
+            idMx: "attr-contact",
+            name: "contacto",
+            key: false,
+            partialKey: false,
+            multivalued: true,
+            children: [
+                {
+                    idMx: "attr-prefix",
+                    name: "prefijo",
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    idMx: "attr-number",
+                    name: "numero",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        const sql = generateSQL(oneNGraph);
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Entidad_1_contacto (
+              Atributo VARCHAR(40),
+              contacto_prefijo VARCHAR(40),
+              contacto_numero VARCHAR(40),
+              PRIMARY KEY (Atributo, contacto_prefijo, contacto_numero)
+            );
+            `,
+        );
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Entidad_1_contacto
+            ADD CONSTRAINT FK_Entidad_1_contacto_Entidad_1_owner
+            FOREIGN KEY (Atributo)
+            REFERENCES Entidad_1(Atributo)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
+            `,
+        );
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Entidad_1 (
+              Atributo VARCHAR(40) PRIMARY KEY,
+              Atributo_Relacion VARCHAR(40)
+            );
+            `,
+        );
+
+        expect(sql).not.toContain("contacto VARCHAR(40)");
+        expect(sql).not.toContain("contacto_prefijo VARCHAR(40) PRIMARY KEY");
+    });
 })
 
 describe("1:1 relation extraction", () => {
@@ -313,5 +376,62 @@ describe("1:1 relation extraction", () => {
         );
 
         expect(sql).not.toContain("REFERENCES Entidad(Atributo)");
+    });
+    
+    test("should reference the merged table for a composite multivalued attribute in a mandatory 1:1 relation", () => {
+        oneOneGraph.relations.at(0).side1.cardinality = "1:1";
+        oneOneGraph.relations.at(0).side2.cardinality = "1:1";
+
+        oneOneGraph.entities.at(0).attributes.push({
+            idMx: "attr-contact",
+            name: "contacto",
+            key: false,
+            partialKey: false,
+            multivalued: true,
+            children: [
+                {
+                    idMx: "attr-prefix",
+                    name: "prefijo",
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    idMx: "attr-number",
+                    name: "numero",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        const sql = generateSQL(oneOneGraph);
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Entidad_contacto (
+              Atributo_Relacion VARCHAR(40),
+              contacto_prefijo VARCHAR(40),
+              contacto_numero VARCHAR(40),
+              PRIMARY KEY (Atributo_Relacion, contacto_prefijo, contacto_numero)
+            );
+            `,
+        );
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Entidad_contacto
+            ADD CONSTRAINT FK_Entidad_contacto_Relacion_owner
+            FOREIGN KEY (Atributo_Relacion)
+            REFERENCES Relacion(Atributo_Relacion)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
+            `,
+        );
+
+        expect(sql).not.toContain("REFERENCES Entidad(Atributo)");
+        expect(sql).not.toContain("contacto_prefijo_Relacion VARCHAR(40)");
+        expect(sql).not.toContain("contacto_numero_Relacion VARCHAR(40)");
     });
 })
