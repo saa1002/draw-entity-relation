@@ -393,7 +393,7 @@ test('toggle simple multivalued attributes and persist across reloads', async ({
 
     await expect(
         page.getByRole('button', { name: 'Añadir subatributo' }),
-    ).toHaveCount(0);
+    ).toBeVisible();
 
     await page.reload();
 
@@ -499,7 +499,7 @@ test('toggle composite multivalued attributes and persist across reloads', async
 
     await expect(
         page.getByRole('button', { name: 'Añadir subatributo' }),
-    ).toHaveCount(0);
+    ).toBeVisible();
 
     await page.reload();
 
@@ -545,4 +545,94 @@ test('toggle composite multivalued attributes and persist across reloads', async
             hasMultivaluedFlag: false,
             childNames: ['prefijo', 'numero'],
         });
+});
+
+test('add child attributes to a simple multivalued entity attribute', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+
+    await addAttributeToSelectedEntity(page);
+    await renameElement(page, 'Atributo', 'id');
+
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+    await renameElement(page, 'Atributo', 'telefonos');
+
+    await page.getByText('telefonos', { exact: true }).click();
+    await page.getByRole('button', { name: 'Marcar multivaluado' }).click();
+
+    await expect(
+        page.getByText('Atributo marcado como multivaluado').last(),
+    ).toBeVisible();
+
+    await expect(
+        page.getByRole('button', { name: 'Añadir subatributo' }),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+
+    await expect(page.getByText('Subatributo insertado').last()).toBeVisible();
+
+    await renameElement(page, 'Atributo', 'prefijo');
+
+    await page.getByText('telefonos', { exact: true }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+
+    await renameElement(page, 'Atributo', 'numero');
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
+        name: 'telefonos',
+        key: false,
+        partialKey: false,
+        multivalued: true,
+        children: [
+            {
+                name: 'prefijo',
+                key: false,
+                partialKey: false,
+            },
+            {
+                name: 'numero',
+                key: false,
+                partialKey: false,
+            },
+        ],
+    });
+
+    await page.reload();
+
+    await expect(page.getByText('telefonos', { exact: true })).toBeVisible();
+    await expect(page.getByText('prefijo', { exact: true })).toBeVisible();
+    await expect(page.getByText('numero', { exact: true })).toBeVisible();
+
+    await page.getByText('telefonos', { exact: true }).click();
+
+    await expect(
+        page.getByRole('button', { name: 'Quitar multivaluado' }),
+    ).toBeVisible();
+
+    await expect(
+        page.getByRole('button', { name: 'Añadir subatributo' }),
+    ).toBeVisible();
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
+        name: 'telefonos',
+        key: false,
+        partialKey: false,
+        multivalued: true,
+        children: [
+            {
+                name: 'prefijo',
+                key: false,
+                partialKey: false,
+            },
+            {
+                name: 'numero',
+                key: false,
+                partialKey: false,
+            },
+        ],
+    });
 });

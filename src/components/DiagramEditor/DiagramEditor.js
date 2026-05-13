@@ -713,6 +713,21 @@ export default function App(props) {
         toast.success("Atributo insertado");
     };
 
+    const canAddChildAttributeToSelectedAttribute = (attributeOwner) => {
+        const { attribute, depth } = attributeOwner;
+
+        if (!isMultivaluedAttribute(attribute)) {
+            return true;
+        }
+
+        return (
+            isEntityAttributeOwner(attributeOwner) &&
+            depth === 0 &&
+            !attribute.key &&
+            !attribute.partialKey
+        );
+    };
+
     const addChildAttribute = () => {
         if (!selected?.style?.includes("shape=ellipse")) return;
 
@@ -724,12 +739,14 @@ export default function App(props) {
         if (!attributeOwner) return;
 
         const parentAttribute = attributeOwner.attribute;
-        if (isMultivaluedAttribute(parentAttribute)) {
+
+        if (!canAddChildAttributeToSelectedAttribute(attributeOwner)) {
             toast.error(
-                "Los atributos multivaluados compuestos se implementarán más adelante.",
+                "Solo se pueden crear atributos multivaluados compuestos en atributos top-level de entidad.",
             );
             return;
         }
+
         const childAttributes = parentAttribute.children ?? [];
 
         const semantics = {
@@ -1142,7 +1159,7 @@ export default function App(props) {
             return;
         }
 
-        if (isMultivaluedAttribute(selectedAttributeOwner.attribute)) {
+        if (!canAddChildAttributeToSelectedAttribute(selectedAttributeOwner)) {
             return;
         }
 
