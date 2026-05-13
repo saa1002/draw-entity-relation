@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
     addChildAttributeToAttribute,
+    convertSubattributeToSimpleAttributeById,
     createAttribute,
     isCompositeMultivaluedAttribute,
     isMultivaluedAttribute,
@@ -372,6 +373,163 @@ describe("Hierarchical attribute helpers", () => {
             offsetY: 0,
         })
         expect(owner.attributes).toEqual([result.promotedAttribute])
+    })
+
+    test("convertSubattributeToSimpleAttributeById should detach one child when the composite keeps enough children", () => {
+        const owner = {
+            attributes: [
+                {
+                    idMx: "attr-address",
+                    name: "address",
+                    offsetX: 10,
+                    offsetY: 20,
+                    children: [
+                        {
+                            idMx: "attr-street",
+                            name: "street",
+                            offsetX: 100,
+                            offsetY: -30,
+                        },
+                        {
+                            idMx: "attr-city",
+                            name: "city",
+                            offsetX: 100,
+                            offsetY: 10,
+                        },
+                        {
+                            idMx: "attr-zip",
+                            name: "zip",
+                            offsetX: 100,
+                            offsetY: 50,
+                        },
+                    ],
+                },
+                {
+                    idMx: "attr-email",
+                    name: "email",
+                },
+            ],
+        }
+
+        const result = convertSubattributeToSimpleAttributeById(
+            owner,
+            "attr-city",
+        )
+
+        expect(result.removedCompositeAttribute).toBe(null)
+        expect(result.convertedAttributes).toEqual([
+            {
+                idMx: "attr-city",
+                name: "city",
+                key: false,
+                partialKey: false,
+                offsetX: 110,
+                offsetY: 30,
+            },
+        ])
+
+        expect(owner.attributes.map((attribute) => attribute.idMx)).toEqual([
+            "attr-address",
+            "attr-city",
+            "attr-email",
+        ])
+
+        expect(owner.attributes[0].children.map((attribute) => attribute.idMx))
+            .toEqual(["attr-street", "attr-zip"])
+    })
+
+    test("convertSubattributeToSimpleAttributeById should remove two-child composite groups", () => {
+        const owner = {
+            attributes: [
+                {
+                    idMx: "attr-code",
+                    name: "code",
+                    key: true,
+                    partialKey: false,
+                    offsetX: 20,
+                    offsetY: 30,
+                    cell: ["attr-code", "edge-code"],
+                    children: [
+                        {
+                            idMx: "attr-series",
+                            name: "series",
+                            offsetX: 100,
+                            offsetY: -20,
+                        },
+                        {
+                            idMx: "attr-number",
+                            name: "number",
+                            offsetX: 100,
+                            offsetY: 20,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        const result = convertSubattributeToSimpleAttributeById(
+            owner,
+            "attr-series",
+        )
+
+        expect(result.removedCompositeAttribute).toEqual({
+            idMx: "attr-code",
+            name: "code",
+            key: true,
+            partialKey: false,
+            offsetX: 20,
+            offsetY: 30,
+            cell: ["attr-code", "edge-code"],
+        })
+
+        expect(result.convertedAttributes).toEqual([
+            {
+                idMx: "attr-series",
+                name: "series",
+                key: true,
+                partialKey: false,
+                offsetX: 120,
+                offsetY: 10,
+            },
+            {
+                idMx: "attr-number",
+                name: "number",
+                key: true,
+                partialKey: false,
+                offsetX: 120,
+                offsetY: 50,
+            },
+        ])
+
+        expect(owner.attributes).toEqual(result.convertedAttributes)
+    })
+
+    test("convertSubattributeToSimpleAttributeById should do nothing for top-level attributes", () => {
+        const owner = {
+            attributes: [
+                {
+                    idMx: "attr-name",
+                    name: "name",
+                },
+            ],
+        }
+
+        const result = convertSubattributeToSimpleAttributeById(
+            owner,
+            "attr-name",
+        )
+
+        expect(result).toEqual({
+            convertedAttributes: [],
+            removedCompositeAttribute: null,
+        })
+
+        expect(owner.attributes).toEqual([
+            {
+                idMx: "attr-name",
+                name: "name",
+            },
+        ])
     })
 
     test("promoted attributes should inherit composite attribute semantics", () => {

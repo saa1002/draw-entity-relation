@@ -366,6 +366,91 @@ export const removeAttributeFromOwnerTreeByIdWithPromotion = (
     );
 };
 
+const createEmptySubattributeConversionResult = () => ({
+    convertedAttributes: [],
+    removedCompositeAttribute: null,
+});
+
+const convertSubattributeToSimpleAttributeInListById = (
+    attributes,
+    attributeId,
+) => {
+    for (let index = 0; index < getAttributes(attributes).length; index += 1) {
+        const attribute = attributes[index];
+
+        if (!Array.isArray(attribute.children)) {
+            continue;
+        }
+
+        const childIndex = findAttributeIndexById(
+            attribute.children,
+            attributeId,
+        );
+
+        if (childIndex !== -1) {
+            if (attribute.children.length <= 2) {
+                const convertedAttributes = attribute.children.map(
+                    (childAttribute) =>
+                        inheritCompositeAttributeSemantics(
+                            childAttribute,
+                            attribute,
+                        ),
+                );
+
+                attributes.splice(index, 1, ...convertedAttributes);
+
+                return {
+                    convertedAttributes,
+                    removedCompositeAttribute:
+                        createRemovedCompositeAttributeSnapshot(attribute),
+                };
+            }
+
+            const [convertedAttribute] = attribute.children.splice(
+                childIndex,
+                1,
+            );
+
+            const promotedAttribute = inheritCompositeAttributeSemantics(
+                convertedAttribute,
+                attribute,
+            );
+
+            attributes.splice(index + 1, 0, promotedAttribute);
+
+            return {
+                convertedAttributes: [promotedAttribute],
+                removedCompositeAttribute: null,
+            };
+        }
+
+        const conversionResult = convertSubattributeToSimpleAttributeInListById(
+            attribute.children,
+            attributeId,
+        );
+
+        if (conversionResult.convertedAttributes.length > 0) {
+            return conversionResult;
+        }
+    }
+
+    return createEmptySubattributeConversionResult();
+};
+
+export const convertSubattributeToSimpleAttributeById = (
+    owner,
+    attributeId,
+) => {
+    if (!owner) {
+        return createEmptySubattributeConversionResult();
+    }
+
+    return convertSubattributeToSimpleAttributeInListById(
+        ensureOwnerAttributes(owner),
+        attributeId,
+    );
+};
+
 export const removeAttributeFromOwnerTreeById = (owner, attributeId) =>
     removeAttributeFromOwnerTreeByIdWithPromotion(owner, attributeId)
         .removedAttribute;
