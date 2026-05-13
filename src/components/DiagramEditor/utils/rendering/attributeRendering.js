@@ -10,6 +10,7 @@ import {
     ER_FONT_FAMILY,
     ER_FONT_SIZE,
     ER_STROKE,
+    getAttributeDimensions,
 } from "../mxStyles/diagramStyles";
 
 export const DISCRIMINANT_UNDERLINE_SUFFIX = "__discriminant_underline";
@@ -18,6 +19,25 @@ export const MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX = "__multivalued_decorator";
 const DISCRIMINANT_UNDERLINE_MARGIN_X = 16;
 const DISCRIMINANT_UNDERLINE_OFFSET_Y = 12;
 const MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET = 4;
+
+export const COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE = 4;
+
+export const isCompositeAttributeForRendering = (attribute) =>
+    getAttributeChildren(attribute).length > 0;
+
+export const getAttributeDisplayValue = (attribute) =>
+    isCompositeAttributeForRendering(attribute) ? "" : attribute?.name;
+
+export const getAttributeRenderDimensions = (attribute, getDimensions) => {
+    if (isCompositeAttributeForRendering(attribute)) {
+        return {
+            width: COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE,
+            height: COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE,
+        };
+    }
+
+    return getDimensions(attribute?.name);
+};
 
 export const getDiscriminantUnderlineId = (attributeId) =>
     `${attributeId}${DISCRIMINANT_UNDERLINE_SUFFIX}`;
@@ -52,6 +72,24 @@ export const getAttributeStyleString = (
         `fontSize=${ER_FONT_SIZE}`,
         `fontFamily=${ER_FONT_FAMILY}`,
     ].join(";");
+
+    if (isCompositeAttributeForRendering(attribute)) {
+        return [
+            "shape=ellipse",
+            "perimeter=ellipsePerimeter",
+            "align=center",
+            "verticalAlign=middle",
+            "spacing=0",
+            "whiteSpace=wrap",
+            "overflow=hidden",
+            "resizable=0",
+            `fillColor=${ER_FILL}`,
+            `strokeColor=${ER_STROKE}`,
+            "strokeWidth=1",
+            "fontSize=0",
+            "fontColor=none",
+        ].join(";");
+    }
 
     if (attribute?.key || inheritedKey) {
         return `${baseStyle};keyAttrStyle`;
@@ -314,12 +352,54 @@ export const createAttributeRenderingHelpers = ({
         const attributeCell = accessCell(attribute.idMx);
 
         if (attributeCell) {
-            graph
-                .getModel()
-                .setStyle(
-                    attributeCell,
-                    getAttributeStyleString(attribute, { inheritedKey }),
-                );
+            const model = graph.getModel();
+
+            model.beginUpdate();
+
+            try {
+                const displayValue = getAttributeDisplayValue(attribute);
+
+                if (typeof model.setValue === "function") {
+                    model.setValue(attributeCell, displayValue);
+                } else {
+                    attributeCell.value = displayValue;
+                }
+
+                if (attributeCell.geometry) {
+                    const { width, height } = getAttributeRenderDimensions(
+                        attribute,
+                        getAttributeDimensions,
+                    );
+
+                    const geometry =
+                        typeof attributeCell.geometry.clone === "function"
+                            ? attributeCell.geometry.clone()
+                            : { ...attributeCell.geometry };
+
+                    geometry.x += (geometry.width - width) / 2;
+                    geometry.y += (geometry.height - height) / 2;
+                    geometry.width = width;
+                    geometry.height = height;
+
+                    if (typeof model.setGeometry === "function") {
+                        model.setGeometry(attributeCell, geometry);
+                    } else {
+                        attributeCell.geometry = geometry;
+                    }
+                }
+
+                const style = getAttributeStyleString(attribute, {
+                    inheritedKey,
+                });
+
+                if (typeof model.setStyle === "function") {
+                    model.setStyle(attributeCell, style);
+                } else {
+                    attributeCell.style = style;
+                }
+            } finally {
+                model.endUpdate();
+            }
 
             if (isMultivaluedAttribute(attribute)) {
                 ensureMultivaluedAttributeDecorator(attributeCell);
@@ -332,6 +412,8 @@ export const createAttributeRenderingHelpers = ({
             } else {
                 removeDiscriminantUnderline(attribute.idMx);
             }
+
+            graph.refresh(attributeCell);
         }
 
         getAttributeChildren(attribute).forEach((childAttribute) => {

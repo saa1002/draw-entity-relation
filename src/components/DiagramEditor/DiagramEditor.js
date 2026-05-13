@@ -40,7 +40,6 @@ import {
     getLastAttribute,
     getWeakAndStrongSidesForRelation,
     getWeakSideOfIdentifyingRelation,
-    isCompositeAttribute,
     isEntityAttributeOwner,
     isFirstAttributeForOwner,
     isIdentifyingRelation,
@@ -54,7 +53,6 @@ import {
     relationHasBothEntitySides,
     relationInvolvesEntity,
     removeAllAttributesFromOwner,
-    removeAttributeFromOwnerById,
     removeAttributeFromOwnerTreeByIdWithPromotion,
     toggleExclusivePartialKeyAttribute,
     toggleExclusivePrimaryKeyAttribute,
@@ -83,6 +81,8 @@ import {
 } from "./utils/persistence/filePersistence";
 import {
     createAttributeRenderingHelpers,
+    getAttributeDisplayValue,
+    getAttributeRenderDimensions,
     getAttributeStyleString,
 } from "./utils/rendering/attributeRendering";
 import {
@@ -608,17 +608,26 @@ export default function App(props) {
     }) => {
         const newX = source.geometry.x + offsetX;
         const newY = source.geometry.y + offsetY;
-        const { width, height } = getAttributeDimensions(name);
+
+        const attributeForRendering = {
+            name,
+            ...semantics,
+        };
+
+        const { width, height } = getAttributeRenderDimensions(
+            attributeForRendering,
+            getAttributeDimensions,
+        );
 
         const target = graph.insertVertex(
             null,
             null,
-            name,
+            getAttributeDisplayValue(attributeForRendering),
             newX,
             newY,
             width,
             height,
-            getAttributeStyleString(semantics),
+            getAttributeStyleString(attributeForRendering),
         );
 
         const edge = graph.insertEdge(source, null, null, source, target);
@@ -2086,6 +2095,8 @@ export default function App(props) {
 
             const { owner } = attributeOwner;
 
+            const parentAttribute = attributeOwner.parent;
+
             const {
                 removedAttribute,
                 removedCompositeAttribute,
@@ -2103,6 +2114,11 @@ export default function App(props) {
 
             reparentPromotedAttributeCell(promotedAttribute);
 
+            if (!promotedAttribute && parentAttribute) {
+                syncAttributeVisualRepresentation(parentAttribute);
+            }
+
+            refreshGraph();
             syncAndPersistDiagramData();
         }
 

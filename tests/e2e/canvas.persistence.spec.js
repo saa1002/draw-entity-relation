@@ -4,6 +4,8 @@ import {
     addEntity,
     addRelation,
     configureRelationSides,
+    enableMxGraphDebug,
+    expectAttributeCellVisible,
     expectSavedDiagramState,
     getSavedDiagram,
 } from '../helpers/canvas';
@@ -14,6 +16,10 @@ import {
     resetDiagram,
     seedSavedDiagram,
 } from '../helpers/persistence';
+
+test.beforeEach(async ({ page }) => {
+    await enableMxGraphDebug(page);
+});
 
 test('relation configuration persists after accept and survives reload', async ({ page }) => {
     await page.goto('/');
@@ -304,7 +310,8 @@ test('export/import round-trip preserves nested attribute trees', async ({ page 
     await expect(page.locator('.mxgraph-drawing-container')).toBeVisible();
 
     await expect(page.getByText('Documento', { exact: true })).toBeVisible();
-    await expect(page.getByText('codigo', { exact: true })).toBeVisible();
+    await expect(page.getByText('codigo', { exact: true })).toHaveCount(0);
+    await expectAttributeCellVisible(page, 'Documento', 'codigo', true);
     await expect(page.getByText('serie', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
     await expect(page.getByText('descripcion', { exact: true })).toBeVisible();
@@ -334,7 +341,8 @@ test('export/import round-trip preserves nested attribute trees', async ({ page 
     await importDiagram(page, exportedBefore);
 
     await expect(page.getByText('Documento', { exact: true })).toBeVisible();
-    await expect(page.getByText('codigo', { exact: true })).toBeVisible();
+    await expect(page.getByText('codigo', { exact: true })).toHaveCount(0);
+    await expectAttributeCellVisible(page, 'Documento', 'codigo', true);
     await expect(page.getByText('serie', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
     await expect(page.getByText('descripcion', { exact: true })).toBeVisible();

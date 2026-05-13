@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'vitest'
 
-import { createAttributeRenderingHelpers, getMultivaluedAttributeDecoratorId, } from '../../../src/components/DiagramEditor/utils/rendering/attributeRendering'
+import { COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE,
+getAttributeDisplayValue,
+getAttributeRenderDimensions,
+getAttributeStyleString,createAttributeRenderingHelpers, getMultivaluedAttributeDecoratorId, } from '../../../src/components/DiagramEditor/utils/rendering/attributeRendering'
 
 const createCell = (
     id,
@@ -89,13 +92,20 @@ describe('attribute rendering helpers', () => {
             multivalued: true,
         })
 
+        expect(cells['attr-phones'].geometry).toMatchObject({
+            x: 110,
+            y: 123,
+            width: 70,
+            height: 34,
+        })
+
         expect(cells[decoratorId]).toMatchObject({
             id: decoratorId,
             geometry: {
-                x: 104,
-                y: 124,
-                width: 82,
-                height: 32,
+                x: 114,
+                y: 127,
+                width: 62,
+                height: 26,
             },
             style: 'multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0',
         })
@@ -242,7 +252,8 @@ describe('attribute rendering helpers', () => {
             ],
         })
 
-        expect(cells['attr-code'].style).toContain('keyAttrStyle')
+        expect(cells['attr-code'].style).not.toContain('keyAttrStyle')
+        expect(cells['attr-code'].style).toContain('fontSize=0')
         expect(cells['attr-series'].style).toContain('keyAttrStyle')
         expect(cells['attr-number'].style).toContain('keyAttrStyle')
     })
@@ -270,5 +281,88 @@ describe('attribute rendering helpers', () => {
 
         expect(cells['attr-code'].style).not.toContain('keyAttrStyle')
         expect(cells['attr-series'].style).not.toContain('keyAttrStyle')
+    })
+
+    test('composite attributes should render as branch connectors without labels', () => {
+        const attribute = {
+            idMx: 'attr-address',
+            name: 'address',
+            children: [
+                {
+                    idMx: 'attr-street',
+                    name: 'street',
+                },
+            ],
+        }
+
+        expect(getAttributeDisplayValue(attribute)).toBe('')
+
+        expect(
+            getAttributeRenderDimensions(attribute, () => ({
+                width: 100,
+                height: 40,
+            })),
+        ).toEqual({
+            width: COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE,
+            height: COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE,
+        })
+
+        expect(getAttributeStyleString(attribute)).toContain('fontSize=0')
+        expect(getAttributeStyleString(attribute)).not.toContain(
+            'keyAttrStyle',
+        )
+    })
+
+    test('simple attributes should keep their visible label and normal dimensions', () => {
+        const attribute = {
+            idMx: 'attr-name',
+            name: 'name',
+        }
+
+        expect(getAttributeDisplayValue(attribute)).toBe('name')
+
+        expect(
+            getAttributeRenderDimensions(attribute, () => ({
+                width: 100,
+                height: 40,
+            })),
+        ).toEqual({
+            width: 100,
+            height: 40,
+        })
+    })
+
+    test('syncs composite attributes as small unlabeled connector cells', () => {
+        const cells = {
+            'attr-address': createCell('attr-address', {
+                x: 100,
+                y: 120,
+                width: 90,
+                height: 40,
+            }),
+            'attr-street': createCell('attr-street'),
+        }
+
+        const helpers = createHelpers(cells)
+
+        helpers.syncAttributeVisualRepresentation({
+            idMx: 'attr-address',
+            name: 'address',
+            children: [
+                {
+                    idMx: 'attr-street',
+                    name: 'street',
+                },
+            ],
+        })
+
+        expect(cells['attr-address'].value).toBe('')
+        expect(cells['attr-address'].geometry).toMatchObject({
+            x: 100 + (90 - COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE) / 2,
+            y: 120 + (40 - COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE) / 2,
+            width: COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE,
+            height: COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE,
+        })
+        expect(cells['attr-address'].style).toContain('fontSize=0')
     })
 })

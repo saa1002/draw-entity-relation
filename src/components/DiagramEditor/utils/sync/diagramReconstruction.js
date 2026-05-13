@@ -12,7 +12,11 @@ import {
     getRelationDimensions,
     getRelationStyleString,
 } from "../mxStyles/diagramStyles";
-import { getAttributeStyleString } from "../rendering/attributeRendering";
+import {
+    getAttributeDisplayValue,
+    getAttributeRenderDimensions,
+    getAttributeStyleString,
+} from "../rendering/attributeRendering";
 
 export const reconstructDiagramGraph = ({
     graph,
@@ -27,18 +31,27 @@ export const reconstructDiagramGraph = ({
 }) => {
     if (!graph || !diagram) return;
 
-    const recreateAttribute = (attribute, source) => {
-        const { width, height } = getAttributeDimensions(attribute.name);
+    const recreateAttribute = (
+        attribute,
+        source,
+        { inheritedKey = false } = {},
+    ) => {
+        const effectiveKey = inheritedKey || attribute?.key === true;
+
+        const { width, height } = getAttributeRenderDimensions(
+            attribute,
+            getAttributeDimensions,
+        );
 
         const target = graph.insertVertex(
             null,
             attribute.idMx,
-            attribute.name,
+            getAttributeDisplayValue(attribute),
             attribute.position.x,
             attribute.position.y,
             width,
             height,
-            getAttributeStyleString(attribute),
+            getAttributeStyleString(attribute, { inheritedKey }),
         );
 
         const storedEdgeId = attribute.cell?.at(1) ?? null;
@@ -64,7 +77,9 @@ export const reconstructDiagramGraph = ({
         graph.orderCells(true, [edge]);
 
         for (const childAttribute of getAttributeChildren(attribute)) {
-            recreateAttribute(childAttribute, target);
+            recreateAttribute(childAttribute, target, {
+                inheritedKey: effectiveKey,
+            });
         }
     };
 

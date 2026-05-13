@@ -287,3 +287,103 @@ export async function renameElement(page, currentName, newName) {
 
     await page.locator('svg').click({ position: { x: 20, y: 20 } });
 }
+
+export async function enableMxGraphDebug(page) {
+    await page.addInitScript(() => {
+        window.__PW__ = true;
+    });
+}
+
+function findAttributeByName(attributes = [], attributeName) {
+    for (const attribute of attributes) {
+        if (attribute.name === attributeName) {
+            return attribute;
+        }
+
+        const childAttribute = findAttributeByName(
+            attribute.children ?? [],
+            attributeName,
+        );
+
+        if (childAttribute) {
+            return childAttribute;
+        }
+    }
+
+    return null;
+}
+
+export async function getSavedAttribute(page, ownerName, attributeName) {
+    const diagram = await getSavedDiagram(page);
+
+    const owner = [
+        ...(diagram.entities ?? []),
+        ...(diagram.relations ?? []),
+    ].find((candidate) => candidate.name === ownerName);
+
+    return findAttributeByName(owner?.attributes ?? [], attributeName);
+}
+
+export async function selectAttributeByName(page, ownerName, attributeName) {
+    await expect
+        .poll(async () => {
+            const attribute = await getSavedAttribute(
+                page,
+                ownerName,
+                attributeName,
+            );
+
+            return attribute?.idMx ?? null;
+        })
+        .not.toBeNull();
+
+    const attribute = await getSavedAttribute(
+        page,
+        ownerName,
+        attributeName,
+    );
+
+    await page.waitForFunction((attributeId) => {
+        const graph = window.__DEBUG_GRAPH__;
+        return Boolean(graph?.getModel?.()?.getCell?.(attributeId));
+    }, attribute.idMx);
+
+    await page.evaluate((attributeId) => {
+        const graph = window.__DEBUG_GRAPH__;
+        const cell = graph.getModel().getCell(attributeId);
+
+        graph.setSelectionCell(cell);
+    }, attribute.idMx);
+}
+
+export async function expectAttributeCellVisible(
+    page,
+    ownerName,
+    attributeName,
+    expectedVisible = true,
+) {
+    await expect
+        .poll(async () => {
+            const attribute = await getSavedAttribute(
+                page,
+                ownerName,
+                attributeName,
+            );
+
+            if (!attribute?.idMx) {
+                return null;
+            }
+
+            return page.evaluate((attributeId) => {
+                const graph = window.__DEBUG_GRAPH__;
+                const cell = graph?.getModel?.()?.getCell?.(attributeId);
+
+                if (!cell) {
+                    return null;
+                }
+
+                return cell.visible !== false;
+            }, attribute.idMx);
+        })
+        .toBe(expectedVisible);
+}

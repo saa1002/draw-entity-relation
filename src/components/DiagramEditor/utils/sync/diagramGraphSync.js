@@ -1,4 +1,7 @@
-import { getAttributeChildren } from "../../../../domain/er";
+import {
+    getAttributeChildren,
+    isCompositeAttribute,
+} from "../../../../domain/er";
 
 const hasGraphCell = (graph, idMx) =>
     Object.prototype.hasOwnProperty.call(graph.model.cells, idMx);
@@ -37,7 +40,15 @@ const syncAttributeFromGraph = ({
 
     if (!attributeCell || !edgeCell) return;
 
-    attribute.name = attributeCell.value;
+    const shouldSyncAttributeName =
+        !isCompositeAttribute(attribute) ||
+        (attributeCell.value !== "" &&
+            attributeCell.value !== null &&
+            attributeCell.value !== undefined);
+
+    if (shouldSyncAttributeName) {
+        attribute.name = attributeCell.value;
+    }
 
     updateAttributePosition({
         attribute,

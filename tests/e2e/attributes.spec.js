@@ -3,8 +3,11 @@ import { test, expect } from '@playwright/test';
 import {
     addAttributeToSelectedEntity,
     addEntity,
+    enableMxGraphDebug,
+    expectAttributeCellVisible,
     expectSavedEntityAttributeToMatch,
     getSavedEntity,
+    selectAttributeByName,
     selectEntity,
     renameElement,
 } from '../helpers/canvas';
@@ -16,6 +19,10 @@ const compactSQL = (sql) => sql.replace(/\s+/g, '');
 const expectSQLToContain = (actual, expectedFragment) => {
     expect(compactSQL(actual)).toContain(compactSQL(expectedFragment));
 };
+
+test.beforeEach(async ({ page }) => {
+    await enableMxGraphDebug(page);
+});
 
 test('add attributes to an entity', async ({ page }) => {
     await page.goto('/');
@@ -221,7 +228,8 @@ test('hide/show attributes also affects nested attribute trees', async ({ page }
 
     await page.goto('/');
 
-    await expect(page.getByText('codigo', { exact: true })).toBeVisible();
+    await expect(page.getByText('codigo', { exact: true })).toHaveCount(0);
+    await expectAttributeCellVisible(page, 'Documento', 'codigo', true);
     await expect(page.getByText('serie', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
 
@@ -231,7 +239,8 @@ test('hide/show attributes also affects nested attribute trees', async ({ page }
         .getByRole('button', { name: 'Ocultar atributos' })
         .click();
 
-    await expect(page.getByText('codigo', { exact: true })).toBeHidden();
+    await expect(page.getByText('codigo', { exact: true })).toHaveCount(0);
+    await expectAttributeCellVisible(page, 'Documento', 'codigo', false);
     await expect(page.getByText('serie', { exact: true })).toBeHidden();
     await expect(page.getByText('numero', { exact: true })).toBeHidden();
 
@@ -239,7 +248,8 @@ test('hide/show attributes also affects nested attribute trees', async ({ page }
         .getByRole('button', { name: 'Mostrar atributos' })
         .click();
 
-    await expect(page.getByText('codigo', { exact: true })).toBeVisible();
+    await expect(page.getByText('codigo', { exact: true })).toHaveCount(0);
+    await expectAttributeCellVisible(page, 'Documento', 'codigo', true);
     await expect(page.getByText('serie', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
 });
@@ -286,7 +296,7 @@ test('create a composite attribute with multiple child attributes from the edito
     await page.getByRole('button', { name: 'Añadir subatributo' }).click();
     await renameElement(page, 'Atributo', 'serie');
 
-    await page.getByText('codigo', { exact: true }).click();
+    await selectAttributeByName(page, 'Entidad', 'codigo');
 
     await page.getByRole('button', { name: 'Añadir subatributo' }).click();
     await renameElement(page, 'Atributo', 'numero');
@@ -314,7 +324,8 @@ test('create a composite attribute with multiple child attributes from the edito
             ],
         });
 
-    await expect(page.getByText('codigo', { exact: true })).toBeVisible();
+    await expect(page.getByText('codigo', { exact: true })).toHaveCount(0);
+    await expectAttributeCellVisible(page, 'Entidad', 'codigo', true);
     await expect(page.getByText('serie', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
 });
@@ -468,12 +479,12 @@ test('toggle composite multivalued attributes and persist across reloads', async
 
     await renameElement(page, 'Atributo', 'prefijo');
 
-    await page.getByText('contacto', { exact: true }).click();
+    await selectAttributeByName(page, 'Entidad', 'contacto');
     await page.getByRole('button', { name: 'Añadir subatributo' }).click();
 
     await renameElement(page, 'Atributo', 'numero');
 
-    await page.getByText('contacto', { exact: true }).click();
+    await selectAttributeByName(page, 'Entidad', 'contacto');
     await page.getByRole('button', { name: 'Marcar multivaluado' }).click();
 
     await expect(
@@ -509,11 +520,12 @@ test('toggle composite multivalued attributes and persist across reloads', async
 
     await page.reload();
 
-    await expect(page.getByText('contacto', { exact: true })).toBeVisible();
+    await expect(page.getByText('contacto', { exact: true })).toHaveCount(0);
+    await expectAttributeCellVisible(page, 'Entidad', 'contacto', true);
     await expect(page.getByText('prefijo', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
 
-    await page.getByText('contacto', { exact: true }).click();
+    await selectAttributeByName(page, 'Entidad', 'contacto');
 
     await expect(
         page.getByRole('button', { name: 'Quitar multivaluado' }),
@@ -583,7 +595,7 @@ test('add child attributes to a simple multivalued entity attribute', async ({ p
 
     await renameElement(page, 'Atributo', 'prefijo');
 
-    await page.getByText('telefonos', { exact: true }).click();
+    await selectAttributeByName(page, 'Entidad', 'telefonos');
     await page.getByRole('button', { name: 'Añadir subatributo' }).click();
 
     await renameElement(page, 'Atributo', 'numero');
@@ -609,11 +621,12 @@ test('add child attributes to a simple multivalued entity attribute', async ({ p
 
     await page.reload();
 
-    await expect(page.getByText('telefonos', { exact: true })).toBeVisible();
+    await expect(page.getByText('telefonos', { exact: true })).toHaveCount(0);
+    await expectAttributeCellVisible(page, 'Entidad', 'telefonos', true);
     await expect(page.getByText('prefijo', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
 
-    await page.getByText('telefonos', { exact: true }).click();
+    await selectAttributeByName(page, 'Entidad', 'telefonos');
 
     await expect(
         page.getByRole('button', { name: 'Quitar multivaluado' }),
@@ -666,7 +679,7 @@ test('generate SQL for an editor-created composite multivalued attribute', async
     await page.getByRole('button', { name: 'Añadir subatributo' }).click();
     await renameElement(page, 'Atributo', 'prefijo');
 
-    await page.getByText('telefonos', { exact: true }).click();
+    await selectAttributeByName(page, 'Entidad', 'telefonos');
     await page.getByRole('button', { name: 'Añadir subatributo' }).click();
     await renameElement(page, 'Atributo', 'numero');
 
