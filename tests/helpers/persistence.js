@@ -112,3 +112,32 @@ export async function seedSavedDiagram(page, diagram) {
         );
     }, diagram);
 }
+
+export async function exportCurrentSqlScript(page) {
+    await mockSaveFilePicker(page);
+
+    const previousExportsCount = await page.evaluate(
+        () => window.__E2E_SAVED_FILES__.length,
+    );
+
+    await page.getByRole('button', { name: 'Generar SQL' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(dialog.getByText('Generación script SQL')).toBeVisible();
+
+    const acceptButton = dialog.getByRole('button', { name: 'Aceptar' });
+
+    await expect(acceptButton).toBeEnabled();
+
+    await acceptButton.click();
+
+    await page.waitForFunction(
+        (count) => window.__E2E_SAVED_FILES__.length > count,
+        previousExportsCount,
+    );
+
+    return page.evaluate(
+        () => window.__E2E_SAVED_FILES__.at(-1).content,
+    );
+}

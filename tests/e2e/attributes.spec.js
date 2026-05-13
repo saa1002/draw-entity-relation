@@ -9,7 +9,13 @@ import {
     renameElement,
 } from '../helpers/canvas';
 
-import { seedSavedDiagram } from '../helpers/persistence';
+import { exportCurrentSqlScript, seedSavedDiagram } from '../helpers/persistence';
+
+const compactSQL = (sql) => sql.replace(/\s+/g, '');
+
+const expectSQLToContain = (actual, expectedFragment) => {
+    expect(compactSQL(actual)).toContain(compactSQL(expectedFragment));
+};
 
 test('add attributes to an entity', async ({ page }) => {
     await page.goto('/');
@@ -635,4 +641,71 @@ test('add child attributes to a simple multivalued entity attribute', async ({ p
             },
         ],
     });
+});
+
+test('generate SQL for an editor-created composite multivalued attribute', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+
+    await addAttributeToSelectedEntity(page);
+    await renameElement(page, 'Atributo', 'id');
+
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+    await renameElement(page, 'Atributo', 'telefonos');
+
+    await page.getByText('telefonos', { exact: true }).click();
+    await page.getByRole('button', { name: 'Marcar multivaluado' }).click();
+
+    await expect(
+        page.getByText('Atributo marcado como multivaluado').last(),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await renameElement(page, 'Atributo', 'prefijo');
+
+    await page.getByText('telefonos', { exact: true }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await renameElement(page, 'Atributo', 'numero');
+
+    const sql = await exportCurrentSqlScript(page);
+
+    expectSQLToContain(
+        sql,
+        `
+        CREATE TABLE Entidad (
+          id VARCHAR(40) PRIMARY KEY
+        );
+        `,
+    );
+
+    expectSQLToContain(
+        sql,
+        `
+        CREATE TABLE Entidad_telefonos (
+          id VARCHAR(40),
+          telefonos_prefijo VARCHAR(40),
+          telefonos_numero VARCHAR(40),
+          PRIMARY KEY (id, telefonos_prefijo, telefonos_numero)
+        );
+        `,
+    );
+
+    expectSQLToContain(
+        sql,
+        `
+        ALTER TABLE Entidad_telefonos
+        ADD CONSTRAINT FK_Entidad_telefonos_Entidad_owner
+        FOREIGN KEY (id)
+        REFERENCES Entidad(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE;
+        `,
+    );
+
+    expect(sql).not.toContain('telefonos VARCHAR(40)');
+    expect(sql).not.toContain('telefonos_prefijo VARCHAR(40) PRIMARY KEY');
+    expect(sql).not.toContain('telefonos_numero VARCHAR(40) PRIMARY KEY');
 });
