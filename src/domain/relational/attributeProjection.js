@@ -13,11 +13,11 @@ export const projectAttributeTreeToColumns = (attributes) => {
     const columns = [];
 
     walkAttributeTree(attributes, (attribute, { ancestors }) => {
-        if (!isLeafAttribute(attribute) || isMultivaluedAttribute(attribute)) {
+        const path = [...ancestors, attribute];
+
+        if (!isLeafAttribute(attribute) || path.some(isMultivaluedAttribute)) {
             return;
         }
-
-        const path = [...ancestors, attribute];
 
         columns.push({
             name: buildColumnNameFromPath(path),

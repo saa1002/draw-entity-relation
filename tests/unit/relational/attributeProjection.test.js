@@ -185,4 +185,44 @@ describe('Attribute relational projection', () => {
             },
         ])
     })
+    
+    test('composite multivalued attribute leaves should not project as regular columns', () => {
+        const attributes = [
+            {
+                idMx: 'attr-1',
+                name: 'id_cliente',
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: 'attr-2',
+                name: 'telefonos',
+                key: false,
+                partialKey: false,
+                multivalued: true,
+                children: [
+                    {
+                        idMx: 'attr-3',
+                        name: 'prefijo',
+                        key: false,
+                        partialKey: false,
+                    },
+                    {
+                        idMx: 'attr-4',
+                        name: 'numero',
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ]
+
+        expect(projectAttributeTreeToColumns(attributes)).toEqual([
+            {
+                name: 'id_cliente',
+                key: true,
+                partialKey: false,
+            },
+        ])
+    })
 })
