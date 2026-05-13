@@ -1,4 +1,7 @@
-import { projectAttributeTreeToColumns } from "../../../relational/attributeProjection";
+import {
+    projectAttributeTreeToColumns,
+    projectMultivaluedAttributeToColumns,
+} from "../../../relational/attributeProjection";
 import { normalizeIdentifier } from "../../../relational/naming";
 import { isMultivaluedAttribute } from "../../attributes";
 
@@ -110,7 +113,16 @@ function hasMultivaluedAuxiliaryTableColumnCollision(entity, graph) {
             continue;
         }
 
-        if (hasNormalizedNameCollision([...ownerColumnNames, attribute.name])) {
+        const valueColumnNames = projectMultivaluedAttributeToColumns(
+            attribute,
+        ).map((column) => column.name);
+
+        if (
+            hasNormalizedNameCollision([
+                ...ownerColumnNames,
+                ...valueColumnNames,
+            ])
+        ) {
             return true;
         }
     }

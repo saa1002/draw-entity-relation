@@ -369,7 +369,73 @@ describe("SQL identifier normalization", () => {
 
         expect(sqlIdentifierCollisions(diagram)).toBe(true);
         expect(validateGraph(diagram).noSQLIdentifierCollisions).toBe(false);
-    });    
+    });   
+    
+    test("Composite multivalued auxiliary table leaf columns should not collide after SQL normalization", () => {
+        graph.entities.at(0).name = "Cliente";
+        graph.entities.at(0).attributes = [
+            {
+                idMx: "attr-id-cliente",
+                name: "id_cliente",
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-contacto",
+                name: "contacto",
+                key: false,
+                partialKey: false,
+                multivalued: true,
+                children: [
+                    {
+                        idMx: "attr-codigo-accent",
+                        name: "código",
+                        key: false,
+                        partialKey: false,
+                    },
+                    {
+                        idMx: "attr-codigo",
+                        name: "codigo",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        expect(sqlIdentifierCollisions(graph)).toBe(true);
+        expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false);
+    });
+    
+    test("Composite multivalued auxiliary table leaf columns should not collide with owner key columns", () => {
+        graph.entities.at(0).name = "Cliente";
+        graph.entities.at(0).attributes = [
+            {
+                idMx: "attr-id-cliente",
+                name: "id_cliente",
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-id",
+                name: "id",
+                key: false,
+                partialKey: false,
+                multivalued: true,
+                children: [
+                    {
+                        idMx: "attr-cliente",
+                        name: "cliente",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        expect(sqlIdentifierCollisions(graph)).toBe(true);
+        expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false);
+    });
 })
 
 describe("Composite attribute structure", () => {
