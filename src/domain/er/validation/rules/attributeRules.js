@@ -1,6 +1,5 @@
 import {
     getAttributeChildren,
-    isCompositeAttribute,
     isMultivaluedAttribute,
     walkAttributeTree,
 } from "../../attributes";
@@ -87,6 +86,22 @@ export function emptyCompositeAttributes(graph) {
 }
 
 export function unsupportedMultivaluedAttributes(graph) {
+    const hasUnsupportedCompositeMultivaluedChild = (attribute) => {
+        let hasUnsupportedChild = false;
+
+        walkAttributeTree(getAttributeChildren(attribute), (childAttribute) => {
+            if (
+                isMultivaluedAttribute(childAttribute) ||
+                childAttribute.key ||
+                childAttribute.partialKey
+            ) {
+                hasUnsupportedChild = true;
+            }
+        });
+
+        return hasUnsupportedChild;
+    };
+
     const hasUnsupportedEntityMultivaluedAttribute = (attributes = []) => {
         let hasUnsupportedAttribute = false;
 
@@ -99,7 +114,7 @@ export function unsupportedMultivaluedAttributes(graph) {
                 depth > 0 ||
                 attribute.key ||
                 attribute.partialKey ||
-                isCompositeAttribute(attribute)
+                hasUnsupportedCompositeMultivaluedChild(attribute)
             ) {
                 hasUnsupportedAttribute = true;
             }

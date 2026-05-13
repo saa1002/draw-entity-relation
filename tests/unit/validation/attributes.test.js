@@ -448,7 +448,7 @@ describe("Multivalued attribute constraints", () => {
         );
     });
 
-    test("Composite attributes can't be multivalued yet", () => {
+    test("Top-level composite entity multivalued attributes should be valid", () => {
         graph.entities.at(0).attributes.push({
             idMx: "attr-contact",
             name: "contacto",
@@ -461,6 +461,52 @@ describe("Multivalued attribute constraints", () => {
                     name: "telefono",
                     key: false,
                     partialKey: false,
+                },
+            ],
+        });
+
+        expect(unsupportedMultivaluedAttributes(graph)).toBe(false);
+        expect(validateGraph(graph).noUnsupportedMultivaluedAttributes).toBe(
+            true,
+        );
+    });
+
+    test("Primary key leaves inside composite multivalued attributes are unsupported", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-contact",
+            name: "contacto",
+            key: false,
+            partialKey: false,
+            multivalued: true,
+            children: [
+                {
+                    idMx: "attr-phone",
+                    name: "telefono",
+                    key: true,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        expect(unsupportedMultivaluedAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noUnsupportedMultivaluedAttributes).toBe(
+            false,
+        );
+    });
+
+    test("Partial key leaves inside composite multivalued attributes are unsupported", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-contact",
+            name: "contacto",
+            key: false,
+            partialKey: false,
+            multivalued: true,
+            children: [
+                {
+                    idMx: "attr-phone",
+                    name: "telefono",
+                    key: false,
+                    partialKey: true,
                 },
             ],
         });
@@ -501,5 +547,5 @@ describe("Multivalued attribute constraints", () => {
         expect(validateGraph(graph).noUnsupportedMultivaluedAttributes).toBe(
             false,
         );
-    });
+    });  
 });
