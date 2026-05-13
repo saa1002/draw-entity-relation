@@ -1052,13 +1052,6 @@ export default function App(props) {
             return;
         }
 
-        if (isCompositeAttribute(attribute)) {
-            toast.error(
-                "Los atributos multivaluados compuestos se implementarán más adelante.",
-            );
-            return;
-        }
-
         const shouldBecomeMultivalued = !isMultivaluedAttribute(attribute);
 
         if (shouldBecomeMultivalued) {
@@ -1289,11 +1282,7 @@ export default function App(props) {
 
         const { attribute } = selectedEntityAttribute;
 
-        if (
-            attribute.key ||
-            attribute.partialKey ||
-            isCompositeAttribute(attribute)
-        ) {
+        if (attribute.key || attribute.partialKey) {
             return;
         }
 
