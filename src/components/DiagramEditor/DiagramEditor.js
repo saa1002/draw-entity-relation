@@ -26,6 +26,7 @@ import {
     clearIdentifyingRelationDomainSemantics,
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
+    convertSubattributeToSimpleAttributeById,
     createAttribute,
     findAttributeOwnerById,
     findAttributeTreeOwnerById,
@@ -1176,6 +1177,35 @@ export default function App(props) {
         );
     };
 
+    const ConvertSubattributeToSimpleButton = () => {
+        if (!selected?.style?.includes("shape=ellipse")) {
+            return;
+        }
+
+        const selectedAttributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected?.id,
+        );
+
+        if (
+            !canConvertSelectedSubattributeToSimpleAttribute(
+                selectedAttributeOwner,
+            )
+        ) {
+            return;
+        }
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={convertSelectedSubattributeToSimpleAttribute}
+            >
+                Convertir en atributo simple
+            </button>
+        );
+    };
+
     const ToggleAttributesButton = () => {
         const isEntity =
             selected?.style?.includes("shape=rectangle") &&
@@ -1930,6 +1960,18 @@ export default function App(props) {
             );
         }
     };
+
+    const removeAttributeConnectionEdges = (attribute) => {
+        const edgeCells = (attribute?.cell ?? [])
+            .slice(1)
+            .map((cellId) => accessCell(cellId))
+            .filter(Boolean);
+
+        if (edgeCells.length > 0) {
+            graph.removeCells(edgeCells);
+        }
+    };
+
     const reparentPromotedAttributeCell = (attribute) => {
         if (!attribute?.idMx) return;
 
@@ -1967,6 +2009,46 @@ export default function App(props) {
 
         graph.orderCells(true, [edge]);
         syncAttributeVisualRepresentation(attribute);
+    };
+
+    const canConvertSelectedSubattributeToSimpleAttribute = (
+        attributeOwner,
+    ) => {
+        return attributeOwner?.parent && attributeOwner.depth === 1;
+    };
+
+    const convertSelectedSubattributeToSimpleAttribute = () => {
+        if (!selected?.style?.includes("shape=ellipse")) return;
+
+        const attributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected.id,
+        );
+
+        if (!canConvertSelectedSubattributeToSimpleAttribute(attributeOwner)) {
+            return;
+        }
+
+        const { owner } = attributeOwner;
+
+        const { convertedAttributes, removedCompositeAttribute } =
+            convertSubattributeToSimpleAttributeById(owner, selected.id);
+
+        if (convertedAttributes.length === 0) return;
+
+        convertedAttributes.forEach(removeAttributeConnectionEdges);
+
+        removeAttributesCells([removedCompositeAttribute].filter(Boolean));
+
+        convertedAttributes.forEach(reparentPromotedAttributeCell);
+
+        syncAndPersistDiagramData();
+
+        toast.success(
+            convertedAttributes.length > 1
+                ? "Subatributos convertidos en atributos simples"
+                : "Subatributo convertido en atributo simple",
+        );
     };
 
     const DeleteAttributeButton = () => {
@@ -2378,6 +2460,7 @@ export default function App(props) {
                 <div>{AddAttributeButton()}</div>
                 <div>{RelationAddAttributeButton()}</div>
                 <div>{AddChildAttributeButton()}</div>
+                <div>{ConvertSubattributeToSimpleButton()}</div>
                 <div>{ToggleAttributesButton()}</div>
                 <div>{ToggleAttrKeyButton()}</div>
                 <div>{TogglePartialKeyButton()}</div>
