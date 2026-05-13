@@ -54,7 +54,7 @@ import {
     relationInvolvesEntity,
     removeAllAttributesFromOwner,
     removeAttributeFromOwnerById,
-    removeAttributeFromOwnerTreeById,
+    removeAttributeFromOwnerTreeByIdWithPromotion,
     toggleExclusivePartialKeyAttribute,
     toggleExclusivePrimaryKeyAttribute,
     updateAttributePosition,
@@ -1930,6 +1930,44 @@ export default function App(props) {
             );
         }
     };
+    const reparentPromotedAttributeCell = (attribute) => {
+        if (!attribute?.idMx) return;
+
+        const promotedAttributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            attribute.idMx,
+        );
+
+        if (!promotedAttributeOwner) return;
+
+        const promotedAttributeCell = accessCell(attribute.idMx);
+        const sourceCell = accessCell(
+            promotedAttributeOwner.parent?.idMx ??
+                promotedAttributeOwner.owner?.idMx,
+        );
+
+        if (!promotedAttributeCell || !sourceCell) return;
+
+        const edge = graph.insertEdge(
+            sourceCell,
+            null,
+            null,
+            sourceCell,
+            promotedAttributeCell,
+        );
+
+        attribute.cell = [promotedAttributeCell.id, edge.id];
+
+        updateAttributePosition({
+            attribute,
+            owner:
+                promotedAttributeOwner.parent ?? promotedAttributeOwner.owner,
+            position: promotedAttributeCell.geometry,
+        });
+
+        graph.orderCells(true, [edge]);
+        syncAttributeVisualRepresentation(attribute);
+    };
 
     const DeleteAttributeButton = () => {
         const isAttribute = selected?.style?.includes("shape=ellipse");
@@ -1966,14 +2004,22 @@ export default function App(props) {
 
             const { owner } = attributeOwner;
 
-            const removedAttribute = removeAttributeFromOwnerTreeById(
+            const {
+                removedAttribute,
+                removedCompositeAttribute,
+                promotedAttribute,
+            } = removeAttributeFromOwnerTreeByIdWithPromotion(
                 owner,
                 selected.id,
             );
 
             if (!removedAttribute) return;
 
-            removeAttributesCells([removedAttribute]);
+            removeAttributesCells(
+                [removedAttribute, removedCompositeAttribute].filter(Boolean),
+            );
+
+            reparentPromotedAttributeCell(promotedAttribute);
 
             syncAndPersistDiagramData();
         }

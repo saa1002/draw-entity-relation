@@ -254,43 +254,110 @@ export const removeAttributeFromOwnerById = (owner, attributeId) => {
     return removedAttribute ?? null;
 };
 
+const createEmptyRemovalResult = () => ({
+    removedAttribute: null,
+    removedCompositeAttribute: null,
+    promotedAttribute: null,
+});
+
+const createRemovedCompositeAttributeSnapshot = (attribute) => {
+    const { children, ...attributeWithoutChildren } = attribute;
+
+    return attributeWithoutChildren;
+};
+
+const inheritCompositeAttributeSemantics = (
+    promotedAttribute,
+    parentAttribute,
+) => {
+    if (!promotedAttribute || !parentAttribute) {
+        return promotedAttribute;
+    }
+
+    promotedAttribute.key =
+        promotedAttribute.key === true || parentAttribute.key === true;
+    promotedAttribute.partialKey =
+        promotedAttribute.partialKey === true ||
+        parentAttribute.partialKey === true;
+
+    if (isMultivaluedAttribute(parentAttribute)) {
+        promotedAttribute.multivalued = true;
+    }
+
+    promotedAttribute.offsetX =
+        (typeof parentAttribute.offsetX === "number"
+            ? parentAttribute.offsetX
+            : 0) +
+        (typeof promotedAttribute.offsetX === "number"
+            ? promotedAttribute.offsetX
+            : 0);
+
+    promotedAttribute.offsetY =
+        (typeof parentAttribute.offsetY === "number"
+            ? parentAttribute.offsetY
+            : 0) +
+        (typeof promotedAttribute.offsetY === "number"
+            ? promotedAttribute.offsetY
+            : 0);
+
+    return promotedAttribute;
+};
+
 const removeAttributeFromListById = (attributes, attributeId) => {
     const attributeIndex = findAttributeIndexById(attributes, attributeId);
 
     if (attributeIndex !== -1) {
         const [removedAttribute] = attributes.splice(attributeIndex, 1);
 
-        return removedAttribute ?? null;
+        return {
+            ...createEmptyRemovalResult(),
+            removedAttribute: removedAttribute ?? null,
+        };
     }
 
     for (let index = 0; index < getAttributes(attributes).length; index += 1) {
         const attribute = attributes[index];
+
         if (!Array.isArray(attribute.children)) {
             continue;
         }
 
-        const removedAttribute = removeAttributeFromListById(
+        const removalResult = removeAttributeFromListById(
             attribute.children,
             attributeId,
         );
 
-        if (removedAttribute) {
+        if (removalResult.removedAttribute) {
             if (attribute.children.length === 0) {
                 const { children, ...attributeWithoutChildren } = attribute;
 
                 attributes[index] = attributeWithoutChildren;
+            } else if (attribute.children.length === 1) {
+                const [promotedAttribute] = attribute.children;
+
+                attributes[index] = inheritCompositeAttributeSemantics(
+                    promotedAttribute,
+                    attribute,
+                );
+
+                removalResult.removedCompositeAttribute =
+                    createRemovedCompositeAttributeSnapshot(attribute);
+                removalResult.promotedAttribute = attributes[index];
             }
 
-            return removedAttribute;
+            return removalResult;
         }
     }
 
-    return null;
+    return createEmptyRemovalResult();
 };
 
-export const removeAttributeFromOwnerTreeById = (owner, attributeId) => {
+export const removeAttributeFromOwnerTreeByIdWithPromotion = (
+    owner,
+    attributeId,
+) => {
     if (!owner) {
-        return null;
+        return createEmptyRemovalResult();
     }
 
     return removeAttributeFromListById(
@@ -298,6 +365,10 @@ export const removeAttributeFromOwnerTreeById = (owner, attributeId) => {
         attributeId,
     );
 };
+
+export const removeAttributeFromOwnerTreeById = (owner, attributeId) =>
+    removeAttributeFromOwnerTreeByIdWithPromotion(owner, attributeId)
+        .removedAttribute;
 
 export const removeAllAttributesFromOwner = (owner) => {
     if (!owner) {

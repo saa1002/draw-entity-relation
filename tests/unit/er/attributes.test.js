@@ -14,6 +14,7 @@ import {
     isCompositeAttribute,
     isLeafAttribute,
     removeAttributeFromOwnerTreeById,
+    removeAttributeFromOwnerTreeByIdWithPromotion,
     walkAttributeTree,
 } from '../../../src/domain/er/attributes'
 
@@ -245,10 +246,16 @@ describe("Hierarchical attribute helpers", () => {
         )
 
         expect(removedAttribute).toEqual({ idMx: "attr-2", name: "street" })
-        expect(owner.attributes[0].children.map((attribute) => attribute.idMx))
-            .toEqual(["attr-3"])
         expect(owner.attributes.map((attribute) => attribute.idMx))
-            .toEqual(["attr-1", "attr-4"])
+            .toEqual(["attr-3", "attr-4"])
+        expect(owner.attributes[0]).toEqual({
+            idMx: "attr-3",
+            name: "city",
+            key: false,
+            partialKey: false,
+            offsetX: 0,
+            offsetY: 0,
+        })
     })
     
     test("addChildAttributeToAttribute should initialize children and append the child", () => {
@@ -325,6 +332,88 @@ describe("Hierarchical attribute helpers", () => {
 
         expect(attribute).not.toHaveProperty("multivalued")
         expect(isMultivaluedAttribute(attribute)).toBe(false)
+    })
+    
+    test("removeAttributeFromOwnerTreeByIdWithPromotion should report promoted attributes", () => {
+        const owner = {
+            attributes: [
+                {
+                    idMx: "attr-1",
+                    name: "address",
+                    children: [
+                        { idMx: "attr-2", name: "street" },
+                        { idMx: "attr-3", name: "city" },
+                    ],
+                    cell: ["attr-1", "edge-1"],
+                },
+            ],
+        }
+
+        const result = removeAttributeFromOwnerTreeByIdWithPromotion(
+            owner,
+            "attr-2",
+        )
+
+        expect(result.removedAttribute).toEqual({
+            idMx: "attr-2",
+            name: "street",
+        })
+        expect(result.removedCompositeAttribute).toEqual({
+            idMx: "attr-1",
+            name: "address",
+            cell: ["attr-1", "edge-1"],
+        })
+        expect(result.promotedAttribute).toEqual({
+            idMx: "attr-3",
+            name: "city",
+            key: false,
+            partialKey: false,
+            offsetX: 0,
+            offsetY: 0,
+        })
+        expect(owner.attributes).toEqual([result.promotedAttribute])
+    })
+
+    test("promoted attributes should inherit composite attribute semantics", () => {
+        const owner = {
+            attributes: [
+                {
+                    idMx: "attr-1",
+                    name: "contact",
+                    key: true,
+                    partialKey: false,
+                    multivalued: true,
+                    offsetX: 10,
+                    offsetY: 20,
+                    children: [
+                        { idMx: "attr-2", name: "prefix" },
+                        {
+                            idMx: "attr-3",
+                            name: "number",
+                            key: false,
+                            partialKey: false,
+                            offsetX: 30,
+                            offsetY: 40,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        const result = removeAttributeFromOwnerTreeByIdWithPromotion(
+            owner,
+            "attr-2",
+        )
+
+        expect(result.promotedAttribute).toMatchObject({
+            idMx: "attr-3",
+            name: "number",
+            key: true,
+            partialKey: false,
+            multivalued: true,
+            offsetX: 40,
+            offsetY: 60,
+        })
     })
 })
 
