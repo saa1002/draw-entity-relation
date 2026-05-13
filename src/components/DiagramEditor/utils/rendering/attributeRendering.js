@@ -32,7 +32,10 @@ export const isMultivaluedAttributeDecoratorCell = (cell) =>
     !!cell?.id &&
     String(cell.id).endsWith(MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX);
 
-export const getAttributeStyleString = (attribute) => {
+export const getAttributeStyleString = (
+    attribute,
+    { inheritedKey = false } = {},
+) => {
     const baseStyle = [
         "shape=ellipse",
         "perimeter=ellipsePerimeter",
@@ -50,7 +53,7 @@ export const getAttributeStyleString = (attribute) => {
         `fontFamily=${ER_FONT_FAMILY}`,
     ].join(";");
 
-    if (attribute?.key) {
+    if (attribute?.key || inheritedKey) {
         return `${baseStyle};keyAttrStyle`;
     }
 
@@ -303,26 +306,39 @@ export const createAttributeRenderingHelpers = ({
         }
     };
 
-    const syncAttributeVisualRepresentation = (attribute) => {
+    const syncAttributeVisualRepresentation = (
+        attribute,
+        { inheritedKey = false } = {},
+    ) => {
+        const effectiveKey = inheritedKey || attribute?.key === true;
         const attributeCell = accessCell(attribute.idMx);
 
-        if (!attributeCell) return;
+        if (attributeCell) {
+            graph
+                .getModel()
+                .setStyle(
+                    attributeCell,
+                    getAttributeStyleString(attribute, { inheritedKey }),
+                );
 
-        graph
-            .getModel()
-            .setStyle(attributeCell, getAttributeStyleString(attribute));
+            if (isMultivaluedAttribute(attribute)) {
+                ensureMultivaluedAttributeDecorator(attributeCell);
+            } else {
+                removeMultivaluedAttributeDecorator(attribute.idMx);
+            }
 
-        if (isMultivaluedAttribute(attribute)) {
-            ensureMultivaluedAttributeDecorator(attributeCell);
-        } else {
-            removeMultivaluedAttributeDecorator(attribute.idMx);
+            if (attribute.partialKey) {
+                ensureDiscriminantUnderline(attributeCell);
+            } else {
+                removeDiscriminantUnderline(attribute.idMx);
+            }
         }
 
-        if (attribute.partialKey) {
-            ensureDiscriminantUnderline(attributeCell);
-        } else {
-            removeDiscriminantUnderline(attribute.idMx);
-        }
+        getAttributeChildren(attribute).forEach((childAttribute) => {
+            syncAttributeVisualRepresentation(childAttribute, {
+                inheritedKey: effectiveKey,
+            });
+        });
     };
 
     const setOwnerAttributesVisible = (owner, visible) => {

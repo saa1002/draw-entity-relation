@@ -216,4 +216,59 @@ describe('attribute rendering helpers', () => {
         expect(cells['attr-street'].geometry.x).toBe(240)
         expect(cells['attr-street'].geometry.y).toBe(130)
     })
+
+    test('propagates primary key rendering to composite attribute leaves', () => {
+        const cells = {
+            'attr-code': createCell('attr-code'),
+            'attr-series': createCell('attr-series'),
+            'attr-number': createCell('attr-number'),
+        }
+
+        const helpers = createHelpers(cells)
+
+        helpers.syncAttributeVisualRepresentation({
+            idMx: 'attr-code',
+            name: 'code',
+            key: true,
+            children: [
+                {
+                    idMx: 'attr-series',
+                    name: 'series',
+                },
+                {
+                    idMx: 'attr-number',
+                    name: 'number',
+                },
+            ],
+        })
+
+        expect(cells['attr-code'].style).toContain('keyAttrStyle')
+        expect(cells['attr-series'].style).toContain('keyAttrStyle')
+        expect(cells['attr-number'].style).toContain('keyAttrStyle')
+    })
+
+    test('removes inherited primary key rendering from composite attribute leaves', () => {
+        const cells = {
+            'attr-code': createCell('attr-code'),
+            'attr-series': createCell('attr-series'),
+        }
+        cells['attr-series'].style = 'shape=ellipse;keyAttrStyle'
+
+        const helpers = createHelpers(cells)
+
+        helpers.syncAttributeVisualRepresentation({
+            idMx: 'attr-code',
+            name: 'code',
+            key: false,
+            children: [
+                {
+                    idMx: 'attr-series',
+                    name: 'series',
+                },
+            ],
+        })
+
+        expect(cells['attr-code'].style).not.toContain('keyAttrStyle')
+        expect(cells['attr-series'].style).not.toContain('keyAttrStyle')
+    })
 })
