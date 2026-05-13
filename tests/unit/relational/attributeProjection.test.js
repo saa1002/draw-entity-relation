@@ -52,19 +52,19 @@ describe('Attribute relational projection', () => {
 
         expect(projectAttributeTreeToColumns(attributes)).toEqual([
             {
-                name: 'direccion_calle',
+                name: 'calle',
                 key: false,
                 partialKey: false,
             },
             {
-                name: 'direccion_ciudad',
+                name: 'ciudad',
                 key: false,
                 partialKey: false,
             },
         ])
     })
 
-    test('nested composite attributes should use the full attribute path', () => {
+    test('nested composite attributes should project the leaf attribute name', () => {
         const attributes = [
             {
                 idMx: 'attr-1',
@@ -86,7 +86,7 @@ describe('Attribute relational projection', () => {
 
         expect(projectAttributeTreeToColumns(attributes)).toEqual([
             {
-                name: 'contacto_direccion_ciudad',
+                name: 'ciudad',
                 key: false,
                 partialKey: false,
             },
@@ -115,12 +115,12 @@ describe('Attribute relational projection', () => {
 
         expect(projectAttributeTreeToColumns(attributes)).toEqual([
             {
-                name: 'documento_tipo',
+                name: 'tipo',
                 key: true,
                 partialKey: false,
             },
             {
-                name: 'documento_numero',
+                name: 'numero',
                 key: true,
                 partialKey: false,
             },
@@ -149,12 +149,12 @@ describe('Attribute relational projection', () => {
 
         expect(projectAttributeTreeToColumns(attributes)).toEqual([
             {
-                name: 'codigo_serie',
+                name: 'serie',
                 key: false,
                 partialKey: true,
             },
             {
-                name: 'codigo_numero',
+                name: 'numero',
                 key: false,
                 partialKey: true,
             },

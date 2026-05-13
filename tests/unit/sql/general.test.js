@@ -182,8 +182,8 @@ ALTER TABLE Entidad_2 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_
 
         const sql = generateSQL(nMGraph);
 
-        expect(sql).toContain("periodo_inicio VARCHAR(40)");
-        expect(sql).toContain("periodo_fin VARCHAR(40)");
+        expect(sql).toContain("inicio VARCHAR(40)");
+        expect(sql).toContain("fin VARCHAR(40)");
         expect(sql).not.toContain("periodo VARCHAR(40)");
     });
 });

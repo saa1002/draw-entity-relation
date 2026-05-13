@@ -89,8 +89,8 @@ describe("1:N relation extraction", () => {
 
         expect(targetTable.attributes.map((attr) => attr.name)).toEqual([
             "Atributo",
-            "direccion_calle",
-            "direccion_ciudad",
+            "calle",
+            "ciudad",
             "Atributo_Relación",
         ]);
         expect(
@@ -127,13 +127,13 @@ describe("1:N relation extraction", () => {
 
         expect(targetTable.attributes.map((attr) => attr.name)).toEqual([
             "Atributo",
-            "codigo_serie_Relación",
-            "codigo_numero_Relación",
+            "serie_Relación",
+            "numero_Relación",
         ]);
 
         expect(
             targetTable.attributes.slice(1).map((attr) => attr.foreign_key_column),
-        ).toEqual(["codigo_serie", "codigo_numero"]);
+        ).toEqual(["serie", "numero"]);
     });
     
     test("should generate a separate table for a simple multivalued attribute on a 1:N related entity", () => {
@@ -213,9 +213,9 @@ describe("1:N relation extraction", () => {
             `
             CREATE TABLE Entidad_1_contacto (
               Atributo VARCHAR(40),
-              contacto_prefijo VARCHAR(40),
-              contacto_numero VARCHAR(40),
-              PRIMARY KEY (Atributo, contacto_prefijo, contacto_numero)
+              prefijo VARCHAR(40),
+              numero VARCHAR(40),
+              PRIMARY KEY (Atributo, prefijo, numero)
             );
             `,
         );
@@ -243,7 +243,7 @@ describe("1:N relation extraction", () => {
         );
 
         expect(sql).not.toContain("contacto VARCHAR(40)");
-        expect(sql).not.toContain("contacto_prefijo VARCHAR(40) PRIMARY KEY");
+        expect(sql).not.toContain("prefijo VARCHAR(40) PRIMARY KEY");
     });
 })
 
@@ -328,10 +328,10 @@ describe("1:1 relation extraction", () => {
         const mergedTable = tables.at(0);
 
         expect(mergedTable.attributes.map((attr) => attr.name)).toContain(
-            "nombre_primero_Relación",
+            "primero_Relación",
         );
         expect(mergedTable.attributes.map((attr) => attr.name)).toContain(
-            "nombre_segundo_Relación",
+            "segundo_Relación",
         );
         expect(mergedTable.attributes.map((attr) => attr.name)).not.toContain(
             "nombre_Relación",
@@ -411,9 +411,9 @@ describe("1:1 relation extraction", () => {
             `
             CREATE TABLE Entidad_contacto (
               Atributo_Relacion VARCHAR(40),
-              contacto_prefijo VARCHAR(40),
-              contacto_numero VARCHAR(40),
-              PRIMARY KEY (Atributo_Relacion, contacto_prefijo, contacto_numero)
+              prefijo VARCHAR(40),
+              numero VARCHAR(40),
+              PRIMARY KEY (Atributo_Relacion, prefijo, numero)
             );
             `,
         );
@@ -431,7 +431,7 @@ describe("1:1 relation extraction", () => {
         );
 
         expect(sql).not.toContain("REFERENCES Entidad(Atributo)");
-        expect(sql).not.toContain("contacto_prefijo_Relacion VARCHAR(40)");
-        expect(sql).not.toContain("contacto_numero_Relacion VARCHAR(40)");
+        expect(sql).not.toContain("prefijo_Relacion VARCHAR(40)");
+        expect(sql).not.toContain("numero_Relacion VARCHAR(40)");
     });
 })

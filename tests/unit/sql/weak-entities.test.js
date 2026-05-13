@@ -654,11 +654,11 @@ describe('Weak entity SQL generation', () => {
         const sql = generateSQL(graph)
 
         expect(sql).toContain('CREATE TABLE LineaPedido')
-        expect(sql).toContain('codigo_serie VARCHAR(40)')
-        expect(sql).toContain('codigo_numero VARCHAR(40)')
+        expect(sql).toContain('serie VARCHAR(40)')
+        expect(sql).toContain('numero VARCHAR(40)')
         expect(sql).toContain('id_pedido_Pedido VARCHAR(40)')
         expect(sql).toContain(
-            'PRIMARY KEY (codigo_serie, codigo_numero, id_pedido_Pedido)',
+            'PRIMARY KEY (serie, numero, id_pedido_Pedido)',
         )
         expect(sql).not.toContain('codigo VARCHAR(40)')
     })
@@ -760,9 +760,9 @@ describe('Weak entity SQL generation', () => {
             CREATE TABLE LineaPedido_contacto (
               numero_linea VARCHAR(40),
               id_pedido_Pedido VARCHAR(40),
-              contacto_prefijo VARCHAR(40),
-              contacto_numero VARCHAR(40),
-              PRIMARY KEY (numero_linea, id_pedido_Pedido, contacto_prefijo, contacto_numero)
+              prefijo VARCHAR(40),
+              numero VARCHAR(40),
+              PRIMARY KEY (numero_linea, id_pedido_Pedido, prefijo, numero)
             );
             `,
         )

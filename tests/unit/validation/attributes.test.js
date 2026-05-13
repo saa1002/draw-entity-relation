@@ -176,7 +176,7 @@ describe("SQL identifier normalization", () => {
             },
             {
                 idMx: "attr-3",
-                name: "direccion_codigo",
+                name: "codigo",
                 key: true,
                 partialKey: false,
             },
@@ -295,7 +295,7 @@ describe("SQL identifier normalization", () => {
                         },
                         {
                             idMx: "attr-codigo-numero",
-                            name: "codigo_numero",
+                            name: "numero",
                             key: false,
                             partialKey: false,
                             multivalued: true,
@@ -425,7 +425,7 @@ describe("SQL identifier normalization", () => {
                 children: [
                     {
                         idMx: "attr-cliente",
-                        name: "cliente",
+                        name: "id_cliente",
                         key: false,
                         partialKey: false,
                     },

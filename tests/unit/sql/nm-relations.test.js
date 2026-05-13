@@ -85,8 +85,8 @@ describe("N:M relation extraction", () => {
 
         expect(leftEntityTable.attributes.map((attr) => attr.name)).toEqual([
             "Atributo",
-            "direccion_calle",
-            "direccion_ciudad",
+            "calle",
+            "ciudad",
         ]);
         expect(
             leftEntityTable.attributes.some((attr) => attr.name === "direccion"),
@@ -123,8 +123,8 @@ describe("N:M relation extraction", () => {
         const junctionTable = tables.at(2);
 
         expect(junctionTable.attributes.map((attr) => attr.name)).toEqual([
-            "codigo_serie_Relación_1",
-            "codigo_numero_Relación_1",
+            "serie_Relación_1",
+            "numero_Relación_1",
             "Atributo_Relación_2",
             "Atributo",
         ]);
@@ -133,7 +133,7 @@ describe("N:M relation extraction", () => {
             junctionTable.attributes.slice(0, 2).map(
                 (attr) => attr.foreign_key_column,
             ),
-        ).toEqual(["codigo_serie", "codigo_numero"]);
+        ).toEqual(["serie", "numero"]);
     });
     test("should project composite relation attributes in the junction table", () => {
         nMGraph.relations.at(0).attributes = [
@@ -167,8 +167,8 @@ describe("N:M relation extraction", () => {
         expect(junctionTable.attributes.map((attr) => attr.name)).toEqual([
             "Atributo_Relación_1",
             "Atributo_Relación_2",
-            "periodo_inicio",
-            "periodo_fin",
+            "inicio",
+            "fin",
         ]);
 
         expect(

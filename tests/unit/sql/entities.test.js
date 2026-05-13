@@ -87,8 +87,8 @@ describe('Standalone entity SQL generation', () => {
 
         expect(sql).toContain('CREATE TABLE Cliente')
         expect(sql).toContain('id_cliente VARCHAR(40) PRIMARY KEY')
-        expect(sql).toContain('direccion_calle VARCHAR(40)')
-        expect(sql).toContain('direccion_ciudad VARCHAR(40)')
+        expect(sql).toContain('calle VARCHAR(40)')
+        expect(sql).toContain('ciudad VARCHAR(40)')
         expect(sql).not.toContain('direccion VARCHAR(40)')
     })
 
@@ -128,9 +128,9 @@ describe('Standalone entity SQL generation', () => {
 
         const sql = generateSQL(graph)
 
-        expect(sql).toContain('codigo_serie VARCHAR(40)')
-        expect(sql).toContain('codigo_numero VARCHAR(40)')
-        expect(sql).toContain('PRIMARY KEY (codigo_serie, codigo_numero)')
+        expect(sql).toContain('serie VARCHAR(40)')
+        expect(sql).toContain('numero VARCHAR(40)')
+        expect(sql).toContain('PRIMARY KEY (serie, numero)')
         expect(sql).not.toContain('codigo VARCHAR(40)')
     })
     
@@ -225,9 +225,9 @@ describe('Standalone entity SQL generation', () => {
             sql,
             `
             CREATE TABLE Documento (
-              codigo_serie VARCHAR(40),
-              codigo_numero VARCHAR(40),
-              PRIMARY KEY (codigo_serie, codigo_numero)
+              serie VARCHAR(40),
+              numero VARCHAR(40),
+              PRIMARY KEY (serie, numero)
             );
             `,
         )
@@ -236,10 +236,10 @@ describe('Standalone entity SQL generation', () => {
             sql,
             `
             CREATE TABLE Documento_etiqueta (
-              codigo_serie VARCHAR(40),
-              codigo_numero VARCHAR(40),
+              serie VARCHAR(40),
+              numero VARCHAR(40),
               etiqueta VARCHAR(40),
-              PRIMARY KEY (codigo_serie, codigo_numero, etiqueta)
+              PRIMARY KEY (serie, numero, etiqueta)
             );
             `,
         )
@@ -249,8 +249,8 @@ describe('Standalone entity SQL generation', () => {
             `
             ALTER TABLE Documento_etiqueta
             ADD CONSTRAINT FK_Documento_etiqueta_Documento_owner
-            FOREIGN KEY (codigo_serie, codigo_numero)
-            REFERENCES Documento(codigo_serie, codigo_numero)
+            FOREIGN KEY (serie, numero)
+            REFERENCES Documento(serie, numero)
             ON DELETE CASCADE
             ON UPDATE CASCADE;
             `,
@@ -317,9 +317,9 @@ describe('Standalone entity SQL generation', () => {
             `
             CREATE TABLE Cliente_telefonos (
               id_cliente VARCHAR(40),
-              telefonos_prefijo VARCHAR(40),
-              telefonos_numero VARCHAR(40),
-              PRIMARY KEY (id_cliente, telefonos_prefijo, telefonos_numero)
+              prefijo VARCHAR(40),
+              numero VARCHAR(40),
+              PRIMARY KEY (id_cliente, prefijo, numero)
             );
             `,
         )

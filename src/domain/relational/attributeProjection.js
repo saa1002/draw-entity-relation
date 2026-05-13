@@ -7,36 +7,28 @@ import {
     walkAttributeTree,
 } from "../er/attributes";
 
-const buildColumnNameFromPath = (path) =>
-    path.map((attribute) => attribute.name).join("_");
+const buildColumnNameFromLeaf = (attribute) => attribute.name;
 
 export const projectMultivaluedAttributeToColumns = (attribute) => {
     if (isLeafAttribute(attribute)) {
         return [
             {
-                name: buildColumnNameFromPath([attribute]),
+                name: buildColumnNameFromLeaf(attribute),
             },
         ];
     }
 
     const columns = [];
 
-    walkAttributeTree(
-        getAttributeChildren(attribute),
-        (leafAttribute, { ancestors }) => {
-            if (!isLeafAttribute(leafAttribute)) {
-                return;
-            }
+    walkAttributeTree(getAttributeChildren(attribute), (leafAttribute) => {
+        if (!isLeafAttribute(leafAttribute)) {
+            return;
+        }
 
-            columns.push({
-                name: buildColumnNameFromPath([
-                    attribute,
-                    ...ancestors,
-                    leafAttribute,
-                ]),
-            });
-        },
-    );
+        columns.push({
+            name: buildColumnNameFromLeaf(leafAttribute),
+        });
+    });
 
     return columns;
 };
@@ -52,7 +44,7 @@ export const projectAttributeTreeToColumns = (attributes) => {
         }
 
         columns.push({
-            name: buildColumnNameFromPath(path),
+            name: buildColumnNameFromLeaf(attribute),
             key: path.some(isPrimaryKeyAttribute),
             partialKey: path.some(isPartialKeyAttribute),
         });

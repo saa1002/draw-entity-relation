@@ -686,9 +686,9 @@ test('generate SQL for an editor-created composite multivalued attribute', async
         `
         CREATE TABLE Entidad_telefonos (
           id VARCHAR(40),
-          telefonos_prefijo VARCHAR(40),
-          telefonos_numero VARCHAR(40),
-          PRIMARY KEY (id, telefonos_prefijo, telefonos_numero)
+          prefijo VARCHAR(40),
+          numero VARCHAR(40),
+          PRIMARY KEY (id, prefijo, numero)
         );
         `,
     );
@@ -706,6 +706,6 @@ test('generate SQL for an editor-created composite multivalued attribute', async
     );
 
     expect(sql).not.toContain('telefonos VARCHAR(40)');
-    expect(sql).not.toContain('telefonos_prefijo VARCHAR(40) PRIMARY KEY');
-    expect(sql).not.toContain('telefonos_numero VARCHAR(40) PRIMARY KEY');
+    expect(sql).not.toContain('prefijo VARCHAR(40) PRIMARY KEY');
+    expect(sql).not.toContain('numero VARCHAR(40) PRIMARY KEY');
 });
