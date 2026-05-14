@@ -20,6 +20,33 @@ const DISCRIMINANT_UNDERLINE_MARGIN_X = 16;
 const DISCRIMINANT_UNDERLINE_OFFSET_Y = 12;
 const MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET = 4;
 
+const ATTRIBUTE_BASE_STYLE_PARTS = [
+    "shape=ellipse",
+    "perimeter=ellipsePerimeter",
+    "align=center",
+    "verticalAlign=middle",
+    "spacing=0",
+    "whiteSpace=wrap",
+    "overflow=hidden",
+    "resizable=0",
+    `fillColor=${ER_FILL}`,
+    `strokeColor=${ER_STROKE}`,
+    "strokeWidth=1",
+];
+
+const VISIBLE_ATTRIBUTE_STYLE = [
+    ...ATTRIBUTE_BASE_STYLE_PARTS,
+    `fontColor=${ER_FONT}`,
+    `fontSize=${ER_FONT_SIZE}`,
+    `fontFamily=${ER_FONT_FAMILY}`,
+].join(";");
+
+const COMPOSITE_ATTRIBUTE_CONNECTOR_STYLE = [
+    ...ATTRIBUTE_BASE_STYLE_PARTS,
+    "fontSize=0",
+    "fontColor=none",
+].join(";");
+
 export const COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE = 4;
 
 export const isCompositeAttributeForRendering = (attribute) =>
@@ -56,46 +83,15 @@ export const getAttributeStyleString = (
     attribute,
     { inheritedKey = false } = {},
 ) => {
-    const baseStyle = [
-        "shape=ellipse",
-        "perimeter=ellipsePerimeter",
-        "align=center",
-        "verticalAlign=middle",
-        "spacing=0",
-        "whiteSpace=wrap",
-        "overflow=hidden",
-        "resizable=0",
-        `fillColor=${ER_FILL}`,
-        `strokeColor=${ER_STROKE}`,
-        "strokeWidth=1",
-        `fontColor=${ER_FONT}`,
-        `fontSize=${ER_FONT_SIZE}`,
-        `fontFamily=${ER_FONT_FAMILY}`,
-    ].join(";");
-
     if (isCompositeAttributeForRendering(attribute)) {
-        return [
-            "shape=ellipse",
-            "perimeter=ellipsePerimeter",
-            "align=center",
-            "verticalAlign=middle",
-            "spacing=0",
-            "whiteSpace=wrap",
-            "overflow=hidden",
-            "resizable=0",
-            `fillColor=${ER_FILL}`,
-            `strokeColor=${ER_STROKE}`,
-            "strokeWidth=1",
-            "fontSize=0",
-            "fontColor=none",
-        ].join(";");
+        return COMPOSITE_ATTRIBUTE_CONNECTOR_STYLE;
     }
 
     if (attribute?.key || inheritedKey) {
-        return `${baseStyle};keyAttrStyle`;
+        return `${VISIBLE_ATTRIBUTE_STYLE};keyAttrStyle`;
     }
 
-    return baseStyle;
+    return VISIBLE_ATTRIBUTE_STYLE;
 };
 
 export const createAttributeRenderingHelpers = ({
