@@ -18,6 +18,8 @@ import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
 import {
     ATTRIBUTE_OWNER_TYPES,
+    IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY,
+    IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES,
     POSSIBLE_CARDINALITIES,
     addAttributeToOwner,
     addChildAttributeToAttribute,
@@ -1739,10 +1741,10 @@ export default function App(props) {
             const isWeakSide = sideKey === "side1" ? side1IsWeak : side2IsWeak;
 
             if (isWeakSide) {
-                return ["0:N", "1:N"];
+                return IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES;
             }
 
-            return ["1:1"];
+            return [IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY];
         };
 
         if (isRelation) {

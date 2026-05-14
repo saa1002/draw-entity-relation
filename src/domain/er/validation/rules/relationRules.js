@@ -1,7 +1,6 @@
 import { flattenAttributeTree } from "../../attributes";
+import { POSSIBLE_CARDINALITIES } from "../../relations";
 import { getEntityById } from "../helpers";
-
-export const POSSIBLE_CARDINALITIES = ["0:1", "0:N", "1:1", "1:N"];
 
 // True if there is an N:M relation that has a key
 export function nmRelationsWithPK(graph) {

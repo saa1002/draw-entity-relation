@@ -1,5 +1,9 @@
 import { flattenAttributeTree } from "../../attributes";
 import {
+    IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY,
+    IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES,
+} from "../../relations";
+import {
     getIdentifyingDependency,
     relationConnectsEntity,
     weakEntityOwnershipHasCycle,
@@ -113,12 +117,14 @@ export function identifyingRelationCardinalitiesNotValid(graph) {
         // Invalid identifying endpoints are reported by identifyingRelationsNotValid.
         if (!dependency) continue;
 
-        const weakCardinalityIsValid = ["0:N", "1:N"].includes(
-            dependency.side.cardinality,
-        );
+        const weakCardinalityIsValid =
+            IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES.includes(
+                dependency.side.cardinality,
+            );
 
         const ownerCardinalityIsValid =
-            dependency.ownerSide.cardinality === "1:1";
+            dependency.ownerSide.cardinality ===
+            IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY;
 
         if (!weakCardinalityIsValid || !ownerCardinalityIsValid) {
             return true;

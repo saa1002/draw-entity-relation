@@ -8,6 +8,17 @@ import {
 const getRelations = (diagram) =>
     Array.isArray(diagram?.relations) ? diagram.relations : [];
 
+export const POSSIBLE_CARDINALITIES = ["0:1", "0:N", "1:1", "1:N"];
+
+export const DEFAULT_IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITY = "0:N";
+
+export const IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES = [
+    DEFAULT_IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITY,
+    "1:N",
+];
+
+export const IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY = "1:1";
+
 export const findRelationById = (diagram, relationId) =>
     getRelations(diagram).find((relation) => relation.idMx === relationId) ??
     null;
@@ -320,8 +331,8 @@ export const applyIdentifyingRelationCardinalities = (
         return false;
     }
 
-    weakSide.cardinality = "0:N";
-    strongSide.cardinality = "1:1";
+    weakSide.cardinality = DEFAULT_IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITY;
+    strongSide.cardinality = IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY;
 
     return true;
 };
