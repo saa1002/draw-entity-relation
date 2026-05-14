@@ -11,7 +11,7 @@ const normalizeAttributeCell = (cell, fallbackId = "") => {
     return [fallbackId, null];
 };
 
-export const normalizeAttribute = (attribute = {}) => ({
+const normalizeAttributeBase = (normalizeChild, attribute = {}) => ({
     ...attribute,
     idMx: attribute.idMx ?? "",
     name: attribute.name ?? "",
@@ -21,21 +21,14 @@ export const normalizeAttribute = (attribute = {}) => ({
     cell: normalizeAttributeCell(attribute.cell, attribute.idMx),
     offsetX: typeof attribute.offsetX === "number" ? attribute.offsetX : 0,
     offsetY: typeof attribute.offsetY === "number" ? attribute.offsetY : 0,
-    ...normalizeAttributeChildren(attribute, normalizeAttribute),
+    ...normalizeAttributeChildren(attribute, normalizeChild),
 });
 
-export const normalizeRelationAttribute = (attribute = {}) => ({
-    ...attribute,
-    idMx: attribute.idMx ?? "",
-    name: attribute.name ?? "",
-    position: normalizePosition(attribute.position),
-    key: attribute.key ?? false,
-    partialKey: attribute.partialKey ?? false,
-    cell: normalizeAttributeCell(attribute.cell, attribute.idMx),
-    offsetX: typeof attribute.offsetX === "number" ? attribute.offsetX : 0,
-    offsetY: typeof attribute.offsetY === "number" ? attribute.offsetY : 0,
-    ...normalizeAttributeChildren(attribute, normalizeRelationAttribute),
-});
+export const normalizeAttribute = (attribute = {}) =>
+    normalizeAttributeBase(normalizeAttribute, attribute);
+
+export const normalizeRelationAttribute = (attribute = {}) =>
+    normalizeAttributeBase(normalizeRelationAttribute, attribute);
 
 export const normalizeEntity = (entity = {}) => ({
     ...entity,
