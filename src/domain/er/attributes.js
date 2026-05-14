@@ -476,10 +476,6 @@ export const updateAttributePosition = ({ attribute, owner, position }) => {
 
     const ownerY = typeof owner.position?.y === "number" ? owner.position.y : 0;
 
-    const positionX = typeof position.x === "number" ? position.x : 0;
-
-    const positionY = typeof position.y === "number" ? position.y : 0;
-
     attribute.position = {
         x: position.x,
         y: position.y,
