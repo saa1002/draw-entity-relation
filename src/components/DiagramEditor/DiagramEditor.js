@@ -2121,21 +2121,15 @@ export default function App(props) {
             refreshGraph();
             syncAndPersistDiagramData();
         }
-
-        if (
-            (isAttribute && !isKey && !isFromRelation) ||
-            (isAttribute && isFromRelation)
-        ) {
-            return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={deleteAttribute}
-                >
-                    Borrar
-                </button>
-            );
-        }
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={deleteAttribute}
+            >
+                Borrar
+            </button>
+        );
     };
 
     const DeleteRelationButton = () => {
