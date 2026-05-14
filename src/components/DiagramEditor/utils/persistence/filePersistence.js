@@ -13,7 +13,10 @@ export const saveFileWithPicker = async ({
     mimeType,
     pickerTypes,
 }) => {
-    if (!window.showSaveFilePicker || !window.showSaveFilePicker) {
+    if (
+        typeof window === "undefined" ||
+        typeof window.showSaveFilePicker !== "function"
+    ) {
         return SAVE_FILE_RESULT.UNSUPPORTED;
     }
 
