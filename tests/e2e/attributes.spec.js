@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { buildSQLAssertions } from '../helpers/sqlAssertions';
 
 import {
     addAttributeToSelectedEntity,
@@ -14,11 +15,7 @@ import {
 
 import { exportCurrentSqlScript, seedSavedDiagram } from '../helpers/persistence';
 
-const compactSQL = (sql) => sql.replace(/\s+/g, '');
-
-const expectSQLToContain = (actual, expectedFragment) => {
-    expect(compactSQL(actual)).toContain(compactSQL(expectedFragment));
-};
+const { expectSQLToContain } = buildSQLAssertions(expect);
 
 test.beforeEach(async ({ page }) => {
     await enableMxGraphDebug(page);

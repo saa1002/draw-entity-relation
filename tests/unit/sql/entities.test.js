@@ -1,11 +1,8 @@
 import { describe, expect, test } from 'vitest'
+import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { generateSQL } from '../../../src/services/sql'
 
-const compactSQL = (sql) => sql.replace(/\s+/g, '')
-
-const expectSQLToContain = (actual, expectedFragment) => {
-    expect(compactSQL(actual)).toContain(compactSQL(expectedFragment))
-}
+const { expectSQLToContain } = buildSQLAssertions(expect)
 
 describe('Standalone entity SQL generation', () => {
     test('a standalone strong entity should generate a single table with its primary key', () => {

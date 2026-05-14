@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
+import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     filterTables,
@@ -10,6 +11,8 @@ import {
 let oneNGraph
 let oneOneGraph
 
+const { expectSQLToContain } = buildSQLAssertions(expect)
+
 const extract1NTables = () => {
     const filteredTables = filterTables(oneNGraph)
     return process1NRelation(filteredTables.at(0))
@@ -18,12 +21,6 @@ const extract1NTables = () => {
 const extract11Tables = () => {
     const filteredTables = filterTables(oneOneGraph)
     return process11Relation(filteredTables.at(0))
-}
-
-const compactSQL = (sql) => sql.replace(/\s+/g, '')
-
-const expectSQLToContain = (actual, expectedFragment) => {
-    expect(compactSQL(actual)).toContain(compactSQL(expectedFragment))
 }
 
 beforeEach(() => {

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
+import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     filterTables,
@@ -8,11 +9,7 @@ import {
 
 let nMGraph
 
-const compactSQL = (sql) => sql.replace(/\s+/g, '')
-
-const expectSQLToContain = (actual, expectedFragment) => {
-    expect(compactSQL(actual)).toContain(compactSQL(expectedFragment))
-}
+const { expectSQLToContain } = buildSQLAssertions(expect)
 
 beforeEach(() => {
     nMGraph = loadGraphFixture('n-m-relation.json')

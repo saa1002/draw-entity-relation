@@ -1,15 +1,9 @@
 import { describe, expect, test } from 'vitest'
+import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { generateSQL } from '../../../src/services/sql'
 
-const compactSQL = (sql) => sql.replace(/\s+/g, '')
-
-const expectSQLToContain = (actual, expectedFragment) => {
-    expect(compactSQL(actual)).toContain(compactSQL(expectedFragment))
-}
-
-const expectSQLNotToContain = (actual, expectedFragment) => {
-    expect(compactSQL(actual)).not.toContain(compactSQL(expectedFragment))
-}
+const { expectSQLToContain, expectSQLNotToContain } =
+    buildSQLAssertions(expect)
 
 function createCascadedWeakEntitiesGraph(extraRelations = []) {
     const strongEntity = {
