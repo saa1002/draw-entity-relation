@@ -42,6 +42,26 @@ export const isManyToManyRelation = (relation) =>
     relation?.side1?.cardinality?.endsWith(":N") === true &&
     relation?.side2?.cardinality?.endsWith(":N") === true;
 
+export const createEmptyRelationSide = ({ cardinality = "" } = {}) => ({
+    idMx: "",
+    cardinality,
+    cell: "",
+    edgeId: "",
+    entity: { idMx: "" },
+});
+
+export const resetRelationSides = (relation, { cardinality = "" } = {}) => {
+    if (!relation) {
+        return null;
+    }
+
+    relation.side1 = createEmptyRelationSide({ cardinality });
+    relation.side2 = createEmptyRelationSide({ cardinality });
+    relation.canHoldAttributes = false;
+
+    return relation;
+};
+
 export const isMandatoryOneToOneMergeRelation = (relation) => {
     if (isIdentifyingRelation(relation)) {
         return false;

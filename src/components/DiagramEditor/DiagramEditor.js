@@ -54,6 +54,7 @@ import {
     relationInvolvesEntity,
     removeAllAttributesFromOwner,
     removeAttributeFromOwnerTreeByIdWithPromotion,
+    resetRelationSides,
     toggleExclusivePartialKeyAttribute,
     toggleExclusivePrimaryKeyAttribute,
     updateAttributePosition,
@@ -1446,20 +1447,7 @@ export default function App(props) {
 
                 removeRelationAttributes(relation);
 
-                relation.side1 = {
-                    cardinality: "X:X",
-                    cell: "",
-                    edgeId: "",
-                    entity: { idMx: "" },
-                    idMx: "",
-                };
-                relation.side2 = {
-                    cardinality: "X:X",
-                    cell: "",
-                    edgeId: "",
-                    entity: { idMx: "" },
-                    idMx: "",
-                };
+                resetRelationSides(relation, { cardinality: "X:X" });
             }
 
             const target1 = accessCell(side1.idMx);
@@ -1934,23 +1922,9 @@ export default function App(props) {
                             ]);
 
                             // Reinitialize the relation sides
-                            diagramRef.current.relations[index].side1 = {
-                                idMx: "",
-                                cardinality: "",
-                                cell: "",
-                                edgeId: "",
-                                entity: { idMx: "" },
-                            };
-                            diagramRef.current.relations[index].side2 = {
-                                idMx: "",
-                                cardinality: "",
-                                cell: "",
-                                edgeId: "",
-                                entity: { idMx: "" },
-                            };
-                            diagramRef.current.relations[
-                                index
-                            ].canHoldAttributes = false;
+                            resetRelationSides(
+                                diagramRef.current.relations[index],
+                            );
                         }
                     });
                 }
