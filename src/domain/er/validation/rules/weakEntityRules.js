@@ -2,10 +2,10 @@ import { flattenAttributeTree } from "../../attributes";
 import {
     IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY,
     IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES,
+    relationInvolvesEntity,
 } from "../../relations";
 import {
     getIdentifyingDependency,
-    relationConnectsEntity,
     weakEntityOwnershipHasCycle,
 } from "../helpers";
 
@@ -150,7 +150,7 @@ export function inconsistentWeakEntityOwnership(graph) {
             return true;
         }
 
-        if (!relationConnectsEntity(relation, entity.idMx)) {
+        if (!relationInvolvesEntity(relation, entity.idMx)) {
             return true;
         }
 

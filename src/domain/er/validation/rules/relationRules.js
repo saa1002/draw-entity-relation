@@ -1,6 +1,6 @@
 import { flattenAttributeTree } from "../../attributes";
+import { findEntityById } from "../../entities";
 import { POSSIBLE_CARDINALITIES } from "../../relations";
-import { getEntityById } from "../helpers";
 
 // True if there is an N:M relation that has a key
 export function nmRelationsWithPK(graph) {
@@ -47,8 +47,8 @@ export function brokenRelationEntityReferences(graph) {
             continue;
         }
 
-        const side1Exists = getEntityById(graph, side1EntityId) !== null;
-        const side2Exists = getEntityById(graph, side2EntityId) !== null;
+        const side1Exists = findEntityById(graph, side1EntityId) !== null;
+        const side2Exists = findEntityById(graph, side2EntityId) !== null;
 
         if (!side1Exists || !side2Exists) {
             return true;

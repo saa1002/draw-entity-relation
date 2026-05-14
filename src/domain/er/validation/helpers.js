@@ -1,15 +1,5 @@
+import { findEntityById } from "../entities";
 import { getRelationSideMaximum } from "../relations";
-
-export function getEntityById(graph, entityId) {
-    return graph.entities.find((entity) => entity.idMx === entityId) ?? null;
-}
-
-export function relationConnectsEntity(relation, entityId) {
-    return (
-        relation?.side1?.entity?.idMx === entityId ||
-        relation?.side2?.entity?.idMx === entityId
-    );
-}
 
 export function getIdentifyingDependency(graph, relation) {
     const side1EntityId = relation?.side1?.entity?.idMx;
@@ -23,8 +13,8 @@ export function getIdentifyingDependency(graph, relation) {
         return null;
     }
 
-    const side1Entity = getEntityById(graph, side1EntityId);
-    const side2Entity = getEntityById(graph, side2EntityId);
+    const side1Entity = findEntityById(graph, side1EntityId);
+    const side2Entity = findEntityById(graph, side2EntityId);
 
     if (!side1Entity || !side2Entity) {
         return null;
@@ -128,7 +118,7 @@ export function weakEntityOwnershipHasCycle(graph, entity) {
         }
 
         visitedEntityIds.add(currentEntity.ownerEntityId);
-        currentEntity = getEntityById(graph, currentEntity.ownerEntityId);
+        currentEntity = findEntityById(graph, currentEntity.ownerEntityId);
     }
 
     return false;
