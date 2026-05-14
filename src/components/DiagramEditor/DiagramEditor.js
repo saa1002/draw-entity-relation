@@ -72,6 +72,9 @@ import {
     getCardinalityStyleString,
     getRelationStyleString,
     installDiagramEditorStyles,
+    isAttributeShapeCell,
+    isEntityShapeCell,
+    isRelationShapeCell,
 } from "./utils/mxStyles/diagramStyles";
 import {
     SAVE_FILE_RESULT,
@@ -488,10 +491,7 @@ export default function App(props) {
         const cells = evt.getProperty("cells") || [];
 
         cells.forEach((cell) => {
-            if (
-                cell?.style?.includes("shape=rectangle") &&
-                !isWeakEntityDecoratorCell(cell)
-            ) {
+            if (isEntityShapeCell(cell) && !isWeakEntityDecoratorCell(cell)) {
                 const entityData = findEntityById(diagramRef.current, cell.id);
 
                 if (isWeakEntity(entityData)) {
@@ -514,7 +514,7 @@ export default function App(props) {
                 }
             }
             if (
-                cell.style.includes("shape=rhombus") &&
+                isRelationShapeCell(cell) &&
                 !isIdentifyingRelationDecoratorCell(cell)
             ) {
                 const relationData = findRelationById(
@@ -556,16 +556,16 @@ export default function App(props) {
     const onCellsMoved = (_evt) => {
         if (selected) {
             if (
-                selected?.style?.includes("shape=rectangle") &&
+                isEntityShapeCell(selected) &&
                 !isWeakEntityDecoratorCell(selected)
             ) {
                 handleEntityMove(selected);
             } else if (
-                selected?.style?.includes("shape=rhombus") &&
+                isRelationShapeCell(selected) &&
                 !isIdentifyingRelationDecoratorCell(selected)
             ) {
                 handleRelationMove(selected);
-            } else if (selected?.style?.includes("shape=ellipse")) {
+            } else if (isAttributeShapeCell(selected)) {
                 handleAttributeMove(selected);
             }
         }
@@ -652,11 +652,11 @@ export default function App(props) {
         let selectedDiag;
         let isRelation = false;
         if (
-            selected?.style?.includes("shape=rectangle") &&
+            isEntityShapeCell(selected) &&
             !isWeakEntityDecoratorCell(selected)
         ) {
             selectedDiag = findEntityById(diagramRef.current, selected.id);
-        } else if (selected?.style?.includes("shape=rhombus")) {
+        } else if (isRelationShapeCell(selected)) {
             selectedDiag = findRelationById(diagramRef.current, selected.id);
             isRelation = true;
         }
@@ -742,7 +742,7 @@ export default function App(props) {
     };
 
     const addChildAttribute = () => {
-        if (!selected?.style?.includes("shape=ellipse")) return;
+        if (!isAttributeShapeCell(selected)) return;
 
         const attributeOwner = findAttributeTreeOwnerById(
             diagramRef.current,
@@ -884,7 +884,7 @@ export default function App(props) {
 
     const toggleWeakEntity = () => {
         if (!selected) return;
-        if (!selected?.style?.includes("shape=rectangle")) return;
+        if (!isEntityShapeCell(selected)) return;
         if (isWeakEntityDecoratorCell(selected)) return;
 
         const entity = getSelectedEntityData();
@@ -912,7 +912,7 @@ export default function App(props) {
 
     const togglePartialKey = () => {
         if (!selected) return;
-        if (!selected?.style?.includes("shape=ellipse")) return;
+        if (!isAttributeShapeCell(selected)) return;
 
         const selectedEntityAttribute = getSelectedEntityAttributeData();
         if (!selectedEntityAttribute) return;
@@ -954,7 +954,7 @@ export default function App(props) {
     const toggleIdentifyingRelation = () => {
         if (!selected) return;
         if (isIdentifyingRelationDecoratorCell(selected)) return;
-        if (!selected?.style?.includes("shape=rhombus")) return;
+        if (!isRelationShapeCell(selected)) return;
 
         const relation = getSelectedRelationData();
         if (!relation) return;
@@ -1050,7 +1050,7 @@ export default function App(props) {
 
     const toggleMultivaluedAttribute = () => {
         if (!selected) return;
-        if (!selected?.style?.includes("shape=ellipse")) return;
+        if (!isAttributeShapeCell(selected)) return;
 
         const attributeOwner = findAttributeTreeOwnerById(
             diagramRef.current,
@@ -1127,7 +1127,7 @@ export default function App(props) {
 
     const AddAttributeButton = () => {
         if (
-            selected?.style?.includes("shape=rectangle") &&
+            isEntityShapeCell(selected) &&
             !isWeakEntityDecoratorCell(selected)
         ) {
             return (
@@ -1161,7 +1161,7 @@ export default function App(props) {
     };
 
     const AddChildAttributeButton = () => {
-        if (!selected?.style?.includes("shape=ellipse")) {
+        if (!isAttributeShapeCell(selected)) {
             return;
         }
 
@@ -1190,7 +1190,7 @@ export default function App(props) {
     };
 
     const ConvertSubattributeToSimpleButton = () => {
-        if (!selected?.style?.includes("shape=ellipse")) {
+        if (!isAttributeShapeCell(selected)) {
             return;
         }
 
@@ -1220,10 +1220,9 @@ export default function App(props) {
 
     const ToggleAttributesButton = () => {
         const isEntity =
-            selected?.style?.includes("shape=rectangle") &&
-            !isWeakEntityDecoratorCell(selected);
+            isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
         const isRelationNM =
-            selected?.style?.includes("shape=rhombus") &&
+            isRelationShapeCell(selected) &&
             canRelationHoldAttributes(
                 findRelationById(diagramRef.current, selected?.id),
             );
@@ -1265,7 +1264,7 @@ export default function App(props) {
     };
 
     const ToggleAttrKeyButton = () => {
-        const isAttribute = selected?.style?.includes("shape=ellipse");
+        const isAttribute = isAttributeShapeCell(selected);
 
         if (!isAttribute) {
             return;
@@ -1299,7 +1298,7 @@ export default function App(props) {
     };
 
     const TogglePartialKeyButton = () => {
-        const isAttribute = selected?.style?.includes("shape=ellipse");
+        const isAttribute = isAttributeShapeCell(selected);
         const selectedEntityAttribute = getSelectedEntityAttributeData();
 
         if (!isAttribute || !selectedEntityAttribute) {
@@ -1334,7 +1333,7 @@ export default function App(props) {
     };
 
     const ToggleMultivaluedAttributeButton = () => {
-        const isAttribute = selected?.style?.includes("shape=ellipse");
+        const isAttribute = isAttributeShapeCell(selected);
         const selectedEntityAttribute = getSelectedEntityAttributeData();
 
         if (!isAttribute || !selectedEntityAttribute) {
@@ -1362,8 +1361,7 @@ export default function App(props) {
 
     const ToggleWeakEntityButton = () => {
         const isEntity =
-            selected?.style?.includes("shape=rectangle") &&
-            !isWeakEntityDecoratorCell(selected);
+            isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
 
         const selectedEntityDiag = getSelectedEntityData();
 
@@ -1383,7 +1381,7 @@ export default function App(props) {
     };
 
     const ToggleIdentifyingRelationButton = () => {
-        const isRelation = selected?.style?.includes("shape=rhombus");
+        const isRelation = isRelationShapeCell(selected);
         const selectedRelationDiag = getSelectedRelationData();
 
         if (isRelation && selectedRelationDiag) {
@@ -1402,7 +1400,7 @@ export default function App(props) {
     };
 
     const RelationConfigurationButton = () => {
-        const isRelation = selected?.style?.includes("shape=rhombus");
+        const isRelation = isRelationShapeCell(selected);
         const [open, setOpen] = React.useState(false);
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
 
@@ -1638,7 +1636,7 @@ export default function App(props) {
     };
 
     const RelationCardinalitiesButton = () => {
-        const isRelation = selected?.style?.includes("shape=rhombus");
+        const isRelation = isRelationShapeCell(selected);
         const selectedDiag = findRelationById(diagramRef.current, selected?.id);
         const [open, setOpen] = React.useState(false);
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
@@ -1866,8 +1864,7 @@ export default function App(props) {
 
     const DeleteEntityButton = () => {
         const isEntity =
-            selected?.style?.includes("shape=rectangle") &&
-            !isWeakEntityDecoratorCell(selected);
+            isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
         function deleteEntity() {
             // Find the entity in diagramRef.current.entities
             const entityIndex = findEntityIndexById(
@@ -2003,7 +2000,7 @@ export default function App(props) {
     };
 
     const convertSelectedSubattributeToSimpleAttribute = () => {
-        if (!selected?.style?.includes("shape=ellipse")) return;
+        if (!isAttributeShapeCell(selected)) return;
 
         const attributeOwner = findAttributeTreeOwnerById(
             diagramRef.current,
@@ -2037,7 +2034,7 @@ export default function App(props) {
     };
 
     const DeleteAttributeButton = () => {
-        const isAttribute = selected?.style?.includes("shape=ellipse");
+        const isAttribute = isAttributeShapeCell(selected);
 
         if (!isAttribute) {
             return;
@@ -2109,7 +2106,7 @@ export default function App(props) {
     };
 
     const DeleteRelationButton = () => {
-        const isRelation = selected?.style?.includes("shape=rhombus");
+        const isRelation = isRelationShapeCell(selected);
 
         function deleteRelation() {
             // Find the relation in diagramRef.current.relations

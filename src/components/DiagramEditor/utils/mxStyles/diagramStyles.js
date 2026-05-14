@@ -20,6 +20,15 @@ export const ER_FONT = "#000000";
 export const ER_FONT_FAMILY = "Times New Roman";
 export const ER_FONT_SIZE = 16;
 
+const hasCellShape = (cell, shape) =>
+    String(cell?.style ?? "").includes(`shape=${shape}`);
+
+export const isEntityShapeCell = (cell) => hasCellShape(cell, "rectangle");
+
+export const isRelationShapeCell = (cell) => hasCellShape(cell, "rhombus");
+
+export const isAttributeShapeCell = (cell) => hasCellShape(cell, "ellipse");
+
 export const getEntityDimensions = (label = "") => {
     const text = String(label ?? "");
     return {

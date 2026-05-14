@@ -2,6 +2,9 @@ import {
     getAttributeDimensions,
     getEntityDimensions,
     getRelationDimensions,
+    isAttributeShapeCell,
+    isEntityShapeCell,
+    isRelationShapeCell,
 } from "../mxStyles/diagramStyles";
 
 export const installGraphLabelEditingHandler = ({
@@ -51,7 +54,7 @@ export const installGraphLabelEditingHandler = ({
         this.getModel().beginUpdate();
 
         try {
-            if (cell.style.includes("shape=ellipse")) {
+            if (isAttributeShapeCell(cell)) {
                 const { width, height } = getAttributeDimensions(newValue);
 
                 resizeCellGeometry({
@@ -71,7 +74,7 @@ export const installGraphLabelEditingHandler = ({
                     syncDiscriminantUnderline(cell);
                 }
             } else if (
-                cell.style.includes("shape=rectangle") &&
+                isEntityShapeCell(cell) &&
                 !isWeakEntityDecoratorCell(cell)
             ) {
                 const { width, height } = getEntityDimensions(newValue);
@@ -104,7 +107,7 @@ export const installGraphLabelEditingHandler = ({
                     }
                 }
             } else if (
-                cell.style.includes("shape=rhombus") &&
+                isRelationShapeCell(cell) &&
                 !isIdentifyingRelationDecoratorCell(cell)
             ) {
                 const { width, height } = getRelationDimensions(newValue);
