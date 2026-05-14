@@ -1,3 +1,5 @@
+import { getRelationSideMaximum } from "../relations";
+
 export function getEntityById(graph, entityId) {
     return graph.entities.find((entity) => entity.idMx === entityId) ?? null;
 }
@@ -92,8 +94,8 @@ export function getIdentifyingDependency(graph, relation) {
         );
     }
 
-    const side1Maximum = relation.side1?.cardinality?.split(":")?.[1];
-    const side2Maximum = relation.side2?.cardinality?.split(":")?.[1];
+    const side1Maximum = getRelationSideMaximum(relation.side1);
+    const side2Maximum = getRelationSideMaximum(relation.side2);
 
     if (side1Maximum === "N" && side2Maximum === "1") {
         return makeDependency(

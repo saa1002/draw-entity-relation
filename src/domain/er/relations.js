@@ -29,6 +29,20 @@ export const isRelationConfigured = (relation) =>
     relation?.side1?.idMx !== "" &&
     relation?.side2?.idMx !== "";
 
+export const getRelationSideCardinality = (side = {}) => {
+    const [minimum = "", maximum = ""] = String(side.cardinality ?? "").split(
+        ":",
+    );
+
+    return {
+        minimum,
+        maximum,
+    };
+};
+
+export const getRelationSideMaximum = (side) =>
+    getRelationSideCardinality(side).maximum;
+
 export const isSelfRelation = (relation) =>
     relationHasBothEntitySides(relation) &&
     relation.side1.entity.idMx === relation.side2.entity.idMx;
@@ -191,8 +205,8 @@ export const getWeakAndStrongSidesForRelation = (diagram, relationData) => {
         }
     }
 
-    const side1Maximum = relationData.side1?.cardinality?.split(":")?.[1];
-    const side2Maximum = relationData.side2?.cardinality?.split(":")?.[1];
+    const side1Maximum = getRelationSideMaximum(relationData.side1);
+    const side2Maximum = getRelationSideMaximum(relationData.side2);
 
     if (side1Maximum === "N" && side2Maximum === "1") {
         return makeResult(

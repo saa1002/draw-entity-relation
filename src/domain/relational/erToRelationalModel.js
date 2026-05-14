@@ -1,5 +1,6 @@
 import { isMultivaluedAttribute } from "../er/attributes";
 import {
+    getRelationSideCardinality,
     isMandatoryOneToOneMergeRelation,
     isSelfRelation,
 } from "../er/relations";
@@ -41,9 +42,12 @@ export function filterTables(graph) {
     function processRelation(relation) {
         const side1 = relation.side1;
         const side2 = relation.side2;
+        const side1Cardinality = getRelationSideCardinality(side1);
+        const side2Cardinality = getRelationSideCardinality(side2);
+
         const cardinalityType = getCardinalityType(
-            side1.cardinality.split(":")[1],
-            side2.cardinality.split(":")[1],
+            side1Cardinality.maximum,
+            side2Cardinality.maximum,
         );
 
         const table = {
@@ -51,17 +55,11 @@ export function filterTables(graph) {
             type: cardinalityType,
             side1: {
                 entity: entities.find((e) => e.idMx === side1.entity.idMx),
-                cardinality: {
-                    minimum: side1.cardinality.split(":")[0],
-                    maximum: side1.cardinality.split(":")[1],
-                },
+                cardinality: side1Cardinality,
             },
             side2: {
                 entity: entities.find((e) => e.idMx === side2.entity.idMx),
-                cardinality: {
-                    minimum: side2.cardinality.split(":")[0],
-                    maximum: side2.cardinality.split(":")[1],
-                },
+                cardinality: side2Cardinality,
             },
             attributes: [...relation.attributes],
         };
