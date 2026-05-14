@@ -1,5 +1,8 @@
 import { isMultivaluedAttribute } from "../er/attributes";
-import { isMandatoryOneToOneMergeRelation } from "../er/relations";
+import {
+    isMandatoryOneToOneMergeRelation,
+    isSelfRelation,
+} from "../er/relations";
 import {
     projectAttributeTreeToColumns,
     projectMultivaluedAttributeToColumns,
@@ -343,7 +346,7 @@ export function process1NRelation(relation, graph) {
                 keyColumns: oneSideKeyColumns,
                 referencedEntity: oneSide.entity,
                 relationName: relation.name,
-                suffix: side1.entity.idMx === side2.entity.idMx ? "ref" : "",
+                suffix: isSelfRelation(relation) ? "ref" : "",
                 notnull,
                 unique: false,
             }),
@@ -351,7 +354,7 @@ export function process1NRelation(relation, graph) {
     };
 
     // Relación reflexiva, se crea solo una tabla
-    if (side1.entity.idMx === side2.entity.idMx) {
+    if (isSelfRelation(relation)) {
         return [manySideTable];
     }
 
@@ -364,7 +367,7 @@ export function process11Relation(relation, graph) {
     // Reflexive 1:1 relation: keep a single table and add a role-based copy
     // of the full PK as a self-referencing FK. The FK columns are UNIQUE
     // because the relationship has maximum 1 on both sides.
-    if (side1.entity.idMx === side2.entity.idMx) {
+    if (isSelfRelation(relation)) {
         const notnull =
             side1.cardinality.minimum === "1" ||
             side2.cardinality.minimum === "1";
@@ -475,7 +478,7 @@ export function process11Relation(relation, graph) {
     };
 
     // Si la relación es reflexiva solo se devuelve esta tabla
-    if (side1.entity.idMx === side2.entity.idMx) {
+    if (isSelfRelation(relation)) {
         return [tableWithForeignKey];
     }
 
@@ -525,7 +528,7 @@ export function processNMRelation(relation, graph) {
 
     // La relación es reflexiva y por tanto first y second table
     // son iguales y solo necesitamos una de las dos
-    if (side1.entity.name === side2.entity.name) {
+    if (isSelfRelation(relation)) {
         return [firstTable, thirdTable];
     }
 
