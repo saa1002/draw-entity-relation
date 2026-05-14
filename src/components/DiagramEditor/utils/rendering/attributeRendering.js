@@ -72,6 +72,21 @@ export const getDiscriminantUnderlineId = (attributeId) =>
 export const getMultivaluedAttributeDecoratorId = (attributeId) =>
     `${attributeId}${MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX}`;
 
+const getMultivaluedAttributeDecoratorBounds = (attributeGeometry) => {
+    if (!attributeGeometry) {
+        return null;
+    }
+
+    const offset = MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET;
+
+    return {
+        x: attributeGeometry.x + offset,
+        y: attributeGeometry.y + offset,
+        width: Math.max(1, attributeGeometry.width - offset * 2),
+        height: Math.max(1, attributeGeometry.height - offset * 2),
+    };
+};
+
 export const isDiscriminantUnderlineCell = (cell) =>
     !!cell?.id && String(cell.id).endsWith(DISCRIMINANT_UNDERLINE_SUFFIX);
 
@@ -273,24 +288,22 @@ export const createAttributeRenderingHelpers = ({
             getMultivaluedAttributeDecoratorId(attributeCell.id),
         );
 
-        if (!decorator || !decorator.geometry || !attributeCell.geometry) {
+        if (!decorator || !decorator.geometry) {
             return;
         }
 
-        decorator.geometry.x =
-            attributeCell.geometry.x + MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET;
-        decorator.geometry.y =
-            attributeCell.geometry.y + MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET;
-        decorator.geometry.width = Math.max(
-            1,
-            attributeCell.geometry.width -
-                MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET * 2,
+        const bounds = getMultivaluedAttributeDecoratorBounds(
+            attributeCell.geometry,
         );
-        decorator.geometry.height = Math.max(
-            1,
-            attributeCell.geometry.height -
-                MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET * 2,
-        );
+
+        if (!bounds) {
+            return;
+        }
+
+        decorator.geometry.x = bounds.x;
+        decorator.geometry.y = bounds.y;
+        decorator.geometry.width = bounds.width;
+        decorator.geometry.height = bounds.height;
 
         graph.refresh(decorator);
         graph.orderCells(false, [decorator]);
@@ -298,18 +311,24 @@ export const createAttributeRenderingHelpers = ({
     };
 
     const createMultivaluedAttributeDecorator = (attributeCell) => {
-        if (!attributeCell?.id || !attributeCell.geometry) return null;
+        if (!attributeCell?.id) return null;
 
-        const { x, y, width, height } = attributeCell.geometry;
+        const bounds = getMultivaluedAttributeDecoratorBounds(
+            attributeCell.geometry,
+        );
+
+        if (!bounds) {
+            return null;
+        }
 
         return graph.insertVertex(
             null,
             getMultivaluedAttributeDecoratorId(attributeCell.id),
             "",
-            x + MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET,
-            y + MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET,
-            Math.max(1, width - MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET * 2),
-            Math.max(1, height - MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET * 2),
+            bounds.x,
+            bounds.y,
+            bounds.width,
+            bounds.height,
             "multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0",
         );
     };
