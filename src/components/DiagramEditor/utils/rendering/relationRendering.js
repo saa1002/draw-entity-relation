@@ -22,6 +22,21 @@ export const isIdentifyingRelationEdgeDecoratorCell = (cell) =>
     !!cell?.id &&
     String(cell.id).endsWith(IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX);
 
+const getIdentifyingRelationDecoratorBounds = (relationGeometry) => {
+    if (!relationGeometry) {
+        return null;
+    }
+
+    const offset = IDENTIFYING_RELATION_DECORATOR_OFFSET;
+
+    return {
+        x: relationGeometry.x + offset,
+        y: relationGeometry.y + offset,
+        width: Math.max(1, relationGeometry.width - offset * 2),
+        height: Math.max(1, relationGeometry.height - offset * 2),
+    };
+};
+
 export const createRelationRenderingHelpers = ({
     graph,
     accessCell,
@@ -36,22 +51,22 @@ export const createRelationRenderingHelpers = ({
             getIdentifyingRelationDecoratorId(relationCell.id),
         );
 
-        if (!decorator || !decorator.geometry || !relationCell.geometry) return;
+        if (!decorator || !decorator.geometry) {
+            return;
+        }
 
-        decorator.geometry.x =
-            relationCell.geometry.x + IDENTIFYING_RELATION_DECORATOR_OFFSET;
-        decorator.geometry.y =
-            relationCell.geometry.y + IDENTIFYING_RELATION_DECORATOR_OFFSET;
-        decorator.geometry.width = Math.max(
-            1,
-            relationCell.geometry.width -
-                IDENTIFYING_RELATION_DECORATOR_OFFSET * 2,
+        const bounds = getIdentifyingRelationDecoratorBounds(
+            relationCell.geometry,
         );
-        decorator.geometry.height = Math.max(
-            1,
-            relationCell.geometry.height -
-                IDENTIFYING_RELATION_DECORATOR_OFFSET * 2,
-        );
+
+        if (!bounds) {
+            return;
+        }
+
+        decorator.geometry.x = bounds.x;
+        decorator.geometry.y = bounds.y;
+        decorator.geometry.width = bounds.width;
+        decorator.geometry.height = bounds.height;
 
         graph.refresh(decorator);
         graph.orderCells(false, [decorator]);
@@ -60,14 +75,25 @@ export const createRelationRenderingHelpers = ({
     const createIdentifyingRelationDecorator = (relation) => {
         const { width, height } = getRelationDimensions(relation.name);
 
+        const bounds = getIdentifyingRelationDecoratorBounds({
+            x: relation.position.x,
+            y: relation.position.y,
+            width,
+            height,
+        });
+
+        if (!bounds) {
+            return null;
+        }
+
         return graph.insertVertex(
             null,
             getIdentifyingRelationDecoratorId(relation.idMx),
             "",
-            relation.position.x + IDENTIFYING_RELATION_DECORATOR_OFFSET,
-            relation.position.y + IDENTIFYING_RELATION_DECORATOR_OFFSET,
-            Math.max(1, width - IDENTIFYING_RELATION_DECORATOR_OFFSET * 2),
-            Math.max(1, height - IDENTIFYING_RELATION_DECORATOR_OFFSET * 2),
+            bounds.x,
+            bounds.y,
+            bounds.width,
+            bounds.height,
             "identifyingRelationDecoratorStyle;shape=rhombus",
         );
     };
