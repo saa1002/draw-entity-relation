@@ -1,4 +1,5 @@
 import { isMultivaluedAttribute } from "../er/attributes";
+import { isMandatoryOneToOneMergeRelation } from "../er/relations";
 import {
     projectAttributeTreeToColumns,
     projectMultivaluedAttributeToColumns,
@@ -171,21 +172,6 @@ function buildMultivaluedValueAttributes(attribute) {
         notnull: true,
         unique: false,
     }));
-}
-
-function isMandatoryOneToOneMergeRelation(relation) {
-    if (relation.isIdentifying) {
-        return false;
-    }
-
-    if (relation.side1.entity.idMx === relation.side2.entity.idMx) {
-        return false;
-    }
-
-    return (
-        relation.side1.cardinality === "1:1" &&
-        relation.side2.cardinality === "1:1"
-    );
 }
 
 function findMandatoryOneToOneMergeRelationForEntity(entity, graph) {

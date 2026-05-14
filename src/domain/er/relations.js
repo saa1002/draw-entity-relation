@@ -42,6 +42,21 @@ export const isManyToManyRelation = (relation) =>
     relation?.side1?.cardinality?.endsWith(":N") === true &&
     relation?.side2?.cardinality?.endsWith(":N") === true;
 
+export const isMandatoryOneToOneMergeRelation = (relation) => {
+    if (isIdentifyingRelation(relation)) {
+        return false;
+    }
+
+    if (isSelfRelation(relation)) {
+        return false;
+    }
+
+    return (
+        relation?.side1?.cardinality === "1:1" &&
+        relation?.side2?.cardinality === "1:1"
+    );
+};
+
 export const findWeakEntityForIdentifyingRelation = (diagram, relation) =>
     findWeakEntityByIdentifyingRelationId(diagram, relation?.idMx);
 

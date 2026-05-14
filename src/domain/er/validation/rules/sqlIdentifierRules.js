@@ -4,21 +4,7 @@ import {
 } from "../../../relational/attributeProjection";
 import { normalizeIdentifier } from "../../../relational/naming";
 import { isMultivaluedAttribute } from "../../attributes";
-
-function isMandatoryOneToOneMergeRelation(relation) {
-    if (relation.isIdentifying) {
-        return false;
-    }
-
-    if (relation.side1.entity.idMx === relation.side2.entity.idMx) {
-        return false;
-    }
-
-    return (
-        relation.side1.cardinality === "1:1" &&
-        relation.side2.cardinality === "1:1"
-    );
-}
+import { isMandatoryOneToOneMergeRelation } from "../../relations";
 
 function findMandatoryOneToOneMergeRelationForEntity(entity, graph) {
     return graph.relations.find(
