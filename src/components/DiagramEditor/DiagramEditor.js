@@ -69,7 +69,10 @@ import {
     connectRelationGraphSides,
     getConfiguredRelationGraphCells,
     installCellGeometrySyncHandlers,
+    removeEntityGraphCells,
     removeExistingGraphCells,
+    removeRelationConfigurationGraphCells,
+    removeRelationGraphCells,
 } from "./utils/graph/graphCanvas";
 import { installGraphInteractionOverrides } from "./utils/graph/graphInteractionOverrides";
 import { installGraphLabelEditingHandler } from "./utils/graph/graphLabelEditing";
@@ -302,6 +305,20 @@ export default function App(props) {
         relationData.canHoldAttributes = false;
     };
 
+    const removeRelationConfiguration = (relation) => {
+        if (!relation) return;
+
+        clearIdentifyingRelationSemantics(relation.idMx);
+
+        removeRelationConfigurationGraphCells({
+            graph,
+            relation,
+            accessCell,
+            getAttributesCells,
+        });
+
+        resetRelationSides(relation);
+    };
     const getAttributeDataById = (attributeId) =>
         findAttributeTreeOwnerById(diagramRef.current, attributeId)
             ?.attribute ?? null;
@@ -1676,6 +1693,7 @@ export default function App(props) {
     const DeleteEntityButton = () => {
         const isEntity =
             isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
+
         function deleteEntity() {
             // Find the entity in diagramRef.current.entities
             const entityIndex = findEntityIndexById(
@@ -1683,62 +1701,29 @@ export default function App(props) {
                 selected.id,
             );
 
-            if (entityIndex !== -1) {
-                const entity = diagramRef.current.entities[entityIndex];
-
-                // Remove the entity from diagramRef.current.entities
-                diagramRef.current.entities.splice(entityIndex, 1);
-
-                // Find the corresponding cell in graph.model.cells
-                const cell = accessCell(entity.idMx);
-                const weakDecorator = isWeakEntity(entity)
-                    ? accessCell(getWeakEntityDecoratorId(entity.idMx))
-                    : null;
-                if (cell) {
-                    // Collect the attribute cells to delete
-                    const attributeCells = getAttributesCells(
-                        entity.attributes,
-                    );
-
-                    removeExistingGraphCells(graph, [
-                        weakDecorator,
-                        cell,
-                        ...attributeCells,
-                    ]);
-
-                    // Check and remove relations involving this entity
-                    diagramRef.current.relations.forEach((relation, index) => {
-                        if (relationInvolvesEntity(relation, entity.idMx)) {
-                            clearIdentifyingRelationSemantics(relation.idMx);
-
-                            // Find the corresponding cells in graph.model.cells for the relation
-                            const side1Cell = accessCell(relation.side1.cell);
-                            const side2Cell = accessCell(relation.side2.cell);
-                            const edge1Cell = accessCell(relation.side1.edgeId);
-                            const edge2Cell = accessCell(relation.side2.edgeId);
-
-                            // Collect the relation's attribute cells to delete
-                            const relationAttributeCells = getAttributesCells(
-                                relation.attributes,
-                            );
-
-                            // Remove the relation's cells and its attributes from the graph
-                            removeExistingGraphCells(graph, [
-                                side1Cell,
-                                side2Cell,
-                                edge1Cell,
-                                edge2Cell,
-                                ...relationAttributeCells,
-                            ]);
-
-                            // Reinitialize the relation sides
-                            resetRelationSides(
-                                diagramRef.current.relations[index],
-                            );
-                        }
-                    });
-                }
+            if (entityIndex === -1) {
+                syncAndPersistDiagramData();
+                return;
             }
+
+            const entity = diagramRef.current.entities[entityIndex];
+
+            diagramRef.current.entities.splice(entityIndex, 1);
+
+            removeEntityGraphCells({
+                graph,
+                entity,
+                accessCell,
+                getAttributesCells,
+                getWeakEntityDecoratorId,
+                isWeakEntity,
+            });
+
+            diagramRef.current.relations
+                .filter((relation) =>
+                    relationInvolvesEntity(relation, entity.idMx),
+                )
+                .forEach(removeRelationConfiguration);
             syncAndPersistDiagramData();
         }
         if (isEntity) {
@@ -1892,26 +1877,24 @@ export default function App(props) {
                 selected.id,
             );
 
-            if (relationIndex !== -1) {
-                const relation = diagramRef.current.relations[relationIndex];
-
-                clearIdentifyingRelationSemantics(relation.idMx);
-
-                // Remove the relation from diagramRef.current.relations
-                diagramRef.current.relations.splice(relationIndex, 1);
-
-                const cell = accessCell(relation.idMx);
-
-                if (cell) {
-                    // Remove the attributes associated with the entity
-                    const attributeCells = getAttributesCells(
-                        relation.attributes,
-                    );
-
-                    // Remove the cell and its attributes from the graph
-                    removeExistingGraphCells(graph, [cell, ...attributeCells]);
-                }
+            if (relationIndex === -1) {
+                syncAndPersistDiagramData();
+                return;
             }
+
+            const relation = diagramRef.current.relations[relationIndex];
+
+            clearIdentifyingRelationSemantics(relation.idMx);
+
+            diagramRef.current.relations.splice(relationIndex, 1);
+
+            removeRelationGraphCells({
+                graph,
+                relation,
+                accessCell,
+                getAttributesCells,
+            });
+
             syncAndPersistDiagramData();
         }
 

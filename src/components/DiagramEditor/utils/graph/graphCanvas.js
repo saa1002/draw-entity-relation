@@ -316,3 +316,67 @@ export const installCellGeometrySyncHandlers = ({
         graph.removeListener(handleCellsResized);
     };
 };
+
+export const removeEntityGraphCells = ({
+    graph,
+    entity,
+    accessCell,
+    getAttributesCells,
+    getWeakEntityDecoratorId,
+    isWeakEntity,
+}) => {
+    if (!entity) return;
+
+    const entityCell = accessCell(entity.idMx);
+
+    if (!entityCell) return;
+
+    const weakEntityDecorator = isWeakEntity(entity)
+        ? accessCell(getWeakEntityDecoratorId(entity.idMx))
+        : null;
+
+    const attributeCells = getAttributesCells(entity.attributes);
+
+    removeExistingGraphCells(graph, [
+        weakEntityDecorator,
+        entityCell,
+        ...attributeCells,
+    ]);
+};
+
+export const removeRelationConfigurationGraphCells = ({
+    graph,
+    relation,
+    accessCell,
+    getAttributesCells,
+}) => {
+    if (!relation) return;
+
+    const relationAttributeCells = getAttributesCells(relation.attributes);
+
+    removeExistingGraphCells(graph, [
+        ...getConfiguredRelationGraphCells({ relation, accessCell }),
+        ...relationAttributeCells,
+    ]);
+};
+
+export const removeRelationGraphCells = ({
+    graph,
+    relation,
+    accessCell,
+    getAttributesCells,
+}) => {
+    if (!relation) return;
+
+    const relationCell = accessCell(relation.idMx);
+
+    if (!relationCell) return;
+
+    const relationAttributeCells = getAttributesCells(relation.attributes);
+
+    removeExistingGraphCells(graph, [
+        relationCell,
+        ...getConfiguredRelationGraphCells({ relation, accessCell }),
+        ...relationAttributeCells,
+    ]);
+};
