@@ -66,6 +66,8 @@ import {
 import { generateSQL } from "../../services/sql";
 import {
     clearGraphCanvas,
+    connectRelationGraphSides,
+    getConfiguredRelationGraphCells,
     removeExistingGraphCells,
 } from "./utils/graph/graphCanvas";
 import { installGraphInteractionOverrides } from "./utils/graph/graphInteractionOverrides";
@@ -1507,85 +1509,25 @@ export default function App(props) {
             }
 
             if (isRelationConfigured(relation)) {
-                removeExistingGraphCells(graph, [
-                    accessCell(relation.side1.idMx),
-                    accessCell(relation.side2.idMx),
-                    accessCell(relation.side1.edgeId),
-                    accessCell(relation.side2.edgeId),
-                ]);
+                removeExistingGraphCells(
+                    graph,
+                    getConfiguredRelationGraphCells({ relation, accessCell }),
+                );
 
                 removeRelationAttributes(relation);
 
                 resetRelationSides(relation, { cardinality: "X:X" });
             }
 
-            const target1 = accessCell(side1.idMx);
-            const target2 = accessCell(side2.idMx);
-
-            const edge1 = graph.insertEdge(
-                selected,
-                null,
-                null,
-                source,
-                target1,
-            );
-            const edge2 = graph.insertEdge(
-                selected,
-                null,
-                null,
-                source,
-                target2,
-            );
-            const cardinality1 = graph.insertVertex(
-                edge1,
-                null,
-                "X:X",
-                0,
-                0,
-                1,
-                1,
-                getCardinalityStyleString(),
-                true,
-            );
-            const cardinality2 = graph.insertVertex(
-                edge2,
-                null,
-                "X:X",
-                0,
-                0,
-                1,
-                1,
-                getCardinalityStyleString(),
-                true,
-            );
-            graph.updateCellSize(cardinality1);
-            graph.updateCellSize(cardinality2);
-
-            const selectedDiag = findRelationById(
-                diagramRef.current,
-                selected?.id,
-            );
-            selectedDiag.side1.idMx = cardinality1.id;
-            selectedDiag.side2.idMx = cardinality2.id;
-
-            selectedDiag.side1.edgeId = edge1.id;
-            selectedDiag.side2.edgeId = edge2.id;
-
-            selectedDiag.side1.cell = cardinality1.id;
-            selectedDiag.side2.cell = cardinality2.id;
-            selectedDiag.side1.entity.idMx = side1.idMx;
-            selectedDiag.side2.entity.idMx = side2.idMx;
-
-            if (target1 === target2) {
-                const x1 = target1.geometry.x + target1.geometry.width / 2;
-                const x2 = source.geometry.x + source.geometry.width / 2;
-                const y1 = target1.geometry.y + target1.geometry.height / 2;
-                const y2 = source.geometry.y + source.geometry.height / 2;
-
-                edge1.geometry.points = [new mxPoint(x2, y1)];
-                edge2.geometry.points = [new mxPoint(x1, y2)];
-            }
-            graph.orderCells(true, [edge1, edge2]); // Move the new edges to the back
+            connectRelationGraphSides({
+                graph,
+                relationCell: source,
+                relation,
+                side1EntityCell: accessCell(side1.idMx),
+                side2EntityCell: accessCell(side2.idMx),
+                cardinalityStyle: getCardinalityStyleString(),
+                syncSelfRelationEdges,
+            });
 
             syncAndPersistDiagramData();
 
