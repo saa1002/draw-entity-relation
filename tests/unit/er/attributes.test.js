@@ -26,6 +26,7 @@ import {
     hasEmptyCompositeAttributeInTree,
     hasMultivaluedAttributeInTree,
     hasRepeatedSiblingAttributeNamesInTree,
+    toggleExclusivePrimaryKeyAttributeInTree,
     someAttributeInTree,
 } from '../../../src/domain/er/attributes'
 
@@ -704,6 +705,99 @@ describe("Hierarchical attribute helpers", () => {
         });
 
         expect(hasRepeatedSiblingAttributeNamesInTree(attributes)).toBe(true);
-    });    
+    }); 
+    
+    test("toggleExclusivePrimaryKeyAttributeInTree should toggle the root composite attribute when a leaf is selected", () => {
+        const attributes = [
+            {
+                idMx: "attr-id",
+                name: "id",
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-address",
+                name: "direccion",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-street",
+                        name: "calle",
+                        key: false,
+                        partialKey: false,
+                    },
+                    {
+                        idMx: "attr-city",
+                        name: "ciudad",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        const enabledResult = toggleExclusivePrimaryKeyAttributeInTree(
+            attributes,
+            "attr-street",
+        );
+
+        expect(enabledResult).toMatchObject({
+            updated: true,
+            enabled: true,
+        });
+
+        expect(attributes[0]).toMatchObject({
+            name: "id",
+            key: false,
+            partialKey: false,
+        });
+
+        expect(attributes[1]).toMatchObject({
+            name: "direccion",
+            key: true,
+            partialKey: false,
+            children: [
+                {
+                    name: "calle",
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    name: "ciudad",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        const disabledResult = toggleExclusivePrimaryKeyAttributeInTree(
+            attributes,
+            "attr-city",
+        );
+
+        expect(disabledResult).toMatchObject({
+            updated: true,
+            enabled: false,
+        });
+
+        expect(attributes[1]).toMatchObject({
+            name: "direccion",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    name: "calle",
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    name: "ciudad",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+    });  
 })
 

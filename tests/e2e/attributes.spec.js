@@ -771,3 +771,104 @@ test('add sibling subattributes without creating nested subattributes', async ({
             nestedChildren: false,
         });
 });
+
+test('toggle composite attribute key from any child attribute', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+
+    await addAttributeToSelectedEntity(page);
+    await renameElement(page, 'Atributo', 'id');
+
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+    await renameElement(page, 'Atributo', 'direccion');
+
+    await page.getByText('direccion', { exact: true }).click();
+    await page
+        .getByRole('button', { name: 'Añadir subatributo hermano' })
+        .click();
+
+    await renameElement(page, 'Atributo', 'calle');
+
+    await selectAttributeByName(page, 'Entidad', 'calle');
+    await page
+        .getByRole('button', { name: 'Añadir subatributo hermano' })
+        .click();
+
+    await renameElement(page, 'Atributo', 'ciudad');
+
+    await selectAttributeByName(page, 'Entidad', 'calle');
+
+    await expect(
+        page.getByRole('button', { name: 'Convertir en clave' }),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Convertir en clave' }).click();
+
+    await expect
+        .poll(async () => {
+            const entity = await getSavedEntity(page, 'Entidad');
+            const idAttribute = entity?.attributes?.[0];
+            const compositeAttribute = entity?.attributes?.[1];
+
+            return {
+                idKey: idAttribute?.key,
+                compositeKey: compositeAttribute?.key,
+                childKeys: compositeAttribute?.children?.map(
+                    (attribute) => attribute.key,
+                ),
+                childNames: compositeAttribute?.children?.map(
+                    (attribute) => attribute.name,
+                ),
+            };
+        })
+        .toEqual({
+            idKey: false,
+            compositeKey: true,
+            childKeys: [false, false, false],
+            childNames: ['direccion', 'calle', 'ciudad'],
+        });
+
+    await selectAttributeByName(page, 'Entidad', 'ciudad');
+
+    await expect(
+        page.getByRole('button', { name: 'Quitar clave' }),
+    ).toBeVisible();
+    
+    const sql = await exportCurrentSqlScript(page);
+
+    expectSQLToContain(sql, 'PRIMARY KEY (direccion, calle, ciudad)');
+
+    await selectAttributeByName(page, 'Entidad', 'ciudad');
+
+    await expect(
+        page.getByRole('button', { name: 'Quitar clave' }),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Quitar clave' }).click();
+
+    await expect
+        .poll(async () => {
+            const entity = await getSavedEntity(page, 'Entidad');
+            const compositeAttribute = entity?.attributes?.[1];
+
+            return {
+                compositeKey: compositeAttribute?.key,
+                childKeys: compositeAttribute?.children?.map(
+                    (attribute) => attribute.key,
+                ),
+            };
+        })
+        .toEqual({
+            compositeKey: false,
+            childKeys: [false, false, false],
+        });
+        
+    await selectAttributeByName(page, 'Entidad', 'calle');
+
+    await expect(
+        page.getByRole('button', { name: 'Convertir en clave' }),
+    ).toBeVisible();
+});

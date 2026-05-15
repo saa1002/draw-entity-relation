@@ -59,7 +59,7 @@ import {
     removeAttributeFromOwnerTreeByIdWithPromotion,
     resetRelationSides,
     toggleExclusivePartialKeyAttribute,
-    toggleExclusivePrimaryKeyAttribute,
+    toggleExclusivePrimaryKeyAttributeInTree,
     updateAttributePosition,
     validateGraph,
 } from "../../domain/er";
@@ -152,6 +152,26 @@ export default function App(props) {
         return {
             entity: attributeOwner.owner,
             attribute: attributeOwner.attribute,
+        };
+    };
+
+    const getSelectedEntityAttributeKeyData = () => {
+        const attributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected?.id,
+        );
+
+        if (!isEntityAttributeOwner(attributeOwner)) {
+            return null;
+        }
+
+        const rootAttribute =
+            attributeOwner.ancestors?.at(0) ?? attributeOwner.attribute;
+
+        return {
+            entity: attributeOwner.owner,
+            attribute: rootAttribute,
+            selectedAttribute: attributeOwner.attribute,
         };
     };
 
@@ -927,10 +947,11 @@ export default function App(props) {
     };
 
     const toggleAttrKey = () => {
-        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        const selectedEntityAttribute = getSelectedEntityAttributeKeyData();
         if (!selectedEntityAttribute) return;
 
-        const { entity, attribute } = selectedEntityAttribute;
+        const { entity, attribute, selectedAttribute } =
+            selectedEntityAttribute;
 
         if (isMultivaluedAttribute(attribute)) {
             toast.error("Una clave no puede ser multivaluada.");
@@ -944,9 +965,9 @@ export default function App(props) {
             return;
         }
 
-        const result = toggleExclusivePrimaryKeyAttribute(
+        const result = toggleExclusivePrimaryKeyAttributeInTree(
             entity.attributes,
-            selected.id,
+            selectedAttribute.idMx,
         );
 
         if (!result.updated) return;
@@ -1352,7 +1373,7 @@ export default function App(props) {
             return;
         }
 
-        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        const selectedEntityAttribute = getSelectedEntityAttributeKeyData();
 
         if (!selectedEntityAttribute) {
             return;

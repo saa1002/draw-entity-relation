@@ -739,6 +739,71 @@ export const findAttributeNodeInTreeById = (attributes, attributeId) => {
     return foundNode;
 };
 
+const rememberChangedRootAttribute = (changedRootAttributes, rootAttribute) => {
+    if (rootAttribute && !changedRootAttributes.includes(rootAttribute)) {
+        changedRootAttributes.push(rootAttribute);
+    }
+};
+
+export const getRootAttributeFromTreeNode = (attributeNode) =>
+    attributeNode?.ancestors?.at(0) ?? attributeNode?.attribute ?? null;
+
+export const toggleExclusivePrimaryKeyAttributeInTree = (
+    attributes,
+    attributeId,
+) => {
+    const selectedAttributeNode = findAttributeNodeInTreeById(
+        attributes,
+        attributeId,
+    );
+
+    const selectedRootAttribute = getRootAttributeFromTreeNode(
+        selectedAttributeNode,
+    );
+
+    if (!selectedRootAttribute) {
+        return {
+            updated: false,
+            enabled: false,
+            changedAttributes: [],
+        };
+    }
+
+    const shouldSetAsKey = !selectedRootAttribute.key;
+    const changedRootAttributes = [];
+
+    getAttributes(attributes).forEach((rootAttribute) => {
+        walkAttributeTree([rootAttribute], (attribute) => {
+            const previousKey = attribute.key;
+            const previousPartialKey = attribute.partialKey;
+
+            if (shouldSetAsKey) {
+                attribute.key = attribute.idMx === selectedRootAttribute.idMx;
+                attribute.partialKey = false;
+            } else if (rootAttribute.idMx === selectedRootAttribute.idMx) {
+                attribute.key = false;
+                attribute.partialKey = false;
+            }
+
+            if (
+                previousKey !== attribute.key ||
+                previousPartialKey !== attribute.partialKey
+            ) {
+                rememberChangedRootAttribute(
+                    changedRootAttributes,
+                    rootAttribute,
+                );
+            }
+        });
+    });
+
+    return {
+        updated: true,
+        enabled: shouldSetAsKey,
+        changedAttributes: changedRootAttributes,
+    };
+};
+
 export const hasRepeatedSiblingAttributeNamesInTree = (attributes) => {
     const attributeNames = new Set();
 
