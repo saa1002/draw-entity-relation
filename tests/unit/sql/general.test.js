@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
+import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { generateSQL, filterTables } from '../../../src/services/sql'
+
+const { expectSQLToMatch } = buildSQLAssertions(expect)
 
 let oneNGraph
 let oneOneGraph
 let nMGraph
 let oneNGraphAndEntity
 
-const expectSQLToMatch = (actual, expected) => {
-    expect(actual.replace(/\s+/g, '')).toBe(expected.replace(/\s+/g, ''))
-}
 
 beforeEach(() => {
     oneNGraph = loadGraphFixture('1-n-relation.json')
