@@ -4,16 +4,7 @@ import {
 } from "../../../relational/attributeProjection";
 import { normalizeIdentifier } from "../../../relational/naming";
 import { isMultivaluedAttribute } from "../../attributes";
-import { isMandatoryOneToOneMergeRelation } from "../../relations";
-
-function findMandatoryOneToOneMergeRelationForEntity(entity, graph) {
-    return graph.relations.find(
-        (relation) =>
-            isMandatoryOneToOneMergeRelation(relation) &&
-            (relation.side1.entity.idMx === entity.idMx ||
-                relation.side2.entity.idMx === entity.idMx),
-    );
-}
+import { findMandatoryOneToOneMergeRelationForEntity } from "../../relations";
 
 function getEntityPrimaryKeyColumnNames(
     entity,
@@ -59,8 +50,8 @@ function getEntityPrimaryKeyColumnNames(
 function getMultivaluedAuxiliaryOwnerColumnNames(entity, graph) {
     const ownerColumnNames = getEntityPrimaryKeyColumnNames(entity, graph);
     const mergeRelation = findMandatoryOneToOneMergeRelationForEntity(
-        entity,
         graph,
+        entity,
     );
 
     if (!mergeRelation) {

@@ -1,7 +1,7 @@
 import { isMultivaluedAttribute } from "../er/attributes";
 import {
+    findMandatoryOneToOneMergeRelationForEntity,
     getRelationSideCardinality,
-    isMandatoryOneToOneMergeRelation,
     isSelfRelation,
 } from "../er/relations";
 import {
@@ -175,15 +175,6 @@ function buildMultivaluedValueAttributes(attribute) {
     }));
 }
 
-function findMandatoryOneToOneMergeRelationForEntity(entity, graph) {
-    return graph.relations.find(
-        (relation) =>
-            isMandatoryOneToOneMergeRelation(relation) &&
-            (relation.side1.entity.idMx === entity.idMx ||
-                relation.side2.entity.idMx === entity.idMx),
-    );
-}
-
 function getMultivaluedAttributeOwnerReference(entity, graph, tableMap) {
     if (tableMap.has(entity.name)) {
         return {
@@ -193,8 +184,8 @@ function getMultivaluedAttributeOwnerReference(entity, graph, tableMap) {
     }
 
     const mergeRelation = findMandatoryOneToOneMergeRelationForEntity(
-        entity,
         graph,
+        entity,
     );
 
     if (mergeRelation && tableMap.has(mergeRelation.name)) {

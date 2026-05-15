@@ -102,6 +102,23 @@ export const isMandatoryOneToOneMergeRelation = (relation) => {
     );
 };
 
+export const findMandatoryOneToOneMergeRelationForEntity = (
+    diagram,
+    entity,
+) => {
+    if (!diagram || !entity?.idMx) {
+        return null;
+    }
+
+    return (
+        getRelations(diagram).find(
+            (relation) =>
+                isMandatoryOneToOneMergeRelation(relation) &&
+                relationInvolvesEntity(relation, entity.idMx),
+        ) ?? null
+    );
+};
+
 export const findWeakEntityForIdentifyingRelation = (diagram, relation) =>
     findWeakEntityByIdentifyingRelationId(diagram, relation?.idMx);
 
