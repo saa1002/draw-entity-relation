@@ -1,4 +1,9 @@
 import {
+    findAttributeTreeOwnerById,
+    getAttributeCellIds,
+    isCompositeAttribute,
+} from "../../../../domain/er";
+import {
     DISCRIMINANT_UNDERLINE_SUFFIX,
     MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX,
     isDiscriminantUnderlineCell,
@@ -41,11 +46,72 @@ const getInteractiveBaseCellFromDecorator = ({ cell, accessCell }) => {
     return null;
 };
 
+const getDiagramAttributeOwners = (getDiagram) => {
+    const diagram = getDiagram?.() ?? {};
+
+    return [...(diagram.entities ?? []), ...(diagram.relations ?? [])];
+};
+
+const isCompositeAttributeConnectorCell = ({ cell, getDiagram }) => {
+    if (!cell?.id) {
+        return false;
+    }
+
+    const attributeOwner = findAttributeTreeOwnerById(getDiagram?.(), cell.id);
+    const attribute = attributeOwner?.attribute;
+
+    return attribute?.idMx === cell.id && isCompositeAttribute(attribute);
+};
+
+const findCompositeAttributeRootByEdgeId = ({ edgeId, getDiagram }) => {
+    if (!edgeId) {
+        return null;
+    }
+
+    const edgeIdAsString = String(edgeId);
+
+    for (const owner of getDiagramAttributeOwners(getDiagram)) {
+        for (const attribute of owner.attributes ?? []) {
+            if (!isCompositeAttribute(attribute)) {
+                continue;
+            }
+
+            const hasRootEdge = getAttributeCellIds(attribute)
+                .slice(1)
+                .some((cellId) => String(cellId) === edgeIdAsString);
+
+            if (hasRootEdge) {
+                return attribute;
+            }
+        }
+    }
+
+    return null;
+};
+
+const getCompositeAttributeRootCellFromEdge = ({
+    edgeCell,
+    graph,
+    accessCell,
+    getDiagram,
+}) => {
+    if (!edgeCell?.id || !graph?.getModel?.().isEdge?.(edgeCell)) {
+        return null;
+    }
+
+    const compositeAttribute = findCompositeAttributeRootByEdgeId({
+        edgeId: edgeCell.id,
+        getDiagram,
+    });
+
+    return compositeAttribute ? accessCell(compositeAttribute.idMx) : null;
+};
+
 const getUnderlyingInteractiveCell = ({
     cell,
+    graph,
     accessCell,
-    getCompositeAttributeRootCellFromEdge,
-    isCompositeAttributeConnectorCell,
+    getDiagram,
     resolveCompositeAttributeRootEdge = true,
 }) => {
     if (!cell?.id) return cell;
@@ -59,13 +125,23 @@ const getUnderlyingInteractiveCell = ({
         return decoratorBaseCell;
     }
 
-    if (isCompositeAttributeConnectorCell?.(cell)) {
+    if (
+        isCompositeAttributeConnectorCell({
+            cell,
+            getDiagram,
+        })
+    ) {
         return null;
     }
 
     if (resolveCompositeAttributeRootEdge) {
         const compositeAttributeRootCell =
-            getCompositeAttributeRootCellFromEdge?.(cell);
+            getCompositeAttributeRootCellFromEdge({
+                edgeCell: cell,
+                graph,
+                accessCell,
+                getDiagram,
+            });
 
         if (compositeAttributeRootCell) {
             return compositeAttributeRootCell;
@@ -77,16 +153,27 @@ const getUnderlyingInteractiveCell = ({
 
 const isCompositeAttributeInteractionCell = ({
     cell,
-    getCompositeAttributeRootCellFromEdge,
-    isCompositeAttributeConnectorCell,
+    graph,
+    accessCell,
+    getDiagram,
 }) => {
     if (!cell) {
         return false;
     }
 
     return (
-        isCompositeAttributeConnectorCell?.(cell) === true ||
-        Boolean(getCompositeAttributeRootCellFromEdge?.(cell))
+        isCompositeAttributeConnectorCell({
+            cell,
+            getDiagram,
+        }) ||
+        Boolean(
+            getCompositeAttributeRootCellFromEdge({
+                edgeCell: cell,
+                graph,
+                accessCell,
+                getDiagram,
+            }),
+        )
     );
 };
 
@@ -94,8 +181,7 @@ export const installGraphInteractionOverrides = ({
     graph,
     mxGraph,
     accessCell,
-    getCompositeAttributeRootCellFromEdge,
-    isCompositeAttributeConnectorCell,
+    getDiagram,
 }) => {
     if (!graph || !mxGraph || !accessCell) {
         return () => {};
@@ -123,9 +209,9 @@ export const installGraphInteractionOverrides = ({
 
         return getUnderlyingInteractiveCell({
             cell,
+            graph,
             accessCell,
-            getCompositeAttributeRootCellFromEdge,
-            isCompositeAttributeConnectorCell,
+            getDiagram,
             resolveCompositeAttributeRootEdge: false,
         });
     };
@@ -138,9 +224,9 @@ export const installGraphInteractionOverrides = ({
 
         return getUnderlyingInteractiveCell({
             cell,
+            graph,
             accessCell,
-            getCompositeAttributeRootCellFromEdge,
-            isCompositeAttributeConnectorCell,
+            getDiagram,
         });
     };
 
@@ -149,9 +235,9 @@ export const installGraphInteractionOverrides = ({
     graph.dblClick = function (evt, cell) {
         const interactiveCell = getUnderlyingInteractiveCell({
             cell,
+            graph,
             accessCell,
-            getCompositeAttributeRootCellFromEdge,
-            isCompositeAttributeConnectorCell,
+            getDiagram,
             resolveCompositeAttributeRootEdge: false,
         });
 
@@ -167,8 +253,9 @@ export const installGraphInteractionOverrides = ({
             shouldClearCompositeAttributeSelection =
                 isCompositeAttributeInteractionCell({
                     cell,
-                    getCompositeAttributeRootCellFromEdge,
-                    isCompositeAttributeConnectorCell,
+                    graph,
+                    accessCell,
+                    getDiagram,
                 });
         },
         mouseMove: () => {},
