@@ -8,6 +8,7 @@ import {
     projectAttributeTreeToColumns,
     projectMultivaluedAttributeToColumns,
 } from "./attributeProjection";
+import { getEntityPrimaryKeyColumnReferences } from "./entityKeyColumns";
 import { normalizeIdentifier } from "./naming";
 
 // This function takes the graph and prepares the relations
@@ -90,59 +91,7 @@ export function filterTables(graph) {
     return tables;
 }
 
-function getEntityPrimaryKeyColumns(
-    entity,
-    graph,
-    visitedEntityIds = new Set(),
-) {
-    if (!entity) {
-        return [];
-    }
-
-    if (!entity?.weak) {
-        return projectAttributeTreeToColumns(entity.attributes)
-            .filter((attr) => attr.key)
-            .map((attr) => ({
-                name: attr.name,
-                referencedColumn: attr.name,
-            }));
-    }
-
-    if (visitedEntityIds.has(entity.idMx)) {
-        throw new Error(
-            `Cannot resolve primary key columns for weak entity "${entity.name}" because the identifying ownership chain contains a cycle.`,
-        );
-    }
-
-    const nextVisitedEntityIds = new Set(visitedEntityIds);
-    nextVisitedEntityIds.add(entity.idMx);
-
-    const partialKeyColumns = projectAttributeTreeToColumns(entity.attributes)
-        .filter((attr) => attr.partialKey)
-        .map((attr) => ({
-            name: attr.name,
-            referencedColumn: attr.name,
-        }));
-
-    const ownerEntity = graph.entities.find(
-        (candidate) => candidate.idMx === entity.ownerEntityId,
-    );
-
-    const ownerKeyColumns = getEntityPrimaryKeyColumns(
-        ownerEntity,
-        graph,
-        nextVisitedEntityIds,
-    ).map((ownerKeyColumn) => {
-        const weakTableColumnName = `${ownerKeyColumn.name}_${ownerEntity.name}`;
-
-        return {
-            name: weakTableColumnName,
-            referencedColumn: weakTableColumnName,
-        };
-    });
-
-    return [...partialKeyColumns, ...ownerKeyColumns];
-}
+const getEntityPrimaryKeyColumns = getEntityPrimaryKeyColumnReferences;
 
 function buildEntityAttributes(entity) {
     return projectAttributeTreeToColumns(entity.attributes).map((attr) => ({

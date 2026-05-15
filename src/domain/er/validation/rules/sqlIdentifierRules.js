@@ -2,53 +2,16 @@ import {
     projectAttributeTreeToColumns,
     projectMultivaluedAttributeToColumns,
 } from "../../../relational/attributeProjection";
+import { getEntityPrimaryKeyColumnNamesIgnoringCycles } from "../../../relational/entityKeyColumns";
 import { normalizeIdentifier } from "../../../relational/naming";
 import { isMultivaluedAttribute } from "../../attributes";
 import { findMandatoryOneToOneMergeRelationForEntity } from "../../relations";
 
-function getEntityPrimaryKeyColumnNames(
-    entity,
-    graph,
-    visitedEntityIds = new Set(),
-) {
-    if (!entity) {
-        return [];
-    }
-
-    if (!entity.weak) {
-        return projectAttributeTreeToColumns(entity.attributes ?? [])
-            .filter((attribute) => attribute.key)
-            .map((attribute) => attribute.name);
-    }
-
-    if (visitedEntityIds.has(entity.idMx)) {
-        return [];
-    }
-
-    const nextVisitedEntityIds = new Set(visitedEntityIds);
-    nextVisitedEntityIds.add(entity.idMx);
-
-    const partialKeyColumns = projectAttributeTreeToColumns(
-        entity.attributes ?? [],
-    )
-        .filter((attribute) => attribute.partialKey)
-        .map((attribute) => attribute.name);
-
-    const ownerEntity = graph.entities.find(
-        (candidate) => candidate.idMx === entity.ownerEntityId,
-    );
-
-    const ownerKeyColumns = getEntityPrimaryKeyColumnNames(
-        ownerEntity,
-        graph,
-        nextVisitedEntityIds,
-    ).map((ownerKeyColumn) => `${ownerKeyColumn}_${ownerEntity.name}`);
-
-    return [...partialKeyColumns, ...ownerKeyColumns];
-}
-
 function getMultivaluedAuxiliaryOwnerColumnNames(entity, graph) {
-    const ownerColumnNames = getEntityPrimaryKeyColumnNames(entity, graph);
+    const ownerColumnNames = getEntityPrimaryKeyColumnNamesIgnoringCycles(
+        entity,
+        graph,
+    );
     const mergeRelation = findMandatoryOneToOneMergeRelationForEntity(
         graph,
         entity,
