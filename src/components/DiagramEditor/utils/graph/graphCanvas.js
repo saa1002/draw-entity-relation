@@ -1,3 +1,15 @@
+export const removeExistingGraphCells = (graph, cells) => {
+    if (!graph?.removeCells) return;
+
+    const cellsToRemove = (Array.isArray(cells) ? cells : [cells]).filter(
+        Boolean,
+    );
+
+    if (cellsToRemove.length === 0) return;
+
+    graph.removeCells(cellsToRemove);
+};
+
 export const clearGraphCanvas = (graph) => {
     if (!graph?.model?.cells) return;
 
@@ -8,5 +20,5 @@ export const clearGraphCanvas = (graph) => {
 
     if (cellsToRemove.length === 0) return;
 
-    graph.removeCells(cellsToRemove);
+    removeExistingGraphCells(graph, cellsToRemove);
 };

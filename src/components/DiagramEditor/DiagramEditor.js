@@ -64,7 +64,10 @@ import {
     validateGraph,
 } from "../../domain/er";
 import { generateSQL } from "../../services/sql";
-import { clearGraphCanvas } from "./utils/graph/graphCanvas";
+import {
+    clearGraphCanvas,
+    removeExistingGraphCells,
+} from "./utils/graph/graphCanvas";
 import { installGraphInteractionOverrides } from "./utils/graph/graphInteractionOverrides";
 import { installGraphLabelEditingHandler } from "./utils/graph/graphLabelEditing";
 import setInitialConfiguration from "./utils/graph/setInitialConfiguration";
@@ -1504,26 +1507,12 @@ export default function App(props) {
             }
 
             if (isRelationConfigured(relation)) {
-                // Find the previous edges
-                const cardinality1 = accessCell(relation.side1.idMx);
-                const cardinality2 = accessCell(relation.side2.idMx);
-                const edge1 = accessCell(relation.side1.edgeId);
-                const edge2 = accessCell(relation.side2.edgeId);
-
-                // Remove the previous edges from the graph
-                if (cardinality1) {
-                    graph.removeCells([cardinality1]);
-                }
-                if (cardinality2) {
-                    graph.removeCells([cardinality2]);
-                }
-                // Remove the previous edges from the graph
-                if (edge1) {
-                    graph.removeCells([edge1]);
-                }
-                if (edge2) {
-                    graph.removeCells([edge2]);
-                }
+                removeExistingGraphCells(graph, [
+                    accessCell(relation.side1.idMx),
+                    accessCell(relation.side2.idMx),
+                    accessCell(relation.side1.edgeId),
+                    accessCell(relation.side2.edgeId),
+                ]);
 
                 removeRelationAttributes(relation);
 
@@ -1956,12 +1945,12 @@ export default function App(props) {
                         entity.attributes,
                     );
 
-                    // Remove the entity's cell and its attributes from the graph
-                    graph.removeCells(
-                        weakDecorator
-                            ? [weakDecorator, cell, ...attributeCells]
-                            : [cell, ...attributeCells],
-                    );
+                    removeExistingGraphCells(graph, [
+                        weakDecorator,
+                        cell,
+                        ...attributeCells,
+                    ]);
+
                     // Check and remove relations involving this entity
                     diagramRef.current.relations.forEach((relation, index) => {
                         if (relationInvolvesEntity(relation, entity.idMx)) {
@@ -1979,7 +1968,7 @@ export default function App(props) {
                             );
 
                             // Remove the relation's cells and its attributes from the graph
-                            graph.removeCells([
+                            removeExistingGraphCells(graph, [
                                 side1Cell,
                                 side2Cell,
                                 edge1Cell,
@@ -2013,12 +2002,9 @@ export default function App(props) {
     const removeAttributeConnectionEdges = (attribute) => {
         const edgeCells = (attribute?.cell ?? [])
             .slice(1)
-            .map((cellId) => accessCell(cellId))
-            .filter(Boolean);
+            .map((cellId) => accessCell(cellId));
 
-        if (edgeCells.length > 0) {
-            graph.removeCells(edgeCells);
-        }
+        removeExistingGraphCells(graph, edgeCells);
     };
 
     const reparentPromotedAttributeCell = (attribute) => {
@@ -2199,7 +2185,7 @@ export default function App(props) {
                     );
 
                     // Remove the cell and its attributes from the graph
-                    graph.removeCells([cell, ...attributeCells]);
+                    removeExistingGraphCells(graph, [cell, ...attributeCells]);
                 }
             }
             syncAndPersistDiagramData();
