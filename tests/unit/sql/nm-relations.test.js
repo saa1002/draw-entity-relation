@@ -3,9 +3,9 @@ import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     filterTables,
-    generateSQL,
     processNMRelation,
-} from '../../../src/services/sql'
+} from '../../../src/domain/relational/erToRelationalModel'
+import { generateSQL } from '../../../src/services/sql'
 
 let nMGraph
 

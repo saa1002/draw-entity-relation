@@ -136,21 +136,6 @@ const createForeignKeySQL = (table) => {
         .join("\n");
 };
 
-export function generate1NSQL(tables) {
-    const sql = tables.map(createTableSQL).join("\n\n");
-    return sql;
-}
-
-export function generate11SQL(tables) {
-    const sql = tables.map(createTableSQL).join("\n\n");
-    return sql;
-}
-
-export function generateNMSQL(tables) {
-    const sql = tables.map(createTableSQL).join("\n\n");
-    return sql;
-}
-
 function renderSqlScript(tables) {
     const dropTablesScript = createDropTablesSQL(tables);
 

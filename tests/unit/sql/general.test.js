@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import { buildSQLAssertions } from '../../helpers/sqlAssertions'
-import { generateSQL, filterTables } from '../../../src/services/sql'
+import { filterTables } from '../../../src/domain/relational/erToRelationalModel'
+import { generateSQL } from '../../../src/services/sql'
 
 const { expectSQLToMatch } = buildSQLAssertions(expect)
 
