@@ -216,6 +216,7 @@ export default function App(props) {
     });
 
     const {
+        syncSelfRelationEdges,
         syncIdentifyingRelationDecorator,
         ensureIdentifyingRelationDecorator,
         removeIdentifyingRelationDecorator,
@@ -460,18 +461,7 @@ export default function App(props) {
         }
 
         if (isSelfRelation(selectedRelationDiag)) {
-            const target1 = accessCell(selectedRelationDiag.side1.entity.idMx);
-            const source = selected;
-            const edge1 = accessCell(selectedRelationDiag.side1.edgeId);
-            const edge2 = accessCell(selectedRelationDiag.side2.edgeId);
-
-            const x1 = target1.geometry.x + target1.geometry.width / 2;
-            const x2 = source.geometry.x + source.geometry.width / 2;
-            const y1 = target1.geometry.y + target1.geometry.height / 2;
-            const y2 = source.geometry.y + source.geometry.height / 2;
-
-            edge1.geometry.points = [new mxPoint(x2, y1)];
-            edge2.geometry.points = [new mxPoint(x1, y2)];
+            syncSelfRelationEdges(selected, selectedRelationDiag);
         }
         if (isIdentifyingRelation(selectedRelationDiag)) {
             syncIdentifyingRelationDecorator(selected);
@@ -548,21 +538,7 @@ export default function App(props) {
                 if (!relationData) return;
 
                 if (isSelfRelation(relationData)) {
-                    const target = accessCell(relationData.side1.entity.idMx);
-                    const edge1 = accessCell(relationData.side1.edgeId);
-                    const edge2 = accessCell(relationData.side2.edgeId);
-
-                    if (target && edge1 && edge2) {
-                        const x1 =
-                            target.geometry.x + target.geometry.width / 2;
-                        const x2 = cell.geometry.x + cell.geometry.width / 2;
-                        const y1 =
-                            target.geometry.y + target.geometry.height / 2;
-                        const y2 = cell.geometry.y + cell.geometry.height / 2;
-
-                        edge1.geometry.points = [new mxPoint(x2, y1)];
-                        edge2.geometry.points = [new mxPoint(x1, y2)];
-                    }
+                    syncSelfRelationEdges(cell, relationData);
                 }
 
                 if (isIdentifyingRelation(relationData)) {

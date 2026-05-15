@@ -265,7 +265,33 @@ export const createRelationRenderingHelpers = ({
         }
     };
 
+    const syncSelfRelationEdges = (relationCell, relationData) => {
+        if (!relationCell || !relationData) return;
+
+        const target = accessCell(relationData.side1?.entity?.idMx);
+        const edge1 = accessCell(relationData.side1?.edgeId);
+        const edge2 = accessCell(relationData.side2?.edgeId);
+
+        if (
+            !target?.geometry ||
+            !relationCell?.geometry ||
+            !edge1?.geometry ||
+            !edge2?.geometry
+        ) {
+            return;
+        }
+
+        const x1 = target.geometry.x + target.geometry.width / 2;
+        const x2 = relationCell.geometry.x + relationCell.geometry.width / 2;
+        const y1 = target.geometry.y + target.geometry.height / 2;
+        const y2 = relationCell.geometry.y + relationCell.geometry.height / 2;
+
+        edge1.geometry.points = [new mxPoint(x2, y1)];
+        edge2.geometry.points = [new mxPoint(x1, y2)];
+    };
+
     return {
+        syncSelfRelationEdges,
         syncIdentifyingRelationDecorator,
         ensureIdentifyingRelationDecorator,
         removeIdentifyingRelationDecorator,
