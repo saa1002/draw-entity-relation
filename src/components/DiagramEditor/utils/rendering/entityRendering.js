@@ -4,6 +4,21 @@ export const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
 
 const WEAK_ENTITY_DECORATOR_OFFSET = 4;
 
+const getWeakEntityDecoratorBounds = (entityGeometry) => {
+    if (!entityGeometry) {
+        return null;
+    }
+
+    const offset = WEAK_ENTITY_DECORATOR_OFFSET;
+
+    return {
+        x: entityGeometry.x + offset,
+        y: entityGeometry.y + offset,
+        width: Math.max(1, entityGeometry.width - offset * 2),
+        height: Math.max(1, entityGeometry.height - offset * 2),
+    };
+};
+
 export const getWeakEntityDecoratorId = (entityId) =>
     `${entityId}${WEAK_ENTITY_DECORATOR_SUFFIX}`;
 
@@ -16,20 +31,16 @@ export const createEntityRenderingHelpers = ({ graph, accessCell }) => {
 
         const decorator = accessCell(getWeakEntityDecoratorId(entityCell.id));
 
-        if (!decorator || !decorator.geometry || !entityCell.geometry) return;
+        if (!decorator || !decorator.geometry) return;
 
-        decorator.geometry.x =
-            entityCell.geometry.x + WEAK_ENTITY_DECORATOR_OFFSET;
-        decorator.geometry.y =
-            entityCell.geometry.y + WEAK_ENTITY_DECORATOR_OFFSET;
-        decorator.geometry.width = Math.max(
-            1,
-            entityCell.geometry.width - WEAK_ENTITY_DECORATOR_OFFSET * 2,
-        );
-        decorator.geometry.height = Math.max(
-            1,
-            entityCell.geometry.height - WEAK_ENTITY_DECORATOR_OFFSET * 2,
-        );
+        const bounds = getWeakEntityDecoratorBounds(entityCell.geometry);
+
+        if (!bounds) return;
+
+        decorator.geometry.x = bounds.x;
+        decorator.geometry.y = bounds.y;
+        decorator.geometry.width = bounds.width;
+        decorator.geometry.height = bounds.height;
 
         graph.refresh(decorator);
         graph.orderCells(false, [decorator]);
@@ -38,14 +49,25 @@ export const createEntityRenderingHelpers = ({ graph, accessCell }) => {
     const createWeakEntityDecorator = (entity) => {
         const { width, height } = getEntityDimensions(entity.name);
 
+        const bounds = getWeakEntityDecoratorBounds({
+            x: entity.position.x,
+            y: entity.position.y,
+            width,
+            height,
+        });
+
+        if (!bounds) {
+            return null;
+        }
+
         return graph.insertVertex(
             null,
             getWeakEntityDecoratorId(entity.idMx),
             "",
-            entity.position.x + WEAK_ENTITY_DECORATOR_OFFSET,
-            entity.position.y + WEAK_ENTITY_DECORATOR_OFFSET,
-            Math.max(1, width - WEAK_ENTITY_DECORATOR_OFFSET * 2),
-            Math.max(1, height - WEAK_ENTITY_DECORATOR_OFFSET * 2),
+            bounds.x,
+            bounds.y,
+            bounds.width,
+            bounds.height,
             "weakEntityDecoratorStyle;shape=rectangle",
         );
     };
