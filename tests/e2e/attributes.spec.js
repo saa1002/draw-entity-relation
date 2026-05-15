@@ -414,7 +414,7 @@ test('toggle simple multivalued attributes and persist across reloads', async ({
 
     await expect(
         page.getByRole('button', { name: 'Añadir subatributo hermano' }),
-    ).toBeVisible();
+    ).toHaveCount(0);
 
     await page.reload();
 
@@ -574,7 +574,7 @@ test('toggle composite multivalued attributes and persist across reloads', async
         });
 });
 
-test('add child attributes to a simple multivalued entity attribute', async ({ page }) => {
+test('does not allow direct conversion of a simple multivalued entity attribute into a composite attribute', async ({ page }) => {
     await page.goto('/');
 
     await addEntity(page);
@@ -596,46 +596,27 @@ test('add child attributes to a simple multivalued entity attribute', async ({ p
 
     await expect(
         page.getByRole('button', { name: 'Añadir subatributo hermano' }),
-    ).toBeVisible();
-
-    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
-
-    await expect(page.getByText('Subatributo hermano insertado').last()).toBeVisible();
-
-    await renameElement(page, 'Atributo', 'prefijo');
-
-    await selectAttributeByName(page, 'Entidad', 'telefonos');
-    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
-
-    await renameElement(page, 'Atributo', 'numero');
+    ).toHaveCount(0);
 
     await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
         name: 'telefonos',
         key: false,
         partialKey: false,
         multivalued: true,
-        children: [
-            {
-                name: 'prefijo',
-                key: false,
-                partialKey: false,
-            },
-            {
-                name: 'numero',
-                key: false,
-                partialKey: false,
-            },
-        ],
     });
+
+    await expect
+        .poll(async () => {
+            const entity = await getSavedEntity(page, 'Entidad');
+            return entity?.attributes?.[1]?.children;
+        })
+        .toBeUndefined();
 
     await page.reload();
 
-    await expect(page.getByText('telefonos', { exact: true })).toHaveCount(0);
-    await expectAttributeCellVisible(page, 'Entidad', 'telefonos', true);
-    await expect(page.getByText('prefijo', { exact: true })).toBeVisible();
-    await expect(page.getByText('numero', { exact: true })).toBeVisible();
+    await expect(page.getByText('telefonos', { exact: true })).toBeVisible();
 
-    await selectAttributeByName(page, 'Entidad', 'telefonos');
+    await page.getByText('telefonos', { exact: true }).click();
 
     await expect(
         page.getByRole('button', { name: 'Quitar multivaluado' }),
@@ -643,26 +624,7 @@ test('add child attributes to a simple multivalued entity attribute', async ({ p
 
     await expect(
         page.getByRole('button', { name: 'Añadir subatributo hermano' }),
-    ).toBeVisible();
-
-    await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
-        name: 'telefonos',
-        key: false,
-        partialKey: false,
-        multivalued: true,
-        children: [
-            {
-                name: 'prefijo',
-                key: false,
-                partialKey: false,
-            },
-            {
-                name: 'numero',
-                key: false,
-                partialKey: false,
-            },
-        ],
-    });
+    ).toHaveCount(0);
 });
 
 test('generate SQL for an editor-created composite multivalued attribute', async ({ page }) => {
@@ -677,13 +639,7 @@ test('generate SQL for an editor-created composite multivalued attribute', async
     await selectEntity(page, 'Entidad');
     await addAttributeToSelectedEntity(page);
     await renameElement(page, 'Atributo', 'telefonos');
-
     await page.getByText('telefonos', { exact: true }).click();
-    await page.getByRole('button', { name: 'Marcar multivaluado' }).click();
-
-    await expect(
-        page.getByText('Atributo marcado como multivaluado').last(),
-    ).toBeVisible();
 
     await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
     await renameElement(page, 'Atributo', 'prefijo');
@@ -691,6 +647,13 @@ test('generate SQL for an editor-created composite multivalued attribute', async
     await selectAttributeByName(page, 'Entidad', 'telefonos');
     await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
     await renameElement(page, 'Atributo', 'numero');
+
+    await selectAttributeByName(page, 'Entidad', 'telefonos');
+    await page.getByRole('button', { name: 'Marcar multivaluado' }).click();
+
+    await expect(
+        page.getByText('Atributo marcado como multivaluado').last(),
+    ).toBeVisible();
 
     const sql = await exportCurrentSqlScript(page);
 
@@ -707,10 +670,11 @@ test('generate SQL for an editor-created composite multivalued attribute', async
         sql,
         `
         CREATE TABLE Entidad_telefonos (
-          id VARCHAR(40),
-          prefijo VARCHAR(40),
-          numero VARCHAR(40),
-          PRIMARY KEY (id, prefijo, numero)
+        id VARCHAR(40),
+        telefonos VARCHAR(40),
+        prefijo VARCHAR(40),
+        numero VARCHAR(40),
+        PRIMARY KEY (id, telefonos, prefijo, numero)
         );
         `,
     );
@@ -727,7 +691,6 @@ test('generate SQL for an editor-created composite multivalued attribute', async
         `,
     );
 
-    expect(sql).not.toContain('telefonos VARCHAR(40)');
     expect(sql).not.toContain('prefijo VARCHAR(40) PRIMARY KEY');
     expect(sql).not.toContain('numero VARCHAR(40) PRIMARY KEY');
 });

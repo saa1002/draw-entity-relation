@@ -43,6 +43,7 @@ import {
     getLastAttribute,
     getWeakAndStrongSidesForRelation,
     getWeakSideOfIdentifyingRelation,
+    isCompositeAttribute,
     isEntityAttributeOwner,
     isFirstAttributeForOwner,
     isIdentifyingRelation,
@@ -595,6 +596,7 @@ export default function App(props) {
         }
 
         return (
+            isCompositeAttribute(compositeAttribute) &&
             isEntityAttributeOwner(attributeOwner) &&
             !compositeAttribute.key &&
             !compositeAttribute.partialKey
@@ -653,7 +655,7 @@ export default function App(props) {
 
         if (!canAddChildAttributeToSelectedAttribute(attributeOwner)) {
             toast.error(
-                "Solo se pueden crear atributos multivaluados compuestos en atributos top-level de entidad.",
+                "No se puede convertir directamente un atributo multivaluado simple en compuesto.",
             );
             return;
         }
