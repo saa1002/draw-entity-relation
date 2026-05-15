@@ -665,15 +665,27 @@ export const walkAttributeTree = (attributes, visitor) => {
     visit(attributes);
 };
 
-export const flattenAttributeTree = (attributes) => {
-    const flattenedAttributes = [];
+export const getAttributesInTreeMatching = (attributes, predicate) => {
+    if (typeof predicate !== "function") {
+        return [];
+    }
 
-    walkAttributeTree(attributes, (attribute) => {
-        flattenedAttributes.push(attribute);
+    const matchingAttributes = [];
+
+    walkAttributeTree(attributes, (attribute, context) => {
+        if (predicate(attribute, context)) {
+            matchingAttributes.push(attribute);
+        }
     });
 
-    return flattenedAttributes;
+    return matchingAttributes;
 };
+
+export const someAttributeInTree = (attributes, predicate) =>
+    getAttributesInTreeMatching(attributes, predicate).length > 0;
+
+export const flattenAttributeTree = (attributes) =>
+    getAttributesInTreeMatching(attributes, () => true);
 
 export const getLeafAttributes = (attributes) =>
     flattenAttributeTree(attributes).filter(isLeafAttribute);
@@ -709,3 +721,36 @@ export const findAttributeNodeInTreeById = (attributes, attributeId) => {
 
     return foundNode;
 };
+
+export const hasRepeatedSiblingAttributeNamesInTree = (attributes) => {
+    const attributeNames = new Set();
+
+    for (const attribute of getAttributes(attributes)) {
+        if (attributeNames.has(attribute.name)) {
+            return true;
+        }
+
+        attributeNames.add(attribute.name);
+
+        if (
+            hasRepeatedSiblingAttributeNamesInTree(
+                getAttributeChildren(attribute),
+            )
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+};
+
+export const hasEmptyCompositeAttributeInTree = (attributes) =>
+    someAttributeInTree(
+        attributes,
+        (attribute) =>
+            Array.isArray(attribute.children) &&
+            attribute.children.length === 0,
+    );
+
+export const hasMultivaluedAttributeInTree = (attributes) =>
+    someAttributeInTree(attributes, isMultivaluedAttribute);

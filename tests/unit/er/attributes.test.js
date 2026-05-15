@@ -21,6 +21,11 @@ import {
     removeAttributeFromOwnerTreeById,
     removeAttributeFromOwnerTreeByIdWithPromotion,
     walkAttributeTree,
+    getAttributesInTreeMatching,
+    hasEmptyCompositeAttributeInTree,
+    hasMultivaluedAttributeInTree,
+    hasRepeatedSiblingAttributeNamesInTree,
+    someAttributeInTree,
 } from '../../../src/domain/er/attributes'
 
 describe("Hierarchical attribute helpers", () => {
@@ -614,5 +619,61 @@ describe("Hierarchical attribute helpers", () => {
             ),
         ).toEqual(["attr-5"]);
     });
+
+    test("predicate helpers should inspect nested attribute trees", () => {
+        const attributes = [
+            {
+                idMx: "attr-address",
+                name: "direccion",
+                children: [
+                    {
+                        idMx: "attr-street",
+                        name: "calle",
+                    },
+                ],
+            },
+            {
+                idMx: "attr-billing-address",
+                name: "direccion_facturacion",
+                children: [
+                    {
+                        idMx: "attr-billing-street",
+                        name: "calle",
+                        multivalued: true,
+                    },
+                    {
+                        idMx: "attr-billing-city",
+                        name: "ciudad",
+                        children: [],
+                    },
+                ],
+            },
+        ];
+
+        expect(
+            getAttributesInTreeMatching(
+                attributes,
+                (attribute) => attribute.name === "calle",
+            ).map((attribute) => attribute.idMx),
+        ).toEqual(["attr-street", "attr-billing-street"]);
+
+        expect(
+            someAttributeInTree(
+                attributes,
+                (attribute) => attribute.idMx === "attr-billing-city",
+            ),
+        ).toBe(true);
+
+        expect(hasMultivaluedAttributeInTree(attributes)).toBe(true);
+        expect(hasEmptyCompositeAttributeInTree(attributes)).toBe(true);
+        expect(hasRepeatedSiblingAttributeNamesInTree(attributes)).toBe(false);
+
+        attributes[1].children.push({
+            idMx: "attr-billing-street-copy",
+            name: "calle",
+        });
+
+        expect(hasRepeatedSiblingAttributeNamesInTree(attributes)).toBe(true);
+    });    
 })
 
