@@ -11,7 +11,8 @@ import { generateSQL } from '../../../src/services/sql'
 let oneNGraph
 let oneOneGraph
 
-const { expectSQLToContain } = buildSQLAssertions(expect)
+const { expectSQLToContain, expectSQLNotToContain } =
+    buildSQLAssertions(expect)
 
 const extract1NTables = () => {
     const filteredTables = filterTables(oneNGraph)
@@ -132,7 +133,106 @@ describe("1:N relation extraction", () => {
             targetTable.attributes.slice(1).map((attr) => attr.foreign_key_column),
         ).toEqual(["serie", "numero"]);
     });
-    
+
+    test("should not use composite connector names in 1:N foreign key columns or constraints", () => {
+        const graph = {
+            entities: [
+                {
+                    idMx: "cliente",
+                    name: "Cliente",
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: "attr-internal-client-key",
+                            name: "internal_cliente_key_connector",
+                            key: true,
+                            partialKey: false,
+                            children: [
+                                {
+                                    idMx: "attr-calle",
+                                    name: "calle",
+                                    key: false,
+                                    partialKey: false,
+                                },
+                                {
+                                    idMx: "attr-ciudad",
+                                    name: "ciudad",
+                                    key: false,
+                                    partialKey: false,
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    idMx: "pedido",
+                    name: "Pedido",
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: "attr-id-pedido",
+                            name: "id_pedido",
+                            key: true,
+                            partialKey: false,
+                        },
+                    ],
+                },
+            ],
+            relations: [
+                {
+                    idMx: "relation-compra",
+                    name: "Compra",
+                    canHoldAttributes: false,
+                    isIdentifying: false,
+                    attributes: [],
+                    side1: {
+                        idMx: "side-cliente",
+                        cardinality: "1:1",
+                        cell: "side-cell-cliente",
+                        edgeId: "edge-cliente",
+                        entity: {
+                            idMx: "cliente",
+                        },
+                    },
+                    side2: {
+                        idMx: "side-pedido",
+                        cardinality: "0:N",
+                        cell: "side-cell-pedido",
+                        edgeId: "edge-pedido",
+                        entity: {
+                            idMx: "pedido",
+                        },
+                    },
+                },
+            ],
+        }
+
+        const sql = generateSQL(graph)
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Pedido (
+            id_pedido VARCHAR(40) PRIMARY KEY,
+            calle_Compra VARCHAR(40) NOT NULL,
+            ciudad_Compra VARCHAR(40) NOT NULL
+            );
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Pedido
+            ADD CONSTRAINT FK_calle_ciudad_Compra
+            FOREIGN KEY (calle_Compra, ciudad_Compra)
+            REFERENCES Cliente(calle, ciudad);
+            `,
+        )
+
+        expectSQLNotToContain(sql, "internal_cliente_key_connector")
+    });
+
     test("should generate a separate table for a simple multivalued attribute on a 1:N related entity", () => {
         oneNGraph.entities.at(1).attributes.push({
             idMx: "attr-phones",

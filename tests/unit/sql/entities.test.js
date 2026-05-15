@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest'
 import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { generateSQL } from '../../../src/services/sql'
 
-const { expectSQLToContain } = buildSQLAssertions(expect)
+const { expectSQLToContain, expectSQLNotToContain } =
+    buildSQLAssertions(expect)
 
 describe('Standalone entity SQL generation', () => {
     test('a standalone strong entity should generate a single table with its primary key', () => {
@@ -129,6 +130,56 @@ describe('Standalone entity SQL generation', () => {
         expect(sql).toContain('numero VARCHAR(40)')
         expect(sql).toContain('PRIMARY KEY (serie, numero)')
         expect(sql).not.toContain('codigo VARCHAR(40)')
+    })
+
+    test('a composite connector name should not be emitted in standalone entity SQL', () => {
+        const graph = {
+            entities: [
+                {
+                    idMx: '1',
+                    name: 'Cliente',
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: '2',
+                            name: 'internal_direccion_connector',
+                            key: true,
+                            partialKey: false,
+                            children: [
+                                {
+                                    idMx: '3',
+                                    name: 'calle',
+                                    key: false,
+                                    partialKey: false,
+                                },
+                                {
+                                    idMx: '4',
+                                    name: 'ciudad',
+                                    key: false,
+                                    partialKey: false,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+            relations: [],
+        }
+
+        const sql = generateSQL(graph)
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Cliente (
+            calle VARCHAR(40),
+            ciudad VARCHAR(40),
+            PRIMARY KEY (calle, ciudad)
+            );
+            `,
+        )
+
+        expectSQLNotToContain(sql, 'internal_direccion_connector')
     })
     
     test('a standalone entity should generate a separate table for a simple multivalued attribute', () => {

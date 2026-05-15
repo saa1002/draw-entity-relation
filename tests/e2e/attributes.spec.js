@@ -729,6 +729,78 @@ test('generate SQL for an editor-created composite multivalued attribute', async
     expect(sql).not.toContain('numero VARCHAR(40) PRIMARY KEY');
 });
 
+test('generated SQL ignores hidden composite connector names', async ({ page }) => {
+    const diagram = {
+        entities: [
+            {
+                idMx: 'entity-cliente',
+                name: 'Cliente',
+                position: { x: 180, y: 180 },
+                weak: false,
+                ownerEntityId: null,
+                identifyingRelationId: null,
+                attributes: [
+                    {
+                        idMx: 'attr-internal-connector',
+                        name: 'internal_direccion_connector',
+                        position: { x: 300, y: 180 },
+                        key: true,
+                        partialKey: false,
+                        cell: [
+                            'attr-internal-connector',
+                            'edge-internal-connector',
+                        ],
+                        offsetX: 120,
+                        offsetY: 0,
+                        children: [
+                            {
+                                idMx: 'attr-calle',
+                                name: 'calle',
+                                position: { x: 420, y: 150 },
+                                key: false,
+                                partialKey: false,
+                                cell: ['attr-calle', 'edge-calle'],
+                                offsetX: 120,
+                                offsetY: -30,
+                            },
+                            {
+                                idMx: 'attr-ciudad',
+                                name: 'ciudad',
+                                position: { x: 420, y: 210 },
+                                key: false,
+                                partialKey: false,
+                                cell: ['attr-ciudad', 'edge-ciudad'],
+                                offsetX: 120,
+                                offsetY: 30,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+        relations: [],
+    }
+
+    await seedSavedDiagram(page, diagram)
+
+    await page.goto('/')
+
+    const sql = await exportCurrentSqlScript(page)
+
+    expectSQLToContain(
+        sql,
+        `
+        CREATE TABLE Cliente (
+          calle VARCHAR(40),
+          ciudad VARCHAR(40),
+          PRIMARY KEY (calle, ciudad)
+        );
+        `,
+    )
+
+    expect(sql).not.toContain('internal_direccion_connector')
+})
+
 test('add sibling subattributes without creating nested subattributes', async ({ page }) => {
     await page.goto('/');
 
