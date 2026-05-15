@@ -109,7 +109,7 @@ export const createAttributeRenderingHelpers = ({
     mxPoint,
     mxGeometry,
     updateAttributePosition,
-    getAttributeDimensions,
+    getAttributeDimensions: resolveAttributeDimensions = getAttributeDimensions,
 }) => {
     const getAttributeCells = (attribute) => {
         if (!attribute) return [];
@@ -400,7 +400,7 @@ export const createAttributeRenderingHelpers = ({
                 if (attributeCell.geometry) {
                     const { width, height } = getAttributeRenderDimensions(
                         attribute,
-                        getAttributeDimensions,
+                        resolveAttributeDimensions,
                     );
 
                     const geometry =
@@ -530,6 +530,8 @@ export const createAttributeRenderingHelpers = ({
         offsetY,
         semantics,
     }) => {
+        if (!graph || !source?.geometry) return null;
+
         const newX = source.geometry.x + offsetX;
         const newY = source.geometry.y + offsetY;
 
@@ -540,7 +542,7 @@ export const createAttributeRenderingHelpers = ({
 
         const { width, height } = getAttributeRenderDimensions(
             attributeForRendering,
-            getAttributeDimensions,
+            resolveAttributeDimensions,
         );
 
         const target = graph.insertVertex(
