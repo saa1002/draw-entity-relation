@@ -6,6 +6,35 @@ import {
     isMultivaluedAttribute,
     someAttributeInTree,
 } from "../../attributes";
+import { canRelationHoldAttributes } from "../../relations";
+const getEntities = (graph) =>
+    Array.isArray(graph?.entities) ? graph.entities : [];
+
+const getRelations = (graph) =>
+    Array.isArray(graph?.relations) ? graph.relations : [];
+
+const getEntityAttributeCollections = (graph) =>
+    getEntities(graph).map((entity) => entity.attributes ?? []);
+
+const getRelationAttributeCollections = (
+    graph,
+    { onlyAttributeHoldingRelations = true } = {},
+) =>
+    getRelations(graph)
+        .filter(
+            (relation) =>
+                !onlyAttributeHoldingRelations ||
+                canRelationHoldAttributes(relation),
+        )
+        .map((relation) => relation.attributes ?? []);
+
+const getValidAttributeOwnerCollections = (graph) => [
+    ...getEntityAttributeCollections(graph),
+    ...getRelationAttributeCollections(graph),
+];
+
+const someAttributeOwnerMatches = (graph, predicate) =>
+    getValidAttributeOwnerCollections(graph).some(predicate);
 
 // This function checks for repeated attributes in an entity,
 // relations N:M (these are the ones that have a key `canHoldAttributes`
@@ -15,41 +44,14 @@ import {
 // NOTE: Every entity should be treated differently; there can be repeated
 // attributes in different entities.
 export function repeatedAttributesInEntity(graph) {
-    for (const entity of graph.entities) {
-        if (hasRepeatedSiblingAttributeNamesInTree(entity.attributes)) {
-            return true;
-        }
-    }
-
-    for (const relation of graph.relations) {
-        if (
-            relation.canHoldAttributes &&
-            hasRepeatedSiblingAttributeNamesInTree(relation.attributes)
-        ) {
-            return true;
-        }
-    }
-
-    return false;
+    return someAttributeOwnerMatches(
+        graph,
+        hasRepeatedSiblingAttributeNamesInTree,
+    );
 }
 
 export function emptyCompositeAttributes(graph) {
-    for (const entity of graph.entities) {
-        if (hasEmptyCompositeAttributeInTree(entity.attributes)) {
-            return true;
-        }
-    }
-
-    for (const relation of graph.relations) {
-        if (
-            relation.canHoldAttributes &&
-            hasEmptyCompositeAttributeInTree(relation.attributes)
-        ) {
-            return true;
-        }
-    }
-
-    return false;
+    return someAttributeOwnerMatches(graph, hasEmptyCompositeAttributeInTree);
 }
 
 const hasNestedCompositeAttribute = (attributes = []) =>
@@ -60,56 +62,39 @@ const hasNestedCompositeAttribute = (attributes = []) =>
     );
 
 export function nestedCompositeAttributes(graph) {
-    for (const entity of graph.entities) {
-        if (hasNestedCompositeAttribute(entity.attributes)) {
-            return true;
-        }
-    }
-
-    for (const relation of graph.relations) {
-        if (
-            relation.canHoldAttributes &&
-            hasNestedCompositeAttribute(relation.attributes)
-        ) {
-            return true;
-        }
-    }
-
-    return false;
+    return someAttributeOwnerMatches(graph, hasNestedCompositeAttribute);
 }
 
+const hasUnsupportedCompositeMultivaluedChild = (attribute) =>
+    someAttributeInTree(
+        getAttributeChildren(attribute),
+        (childAttribute) =>
+            isMultivaluedAttribute(childAttribute) ||
+            childAttribute.key ||
+            childAttribute.partialKey,
+    );
+
+const hasUnsupportedEntityMultivaluedAttribute = (attributes = []) =>
+    someAttributeInTree(
+        attributes,
+        (attribute, { depth }) =>
+            isMultivaluedAttribute(attribute) &&
+            (depth > 0 ||
+                attribute.key ||
+                attribute.partialKey ||
+                hasUnsupportedCompositeMultivaluedChild(attribute)),
+    );
+
 export function unsupportedMultivaluedAttributes(graph) {
-    const hasUnsupportedCompositeMultivaluedChild = (attribute) =>
-        someAttributeInTree(
-            getAttributeChildren(attribute),
-            (childAttribute) =>
-                isMultivaluedAttribute(childAttribute) ||
-                childAttribute.key ||
-                childAttribute.partialKey,
-        );
+    const hasUnsupportedEntityAttribute = getEntityAttributeCollections(
+        graph,
+    ).some(hasUnsupportedEntityMultivaluedAttribute);
 
-    const hasUnsupportedEntityMultivaluedAttribute = (attributes = []) =>
-        someAttributeInTree(
-            attributes,
-            (attribute, { depth }) =>
-                isMultivaluedAttribute(attribute) &&
-                (depth > 0 ||
-                    attribute.key ||
-                    attribute.partialKey ||
-                    hasUnsupportedCompositeMultivaluedChild(attribute)),
-        );
-
-    for (const entity of graph.entities) {
-        if (hasUnsupportedEntityMultivaluedAttribute(entity.attributes)) {
-            return true;
-        }
+    if (hasUnsupportedEntityAttribute) {
+        return true;
     }
 
-    for (const relation of graph.relations) {
-        if (hasMultivaluedAttributeInTree(relation.attributes)) {
-            return true;
-        }
-    }
-
-    return false;
+    return getRelationAttributeCollections(graph, {
+        onlyAttributeHoldingRelations: false,
+    }).some(hasMultivaluedAttributeInTree);
 }

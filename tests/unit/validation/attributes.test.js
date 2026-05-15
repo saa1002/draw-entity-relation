@@ -101,6 +101,27 @@ describe("Attribute name uniqueness", () => {
 
         expect(repeatedAttributesInEntity(graph)).toBe(false);
         expect(validateGraph(graph).noRepeatedAttrNames).toBe(true);
+    });
+
+    test("Relations that cannot hold attributes are ignored when checking repeated attribute names", () => {
+        graph.relations.at(0).canHoldAttributes = false;
+        graph.relations.at(0).attributes = [
+            {
+                idMx: "attr-relation-1",
+                name: "fecha",
+                key: false,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-relation-2",
+                name: "fecha",
+                key: false,
+                partialKey: false,
+            },
+        ];
+
+        expect(repeatedAttributesInEntity(graph)).toBe(false);
+        expect(validateGraph(graph).noRepeatedAttrNames).toBe(true);
     });    
 })
 
@@ -500,6 +521,22 @@ describe("Composite attribute structure", () => {
 
         expect(nestedCompositeAttributes(graph)).toBe(true);
         expect(validateGraph(graph).noNestedCompositeAttributes).toBe(false);
+    });
+    
+    test("Relations that cannot hold attributes are ignored when checking empty composite attributes", () => {
+        graph.relations.at(0).canHoldAttributes = false;
+        graph.relations.at(0).attributes = [
+            {
+                idMx: "attr-empty-composite-relation",
+                name: "periodo",
+                key: false,
+                partialKey: false,
+                children: [],
+            },
+        ];
+
+        expect(emptyCompositeAttributes(graph)).toBe(false);
+        expect(validateGraph(graph).noEmptyCompositeAttributes).toBe(true);
     });
 });
 
