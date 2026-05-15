@@ -678,6 +678,18 @@ export const flattenAttributeTree = (attributes) => {
 export const getLeafAttributes = (attributes) =>
     flattenAttributeTree(attributes).filter(isLeafAttribute);
 
+export const getPrimaryKeyAttributesInTree = (attributes) =>
+    flattenAttributeTree(attributes).filter(isPrimaryKeyAttribute);
+
+export const getPartialKeyAttributesInTree = (attributes) =>
+    flattenAttributeTree(attributes).filter(isPartialKeyAttribute);
+
+export const hasPrimaryKeyAttributeInTree = (attributes) =>
+    getPrimaryKeyAttributesInTree(attributes).length > 0;
+
+export const hasPartialKeyAttributeInTree = (attributes) =>
+    getPartialKeyAttributesInTree(attributes).length > 0;
+
 export const findAttributeInTreeById = (attributes, attributeId) =>
     flattenAttributeTree(attributes).find(
         (attribute) => attribute.idMx === attributeId,

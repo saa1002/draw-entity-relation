@@ -1,4 +1,4 @@
-import { flattenAttributeTree } from "../../attributes";
+import { hasPrimaryKeyAttributeInTree } from "../../attributes";
 import { findEntityById } from "../../entities";
 import { POSSIBLE_CARDINALITIES } from "../../relations";
 
@@ -10,11 +10,7 @@ export function nmRelationsWithPK(graph) {
             continue;
         }
 
-        const hasPrimaryKey = flattenAttributeTree(
-            relation.attributes ?? [],
-        ).some((attribute) => attribute.key === true);
-
-        if (hasPrimaryKey) {
+        if (hasPrimaryKeyAttributeInTree(relation.attributes)) {
             return true;
         }
     }

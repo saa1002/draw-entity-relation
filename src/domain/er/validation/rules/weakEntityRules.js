@@ -1,4 +1,8 @@
-import { flattenAttributeTree } from "../../attributes";
+import {
+    getPartialKeyAttributesInTree,
+    hasPartialKeyAttributeInTree,
+    hasPrimaryKeyAttributeInTree,
+} from "../../attributes";
 import {
     IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY,
     IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES,
@@ -13,11 +17,7 @@ export function weakEntitiesWithoutPartialKey(graph) {
     for (const entity of graph.entities) {
         if (!entity.weak) continue;
 
-        const hasPartialKey = flattenAttributeTree(
-            entity.attributes ?? [],
-        ).some((attribute) => attribute.partialKey === true);
-
-        if (!hasPartialKey) {
+        if (!hasPartialKeyAttributeInTree(entity.attributes)) {
             return true;
         }
     }
@@ -29,11 +29,7 @@ export function weakEntitiesWithMoreThanOnePartialKey(graph) {
     for (const entity of graph.entities) {
         if (!entity.weak) continue;
 
-        const partialKeyCount = flattenAttributeTree(
-            entity.attributes ?? [],
-        ).filter((attribute) => attribute.partialKey === true).length;
-
-        if (partialKeyCount > 1) {
+        if (getPartialKeyAttributesInTree(entity.attributes).length > 1) {
             return true;
         }
     }
@@ -45,11 +41,7 @@ export function weakEntitiesWithPrimaryKey(graph) {
     for (const entity of graph.entities) {
         if (!entity.weak) continue;
 
-        const hasPrimaryKey = flattenAttributeTree(
-            entity.attributes ?? [],
-        ).some((attribute) => attribute.key === true);
-
-        if (hasPrimaryKey) {
+        if (hasPrimaryKeyAttributeInTree(entity.attributes)) {
             return true;
         }
     }
@@ -61,11 +53,7 @@ export function strongEntitiesWithPartialKey(graph) {
     for (const entity of graph.entities) {
         if (entity.weak) continue;
 
-        const hasPartialKey = flattenAttributeTree(
-            entity.attributes ?? [],
-        ).some((attribute) => attribute.partialKey === true);
-
-        if (hasPartialKey) {
+        if (hasPartialKeyAttributeInTree(entity.attributes)) {
             return true;
         }
     }

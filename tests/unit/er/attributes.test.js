@@ -8,6 +8,10 @@ import {
     findAttributeInTreeById,
     findAttributeNodeInTreeById,
     findAttributeTreeOwnerById,
+    getPartialKeyAttributesInTree,
+    getPrimaryKeyAttributesInTree,
+    hasPartialKeyAttributeInTree,
+    hasPrimaryKeyAttributeInTree,
     ATTRIBUTE_OWNER_TYPES,
     flattenAttributeTree,
     getAttributeChildren,
@@ -573,5 +577,42 @@ describe("Hierarchical attribute helpers", () => {
             offsetY: 60,
         })
     })
+    test("key helpers should inspect nested attribute trees", () => {
+        const attributes = [
+            {
+                idMx: "attr-1",
+                name: "codigo",
+                key: true,
+                children: [
+                    { idMx: "attr-2", name: "serie" },
+                    { idMx: "attr-3", name: "numero" },
+                ],
+            },
+            {
+                idMx: "attr-4",
+                name: "periodo",
+                children: [
+                    {
+                        idMx: "attr-5",
+                        name: "fecha",
+                        partialKey: true,
+                    },
+                ],
+            },
+        ];
+
+        expect(hasPrimaryKeyAttributeInTree(attributes)).toBe(true);
+        expect(hasPartialKeyAttributeInTree(attributes)).toBe(true);
+        expect(
+            getPrimaryKeyAttributesInTree(attributes).map(
+                (attribute) => attribute.idMx,
+            ),
+        ).toEqual(["attr-1"]);
+        expect(
+            getPartialKeyAttributesInTree(attributes).map(
+                (attribute) => attribute.idMx,
+            ),
+        ).toEqual(["attr-5"]);
+    });
 })
 

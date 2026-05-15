@@ -1,4 +1,7 @@
-import { flattenAttributeTree } from "../../attributes";
+import {
+    getPrimaryKeyAttributesInTree,
+    hasPrimaryKeyAttributeInTree,
+} from "../../attributes";
 
 // This function check for repeated entity name, relations
 // can't be repeated also
@@ -32,12 +35,7 @@ export function entitiesWithoutPK(graph) {
     for (const entity of graph.entities) {
         if (entity.weak) continue;
 
-        const hasPrimaryKey = flattenAttributeTree(
-            entity.attributes ?? [],
-        ).some((attribute) => attribute.key === true);
-
-        // If no primary key found for the current entity, return true
-        if (!hasPrimaryKey) {
+        if (!hasPrimaryKeyAttributeInTree(entity.attributes)) {
             return true;
         }
     }
@@ -49,11 +47,7 @@ export function entitiesWithoutPK(graph) {
 // True if there is an entity that has two or more keys
 export function entitiesWithMoreThanOnePK(graph) {
     for (const entity of graph.entities) {
-        const primaryKeyCount = flattenAttributeTree(
-            entity.attributes ?? [],
-        ).filter((attribute) => attribute.key === true).length;
-
-        if (primaryKeyCount > 1) {
+        if (getPrimaryKeyAttributesInTree(entity.attributes).length > 1) {
             return true;
         }
     }
