@@ -136,6 +136,71 @@ export default function App(props) {
     function accessCell(idMx) {
         return graph.model.cells[idMx];
     }
+    const isCompositeAttributeCell = (cell) => {
+        if (!cell?.id) {
+            return false;
+        }
+
+        const attributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            cell.id,
+        );
+
+        const attribute = attributeOwner?.attribute;
+
+        return (
+            attribute?.idMx === cell.id &&
+            Array.isArray(attribute.children) &&
+            attribute.children.length > 0
+        );
+    };
+
+    const findCompositeAttributeRootByEdgeId = (edgeId) => {
+        if (!edgeId) {
+            return null;
+        }
+
+        const edgeIdAsString = String(edgeId);
+        const owners = [
+            ...(diagramRef.current.entities ?? []),
+            ...(diagramRef.current.relations ?? []),
+        ];
+
+        for (const owner of owners) {
+            for (const attribute of owner.attributes ?? []) {
+                const isCompositeRoot =
+                    Array.isArray(attribute.children) &&
+                    attribute.children.length > 0;
+
+                const hasRootEdge = (attribute.cell ?? [])
+                    .slice(1)
+                    .some((cellId) => String(cellId) === edgeIdAsString);
+
+                if (isCompositeRoot && hasRootEdge) {
+                    return attribute;
+                }
+            }
+        }
+
+        return null;
+    };
+
+    const getCompositeAttributeRootCellFromEdge = (edgeCell) => {
+        if (!edgeCell?.id || !graph?.getModel?.().isEdge?.(edgeCell)) {
+            return null;
+        }
+
+        const compositeAttribute = findCompositeAttributeRootByEdgeId(
+            edgeCell.id,
+        );
+
+        if (!compositeAttribute) {
+            return null;
+        }
+
+        return accessCell(compositeAttribute.idMx);
+    };
+
     const getSelectedEntityData = () =>
         findEntityById(diagramRef.current, selected?.id);
 
@@ -372,6 +437,8 @@ export default function App(props) {
                     graph,
                     mxGraph,
                     accessCell,
+                    getCompositeAttributeRootCellFromEdge,
+                    isCompositeAttributeConnectorCell: isCompositeAttributeCell,
                 });
 
             const cleanupGraphLabelEditingHandler =

@@ -387,3 +387,105 @@ export async function expectAttributeCellVisible(
         })
         .toBe(expectedVisible);
 }
+
+export async function dragCompositeAttributeRootEdge(
+    page,
+    ownerName,
+    attributeName,
+    deltaX,
+    deltaY,
+) {
+    const entity = await getSavedEntity(page, ownerName);
+    const relation = await getSavedRelation(page, ownerName);
+    const owner = entity ?? relation;
+
+    const attribute = owner?.attributes?.find(
+        (candidate) =>
+            candidate.name === attributeName &&
+            Array.isArray(candidate.children) &&
+            candidate.children.length > 0,
+    );
+    const edgeId = attribute?.cell?.[1];
+
+    await expect(edgeId).toBeTruthy();
+
+    const startPoint = await page.evaluate((rootEdgeId) => {
+        const graph = window.__DEBUG_GRAPH__;
+        const edge = graph?.getModel?.()?.getCell?.(rootEdgeId);
+
+        if (!graph || !edge) {
+            return null;
+        }
+
+        const state = graph.view.getState(edge);
+        const points = state?.absolutePoints?.filter(Boolean) ?? [];
+
+        if (points.length < 2) {
+            return null;
+        }
+
+        const firstPoint = points.at(0);
+        const lastPoint = points.at(-1);
+        const containerBounds = graph.container.getBoundingClientRect();
+
+        return {
+            x: containerBounds.left + (firstPoint.x + lastPoint.x) / 2,
+            y: containerBounds.top + (firstPoint.y + lastPoint.y) / 2,
+        };
+    }, edgeId);
+
+    await expect(startPoint).not.toBeNull();
+
+    await page.mouse.move(startPoint.x, startPoint.y);
+    await page.mouse.down();
+    await page.mouse.move(startPoint.x + deltaX, startPoint.y + deltaY, {
+        steps: 8,
+    });
+    await page.mouse.up();
+}
+
+export async function clickCompositeAttributeConnector(
+    page,
+    ownerName,
+    attributeName,
+) {
+    const entity = await getSavedEntity(page, ownerName);
+    const relation = await getSavedRelation(page, ownerName);
+    const owner = entity ?? relation;
+
+    const attribute = owner?.attributes?.find(
+        (candidate) =>
+            candidate.name === attributeName &&
+            Array.isArray(candidate.children) &&
+            candidate.children.length > 0,
+    );
+
+    await expect(attribute?.idMx).toBeTruthy();
+
+    const centerPoint = await page.evaluate((attributeId) => {
+        const graph = window.__DEBUG_GRAPH__;
+        const cell = graph?.getModel?.()?.getCell?.(attributeId);
+
+        if (!graph || !cell) {
+            return null;
+        }
+
+        const state = graph.view.getState(cell);
+        const bounds = state ?? cell.geometry;
+
+        if (!bounds) {
+            return null;
+        }
+
+        const containerBounds = graph.container.getBoundingClientRect();
+
+        return {
+            x: containerBounds.left + bounds.x + bounds.width / 2,
+            y: containerBounds.top + bounds.y + bounds.height / 2,
+        };
+    }, attribute.idMx);
+
+    await expect(centerPoint).not.toBeNull();
+
+    await page.mouse.click(centerPoint.x, centerPoint.y);
+}

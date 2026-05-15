@@ -11,6 +11,9 @@ import {
     selectAttributeByName,
     selectEntity,
     renameElement,
+    clickCompositeAttributeConnector,
+    dragCompositeAttributeRootEdge,
+    deselectCanvas,
 } from '../helpers/canvas';
 
 import { exportCurrentSqlScript, seedSavedDiagram } from '../helpers/persistence';
@@ -943,4 +946,114 @@ test('toggle composite attribute key from any child attribute', async ({ page })
     await expect(
         page.getByRole('button', { name: 'Convertir en clave' }),
     ).toBeVisible();
+});
+
+test('move composite attribute branch from its root edge', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+
+    await renameElement(page, 'Atributo', 'direccion');
+
+    await page.getByText('direccion', { exact: true }).click();
+    await page
+        .getByRole('button', { name: 'Añadir subatributo hermano' })
+        .click();
+
+    await renameElement(page, 'Atributo', 'calle');
+
+    await selectAttributeByName(page, 'Entidad', 'calle');
+    await page
+        .getByRole('button', { name: 'Añadir subatributo hermano' })
+        .click();
+
+    await renameElement(page, 'Atributo', 'ciudad');
+
+    const initialPositions = await getSavedEntity(page, 'Entidad').then(
+        (entity) => {
+            const compositeAttribute = entity.attributes[0];
+
+            return {
+                root: compositeAttribute.position,
+                children: compositeAttribute.children.map((child) => ({
+                    name: child.name,
+                    position: child.position,
+                })),
+            };
+        },
+    );
+
+    await dragCompositeAttributeRootEdge(page, 'Entidad', 'direccion', 60, 40);
+
+    await expect
+        .poll(async () => {
+            const entity = await getSavedEntity(page, 'Entidad');
+            const compositeAttribute = entity?.attributes?.[0];
+
+            return {
+                rootMovedRight:
+                    compositeAttribute?.position?.x >
+                    initialPositions.root.x,
+                rootMovedDown:
+                    compositeAttribute?.position?.y >
+                    initialPositions.root.y,
+                childNames: compositeAttribute?.children?.map(
+                    (child) => child.name,
+                ),
+                childrenMovedRight: compositeAttribute?.children?.every(
+                    (child, index) =>
+                        child.position.x >
+                        initialPositions.children[index].position.x,
+                ),
+                childrenMovedDown: compositeAttribute?.children?.every(
+                    (child, index) =>
+                        child.position.y >
+                        initialPositions.children[index].position.y,
+                ),
+            };
+        })
+        .toEqual({
+            rootMovedRight: true,
+            rootMovedDown: true,
+            childNames: ['direccion', 'calle', 'ciudad'],
+            childrenMovedRight: true,
+            childrenMovedDown: true,
+        });
+});
+
+test('do not select composite connector directly', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+
+    await renameElement(page, 'Atributo', 'direccion');
+
+    await page.getByText('direccion', { exact: true }).click();
+    await page
+        .getByRole('button', { name: 'Añadir subatributo hermano' })
+        .click();
+
+    await renameElement(page, 'Atributo', 'calle');
+
+    await page.evaluate(() => {
+        window.__DEBUG_GRAPH__?.clearSelection?.();
+    });
+
+    await expect(
+        page.getByRole('button', { name: 'Añadir subatributo hermano' }),
+    ).toHaveCount(0);
+
+    await clickCompositeAttributeConnector(page, 'Entidad', 'direccion');
+
+    await expect(
+        page.getByRole('button', { name: 'Añadir subatributo hermano' }),
+    ).toHaveCount(0);
+
+    await expect(
+        page.getByRole('button', { name: 'Convertir en clave' }),
+    ).toHaveCount(0);
 });

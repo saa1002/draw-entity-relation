@@ -47,7 +47,7 @@ const COMPOSITE_ATTRIBUTE_CONNECTOR_STYLE = [
     "fontColor=none",
 ].join(";");
 
-export const COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE = 4;
+export const COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE = 1;
 
 export const isCompositeAttributeForRendering = (attribute) =>
     getAttributeChildren(attribute).length > 0;

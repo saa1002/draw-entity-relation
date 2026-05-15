@@ -15,7 +15,13 @@ import {
     isIdentifyingRelationEdgeDecoratorCell,
 } from "../rendering/relationRendering";
 
-const getUnderlyingInteractiveCell = ({ cell, accessCell }) => {
+const getUnderlyingInteractiveCell = ({
+    cell,
+    accessCell,
+    getCompositeAttributeRootCellFromEdge,
+    isCompositeAttributeConnectorCell,
+    resolveCompositeAttributeRootEdge = true,
+}) => {
     if (!cell?.id) return cell;
 
     const id = String(cell.id);
@@ -46,13 +52,43 @@ const getUnderlyingInteractiveCell = ({ cell, accessCell }) => {
         );
     }
 
+    if (isCompositeAttributeConnectorCell?.(cell)) {
+        return null;
+    }
+
+    if (resolveCompositeAttributeRootEdge) {
+        const compositeAttributeRootCell =
+            getCompositeAttributeRootCellFromEdge?.(cell);
+
+        if (compositeAttributeRootCell) {
+            return compositeAttributeRootCell;
+        }
+    }
+
     return cell;
+};
+
+const isCompositeAttributeInteractionCell = ({
+    cell,
+    getCompositeAttributeRootCellFromEdge,
+    isCompositeAttributeConnectorCell,
+}) => {
+    if (!cell) {
+        return false;
+    }
+
+    return (
+        isCompositeAttributeConnectorCell?.(cell) === true ||
+        Boolean(getCompositeAttributeRootCellFromEdge?.(cell))
+    );
 };
 
 export const installGraphInteractionOverrides = ({
     graph,
     mxGraph,
     accessCell,
+    getCompositeAttributeRootCellFromEdge,
+    isCompositeAttributeConnectorCell,
 }) => {
     if (!graph || !mxGraph || !accessCell) {
         return () => {};
@@ -81,6 +117,9 @@ export const installGraphInteractionOverrides = ({
         return getUnderlyingInteractiveCell({
             cell,
             accessCell,
+            getCompositeAttributeRootCellFromEdge,
+            isCompositeAttributeConnectorCell,
+            resolveCompositeAttributeRootEdge: false,
         });
     };
 
@@ -93,6 +132,8 @@ export const installGraphInteractionOverrides = ({
         return getUnderlyingInteractiveCell({
             cell,
             accessCell,
+            getCompositeAttributeRootCellFromEdge,
+            isCompositeAttributeConnectorCell,
         });
     };
 
@@ -102,12 +143,45 @@ export const installGraphInteractionOverrides = ({
         const interactiveCell = getUnderlyingInteractiveCell({
             cell,
             accessCell,
+            getCompositeAttributeRootCellFromEdge,
+            isCompositeAttributeConnectorCell,
+            resolveCompositeAttributeRootEdge: false,
         });
 
         originalDblClick.call(this, evt, interactiveCell);
     };
 
+    let shouldClearCompositeAttributeSelection = false;
+
+    const compositeAttributeSelectionCleaner = {
+        mouseDown: (_sender, me) => {
+            const cell = me.getCell?.();
+
+            shouldClearCompositeAttributeSelection =
+                isCompositeAttributeInteractionCell({
+                    cell,
+                    getCompositeAttributeRootCellFromEdge,
+                    isCompositeAttributeConnectorCell,
+                });
+        },
+        mouseMove: () => {},
+        mouseUp: () => {
+            if (!shouldClearCompositeAttributeSelection) {
+                return;
+            }
+
+            shouldClearCompositeAttributeSelection = false;
+
+            window.setTimeout(() => {
+                graph.clearSelection();
+            }, 0);
+        },
+    };
+
+    graph.addMouseListener(compositeAttributeSelectionCleaner);
+
     return () => {
+        graph.removeMouseListener(compositeAttributeSelectionCleaner);
         graph.getCellForEvent = originalGetCellForEvent;
         graph.graphHandler.getInitialCellForEvent =
             originalGetInitialCellForEvent;
