@@ -15,6 +15,32 @@ import {
     isIdentifyingRelationEdgeDecoratorCell,
 } from "../rendering/relationRendering";
 
+import { getBaseCellIdFromDecoratorId } from "../rendering/decoratorRendering";
+
+const INTERACTIVE_DECORATOR_SUFFIXES = [
+    WEAK_ENTITY_DECORATOR_SUFFIX,
+    IDENTIFYING_RELATION_DECORATOR_SUFFIX,
+    IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX,
+    DISCRIMINANT_UNDERLINE_SUFFIX,
+    MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX,
+];
+
+const getInteractiveBaseCellFromDecorator = ({ cell, accessCell }) => {
+    if (!cell?.id) {
+        return null;
+    }
+
+    for (const suffix of INTERACTIVE_DECORATOR_SUFFIXES) {
+        const baseCellId = getBaseCellIdFromDecoratorId(cell.id, suffix);
+
+        if (baseCellId !== null) {
+            return accessCell(baseCellId);
+        }
+    }
+
+    return null;
+};
+
 const getUnderlyingInteractiveCell = ({
     cell,
     accessCell,
@@ -24,32 +50,13 @@ const getUnderlyingInteractiveCell = ({
 }) => {
     if (!cell?.id) return cell;
 
-    const id = String(cell.id);
+    const decoratorBaseCell = getInteractiveBaseCellFromDecorator({
+        cell,
+        accessCell,
+    });
 
-    if (id.endsWith(WEAK_ENTITY_DECORATOR_SUFFIX)) {
-        return accessCell(id.slice(0, -WEAK_ENTITY_DECORATOR_SUFFIX.length));
-    }
-
-    if (id.endsWith(IDENTIFYING_RELATION_DECORATOR_SUFFIX)) {
-        return accessCell(
-            id.slice(0, -IDENTIFYING_RELATION_DECORATOR_SUFFIX.length),
-        );
-    }
-
-    if (id.endsWith(IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX)) {
-        return accessCell(
-            id.slice(0, -IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX.length),
-        );
-    }
-
-    if (id.endsWith(DISCRIMINANT_UNDERLINE_SUFFIX)) {
-        return accessCell(id.slice(0, -DISCRIMINANT_UNDERLINE_SUFFIX.length));
-    }
-
-    if (id.endsWith(MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX)) {
-        return accessCell(
-            id.slice(0, -MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX.length),
-        );
+    if (decoratorBaseCell) {
+        return decoratorBaseCell;
     }
 
     if (isCompositeAttributeConnectorCell?.(cell)) {
