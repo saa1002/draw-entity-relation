@@ -13,6 +13,13 @@ import {
     getAttributeDimensions,
 } from "../mxStyles/diagramStyles";
 
+import {
+    buildDecoratorCellId,
+    getInsetBounds,
+    isDecoratorCellForSuffix,
+    syncVertexDecoratorBounds,
+} from "./decoratorRendering";
+
 export const DISCRIMINANT_UNDERLINE_SUFFIX = "__discriminant_underline";
 export const MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX = "__multivalued_decorator";
 
@@ -66,33 +73,20 @@ export const getAttributeRenderDimensions = (attribute, getDimensions) => {
     return getDimensions(attribute?.name);
 };
 
+const getMultivaluedAttributeDecoratorBounds = (attributeGeometry) =>
+    getInsetBounds(attributeGeometry, MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET);
+
 export const getDiscriminantUnderlineId = (attributeId) =>
-    `${attributeId}${DISCRIMINANT_UNDERLINE_SUFFIX}`;
+    buildDecoratorCellId(attributeId, DISCRIMINANT_UNDERLINE_SUFFIX);
 
 export const getMultivaluedAttributeDecoratorId = (attributeId) =>
-    `${attributeId}${MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX}`;
-
-const getMultivaluedAttributeDecoratorBounds = (attributeGeometry) => {
-    if (!attributeGeometry) {
-        return null;
-    }
-
-    const offset = MULTIVALUED_ATTRIBUTE_DECORATOR_OFFSET;
-
-    return {
-        x: attributeGeometry.x + offset,
-        y: attributeGeometry.y + offset,
-        width: Math.max(1, attributeGeometry.width - offset * 2),
-        height: Math.max(1, attributeGeometry.height - offset * 2),
-    };
-};
+    buildDecoratorCellId(attributeId, MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX);
 
 export const isDiscriminantUnderlineCell = (cell) =>
-    !!cell?.id && String(cell.id).endsWith(DISCRIMINANT_UNDERLINE_SUFFIX);
+    isDecoratorCellForSuffix(cell, DISCRIMINANT_UNDERLINE_SUFFIX);
 
 export const isMultivaluedAttributeDecoratorCell = (cell) =>
-    !!cell?.id &&
-    String(cell.id).endsWith(MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX);
+    isDecoratorCellForSuffix(cell, MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX);
 
 export const getAttributeStyleString = (
     attribute,
@@ -265,22 +259,6 @@ export const createAttributeRenderingHelpers = ({
         }
     };
 
-    const disablePointerEventsForCell = (cell) => {
-        const state = graph.view?.getState?.(cell);
-
-        const nodes = [state?.shape?.node, state?.text?.node].filter(Boolean);
-
-        nodes.forEach((node) => {
-            node.setAttribute("pointer-events", "none");
-            node.style.pointerEvents = "none";
-
-            node.querySelectorAll?.("*").forEach((childNode) => {
-                childNode.setAttribute("pointer-events", "none");
-                childNode.style.pointerEvents = "none";
-            });
-        });
-    };
-
     const syncMultivaluedAttributeDecorator = (attributeCell) => {
         if (!attributeCell?.id) return;
 
@@ -288,26 +266,16 @@ export const createAttributeRenderingHelpers = ({
             getMultivaluedAttributeDecoratorId(attributeCell.id),
         );
 
-        if (!decorator || !decorator.geometry) {
-            return;
-        }
-
         const bounds = getMultivaluedAttributeDecoratorBounds(
             attributeCell.geometry,
         );
 
-        if (!bounds) {
-            return;
-        }
-
-        decorator.geometry.x = bounds.x;
-        decorator.geometry.y = bounds.y;
-        decorator.geometry.width = bounds.width;
-        decorator.geometry.height = bounds.height;
-
-        graph.refresh(decorator);
-        graph.orderCells(false, [decorator]);
-        disablePointerEventsForCell(decorator);
+        syncVertexDecoratorBounds({
+            graph,
+            decoratorCell: decorator,
+            bounds,
+            disablePointerEvents: true,
+        });
     };
 
     const createMultivaluedAttributeDecorator = (attributeCell) => {

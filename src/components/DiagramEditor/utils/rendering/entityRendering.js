@@ -1,49 +1,36 @@
 import { getEntityDimensions } from "../mxStyles/diagramStyles";
+import {
+    buildDecoratorCellId,
+    getInsetBounds,
+    isDecoratorCellForSuffix,
+    syncVertexDecoratorBounds,
+} from "./decoratorRendering";
 
 export const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
 
 const WEAK_ENTITY_DECORATOR_OFFSET = 4;
 
-const getWeakEntityDecoratorBounds = (entityGeometry) => {
-    if (!entityGeometry) {
-        return null;
-    }
-
-    const offset = WEAK_ENTITY_DECORATOR_OFFSET;
-
-    return {
-        x: entityGeometry.x + offset,
-        y: entityGeometry.y + offset,
-        width: Math.max(1, entityGeometry.width - offset * 2),
-        height: Math.max(1, entityGeometry.height - offset * 2),
-    };
-};
+const getWeakEntityDecoratorBounds = (entityGeometry) =>
+    getInsetBounds(entityGeometry, WEAK_ENTITY_DECORATOR_OFFSET);
 
 export const getWeakEntityDecoratorId = (entityId) =>
-    `${entityId}${WEAK_ENTITY_DECORATOR_SUFFIX}`;
+    buildDecoratorCellId(entityId, WEAK_ENTITY_DECORATOR_SUFFIX);
 
 export const isWeakEntityDecoratorCell = (cell) =>
-    !!cell?.id && String(cell.id).endsWith(WEAK_ENTITY_DECORATOR_SUFFIX);
+    isDecoratorCellForSuffix(cell, WEAK_ENTITY_DECORATOR_SUFFIX);
 
 export const createEntityRenderingHelpers = ({ graph, accessCell }) => {
     const syncWeakEntityDecorator = (entityCell) => {
         if (!entityCell) return;
 
         const decorator = accessCell(getWeakEntityDecoratorId(entityCell.id));
-
-        if (!decorator || !decorator.geometry) return;
-
         const bounds = getWeakEntityDecoratorBounds(entityCell.geometry);
 
-        if (!bounds) return;
-
-        decorator.geometry.x = bounds.x;
-        decorator.geometry.y = bounds.y;
-        decorator.geometry.width = bounds.width;
-        decorator.geometry.height = bounds.height;
-
-        graph.refresh(decorator);
-        graph.orderCells(false, [decorator]);
+        syncVertexDecoratorBounds({
+            graph,
+            decoratorCell: decorator,
+            bounds,
+        });
     };
 
     const createWeakEntityDecorator = (entity) => {

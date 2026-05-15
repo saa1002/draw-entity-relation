@@ -1,4 +1,10 @@
 import { ER_STROKE, getRelationDimensions } from "../mxStyles/diagramStyles";
+import {
+    buildDecoratorCellId,
+    getInsetBounds,
+    isDecoratorCellForSuffix,
+    syncVertexDecoratorBounds,
+} from "./decoratorRendering";
 
 export const IDENTIFYING_RELATION_DECORATOR_SUFFIX = "__identifying_decorator";
 
@@ -9,33 +15,22 @@ const IDENTIFYING_RELATION_DECORATOR_OFFSET = 4;
 const IDENTIFYING_RELATION_EDGE_PARALLEL_GAP = 5;
 
 export const getIdentifyingRelationDecoratorId = (relationId) =>
-    `${relationId}${IDENTIFYING_RELATION_DECORATOR_SUFFIX}`;
+    buildDecoratorCellId(relationId, IDENTIFYING_RELATION_DECORATOR_SUFFIX);
 
 export const getIdentifyingRelationEdgeDecoratorId = (relationId) =>
-    `${relationId}${IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX}`;
+    buildDecoratorCellId(
+        relationId,
+        IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX,
+    );
 
 export const isIdentifyingRelationDecoratorCell = (cell) =>
-    !!cell?.id &&
-    String(cell.id).endsWith(IDENTIFYING_RELATION_DECORATOR_SUFFIX);
+    isDecoratorCellForSuffix(cell, IDENTIFYING_RELATION_DECORATOR_SUFFIX);
 
 export const isIdentifyingRelationEdgeDecoratorCell = (cell) =>
-    !!cell?.id &&
-    String(cell.id).endsWith(IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX);
+    isDecoratorCellForSuffix(cell, IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX);
 
-const getIdentifyingRelationDecoratorBounds = (relationGeometry) => {
-    if (!relationGeometry) {
-        return null;
-    }
-
-    const offset = IDENTIFYING_RELATION_DECORATOR_OFFSET;
-
-    return {
-        x: relationGeometry.x + offset,
-        y: relationGeometry.y + offset,
-        width: Math.max(1, relationGeometry.width - offset * 2),
-        height: Math.max(1, relationGeometry.height - offset * 2),
-    };
-};
+const getIdentifyingRelationDecoratorBounds = (relationGeometry) =>
+    getInsetBounds(relationGeometry, IDENTIFYING_RELATION_DECORATOR_OFFSET);
 
 export const createRelationRenderingHelpers = ({
     graph,
@@ -51,25 +46,15 @@ export const createRelationRenderingHelpers = ({
             getIdentifyingRelationDecoratorId(relationCell.id),
         );
 
-        if (!decorator || !decorator.geometry) {
-            return;
-        }
-
         const bounds = getIdentifyingRelationDecoratorBounds(
             relationCell.geometry,
         );
 
-        if (!bounds) {
-            return;
-        }
-
-        decorator.geometry.x = bounds.x;
-        decorator.geometry.y = bounds.y;
-        decorator.geometry.width = bounds.width;
-        decorator.geometry.height = bounds.height;
-
-        graph.refresh(decorator);
-        graph.orderCells(false, [decorator]);
+        syncVertexDecoratorBounds({
+            graph,
+            decoratorCell: decorator,
+            bounds,
+        });
     };
 
     const createIdentifyingRelationDecorator = (relation) => {
