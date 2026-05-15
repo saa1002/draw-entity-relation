@@ -44,6 +44,10 @@ const createHelpers = (cells, graphOverrides = {}) => {
         mxGeometry: function geometry() {
             this.setTerminalPoint = () => {}
         },
+        getAttributeDimensions: () => ({
+            width: 70,
+            height: 34,
+        }),
     })
 }
 

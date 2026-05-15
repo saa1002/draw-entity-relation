@@ -109,6 +109,7 @@ export const createAttributeRenderingHelpers = ({
     mxPoint,
     mxGeometry,
     updateAttributePosition,
+    getAttributeDimensions,
 }) => {
     const getAttributeCells = (attribute) => {
         if (!attribute) return [];
@@ -522,12 +523,59 @@ export const createAttributeRenderingHelpers = ({
         });
     };
 
+    const createAttributeGraphCells = ({
+        name,
+        source,
+        offsetX,
+        offsetY,
+        semantics,
+    }) => {
+        const newX = source.geometry.x + offsetX;
+        const newY = source.geometry.y + offsetY;
+
+        const attributeForRendering = {
+            name,
+            ...semantics,
+        };
+
+        const { width, height } = getAttributeRenderDimensions(
+            attributeForRendering,
+            getAttributeDimensions,
+        );
+
+        const target = graph.insertVertex(
+            null,
+            null,
+            getAttributeDisplayValue(attributeForRendering),
+            newX,
+            newY,
+            width,
+            height,
+            getAttributeStyleString(attributeForRendering),
+        );
+
+        const edge = graph.insertEdge(source, null, null, source, target);
+
+        graph.orderCells(false);
+
+        if (semantics.multivalued) {
+            ensureMultivaluedAttributeDecorator(target);
+        }
+
+        if (semantics.partialKey) {
+            ensureDiscriminantUnderline(target);
+        }
+
+        return { target, edge };
+    };
+
     return {
         getAttributesCells,
         removeAttributesCells,
         removeAttributeConnectionEdges,
         reparentAttributeCellToCurrentOwner,
         syncOwnerAttributePositions,
+        createAttributeGraphCells,
         syncDiscriminantUnderline,
         ensureDiscriminantUnderline,
         syncMultivaluedAttributeDecorator,

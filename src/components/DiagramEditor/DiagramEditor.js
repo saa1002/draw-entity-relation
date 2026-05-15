@@ -92,12 +92,7 @@ import {
     readDiagramJsonFile,
     saveDiagramToLocalStorage,
 } from "./utils/persistence/filePersistence";
-import {
-    createAttributeRenderingHelpers,
-    getAttributeDisplayValue,
-    getAttributeRenderDimensions,
-    getAttributeStyleString,
-} from "./utils/rendering/attributeRendering";
+import { createAttributeRenderingHelpers } from "./utils/rendering/attributeRendering";
 import {
     createEntityRenderingHelpers,
     isWeakEntityDecoratorCell,
@@ -250,6 +245,7 @@ export default function App(props) {
         syncAttributeChildrenPositions,
         removeAttributeConnectionEdges,
         reparentAttributeCellToCurrentOwner,
+        createAttributeGraphCells,
         setOwnerAttributesVisible,
     } = createAttributeRenderingHelpers({
         graph,
@@ -469,52 +465,6 @@ export default function App(props) {
         graph.orderCells(moveBack);
     };
 
-    const createAttributeVertex = ({
-        name,
-        source,
-        offsetX,
-        offsetY,
-        semantics,
-    }) => {
-        const newX = source.geometry.x + offsetX;
-        const newY = source.geometry.y + offsetY;
-
-        const attributeForRendering = {
-            name,
-            ...semantics,
-        };
-
-        const { width, height } = getAttributeRenderDimensions(
-            attributeForRendering,
-            getAttributeDimensions,
-        );
-
-        const target = graph.insertVertex(
-            null,
-            null,
-            getAttributeDisplayValue(attributeForRendering),
-            newX,
-            newY,
-            width,
-            height,
-            getAttributeStyleString(attributeForRendering),
-        );
-
-        const edge = graph.insertEdge(source, null, null, source, target);
-
-        graph.orderCells(false);
-
-        if (semantics.multivalued) {
-            ensureMultivaluedAttributeDecorator(target);
-        }
-
-        if (semantics.partialKey) {
-            ensureDiscriminantUnderline(target);
-        }
-
-        return { target, edge };
-    };
-
     const addAttribute = () => {
         let selectedDiag;
         let isRelation = false;
@@ -560,7 +510,7 @@ export default function App(props) {
             selectedDiag.attributes,
         );
 
-        const { target, edge } = createAttributeVertex({
+        const { target, edge } = createAttributeGraphCells({
             name: uniqueAttributeName,
             source,
             offsetX,
@@ -647,7 +597,7 @@ export default function App(props) {
             partialKey: false,
         };
 
-        const { target, edge } = createAttributeVertex({
+        const { target, edge } = createAttributeGraphCells({
             name,
             source,
             offsetX,
@@ -704,7 +654,7 @@ export default function App(props) {
             !isMultivaluedAttribute(compositeAttribute)
         ) {
             const originalAttributeName = compositeAttribute.name;
-            const { target, edge } = createAttributeVertex({
+            const { target, edge } = createAttributeGraphCells({
                 name: originalAttributeName,
                 source,
                 offsetX: 120,
