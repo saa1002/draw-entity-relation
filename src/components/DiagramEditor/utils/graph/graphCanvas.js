@@ -128,3 +128,191 @@ export const connectRelationGraphSides = ({
         side2,
     };
 };
+
+export const installCellGeometrySyncHandlers = ({
+    graph,
+    mxEvent,
+    getSelectedCell,
+    getDiagram,
+    accessCell,
+    isEntityShapeCell,
+    isRelationShapeCell,
+    isAttributeShapeCell,
+    isWeakEntityDecoratorCell,
+    isIdentifyingRelationDecoratorCell,
+    findEntityById,
+    findRelationById,
+    findAttributeTreeOwnerById,
+    isWeakEntity,
+    isSelfRelation,
+    isIdentifyingRelation,
+    canRelationHoldAttributes,
+    updateAttributePosition,
+    syncOwnerAttributePositions,
+    syncAttributeChildrenPositions,
+    syncWeakEntityDecorator,
+    syncSelfRelationEdges,
+    syncIdentifyingRelationDecorator,
+    syncIdentifyingRelationEdgeDecorator,
+    syncMultivaluedAttributeDecorator,
+    syncDiscriminantUnderline,
+    refreshGraph,
+    syncAndPersistDiagramData,
+}) => {
+    const handleEntityMove = (cell) => {
+        const entityData = findEntityById(getDiagram(), cell.id);
+
+        if (!entityData) return;
+
+        syncOwnerAttributePositions(entityData, cell);
+
+        if (isWeakEntity(entityData)) {
+            syncWeakEntityDecorator(cell);
+        }
+
+        if (entityData.identifyingRelationId) {
+            const relationData = findRelationById(
+                getDiagram(),
+                entityData.identifyingRelationId,
+            );
+            const relationCell = accessCell(relationData?.idMx);
+
+            if (relationData && relationCell) {
+                syncIdentifyingRelationEdgeDecorator(
+                    relationCell,
+                    relationData,
+                );
+            }
+        }
+
+        refreshGraph();
+    };
+
+    const handleRelationMove = (cell) => {
+        const relationData = findRelationById(getDiagram(), cell.id);
+
+        if (!relationData) return;
+
+        if (canRelationHoldAttributes(relationData)) {
+            syncOwnerAttributePositions(relationData, cell);
+            refreshGraph();
+        }
+
+        if (isSelfRelation(relationData)) {
+            syncSelfRelationEdges(cell, relationData);
+        }
+
+        if (isIdentifyingRelation(relationData)) {
+            syncIdentifyingRelationDecorator(cell);
+            syncIdentifyingRelationEdgeDecorator(cell, relationData);
+        }
+    };
+
+    const handleAttributeMove = (cell) => {
+        const attributeOwner = findAttributeTreeOwnerById(
+            getDiagram(),
+            cell.id,
+        );
+
+        if (!attributeOwner) return;
+
+        const { owner, parent, attribute } = attributeOwner;
+        const positionOwner = parent ?? owner;
+
+        updateAttributePosition({
+            attribute,
+            owner: positionOwner,
+            position: cell.geometry,
+        });
+
+        syncAttributeChildrenPositions(attribute, cell);
+
+        if (attribute.multivalued) {
+            syncMultivaluedAttributeDecorator(cell);
+        }
+
+        if (attribute.partialKey) {
+            syncDiscriminantUnderline(cell);
+        }
+    };
+
+    const handleCellsResized = (_sender, evt) => {
+        const cells = evt.getProperty("cells") || [];
+
+        cells.forEach((cell) => {
+            if (isEntityShapeCell(cell) && !isWeakEntityDecoratorCell(cell)) {
+                const entityData = findEntityById(getDiagram(), cell.id);
+
+                if (isWeakEntity(entityData)) {
+                    syncWeakEntityDecorator(cell);
+                }
+
+                if (entityData?.identifyingRelationId) {
+                    const relationData = findRelationById(
+                        getDiagram(),
+                        entityData.identifyingRelationId,
+                    );
+                    const relationCell = accessCell(relationData?.idMx);
+
+                    if (relationData && relationCell) {
+                        syncIdentifyingRelationEdgeDecorator(
+                            relationCell,
+                            relationData,
+                        );
+                    }
+                }
+            }
+
+            if (
+                isRelationShapeCell(cell) &&
+                !isIdentifyingRelationDecoratorCell(cell)
+            ) {
+                const relationData = findRelationById(getDiagram(), cell.id);
+
+                if (!relationData) return;
+
+                if (isSelfRelation(relationData)) {
+                    syncSelfRelationEdges(cell, relationData);
+                }
+
+                if (isIdentifyingRelation(relationData)) {
+                    syncIdentifyingRelationDecorator(cell);
+                    syncIdentifyingRelationEdgeDecorator(cell, relationData);
+                }
+            }
+        });
+
+        refreshGraph();
+        syncAndPersistDiagramData();
+    };
+
+    const handleCellsMoved = () => {
+        const selectedCell = getSelectedCell();
+
+        if (selectedCell) {
+            if (
+                isEntityShapeCell(selectedCell) &&
+                !isWeakEntityDecoratorCell(selectedCell)
+            ) {
+                handleEntityMove(selectedCell);
+            } else if (
+                isRelationShapeCell(selectedCell) &&
+                !isIdentifyingRelationDecoratorCell(selectedCell)
+            ) {
+                handleRelationMove(selectedCell);
+            } else if (isAttributeShapeCell(selectedCell)) {
+                handleAttributeMove(selectedCell);
+            }
+        }
+
+        syncAndPersistDiagramData();
+    };
+
+    graph.addListener(mxEvent.CELLS_MOVED, handleCellsMoved);
+    graph.addListener(mxEvent.CELLS_RESIZED, handleCellsResized);
+
+    return () => {
+        graph.removeListener(handleCellsMoved);
+        graph.removeListener(handleCellsResized);
+    };
+};

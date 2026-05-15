@@ -68,6 +68,7 @@ import {
     clearGraphCanvas,
     connectRelationGraphSides,
     getConfiguredRelationGraphCells,
+    installCellGeometrySyncHandlers,
     removeExistingGraphCells,
 } from "./utils/graph/graphCanvas";
 import { installGraphInteractionOverrides } from "./utils/graph/graphInteractionOverrides";
@@ -423,187 +424,46 @@ export default function App(props) {
         view.refresh();
     };
 
-    const handleEntityMove = (selected) => {
-        const selectedEntityDiag = findEntityById(
-            diagramRef.current,
-            selected.id,
-        );
-
-        if (!selectedEntityDiag) return;
-
-        syncOwnerAttributePositions(selectedEntityDiag, selected);
-
-        if (isWeakEntity(selectedEntityDiag)) {
-            syncWeakEntityDecorator(selected);
-        }
-
-        if (selectedEntityDiag?.identifyingRelationId) {
-            const relationData = findRelationById(
-                diagramRef.current,
-                selectedEntityDiag.identifyingRelationId,
-            );
-            const relationCell = accessCell(relationData?.idMx);
-
-            if (relationData && relationCell) {
-                syncIdentifyingRelationEdgeDecorator(
-                    relationCell,
-                    relationData,
-                );
-            }
-        }
-
-        refreshGraph();
-    };
-
-    const handleRelationMove = (selected) => {
-        const selectedRelationDiag = findRelationById(
-            diagramRef.current,
-            selected.id,
-        );
-
-        if (!selectedRelationDiag) return;
-
-        if (canRelationHoldAttributes(selectedRelationDiag)) {
-            syncOwnerAttributePositions(selectedRelationDiag, selected);
-            refreshGraph();
-        }
-
-        if (isSelfRelation(selectedRelationDiag)) {
-            syncSelfRelationEdges(selected, selectedRelationDiag);
-        }
-        if (isIdentifyingRelation(selectedRelationDiag)) {
-            syncIdentifyingRelationDecorator(selected);
-            syncIdentifyingRelationEdgeDecorator(
-                selected,
-                selectedRelationDiag,
-            );
-        }
-    };
-
-    const handleAttributeMove = (selected) => {
-        const attributeOwner = findAttributeTreeOwnerById(
-            diagramRef.current,
-            selected.id,
-        );
-
-        if (!attributeOwner) return;
-
-        const { owner, parent, attribute } = attributeOwner;
-        const positionOwner = parent ?? owner;
-
-        updateAttributePosition({
-            attribute,
-            owner: positionOwner,
-            position: selected.geometry,
-        });
-
-        syncAttributeChildrenPositions(attribute, selected);
-
-        if (attribute.multivalued) {
-            syncMultivaluedAttributeDecorator(selected);
-        }
-
-        if (attribute.partialKey) {
-            syncDiscriminantUnderline(selected);
-        }
-    };
-
-    const onCellsResized = (evt) => {
-        const cells = evt.getProperty("cells") || [];
-
-        cells.forEach((cell) => {
-            if (isEntityShapeCell(cell) && !isWeakEntityDecoratorCell(cell)) {
-                const entityData = findEntityById(diagramRef.current, cell.id);
-
-                if (isWeakEntity(entityData)) {
-                    syncWeakEntityDecorator(cell);
-                }
-
-                if (entityData?.identifyingRelationId) {
-                    const relationData = findRelationById(
-                        diagramRef.current,
-                        entityData.identifyingRelationId,
-                    );
-                    const relationCell = accessCell(relationData?.idMx);
-
-                    if (relationData && relationCell) {
-                        syncIdentifyingRelationEdgeDecorator(
-                            relationCell,
-                            relationData,
-                        );
-                    }
-                }
-            }
-            if (
-                isRelationShapeCell(cell) &&
-                !isIdentifyingRelationDecoratorCell(cell)
-            ) {
-                const relationData = findRelationById(
-                    diagramRef.current,
-                    cell.id,
-                );
-
-                if (!relationData) return;
-
-                if (isSelfRelation(relationData)) {
-                    syncSelfRelationEdges(cell, relationData);
-                }
-
-                if (isIdentifyingRelation(relationData)) {
-                    syncIdentifyingRelationDecorator(cell);
-                    syncIdentifyingRelationEdgeDecorator(cell, relationData);
-                }
-            }
-        });
-
-        refreshGraph();
-        syncAndPersistDiagramData();
-    };
-
-    const onCellsMoved = (_evt) => {
-        if (selected) {
-            if (
-                isEntityShapeCell(selected) &&
-                !isWeakEntityDecoratorCell(selected)
-            ) {
-                handleEntityMove(selected);
-            } else if (
-                isRelationShapeCell(selected) &&
-                !isIdentifyingRelationDecoratorCell(selected)
-            ) {
-                handleRelationMove(selected);
-            } else if (isAttributeShapeCell(selected)) {
-                handleAttributeMove(selected);
-            }
-        }
-        // Ensure that the diagram is updated before
-        syncAndPersistDiagramData();
-    };
-
     React.useEffect(() => {
-        if (graph) {
-            // Define the listener as a function to refer it for removal
-            const handleCellsMoved = (_sender, evt) => {
-                onCellsMoved(evt);
-            };
+        if (!graph) return;
 
-            const handleCellsResized = (_sender, evt) => {
-                onCellsResized(evt);
-            };
+        const cleanupCellGeometrySyncHandlers = installCellGeometrySyncHandlers(
+            {
+                graph,
+                mxEvent,
+                getSelectedCell: () => selected,
+                getDiagram: () => diagramRef.current,
+                accessCell,
+                isEntityShapeCell,
+                isRelationShapeCell,
+                isAttributeShapeCell,
+                isWeakEntityDecoratorCell,
+                isIdentifyingRelationDecoratorCell,
+                findEntityById,
+                findRelationById,
+                findAttributeTreeOwnerById,
+                isWeakEntity,
+                isSelfRelation,
+                isIdentifyingRelation,
+                canRelationHoldAttributes,
+                updateAttributePosition,
+                syncOwnerAttributePositions,
+                syncAttributeChildrenPositions,
+                syncWeakEntityDecorator,
+                syncSelfRelationEdges,
+                syncIdentifyingRelationDecorator,
+                syncIdentifyingRelationEdgeDecorator,
+                syncMultivaluedAttributeDecorator,
+                syncDiscriminantUnderline,
+                refreshGraph,
+                syncAndPersistDiagramData,
+            },
+        );
 
-            // Add the listener
-            graph.addListener(mxEvent.CELLS_MOVED, handleCellsMoved);
-            graph.addListener(mxEvent.CELLS_RESIZED, handleCellsResized);
+        syncAndPersistDiagramData();
 
-            syncAndPersistDiagramData();
-
-            // Cleanup function to remove the listener
-            return () => {
-                graph.removeListener(handleCellsMoved);
-                graph.removeListener(handleCellsResized);
-            };
-        }
-    }, [graph, selected, diagramRef, refreshDiagram]);
+        return cleanupCellGeometrySyncHandlers;
+    }, [graph, selected, refreshDiagram]);
 
     const pushCellsBack = (moveBack) => () => {
         graph.orderCells(moveBack);
@@ -2046,10 +1906,12 @@ export default function App(props) {
 
             reparentAttributeCellToCurrentOwner({
                 attribute: promotedAttribute,
-                attributeOwner: findAttributeTreeOwnerById(
-                    diagramRef.current,
-                    promotedAttribute.idMx,
-                ),
+                attributeOwner: promotedAttribute
+                    ? findAttributeTreeOwnerById(
+                          diagramRef.current,
+                          promotedAttribute.idMx,
+                      )
+                    : null,
             });
 
             if (!promotedAttribute && parentAttribute) {
