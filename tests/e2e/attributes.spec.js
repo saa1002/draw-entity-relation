@@ -261,9 +261,9 @@ test('add child attributes to an existing attribute', async ({ page }) => {
     await renameElement(page, 'Atributo', 'codigo');
 
     await page.getByText('codigo', { exact: true }).click();
-    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
 
-    await expect(page.getByText('Subatributo insertado').last()).toBeVisible();
+    await expect(page.getByText('Subatributo hermano insertado').last()).toBeVisible();
     await expect(page.getByText('Atributo', { exact: true })).toBeVisible();
 
     await renameElement(page, 'Atributo', 'serie');
@@ -276,7 +276,7 @@ test('add child attributes to an existing attribute', async ({ page }) => {
                 (attribute) => attribute.name,
             );
         })
-        .toEqual(['serie']);
+        .toEqual(['codigo', 'serie']);
 });
 
 test('create a composite attribute with multiple child attributes from the editor', async ({ page }) => {
@@ -290,12 +290,12 @@ test('create a composite attribute with multiple child attributes from the edito
 
     await page.getByText('codigo', { exact: true }).click();
 
-    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
     await renameElement(page, 'Atributo', 'serie');
 
     await selectAttributeByName(page, 'Entidad', 'codigo');
 
-    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
     await renameElement(page, 'Atributo', 'numero');
 
     await expect
@@ -309,6 +309,11 @@ test('create a composite attribute with multiple child attributes from the edito
             key: true,
             children: [
                 {
+                    name: 'codigo',
+                    key: false,
+                    partialKey: false,
+                },
+                {
                     name: 'serie',
                     key: false,
                     partialKey: false,
@@ -321,8 +326,7 @@ test('create a composite attribute with multiple child attributes from the edito
             ],
         });
 
-    await expect(page.getByText('codigo', { exact: true })).toHaveCount(0);
-    await expectAttributeCellVisible(page, 'Entidad', 'codigo', true);
+    await expect(page.getByText('codigo', { exact: true })).toBeVisible();
     await expect(page.getByText('serie', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
 });
@@ -337,7 +341,7 @@ test('delete a UI-created child attribute and clean up the parent children list'
     await renameElement(page, 'Atributo', 'codigo');
 
     await page.getByText('codigo', { exact: true }).click();
-    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
 
     await renameElement(page, 'Atributo', 'serie');
 
@@ -406,7 +410,7 @@ test('toggle simple multivalued attributes and persist across reloads', async ({
     ).toBeVisible();
 
     await expect(
-        page.getByRole('button', { name: 'Añadir subatributo' }),
+        page.getByRole('button', { name: 'Añadir subatributo hermano' }),
     ).toBeVisible();
 
     await page.reload();
@@ -472,12 +476,12 @@ test('toggle composite multivalued attributes and persist across reloads', async
     await renameElement(page, 'Atributo', 'contacto');
 
     await page.getByText('contacto', { exact: true }).click();
-    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
 
     await renameElement(page, 'Atributo', 'prefijo');
 
     await selectAttributeByName(page, 'Entidad', 'contacto');
-    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
 
     await renameElement(page, 'Atributo', 'numero');
 
@@ -494,6 +498,11 @@ test('toggle composite multivalued attributes and persist across reloads', async
         partialKey: false,
         multivalued: true,
         children: [
+            {
+                name: 'contacto',
+                key: false,
+                partialKey: false,
+            },
             {
                 name: 'prefijo',
                 key: false,
@@ -512,12 +521,12 @@ test('toggle composite multivalued attributes and persist across reloads', async
     ).toBeVisible();
 
     await expect(
-        page.getByRole('button', { name: 'Añadir subatributo' }),
+        page.getByRole('button', { name: 'Añadir subatributo hermano' }),
     ).toBeVisible();
 
     await page.reload();
 
-    await expect(page.getByText('contacto', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('contacto', { exact: true })).toBeVisible();
     await expectAttributeCellVisible(page, 'Entidad', 'contacto', true);
     await expect(page.getByText('prefijo', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
@@ -558,7 +567,7 @@ test('toggle composite multivalued attributes and persist across reloads', async
         .toEqual({
             multivalued: undefined,
             hasMultivaluedFlag: false,
-            childNames: ['prefijo', 'numero'],
+            childNames: ['contacto', 'prefijo', 'numero'],
         });
 });
 
@@ -583,17 +592,17 @@ test('add child attributes to a simple multivalued entity attribute', async ({ p
     ).toBeVisible();
 
     await expect(
-        page.getByRole('button', { name: 'Añadir subatributo' }),
+        page.getByRole('button', { name: 'Añadir subatributo hermano' }),
     ).toBeVisible();
 
-    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
 
-    await expect(page.getByText('Subatributo insertado').last()).toBeVisible();
+    await expect(page.getByText('Subatributo hermano insertado').last()).toBeVisible();
 
     await renameElement(page, 'Atributo', 'prefijo');
 
     await selectAttributeByName(page, 'Entidad', 'telefonos');
-    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
 
     await renameElement(page, 'Atributo', 'numero');
 
@@ -630,7 +639,7 @@ test('add child attributes to a simple multivalued entity attribute', async ({ p
     ).toBeVisible();
 
     await expect(
-        page.getByRole('button', { name: 'Añadir subatributo' }),
+        page.getByRole('button', { name: 'Añadir subatributo hermano' }),
     ).toBeVisible();
 
     await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
@@ -673,11 +682,11 @@ test('generate SQL for an editor-created composite multivalued attribute', async
         page.getByText('Atributo marcado como multivaluado').last(),
     ).toBeVisible();
 
-    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
     await renameElement(page, 'Atributo', 'prefijo');
 
     await selectAttributeByName(page, 'Entidad', 'telefonos');
-    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
     await renameElement(page, 'Atributo', 'numero');
 
     const sql = await exportCurrentSqlScript(page);
@@ -720,7 +729,7 @@ test('generate SQL for an editor-created composite multivalued attribute', async
     expect(sql).not.toContain('numero VARCHAR(40) PRIMARY KEY');
 });
 
-test('do not allow adding subattributes to child attributes', async ({ page }) => {
+test('add sibling subattributes without creating nested subattributes', async ({ page }) => {
     await page.goto('/');
 
     await addEntity(page);
@@ -730,14 +739,35 @@ test('do not allow adding subattributes to child attributes', async ({ page }) =
     await renameElement(page, 'Atributo', 'codigo');
 
     await page.getByText('codigo', { exact: true }).click();
-    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
-
-    await expect(page.getByText('Subatributo insertado').last()).toBeVisible();
-    await renameElement(page, 'Atributo', 'serie');
-
-    await selectAttributeByName(page, 'Entidad', 'serie');
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
 
     await expect(
-        page.getByRole('button', { name: 'Añadir subatributo' }),
-    ).toHaveCount(0);
+        page.getByText('Subatributo hermano insertado').last(),
+    ).toBeVisible();
+
+    await renameElement(page, 'Atributo', 'serie');
+
+    await page.getByText('serie', { exact: true }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
+
+    await renameElement(page, 'Atributo', 'numero');
+
+    await expect
+        .poll(async () => {
+            const entity = await getSavedEntity(page, 'Entidad');
+            const compositeAttribute = entity?.attributes?.[0];
+
+            return {
+                childNames: compositeAttribute?.children?.map(
+                    (attribute) => attribute.name,
+                ),
+                nestedChildren: compositeAttribute?.children?.some(
+                    (attribute) => Array.isArray(attribute.children),
+                ),
+            };
+        })
+        .toEqual({
+            childNames: ['codigo', 'serie', 'numero'],
+            nestedChildren: false,
+        });
 });

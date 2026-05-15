@@ -237,6 +237,23 @@ export const addChildAttributeToAttribute = (
     return childAttribute;
 };
 
+export const convertSimpleAttributeToCompositeAttribute = (
+    attribute,
+    firstChildAttribute,
+) => {
+    if (!attribute || !firstChildAttribute) {
+        return null;
+    }
+
+    if (Array.isArray(attribute.children) && attribute.children.length > 0) {
+        return null;
+    }
+
+    attribute.children = [firstChildAttribute];
+
+    return firstChildAttribute;
+};
+
 export const removeAttributeFromOwnerById = (owner, attributeId) => {
     if (!owner) {
         return null;

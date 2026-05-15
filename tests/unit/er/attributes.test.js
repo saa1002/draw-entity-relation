@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
     addChildAttributeToAttribute,
+    convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
     createAttribute,
     isCompositeMultivaluedAttribute,
@@ -281,6 +282,35 @@ describe("Hierarchical attribute helpers", () => {
         expect(parentAttribute.children).toEqual([childAttribute])
     })
 
+    test("convertSimpleAttributeToCompositeAttribute should keep the original attribute as the composite connector", () => {
+        const attribute = {
+            idMx: "attr-1",
+            name: "direccion",
+            key: true,
+            partialKey: false,
+        };
+        const firstChildAttribute = {
+            idMx: "attr-2",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+        };
+
+        const convertedAttribute = convertSimpleAttributeToCompositeAttribute(
+            attribute,
+            firstChildAttribute,
+        );
+
+        expect(convertedAttribute).toBe(firstChildAttribute);
+        expect(attribute).toEqual({
+            idMx: "attr-1",
+            name: "direccion",
+            key: true,
+            partialKey: false,
+            children: [firstChildAttribute],
+        });
+    }); 
+       
     test("removeAttributeFromOwnerTreeById should delete empty children arrays", () => {
         const owner = {
             attributes: [

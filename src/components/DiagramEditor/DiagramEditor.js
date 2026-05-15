@@ -28,6 +28,7 @@ import {
     clearIdentifyingRelationDomainSemantics,
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
+    convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
     createAttribute,
     findAttributeOwnerById,
@@ -726,23 +727,85 @@ export default function App(props) {
         toast.success("Atributo insertado");
     };
 
-    const canAddChildAttributeToSelectedAttribute = (attributeOwner) => {
-        const { attribute, depth } = attributeOwner;
+    const getSelectedCompositeAttributeTarget = (attributeOwner) => {
+        if (!attributeOwner || attributeOwner.depth > 1) {
+            return null;
+        }
 
-        if (depth > 0) {
+        const compositeAttribute =
+            attributeOwner.depth === 0
+                ? attributeOwner.attribute
+                : attributeOwner.parent;
+
+        if (!compositeAttribute) {
+            return null;
+        }
+
+        return {
+            ...attributeOwner,
+            compositeAttribute,
+        };
+    };
+
+    const canAddChildAttributeToSelectedAttribute = (attributeOwner) => {
+        const selectedCompositeTarget =
+            getSelectedCompositeAttributeTarget(attributeOwner);
+
+        if (!selectedCompositeTarget) {
             return false;
         }
 
-        if (!isMultivaluedAttribute(attribute)) {
+        const { compositeAttribute } = selectedCompositeTarget;
+
+        if (!isMultivaluedAttribute(compositeAttribute)) {
             return true;
         }
 
         return (
             isEntityAttributeOwner(attributeOwner) &&
-            depth === 0 &&
-            !attribute.key &&
-            !attribute.partialKey
+            !compositeAttribute.key &&
+            !compositeAttribute.partialKey
         );
+    };
+
+    const createSiblingSubattribute = ({
+        parentAttribute,
+        source,
+        childAttributes,
+        offsetX,
+        offsetY,
+        name = generateUniqueAttributeName(childAttributes),
+    }) => {
+        const semantics = {
+            key: false,
+            partialKey: false,
+        };
+
+        const { target, edge } = createAttributeVertex({
+            name,
+            source,
+            offsetX,
+            offsetY,
+            semantics,
+        });
+
+        const childAttribute = createAttribute({
+            idMx: target.id,
+            name: target.value,
+            position: {
+                x: target.geometry.x,
+                y: target.geometry.y,
+            },
+            key: false,
+            partialKey: false,
+            cell: [target.id, edge.id],
+            offsetX,
+            offsetY,
+        });
+
+        addChildAttributeToAttribute(parentAttribute, childAttribute);
+
+        return childAttribute;
     };
 
     const addChildAttribute = () => {
@@ -755,8 +818,6 @@ export default function App(props) {
 
         if (!attributeOwner) return;
 
-        const parentAttribute = attributeOwner.attribute;
-
         if (!canAddChildAttributeToSelectedAttribute(attributeOwner)) {
             toast.error(
                 "Solo se pueden crear atributos multivaluados compuestos en atributos top-level de entidad.",
@@ -764,17 +825,54 @@ export default function App(props) {
             return;
         }
 
-        const childAttributes = parentAttribute.children ?? [];
+        const { compositeAttribute } =
+            getSelectedCompositeAttributeTarget(attributeOwner);
 
-        const semantics = {
-            key: false,
-            partialKey: false,
-        };
+        const source = accessCell(compositeAttribute.idMx);
 
-        const source = selected;
+        if (!source) return;
+
+        if (
+            attributeOwner.depth === 0 &&
+            !compositeAttribute.children &&
+            !isMultivaluedAttribute(compositeAttribute)
+        ) {
+            const originalAttributeName = compositeAttribute.name;
+            const { target, edge } = createAttributeVertex({
+                name: originalAttributeName,
+                source,
+                offsetX: 120,
+                offsetY: -40,
+                semantics: {
+                    key: false,
+                    partialKey: false,
+                },
+            });
+
+            const originalLeaf = createAttribute({
+                idMx: target.id,
+                name: target.value,
+                position: {
+                    x: target.geometry.x,
+                    y: target.geometry.y,
+                },
+                key: false,
+                partialKey: false,
+                cell: [target.id, edge.id],
+                offsetX: 120,
+                offsetY: -40,
+            });
+
+            convertSimpleAttributeToCompositeAttribute(
+                compositeAttribute,
+                originalLeaf,
+            );
+        }
+
+        const childAttributes = compositeAttribute.children ?? [];
 
         let offsetX = 120;
-        let offsetY = -40;
+        let offsetY = 40;
 
         const lastChildAttribute = getLastAttribute(childAttributes);
 
@@ -785,42 +883,22 @@ export default function App(props) {
 
             if (lastChildCell?.geometry) {
                 offsetX = lastChildCell.geometry.x - source.geometry.x;
-                offsetY = lastChildCell.geometry.y - source.geometry.y + 20;
+                offsetY = lastChildCell.geometry.y - source.geometry.y + 40;
             }
         }
 
-        const uniqueAttributeName =
-            generateUniqueAttributeName(childAttributes);
-
-        const { target, edge } = createAttributeVertex({
-            name: uniqueAttributeName,
+        createSiblingSubattribute({
+            parentAttribute: compositeAttribute,
             source,
+            childAttributes,
             offsetX,
             offsetY,
-            semantics,
         });
 
-        addChildAttributeToAttribute(
-            parentAttribute,
-            createAttribute({
-                idMx: target.id,
-                name: target.value,
-                position: {
-                    x: target.geometry.x,
-                    y: target.geometry.y,
-                },
-                key: false,
-                partialKey: false,
-                cell: [target.id, edge.id],
-                offsetX,
-                offsetY,
-            }),
-        );
-
-        syncAttributeVisualRepresentation(parentAttribute);
+        syncAttributeVisualRepresentation(compositeAttribute);
 
         syncAndPersistDiagramData();
-        toast.success("Subatributo insertado");
+        toast.success("Subatributo hermano insertado");
     };
 
     const setAttributesVisibility = (isRelationNM, visible) => {
@@ -1188,7 +1266,7 @@ export default function App(props) {
                 className="button-toolbar-action"
                 onClick={addChildAttribute}
             >
-                Añadir subatributo
+                Añadir subatributo hermano
             </button>
         );
     };
