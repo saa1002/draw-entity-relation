@@ -9,6 +9,7 @@ import {
     identifyingRelationsNotValid,
     inconsistentWeakEntityOwnership,
     multipleIdentifyingRelationsPerWeakEntity,
+    nestedCompositeAttributes,
     nmRelationsWithPK,
     notNMRelationsWithAttributes,
     relationsUnconnected,
@@ -40,6 +41,10 @@ export const VALIDATION_RULES = [
     {
         diagnostic: "noEmptyCompositeAttributes",
         fails: emptyCompositeAttributes,
+    },
+    {
+        diagnostic: "noNestedCompositeAttributes",
+        fails: nestedCompositeAttributes,
     },
     {
         diagnostic: "noUnsupportedMultivaluedAttributes",

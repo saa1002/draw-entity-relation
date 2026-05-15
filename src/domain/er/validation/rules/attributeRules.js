@@ -52,6 +52,32 @@ export function emptyCompositeAttributes(graph) {
     return false;
 }
 
+const hasNestedCompositeAttribute = (attributes = []) =>
+    someAttributeInTree(
+        attributes,
+        (attribute, { depth }) =>
+            depth > 0 && getAttributeChildren(attribute).length > 0,
+    );
+
+export function nestedCompositeAttributes(graph) {
+    for (const entity of graph.entities) {
+        if (hasNestedCompositeAttribute(entity.attributes)) {
+            return true;
+        }
+    }
+
+    for (const relation of graph.relations) {
+        if (
+            relation.canHoldAttributes &&
+            hasNestedCompositeAttribute(relation.attributes)
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 export function unsupportedMultivaluedAttributes(graph) {
     const hasUnsupportedCompositeMultivaluedChild = (attribute) =>
         someAttributeInTree(

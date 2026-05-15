@@ -719,3 +719,25 @@ test('generate SQL for an editor-created composite multivalued attribute', async
     expect(sql).not.toContain('prefijo VARCHAR(40) PRIMARY KEY');
     expect(sql).not.toContain('numero VARCHAR(40) PRIMARY KEY');
 });
+
+test('do not allow adding subattributes to child attributes', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+
+    await renameElement(page, 'Atributo', 'codigo');
+
+    await page.getByText('codigo', { exact: true }).click();
+    await page.getByRole('button', { name: 'Añadir subatributo' }).click();
+
+    await expect(page.getByText('Subatributo insertado').last()).toBeVisible();
+    await renameElement(page, 'Atributo', 'serie');
+
+    await selectAttributeByName(page, 'Entidad', 'serie');
+
+    await expect(
+        page.getByRole('button', { name: 'Añadir subatributo' }),
+    ).toHaveCount(0);
+});

@@ -2,6 +2,7 @@ export const DEFAULT_DIAGNOSTICS = {
     noRepeatedNames: true,
     noRepeatedAttrNames: true,
     noEmptyCompositeAttributes: true,
+    noNestedCompositeAttributes: true,
     noUnsupportedMultivaluedAttributes: true,
     noEntitiesWithoutAttributes: true,
     noEntitiesWithoutPK: true,

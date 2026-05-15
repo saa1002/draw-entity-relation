@@ -3,6 +3,7 @@ import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     repeatedAttributesInEntity,
     emptyCompositeAttributes,
+    nestedCompositeAttributes,
     unsupportedMultivaluedAttributes,
     nmRelationsWithPK,
     sqlIdentifierCollisions,
@@ -471,6 +472,34 @@ describe("Composite attribute structure", () => {
 
         expect(emptyCompositeAttributes(graph)).toBe(true);
         expect(validateGraph(graph).noEmptyCompositeAttributes).toBe(false);
+    });
+    
+    test("Composite attributes can't contain nested composite attributes", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-address",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    idMx: "attr-location",
+                    name: "ubicacion",
+                    key: false,
+                    partialKey: false,
+                    children: [
+                        {
+                            idMx: "attr-city",
+                            name: "ciudad",
+                            key: false,
+                            partialKey: false,
+                        },
+                    ],
+                },
+            ],
+        });
+
+        expect(nestedCompositeAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noNestedCompositeAttributes).toBe(false);
     });
 });
 

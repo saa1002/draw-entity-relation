@@ -729,6 +729,10 @@ export default function App(props) {
     const canAddChildAttributeToSelectedAttribute = (attributeOwner) => {
         const { attribute, depth } = attributeOwner;
 
+        if (depth > 0) {
+            return false;
+        }
+
         if (!isMultivaluedAttribute(attribute)) {
             return true;
         }

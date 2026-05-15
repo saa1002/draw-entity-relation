@@ -33,6 +33,10 @@ const VALIDATION_MESSAGE_DEFINITIONS = [
         message: "Hay atributos compuestos sin subatributos.",
     },
     {
+        key: "noNestedCompositeAttributes",
+        message: "Hay atributos compuestos con subatributos anidados.",
+    },
+    {
         key: "noUnsupportedMultivaluedAttributes",
         message:
             "Solo se soportan atributos multivaluados top-level de entidad, simples o compuestos, sin clave ni discriminante.",
