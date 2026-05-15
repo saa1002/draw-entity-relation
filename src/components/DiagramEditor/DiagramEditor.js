@@ -247,12 +247,15 @@ export default function App(props) {
         ensureMultivaluedAttributeDecorator,
         syncAttributeVisualRepresentation,
         syncAttributeChildrenPositions,
+        removeAttributeConnectionEdges,
+        reparentAttributeCellToCurrentOwner,
         setOwnerAttributesVisible,
     } = createAttributeRenderingHelpers({
         graph,
         accessCell,
         mxPoint,
         mxGeometry,
+        updateAttributePosition,
     });
 
     const clearIdentifyingRelationSemantics = (relationId) => {
@@ -1941,53 +1944,6 @@ export default function App(props) {
         }
     };
 
-    const removeAttributeConnectionEdges = (attribute) => {
-        const edgeCells = (attribute?.cell ?? [])
-            .slice(1)
-            .map((cellId) => accessCell(cellId));
-
-        removeExistingGraphCells(graph, edgeCells);
-    };
-
-    const reparentPromotedAttributeCell = (attribute) => {
-        if (!attribute?.idMx) return;
-
-        const promotedAttributeOwner = findAttributeTreeOwnerById(
-            diagramRef.current,
-            attribute.idMx,
-        );
-
-        if (!promotedAttributeOwner) return;
-
-        const promotedAttributeCell = accessCell(attribute.idMx);
-        const sourceCell = accessCell(
-            promotedAttributeOwner.parent?.idMx ??
-                promotedAttributeOwner.owner?.idMx,
-        );
-
-        if (!promotedAttributeCell || !sourceCell) return;
-
-        const edge = graph.insertEdge(
-            sourceCell,
-            null,
-            null,
-            sourceCell,
-            promotedAttributeCell,
-        );
-
-        attribute.cell = [promotedAttributeCell.id, edge.id];
-
-        updateAttributePosition({
-            attribute,
-            owner:
-                promotedAttributeOwner.parent ?? promotedAttributeOwner.owner,
-            position: promotedAttributeCell.geometry,
-        });
-
-        graph.orderCells(true, [edge]);
-        syncAttributeVisualRepresentation(attribute);
-    };
-
     const canConvertSelectedSubattributeToSimpleAttribute = (
         attributeOwner,
     ) => {
@@ -2017,7 +1973,15 @@ export default function App(props) {
 
         removeAttributesCells([removedCompositeAttribute].filter(Boolean));
 
-        convertedAttributes.forEach(reparentPromotedAttributeCell);
+        convertedAttributes.forEach((attribute) => {
+            reparentAttributeCellToCurrentOwner({
+                attribute,
+                attributeOwner: findAttributeTreeOwnerById(
+                    diagramRef.current,
+                    attribute.idMx,
+                ),
+            });
+        });
 
         syncAndPersistDiagramData();
 
@@ -2080,7 +2044,13 @@ export default function App(props) {
                 [removedAttribute, removedCompositeAttribute].filter(Boolean),
             );
 
-            reparentPromotedAttributeCell(promotedAttribute);
+            reparentAttributeCellToCurrentOwner({
+                attribute: promotedAttribute,
+                attributeOwner: findAttributeTreeOwnerById(
+                    diagramRef.current,
+                    promotedAttribute.idMx,
+                ),
+            });
 
             if (!promotedAttribute && parentAttribute) {
                 syncAttributeVisualRepresentation(parentAttribute);

@@ -108,6 +108,7 @@ export const createAttributeRenderingHelpers = ({
     accessCell,
     mxPoint,
     mxGeometry,
+    updateAttributePosition,
 }) => {
     const getAttributeCells = (attribute) => {
         if (!attribute) return [];
@@ -327,6 +328,53 @@ export const createAttributeRenderingHelpers = ({
         }
     };
 
+    const removeAttributeConnectionEdges = (attribute) => {
+        const edgeCells = (attribute?.cell ?? [])
+            .slice(1)
+            .map((cellId) => accessCell(cellId))
+            .filter(Boolean);
+
+        if (edgeCells.length > 0) {
+            graph.removeCells(edgeCells);
+        }
+
+        return edgeCells;
+    };
+
+    const reparentAttributeCellToCurrentOwner = ({
+        attribute,
+        attributeOwner,
+    }) => {
+        if (!attribute?.idMx || !attributeOwner) return null;
+
+        const parentOwner = attributeOwner.parent ?? attributeOwner.owner;
+        const attributeCell = accessCell(attribute.idMx);
+        const sourceCell = accessCell(parentOwner?.idMx);
+
+        if (!attributeCell || !sourceCell) return null;
+
+        const edge = graph.insertEdge(
+            sourceCell,
+            null,
+            null,
+            sourceCell,
+            attributeCell,
+        );
+
+        attribute.cell = [attributeCell.id, edge.id];
+
+        updateAttributePosition?.({
+            attribute,
+            owner: parentOwner,
+            position: attributeCell.geometry,
+        });
+
+        graph.orderCells(true, [edge]);
+        syncAttributeVisualRepresentation(attribute);
+
+        return edge;
+    };
+
     const syncAttributeVisualRepresentation = (
         attribute,
         { inheritedKey = false } = {},
@@ -477,6 +525,8 @@ export const createAttributeRenderingHelpers = ({
     return {
         getAttributesCells,
         removeAttributesCells,
+        removeAttributeConnectionEdges,
+        reparentAttributeCellToCurrentOwner,
         syncOwnerAttributePositions,
         syncDiscriminantUnderline,
         ensureDiscriminantUnderline,
