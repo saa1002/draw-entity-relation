@@ -504,139 +504,174 @@ export const updateAttributePosition = ({ attribute, owner, position }) => {
     return attribute;
 };
 
-export const toggleExclusivePrimaryKeyAttribute = (attributes, attributeId) => {
-    const selectedAttribute = findAttributeById(attributes, attributeId);
+const ATTRIBUTE_KEY_SEMANTICS = Object.freeze({
+    PRIMARY_KEY: "key",
+    PARTIAL_KEY: "partialKey",
+});
 
-    if (!selectedAttribute) {
-        return {
-            updated: false,
-            enabled: false,
-            changedAttributes: [],
-        };
+const createAttributeToggleResult = ({
+    updated = false,
+    enabled = false,
+    changedAttributes = [],
+} = {}) => ({
+    updated,
+    enabled,
+    changedAttributes,
+});
+
+const rememberChangedAttributeSemantics = ({
+    changedAttributes,
+    attribute,
+    previousKey,
+    previousPartialKey,
+}) => {
+    if (
+        previousKey !== attribute.key ||
+        previousPartialKey !== attribute.partialKey
+    ) {
+        changedAttributes.push(attribute);
     }
-
-    const shouldSetAsKey = !selectedAttribute.key;
-    const changedAttributes = [];
-
-    getAttributes(attributes).forEach((attribute) => {
-        const previousKey = attribute.key;
-        const previousPartialKey = attribute.partialKey;
-
-        if (shouldSetAsKey) {
-            attribute.key = attribute.idMx === attributeId;
-            attribute.partialKey = false;
-        } else if (attribute.idMx === attributeId) {
-            attribute.key = false;
-            attribute.partialKey = false;
-        }
-
-        if (
-            previousKey !== attribute.key ||
-            previousPartialKey !== attribute.partialKey
-        ) {
-            changedAttributes.push(attribute);
-        }
-    });
-
-    return {
-        updated: true,
-        enabled: shouldSetAsKey,
-        changedAttributes,
-    };
 };
 
-export const toggleExclusivePartialKeyAttribute = (attributes, attributeId) => {
-    const selectedAttribute = findAttributeById(attributes, attributeId);
+const setExclusiveAttributeSemantic = ({
+    attribute,
+    selectedAttributeId,
+    semantic,
+    enabled,
+}) => {
+    const isSelectedAttribute = attribute.idMx === selectedAttributeId;
 
-    if (!selectedAttribute) {
-        return {
-            updated: false,
-            enabled: false,
-            changedAttributes: [],
-        };
+    if (enabled) {
+        attribute.key =
+            semantic === ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY &&
+            isSelectedAttribute;
+        attribute.partialKey =
+            semantic === ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY &&
+            isSelectedAttribute;
+
+        return;
     }
 
-    const shouldSetAsPartialKey = !selectedAttribute.partialKey;
-    const changedAttributes = [];
-
-    getAttributes(attributes).forEach((attribute) => {
-        const previousKey = attribute.key;
-        const previousPartialKey = attribute.partialKey;
-
-        if (shouldSetAsPartialKey) {
-            attribute.partialKey = attribute.idMx === attributeId;
-            attribute.key = false;
-        } else if (attribute.idMx === attributeId) {
-            attribute.partialKey = false;
-            attribute.key = false;
-        }
-
-        if (
-            previousKey !== attribute.key ||
-            previousPartialKey !== attribute.partialKey
-        ) {
-            changedAttributes.push(attribute);
-        }
-    });
-
-    return {
-        updated: true,
-        enabled: shouldSetAsPartialKey,
-        changedAttributes,
-    };
-};
-
-export const convertPrimaryKeyToPartialKey = (attributes) => {
-    const discriminantCandidate =
-        getAttributes(attributes).find(isPrimaryKeyAttribute) ??
-        getAttributes(attributes).find(isPartialKeyAttribute) ??
-        null;
-
-    const changedAttributes = [];
-
-    getAttributes(attributes).forEach((attribute) => {
-        const previousKey = attribute.key;
-        const previousPartialKey = attribute.partialKey;
-
+    if (isSelectedAttribute) {
         attribute.key = false;
-        attribute.partialKey = discriminantCandidate?.idMx === attribute.idMx;
-
-        if (
-            previousKey !== attribute.key ||
-            previousPartialKey !== attribute.partialKey
-        ) {
-            changedAttributes.push(attribute);
-        }
-    });
-
-    return changedAttributes;
+        attribute.partialKey = false;
+    }
 };
 
-export const convertPartialKeyToPrimaryKey = (attributes) => {
-    const primaryKeyCandidate =
-        getAttributes(attributes).find(isPartialKeyAttribute) ??
-        getAttributes(attributes).find(isPrimaryKeyAttribute) ??
-        null;
+const toggleExclusiveAttributeSemantic = ({
+    attributes,
+    attributeId,
+    semantic,
+}) => {
+    const selectedAttribute = findAttributeById(attributes, attributeId);
 
+    if (!selectedAttribute) {
+        return createAttributeToggleResult();
+    }
+
+    const shouldEnable = selectedAttribute[semantic] !== true;
     const changedAttributes = [];
 
     getAttributes(attributes).forEach((attribute) => {
         const previousKey = attribute.key;
         const previousPartialKey = attribute.partialKey;
 
-        attribute.partialKey = false;
-        attribute.key = primaryKeyCandidate?.idMx === attribute.idMx;
+        setExclusiveAttributeSemantic({
+            attribute,
+            selectedAttributeId: attributeId,
+            semantic,
+            enabled: shouldEnable,
+        });
 
-        if (
-            previousKey !== attribute.key ||
-            previousPartialKey !== attribute.partialKey
-        ) {
-            changedAttributes.push(attribute);
+        rememberChangedAttributeSemantics({
+            changedAttributes,
+            attribute,
+            previousKey,
+            previousPartialKey,
+        });
+    });
+
+    return createAttributeToggleResult({
+        updated: true,
+        enabled: shouldEnable,
+        changedAttributes,
+    });
+};
+
+export const toggleExclusivePrimaryKeyAttribute = (attributes, attributeId) =>
+    toggleExclusiveAttributeSemantic({
+        attributes,
+        attributeId,
+        semantic: ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY,
+    });
+
+export const toggleExclusivePartialKeyAttribute = (attributes, attributeId) =>
+    toggleExclusiveAttributeSemantic({
+        attributes,
+        attributeId,
+        semantic: ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY,
+    });
+
+const findFirstAttributeMatchingAnyPredicate = (attributes, predicates) => {
+    const safeAttributes = getAttributes(attributes);
+
+    for (const predicate of predicates) {
+        const matchingAttribute = safeAttributes.find(predicate);
+
+        if (matchingAttribute) {
+            return matchingAttribute;
         }
+    }
+
+    return null;
+};
+
+const convertExclusiveAttributeSemantic = ({
+    attributes,
+    semantic,
+    candidatePredicates,
+}) => {
+    const candidate = findFirstAttributeMatchingAnyPredicate(
+        attributes,
+        candidatePredicates,
+    );
+
+    const changedAttributes = [];
+
+    getAttributes(attributes).forEach((attribute) => {
+        const previousKey = attribute.key;
+        const previousPartialKey = attribute.partialKey;
+        const isCandidate = candidate?.idMx === attribute.idMx;
+
+        attribute.key =
+            semantic === ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY && isCandidate;
+        attribute.partialKey =
+            semantic === ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY && isCandidate;
+
+        rememberChangedAttributeSemantics({
+            changedAttributes,
+            attribute,
+            previousKey,
+            previousPartialKey,
+        });
     });
 
     return changedAttributes;
 };
+
+export const convertPrimaryKeyToPartialKey = (attributes) =>
+    convertExclusiveAttributeSemantic({
+        attributes,
+        semantic: ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY,
+        candidatePredicates: [isPrimaryKeyAttribute, isPartialKeyAttribute],
+    });
+
+export const convertPartialKeyToPrimaryKey = (attributes) =>
+    convertExclusiveAttributeSemantic({
+        attributes,
+        semantic: ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY,
+        candidatePredicates: [isPartialKeyAttribute, isPrimaryKeyAttribute],
+    });
 
 export const getAttributeChildren = (attribute) =>
     getAttributes(attribute?.children);

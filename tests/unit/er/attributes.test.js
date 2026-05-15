@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import {
     addChildAttributeToAttribute,
+    convertPartialKeyToPrimaryKey,
+    convertPrimaryKeyToPartialKey,
+    toggleExclusivePartialKeyAttribute,
+    toggleExclusivePrimaryKeyAttribute,
     convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
     createAttribute,
@@ -801,3 +805,164 @@ describe("Hierarchical attribute helpers", () => {
     });  
 })
 
+describe("Flat attribute key semantic transitions", () => {
+    test("toggleExclusivePrimaryKeyAttribute should enable and disable a primary key", () => {
+        const attributes = [
+            {
+                idMx: "attr-id",
+                name: "id",
+                key: false,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-code",
+                name: "code",
+                key: false,
+                partialKey: true,
+            },
+        ];
+
+        const enabledResult = toggleExclusivePrimaryKeyAttribute(
+            attributes,
+            "attr-id",
+        );
+
+        expect(enabledResult).toMatchObject({
+            updated: true,
+            enabled: true,
+        });
+        expect(enabledResult.changedAttributes.map((attribute) => attribute.idMx))
+            .toEqual(["attr-id", "attr-code"]);
+        expect(attributes).toMatchObject([
+            {
+                idMx: "attr-id",
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-code",
+                key: false,
+                partialKey: false,
+            },
+        ]);
+
+        const disabledResult = toggleExclusivePrimaryKeyAttribute(
+            attributes,
+            "attr-id",
+        );
+
+        expect(disabledResult).toMatchObject({
+            updated: true,
+            enabled: false,
+        });
+        expect(disabledResult.changedAttributes.map((attribute) => attribute.idMx))
+            .toEqual(["attr-id"]);
+        expect(attributes[0]).toMatchObject({
+            key: false,
+            partialKey: false,
+        });
+    });
+
+    test("toggleExclusivePartialKeyAttribute should keep key semantics mutually exclusive", () => {
+        const attributes = [
+            {
+                idMx: "attr-id",
+                name: "id",
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-code",
+                name: "code",
+                key: false,
+                partialKey: false,
+            },
+        ];
+
+        const result = toggleExclusivePartialKeyAttribute(
+            attributes,
+            "attr-code",
+        );
+
+        expect(result).toMatchObject({
+            updated: true,
+            enabled: true,
+        });
+        expect(result.changedAttributes.map((attribute) => attribute.idMx))
+            .toEqual(["attr-id", "attr-code"]);
+        expect(attributes).toMatchObject([
+            {
+                idMx: "attr-id",
+                key: false,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-code",
+                key: false,
+                partialKey: true,
+            },
+        ]);
+    });
+
+    test("convertPrimaryKeyToPartialKey should preserve the selected key candidate", () => {
+        const attributes = [
+            {
+                idMx: "attr-id",
+                name: "id",
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-name",
+                name: "name",
+                key: false,
+                partialKey: false,
+            },
+        ];
+
+        const changedAttributes = convertPrimaryKeyToPartialKey(attributes);
+
+        expect(changedAttributes.map((attribute) => attribute.idMx)).toEqual([
+            "attr-id",
+        ]);
+        expect(attributes[0]).toMatchObject({
+            key: false,
+            partialKey: true,
+        });
+        expect(attributes[1]).toMatchObject({
+            key: false,
+            partialKey: false,
+        });
+    });
+
+    test("convertPartialKeyToPrimaryKey should preserve the selected partial key candidate", () => {
+        const attributes = [
+            {
+                idMx: "attr-code",
+                name: "code",
+                key: false,
+                partialKey: true,
+            },
+            {
+                idMx: "attr-name",
+                name: "name",
+                key: false,
+                partialKey: false,
+            },
+        ];
+
+        const changedAttributes = convertPartialKeyToPrimaryKey(attributes);
+
+        expect(changedAttributes.map((attribute) => attribute.idMx)).toEqual([
+            "attr-code",
+        ]);
+        expect(attributes[0]).toMatchObject({
+            key: true,
+            partialKey: false,
+        });
+        expect(attributes[1]).toMatchObject({
+            key: false,
+            partialKey: false,
+        });
+    });
+});
