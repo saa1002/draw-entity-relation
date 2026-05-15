@@ -1402,7 +1402,6 @@ export default function App(props) {
     const RelationConfigurationButton = () => {
         const isRelation = isRelationShapeCell(selected);
         const [open, setOpen] = React.useState(false);
-        const [acceptDisabled, setAcceptDisabled] = React.useState(true);
 
         const handleClickOpen = () => {
             setOpen(true);
@@ -1528,20 +1527,14 @@ export default function App(props) {
         const [side1, setSide1] = React.useState("");
         const [side2, setSide2] = React.useState("");
 
+        const acceptDisabled = side1 === "" || side2 === "";
+
         const handleChangeSide1 = (event) => {
             setSide1(event.target.value);
         };
         const handleChangeSide2 = (event) => {
             setSide2(event.target.value);
         };
-
-        React.useEffect(() => {
-            if (side1 !== "" && side2 !== "") {
-                setAcceptDisabled(false);
-            } else {
-                setAcceptDisabled(true);
-            }
-        }, [side1, side2]);
 
         if (isRelation) {
             return (
@@ -1639,7 +1632,6 @@ export default function App(props) {
         const isRelation = isRelationShapeCell(selected);
         const selectedDiag = findRelationById(diagramRef.current, selected?.id);
         const [open, setOpen] = React.useState(false);
-        const [acceptDisabled, setAcceptDisabled] = React.useState(true);
 
         const handleClickOpen = () => {
             setSide1(selectedDiag?.side1?.cardinality ?? "");
@@ -1695,20 +1687,14 @@ export default function App(props) {
         const [side1, setSide1] = React.useState("");
         const [side2, setSide2] = React.useState("");
 
+        const acceptDisabled = side1 === "" || side2 === "";
+
         const handleChangeSide1 = (event) => {
             setSide1(event.target.value);
         };
         const handleChangeSide2 = (event) => {
             setSide2(event.target.value);
         };
-
-        React.useEffect(() => {
-            if (side1 !== "" && side2 !== "") {
-                setAcceptDisabled(false);
-            } else {
-                setAcceptDisabled(true);
-            }
-        }, [side1, side2]);
 
         const { weakSide, strongSide } = getWeakAndStrongSidesForRelation(
             diagramRef.current,
