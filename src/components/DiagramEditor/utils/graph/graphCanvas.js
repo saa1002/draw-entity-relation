@@ -150,6 +150,7 @@ export const installCellGeometrySyncHandlers = ({
     updateAttributePosition,
     syncOwnerAttributePositions,
     syncAttributeChildrenPositions,
+    syncAttributeVisualRepresentation,
     syncWeakEntityDecorator,
     syncSelfRelationEdges,
     syncIdentifyingRelationDecorator,
@@ -227,9 +228,9 @@ export const installCellGeometrySyncHandlers = ({
 
         syncAttributeChildrenPositions(attribute, cell);
 
-        if (attribute.multivalued) {
-            syncMultivaluedAttributeDecorator(cell);
-        }
+        const rootAttribute = attributeOwner.ancestors?.at(0) ?? attribute;
+
+        syncAttributeVisualRepresentation?.(rootAttribute);
 
         if (attribute.partialKey) {
             syncDiscriminantUnderline(cell);

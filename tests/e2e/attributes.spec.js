@@ -488,8 +488,27 @@ test('toggle composite multivalued attributes and persist across reloads', async
 
     await renameElement(page, 'Atributo', 'numero');
 
-    await selectAttributeByName(page, 'Entidad', 'contacto');
-    await page.getByRole('button', { name: 'Marcar multivaluado' }).click();
+    await page.getByText('prefijo', { exact: true }).click();
+
+    await expect(
+        page.getByRole('button', {
+            name: 'Marcar compuesto como multivaluado',
+        }),
+    ).toHaveCount(0);
+
+    await page.getByText('contacto', { exact: true }).click();
+
+    await expect(
+        page.getByRole('button', {
+            name: 'Marcar compuesto como multivaluado',
+        }),
+    ).toBeVisible();
+
+    await page
+        .getByRole('button', {
+            name: 'Marcar compuesto como multivaluado',
+        })
+        .click();
 
     await expect(
         page.getByText('Atributo marcado como multivaluado').last(),
@@ -520,7 +539,9 @@ test('toggle composite multivalued attributes and persist across reloads', async
     });
 
     await expect(
-        page.getByRole('button', { name: 'Quitar multivaluado' }),
+        page.getByRole('button', {
+            name: 'Quitar multivaluado del compuesto',
+        }),
     ).toBeVisible();
 
     await expect(
@@ -534,10 +555,26 @@ test('toggle composite multivalued attributes and persist across reloads', async
     await expect(page.getByText('prefijo', { exact: true })).toBeVisible();
     await expect(page.getByText('numero', { exact: true })).toBeVisible();
 
-    await selectAttributeByName(page, 'Entidad', 'contacto');
+    await page.getByText('numero', { exact: true }).click();
 
     await expect(
-        page.getByRole('button', { name: 'Quitar multivaluado' }),
+        page.getByRole('button', {
+            name: 'Quitar multivaluado del compuesto',
+        }),
+    ).toHaveCount(0);
+
+    await page.getByText('contacto', { exact: true }).click();
+
+    await expect(
+        page.getByRole('button', {
+            name: 'Quitar multivaluado del compuesto',
+        }),
+    ).toBeVisible();
+
+    await expect(
+        page.getByRole('button', {
+            name: 'Quitar multivaluado del compuesto',
+        }),
     ).toBeVisible();
 
     await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
@@ -547,7 +584,11 @@ test('toggle composite multivalued attributes and persist across reloads', async
         multivalued: true,
     });
 
-    await page.getByRole('button', { name: 'Quitar multivaluado' }).click();
+    await page
+        .getByRole('button', {
+            name: 'Quitar multivaluado del compuesto',
+        })
+        .click();
 
     await expect(
         page.getByText('Multivaluado eliminado del atributo').last(),
@@ -648,8 +689,19 @@ test('generate SQL for an editor-created composite multivalued attribute', async
     await page.getByRole('button', { name: 'Añadir subatributo hermano' }).click();
     await renameElement(page, 'Atributo', 'numero');
 
-    await selectAttributeByName(page, 'Entidad', 'telefonos');
-    await page.getByRole('button', { name: 'Marcar multivaluado' }).click();
+    await page.getByText('telefonos', { exact: true }).click();
+
+    await expect(
+        page.getByRole('button', {
+            name: 'Marcar compuesto como multivaluado',
+        }),
+    ).toBeVisible();
+
+    await page
+        .getByRole('button', {
+            name: 'Marcar compuesto como multivaluado',
+        })
+        .click();
 
     await expect(
         page.getByText('Atributo marcado como multivaluado').last(),

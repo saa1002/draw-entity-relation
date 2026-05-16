@@ -38,6 +38,7 @@ import {
     findRelationById,
     findRelationIndexById,
     generateUniqueAttributeName,
+    getAttributeChildren,
     getCascadedWeakConversionCandidate,
     getDefaultAttributeSemantics,
     getLastAttribute,
@@ -178,6 +179,47 @@ export default function App(props) {
             entity: attributeOwner.owner,
             attribute: rootAttribute,
             selectedAttribute: attributeOwner.attribute,
+        };
+    };
+
+    const getSelectedEntityMultivaluedAttributeData = () => {
+        if (!selected || !isAttributeShapeCell(selected)) {
+            return null;
+        }
+
+        const attributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected.id,
+        );
+
+        if (!attributeOwner || !isEntityAttributeOwner(attributeOwner)) {
+            return null;
+        }
+
+        const rootAttribute =
+            attributeOwner.ancestors?.at(0) ?? attributeOwner.attribute;
+
+        const selectedAttribute = attributeOwner.attribute;
+        const rootChildren = getAttributeChildren(rootAttribute);
+
+        if (rootChildren.length > 0) {
+            const firstVisibleChild = rootChildren[0];
+
+            const isRootSelected =
+                selectedAttribute.idMx === rootAttribute.idMx;
+            const isFirstVisibleChildSelected =
+                selectedAttribute.idMx === firstVisibleChild.idMx;
+
+            if (!isRootSelected && !isFirstVisibleChildSelected) {
+                return null;
+            }
+        }
+
+        return {
+            ...attributeOwner,
+            attribute: rootAttribute,
+            selectedAttribute,
+            isCompositeMultivaluedTarget: rootChildren.length > 0,
         };
     };
 
@@ -463,6 +505,7 @@ export default function App(props) {
                 updateAttributePosition,
                 syncOwnerAttributePositions,
                 syncAttributeChildrenPositions,
+                syncAttributeVisualRepresentation,
                 syncWeakEntityDecorator,
                 syncSelfRelationEdges,
                 syncIdentifyingRelationDecorator,
@@ -967,30 +1010,12 @@ export default function App(props) {
     };
 
     const toggleMultivaluedAttribute = () => {
-        if (!selected) return;
-        if (!isAttributeShapeCell(selected)) return;
+        const selectedEntityAttribute =
+            getSelectedEntityMultivaluedAttributeData();
 
-        const attributeOwner = findAttributeTreeOwnerById(
-            diagramRef.current,
-            selected.id,
-        );
+        if (!selectedEntityAttribute) return;
 
-        if (!attributeOwner) return;
-
-        if (isRelationAttributeOwner(attributeOwner)) {
-            toast.error(
-                "Los atributos multivaluados en relaciones no están soportados todavía.",
-            );
-            return;
-        }
-
-        if (!isEntityAttributeOwner(attributeOwner)) return;
-
-        const { attribute, depth } = attributeOwner;
-
-        if (depth > 0) {
-            return;
-        }
+        const { attribute } = selectedEntityAttribute;
 
         if (attribute.key) {
             toast.error("Una clave no puede ser multivaluada.");
@@ -1252,17 +1277,27 @@ export default function App(props) {
 
     const ToggleMultivaluedAttributeButton = () => {
         const isAttribute = isAttributeShapeCell(selected);
-        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        const selectedEntityAttribute =
+            getSelectedEntityMultivaluedAttributeData();
 
         if (!isAttribute || !selectedEntityAttribute) {
             return;
         }
 
-        const { attribute } = selectedEntityAttribute;
+        const { attribute, isCompositeMultivaluedTarget } =
+            selectedEntityAttribute;
 
         if (attribute.key || attribute.partialKey) {
             return;
         }
+
+        const label = isCompositeMultivaluedTarget
+            ? isMultivaluedAttribute(attribute)
+                ? "Quitar multivaluado del compuesto"
+                : "Marcar compuesto como multivaluado"
+            : isMultivaluedAttribute(attribute)
+              ? "Quitar multivaluado"
+              : "Marcar multivaluado";
 
         return (
             <button
@@ -1270,9 +1305,7 @@ export default function App(props) {
                 className="button-toolbar-action"
                 onClick={toggleMultivaluedAttribute}
             >
-                {isMultivaluedAttribute(attribute)
-                    ? "Quitar multivaluado"
-                    : "Marcar multivaluado"}
+                {label}
             </button>
         );
     };

@@ -378,10 +378,12 @@ export const createAttributeRenderingHelpers = ({
 
     const syncAttributeVisualRepresentation = (
         attribute,
-        { inheritedKey = false } = {},
+        { inheritedKey = false, inheritedMultivalued = false } = {},
     ) => {
         const effectiveKey = inheritedKey || attribute?.key === true;
         const attributeCell = accessCell(attribute.idMx);
+        const isCompositeAttribute =
+            isCompositeAttributeForRendering(attribute);
 
         if (attributeCell) {
             const model = graph.getModel();
@@ -432,8 +434,11 @@ export const createAttributeRenderingHelpers = ({
             } finally {
                 model.endUpdate();
             }
+            const shouldRenderMultivaluedDecorator =
+                (isMultivaluedAttribute(attribute) || inheritedMultivalued) &&
+                !isCompositeAttribute;
 
-            if (isMultivaluedAttribute(attribute)) {
+            if (shouldRenderMultivaluedDecorator) {
                 ensureMultivaluedAttributeDecorator(attributeCell);
             } else {
                 removeMultivaluedAttributeDecorator(attribute.idMx);
@@ -448,9 +453,16 @@ export const createAttributeRenderingHelpers = ({
             graph.refresh(attributeCell);
         }
 
-        getAttributeChildren(attribute).forEach((childAttribute) => {
+        const childAttributes = getAttributeChildren(attribute);
+        const shouldPassMultivaluedDecoratorToFirstChild =
+            (isMultivaluedAttribute(attribute) || inheritedMultivalued) &&
+            isCompositeAttribute;
+
+        childAttributes.forEach((childAttribute, index) => {
             syncAttributeVisualRepresentation(childAttribute, {
                 inheritedKey: effectiveKey,
+                inheritedMultivalued:
+                    shouldPassMultivaluedDecoratorToFirstChild && index === 0,
             });
         });
     };
@@ -469,7 +481,11 @@ export const createAttributeRenderingHelpers = ({
         }
     };
 
-    const syncAttributePositionFromParent = (attribute, parentCell) => {
+    const syncAttributePositionFromParent = (
+        attribute,
+        parentCell,
+        { inheritedMultivalued = false } = {},
+    ) => {
         const attributeCell = accessCell(
             attribute.cell?.at(0) ?? attribute.idMx,
         );
@@ -484,7 +500,13 @@ export const createAttributeRenderingHelpers = ({
         attributeCell.geometry.x = parentCell.geometry.x + offsetX;
         attributeCell.geometry.y = parentCell.geometry.y + offsetY;
 
-        if (isMultivaluedAttribute(attribute)) {
+        const isCompositeAttribute =
+            isCompositeAttributeForRendering(attribute);
+        const shouldSyncMultivaluedDecorator =
+            (isMultivaluedAttribute(attribute) || inheritedMultivalued) &&
+            !isCompositeAttribute;
+
+        if (shouldSyncMultivaluedDecorator) {
             syncMultivaluedAttributeDecorator(attributeCell);
         }
 
@@ -492,8 +514,16 @@ export const createAttributeRenderingHelpers = ({
             syncDiscriminantUnderline(attributeCell);
         }
 
-        getAttributeChildren(attribute).forEach((childAttribute) => {
-            syncAttributePositionFromParent(childAttribute, attributeCell);
+        const childAttributes = getAttributeChildren(attribute);
+        const shouldPassMultivaluedDecoratorToFirstChild =
+            (isMultivaluedAttribute(attribute) || inheritedMultivalued) &&
+            isCompositeAttribute;
+
+        childAttributes.forEach((childAttribute, index) => {
+            syncAttributePositionFromParent(childAttribute, attributeCell, {
+                inheritedMultivalued:
+                    shouldPassMultivaluedDecoratorToFirstChild && index === 0,
+            });
         });
     };
 
@@ -507,12 +537,20 @@ export const createAttributeRenderingHelpers = ({
 
     const syncAttributeChildrenPositions = (attribute, attributeCell) => {
         if (!attributeCell?.geometry) return;
+        const childAttributes = getAttributeChildren(attribute);
+        const shouldPassMultivaluedDecoratorToFirstChild =
+            isMultivaluedAttribute(attribute) &&
+            isCompositeAttributeForRendering(attribute);
 
         graph.getModel().beginUpdate();
 
         try {
-            getAttributeChildren(attribute).forEach((childAttribute) => {
-                syncAttributePositionFromParent(childAttribute, attributeCell);
+            childAttributes.forEach((childAttribute, index) => {
+                syncAttributePositionFromParent(childAttribute, attributeCell, {
+                    inheritedMultivalued:
+                        shouldPassMultivaluedDecoratorToFirstChild &&
+                        index === 0,
+                });
             });
         } finally {
             graph.getModel().endUpdate();

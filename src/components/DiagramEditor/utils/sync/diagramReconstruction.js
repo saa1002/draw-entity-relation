@@ -34,7 +34,7 @@ export const reconstructDiagramGraph = ({
     const recreateAttribute = (
         attribute,
         source,
-        { inheritedKey = false } = {},
+        { inheritedKey = false, inheritedMultivalued = false } = {},
     ) => {
         const effectiveKey = inheritedKey || attribute?.key === true;
 
@@ -66,21 +66,34 @@ export const reconstructDiagramGraph = ({
 
         attribute.cell = [target.id, edge.id];
 
+        const childAttributes = getAttributeChildren(attribute);
+        const isCompositeAttribute = childAttributes.length > 0;
+
         if (attribute.partialKey) {
             ensureDiscriminantUnderline(target);
         }
 
-        if (attribute.multivalued) {
+        const shouldRenderMultivaluedDecorator =
+            (attribute.multivalued === true || inheritedMultivalued) &&
+            !isCompositeAttribute;
+
+        if (shouldRenderMultivaluedDecorator) {
             ensureMultivaluedAttributeDecorator(target);
         }
 
         graph.orderCells(true, [edge]);
 
-        for (const childAttribute of getAttributeChildren(attribute)) {
+        const shouldPassMultivaluedDecoratorToFirstChild =
+            (attribute.multivalued === true || inheritedMultivalued) &&
+            isCompositeAttribute;
+
+        childAttributes.forEach((childAttribute, index) => {
             recreateAttribute(childAttribute, target, {
                 inheritedKey: effectiveKey,
+                inheritedMultivalued:
+                    shouldPassMultivaluedDecoratorToFirstChild && index === 0,
             });
-        }
+        });
     };
 
     const recreateEntity = (entity) => {

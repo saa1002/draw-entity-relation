@@ -369,4 +369,59 @@ describe('attribute rendering helpers', () => {
         })
         expect(cells['attr-address'].style).toContain('fontSize=0')
     })
+
+    test('renders composite multivalued attributes on the first visible child', () => {
+        const firstChildDecoratorId =
+            getMultivaluedAttributeDecoratorId('attr-contact-label');
+        const rootDecoratorId =
+            getMultivaluedAttributeDecoratorId('attr-contact');
+        const secondChildDecoratorId =
+            getMultivaluedAttributeDecoratorId('attr-number');
+
+        const cells = {
+            'attr-contact': createCell('attr-contact', {
+                x: 100,
+                y: 120,
+                width: 90,
+                height: 40,
+            }),
+            'attr-contact-label': createCell('attr-contact-label', {
+                x: 220,
+                y: 100,
+                width: 90,
+                height: 40,
+            }),
+            'attr-number': createCell('attr-number', {
+                x: 220,
+                y: 160,
+                width: 90,
+                height: 40,
+            }),
+        };
+
+        const helpers = createHelpers(cells);
+
+        helpers.syncAttributeVisualRepresentation({
+            idMx: 'attr-contact',
+            name: 'contact',
+            multivalued: true,
+            children: [
+                {
+                    idMx: 'attr-contact-label',
+                    name: 'contact',
+                },
+                {
+                    idMx: 'attr-number',
+                    name: 'number',
+                },
+            ],
+        });
+
+        expect(cells[rootDecoratorId]).toBeUndefined();
+        expect(cells[firstChildDecoratorId]).toMatchObject({
+            id: firstChildDecoratorId,
+            style: 'multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0',
+        });
+        expect(cells[secondChildDecoratorId]).toBeUndefined();
+    });
 })
