@@ -96,6 +96,7 @@ export const reconstructDiagramGraph = ({
         childAttributes.forEach((childAttribute) => {
             recreateAttribute(childAttribute, target, {
                 inheritedKey: effectiveKey,
+                inheritedPartialKey: effectivePartialKey,
                 inheritedMultivalued: shouldPassMultivaluedDecoratorToChildren,
             });
         });
