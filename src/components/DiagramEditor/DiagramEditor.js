@@ -37,15 +37,12 @@ import {
     findRelationById,
     findRelationIndexById,
     generateUniqueAttributeName,
-    getAttributeChildren,
     getCascadedWeakConversionCandidate,
     getDefaultAttributeSemantics,
     getLastAttribute,
     getWeakAndStrongSidesForRelation,
     getWeakSideOfIdentifyingRelation,
     groupRootAttributesIntoCompositeAttribute,
-    isCompositeAttribute,
-    isEntityAttributeOwner,
     isFirstAttributeForOwner,
     isIdentifyingRelation,
     isManyToManyRelation,
@@ -106,6 +103,14 @@ import {
     createRelationRenderingHelpers,
     isIdentifyingRelationDecoratorCell,
 } from "./utils/rendering/relationRendering";
+import {
+    canAddChildAttributeToSelection,
+    canConvertSelectedSubattributeToSimple,
+    getCompositeAttributeSelectionTarget,
+    getEntityAttributeKeySelectionData,
+    getEntityMultivaluedAttributeSelectionData,
+    getSimpleEntityAttributesGroupingSelectionData,
+} from "./utils/selection/attributeSelection";
 import { syncDiagramDataFromGraph } from "./utils/sync/diagramGraphSync";
 import { reconstructDiagramGraph } from "./utils/sync/diagramReconstruction";
 import { getValidationDialogMessages } from "./utils/validation/validationMessages";
@@ -149,128 +154,26 @@ export default function App(props) {
     const getSelectedEntityData = () =>
         findEntityById(diagramRef.current, selected?.id);
 
-    const getSelectedEntityAttributeKeyData = () => {
-        const attributeOwner = findAttributeTreeOwnerById(
-            diagramRef.current,
-            selected?.id,
-        );
-
-        if (!isEntityAttributeOwner(attributeOwner)) {
-            return null;
-        }
-
-        const rootAttribute =
-            attributeOwner.ancestors?.at(0) ?? attributeOwner.attribute;
-
-        return {
-            entity: attributeOwner.owner,
-            attribute: rootAttribute,
-            selectedAttribute: attributeOwner.attribute,
-        };
-    };
-
-    const getSelectedEntityMultivaluedAttributeData = () => {
-        if (!selected || !isAttributeShapeCell(selected)) {
-            return null;
-        }
-
-        const attributeOwner = findAttributeTreeOwnerById(
-            diagramRef.current,
-            selected.id,
-        );
-
-        if (!attributeOwner || !isEntityAttributeOwner(attributeOwner)) {
-            return null;
-        }
-
-        const rootAttribute =
-            attributeOwner.ancestors?.at(0) ?? attributeOwner.attribute;
-
-        const selectedAttribute = attributeOwner.attribute;
-        const rootChildren = getAttributeChildren(rootAttribute);
-
-        return {
-            ...attributeOwner,
-            attribute: rootAttribute,
-            selectedAttribute,
-            isCompositeMultivaluedTarget: rootChildren.length > 0,
-        };
-    };
-
-    const getSelectedSimpleEntityAttributesForGrouping = () => {
-        const selectionCells =
-            typeof graph?.getSelectionCells === "function"
-                ? graph.getSelectionCells()
-                : [];
-
-        if (
-            selectionCells.length < 2 ||
-            !selectionCells.every(isAttributeShapeCell)
-        ) {
-            return null;
-        }
-
-        const selectedAttributeOwners = selectionCells
-            .map((cell) =>
-                findAttributeTreeOwnerById(diagramRef.current, cell.id),
-            )
-            .filter(Boolean);
-
-        if (selectedAttributeOwners.length !== selectionCells.length) {
-            return null;
-        }
-
-        if (!selectedAttributeOwners.every(isEntityAttributeOwner)) {
-            return null;
-        }
-
-        const [firstAttributeOwner] = selectedAttributeOwners;
-        const owner = firstAttributeOwner.owner;
-
-        const allAttributesBelongToSameEntity = selectedAttributeOwners.every(
-            (attributeOwner) => attributeOwner.owner?.idMx === owner?.idMx,
-        );
-
-        if (!allAttributesBelongToSameEntity) {
-            return null;
-        }
-
-        const allAttributesAreGroupable = selectedAttributeOwners.every(
-            ({ attribute, depth }) =>
-                depth === 0 &&
-                !isCompositeAttribute(attribute) &&
-                !isMultivaluedAttribute(attribute) &&
-                !attribute.key &&
-                !attribute.partialKey,
-        );
-
-        if (!allAttributesAreGroupable) {
-            return null;
-        }
-
-        const uniqueAttributeOwners = [];
-        const seenAttributeIds = new Set();
-
-        selectedAttributeOwners.forEach((attributeOwner) => {
-            const attributeId = attributeOwner.attribute?.idMx;
-
-            if (!attributeId || seenAttributeIds.has(attributeId)) {
-                return;
-            }
-
-            seenAttributeIds.add(attributeId);
-            uniqueAttributeOwners.push(attributeOwner);
+    const getSelectedEntityAttributeKeyData = () =>
+        getEntityAttributeKeySelectionData({
+            diagram: diagramRef.current,
+            selectedCell: selected,
         });
 
-        if (uniqueAttributeOwners.length < 2) {
-            return null;
-        }
+    const getSelectedEntityMultivaluedAttributeData = () =>
+        getEntityMultivaluedAttributeSelectionData({
+            diagram: diagramRef.current,
+            selectedCell: selected,
+        });
 
-        return {
-            owner,
-            attributeOwners: uniqueAttributeOwners,
-        };
-    };
+    const getSelectedSimpleEntityAttributesForGrouping = () =>
+        getSimpleEntityAttributesGroupingSelectionData({
+            diagram: diagramRef.current,
+            selectionCells:
+                typeof graph?.getSelectionCells === "function"
+                    ? graph.getSelectionCells()
+                    : [],
+        });
 
     const getCompositeAttributeNameFromUser = (owner) => {
         const defaultName = generateUniqueAttributeName(
@@ -679,47 +582,11 @@ export default function App(props) {
         toast.success("Atributo insertado");
     };
 
-    const getSelectedCompositeAttributeTarget = (attributeOwner) => {
-        if (!attributeOwner || attributeOwner.depth > 1) {
-            return null;
-        }
+    const getSelectedCompositeAttributeTarget = (attributeOwner) =>
+        getCompositeAttributeSelectionTarget(attributeOwner);
 
-        const compositeAttribute =
-            attributeOwner.depth === 0
-                ? attributeOwner.attribute
-                : attributeOwner.parent;
-
-        if (!compositeAttribute) {
-            return null;
-        }
-
-        return {
-            ...attributeOwner,
-            compositeAttribute,
-        };
-    };
-
-    const canAddChildAttributeToSelectedAttribute = (attributeOwner) => {
-        const selectedCompositeTarget =
-            getSelectedCompositeAttributeTarget(attributeOwner);
-
-        if (!selectedCompositeTarget) {
-            return false;
-        }
-
-        const { compositeAttribute } = selectedCompositeTarget;
-
-        if (!isMultivaluedAttribute(compositeAttribute)) {
-            return true;
-        }
-
-        return (
-            isCompositeAttribute(compositeAttribute) &&
-            isEntityAttributeOwner(attributeOwner) &&
-            !compositeAttribute.key &&
-            !compositeAttribute.partialKey
-        );
-    };
+    const canAddChildAttributeToSelectedAttribute = (attributeOwner) =>
+        canAddChildAttributeToSelection(attributeOwner);
 
     const createSiblingSubattribute = ({
         parentAttribute,
@@ -1996,11 +1863,8 @@ export default function App(props) {
         }
     };
 
-    const canConvertSelectedSubattributeToSimpleAttribute = (
-        attributeOwner,
-    ) => {
-        return attributeOwner?.parent && attributeOwner.depth === 1;
-    };
+    const canConvertSelectedSubattributeToSimpleAttribute = (attributeOwner) =>
+        canConvertSelectedSubattributeToSimple(attributeOwner);
 
     const convertSelectedSubattributeToSimpleAttribute = () => {
         if (!isAttributeShapeCell(selected)) return;
