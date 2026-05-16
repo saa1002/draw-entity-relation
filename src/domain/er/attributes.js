@@ -26,53 +26,10 @@ export const ATTRIBUTE_OWNER_TYPES = Object.freeze({
 
 export const DEFAULT_ATTRIBUTE_NAME = "Atributo";
 
-export const findAttributeById = (attributes, attributeId) =>
-    getAttributes(attributes).find(
-        (attribute) => attribute.idMx === attributeId,
-    ) ?? null;
-
 export const findAttributeIndexById = (attributes, attributeId) =>
     getAttributes(attributes).findIndex(
         (attribute) => attribute.idMx === attributeId,
     );
-
-export const findEntityByAttributeId = (diagram, attributeId) =>
-    getEntities(diagram).find((entity) =>
-        getAttributes(entity.attributes).some(
-            (attribute) => attribute.idMx === attributeId,
-        ),
-    ) ?? null;
-
-export const findRelationByAttributeId = (diagram, attributeId) =>
-    getRelations(diagram).find((relation) =>
-        getAttributes(relation.attributes).some(
-            (attribute) => attribute.idMx === attributeId,
-        ),
-    ) ?? null;
-
-export const findAttributeOwnerById = (diagram, attributeId) => {
-    const entity = findEntityByAttributeId(diagram, attributeId);
-
-    if (entity) {
-        return {
-            owner: entity,
-            ownerType: ATTRIBUTE_OWNER_TYPES.ENTITY,
-            attribute: findAttributeById(entity.attributes, attributeId),
-        };
-    }
-
-    const relation = findRelationByAttributeId(diagram, attributeId);
-
-    if (relation) {
-        return {
-            owner: relation,
-            ownerType: ATTRIBUTE_OWNER_TYPES.RELATION,
-            attribute: findAttributeById(relation.attributes, attributeId),
-        };
-    }
-
-    return null;
-};
 
 export const findAttributeTreeOwnerById = (diagram, attributeId) => {
     for (const entity of getEntities(diagram)) {
@@ -118,26 +75,6 @@ export const isEntityAttributeOwner = (attributeOwner) =>
 
 export const isRelationAttributeOwner = (attributeOwner) =>
     attributeOwner?.ownerType === ATTRIBUTE_OWNER_TYPES.RELATION;
-
-export const findPrimaryKeyAttribute = (attributes) =>
-    getAttributes(attributes).find(isPrimaryKeyAttribute) ?? null;
-
-export const findPrimaryKeyAttributes = (attributes) =>
-    getAttributes(attributes).filter(isPrimaryKeyAttribute);
-
-export const findPartialKeyAttribute = (attributes) =>
-    getAttributes(attributes).find(isPartialKeyAttribute) ?? null;
-
-export const findPartialKeyAttributes = (attributes) =>
-    getAttributes(attributes).filter(isPartialKeyAttribute);
-
-export const hasPrimaryKeyAttribute = (attributes) =>
-    findPrimaryKeyAttribute(attributes) !== null;
-
-export const hasPartialKeyAttribute = (attributes) =>
-    findPartialKeyAttribute(attributes) !== null;
-
-export const getAttributeList = getAttributes;
 
 export const getAttributeCellIds = (attribute) =>
     Array.isArray(attribute?.cell) ? attribute.cell.filter(Boolean) : [];
@@ -302,23 +239,6 @@ export const convertSimpleAttributeToCompositeAttribute = (
     attribute.children = [firstChildAttribute];
 
     return firstChildAttribute;
-};
-
-export const removeAttributeFromOwnerById = (owner, attributeId) => {
-    if (!owner) {
-        return null;
-    }
-
-    const attributes = ensureOwnerAttributes(owner);
-    const attributeIndex = findAttributeIndexById(attributes, attributeId);
-
-    if (attributeIndex === -1) {
-        return null;
-    }
-
-    const [removedAttribute] = attributes.splice(attributeIndex, 1);
-
-    return removedAttribute ?? null;
 };
 
 const createEmptyRemovalResult = () => ({
@@ -559,16 +479,6 @@ const ATTRIBUTE_KEY_SEMANTICS = Object.freeze({
     PARTIAL_KEY: "partialKey",
 });
 
-const createAttributeToggleResult = ({
-    updated = false,
-    enabled = false,
-    changedAttributes = [],
-} = {}) => ({
-    updated,
-    enabled,
-    changedAttributes,
-});
-
 const rememberChangedAttributeSemantics = ({
     changedAttributes,
     attribute,
@@ -582,85 +492,6 @@ const rememberChangedAttributeSemantics = ({
         changedAttributes.push(attribute);
     }
 };
-
-const setExclusiveAttributeSemantic = ({
-    attribute,
-    selectedAttributeId,
-    semantic,
-    enabled,
-}) => {
-    const isSelectedAttribute = attribute.idMx === selectedAttributeId;
-
-    if (enabled) {
-        attribute.key =
-            semantic === ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY &&
-            isSelectedAttribute;
-        attribute.partialKey =
-            semantic === ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY &&
-            isSelectedAttribute;
-
-        return;
-    }
-
-    if (isSelectedAttribute) {
-        attribute.key = false;
-        attribute.partialKey = false;
-    }
-};
-
-const toggleExclusiveAttributeSemantic = ({
-    attributes,
-    attributeId,
-    semantic,
-}) => {
-    const selectedAttribute = findAttributeById(attributes, attributeId);
-
-    if (!selectedAttribute) {
-        return createAttributeToggleResult();
-    }
-
-    const shouldEnable = selectedAttribute[semantic] !== true;
-    const changedAttributes = [];
-
-    getAttributes(attributes).forEach((attribute) => {
-        const previousKey = attribute.key;
-        const previousPartialKey = attribute.partialKey;
-
-        setExclusiveAttributeSemantic({
-            attribute,
-            selectedAttributeId: attributeId,
-            semantic,
-            enabled: shouldEnable,
-        });
-
-        rememberChangedAttributeSemantics({
-            changedAttributes,
-            attribute,
-            previousKey,
-            previousPartialKey,
-        });
-    });
-
-    return createAttributeToggleResult({
-        updated: true,
-        enabled: shouldEnable,
-        changedAttributes,
-    });
-};
-
-export const toggleExclusivePrimaryKeyAttribute = (attributes, attributeId) =>
-    toggleExclusiveAttributeSemantic({
-        attributes,
-        attributeId,
-        semantic: ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY,
-    });
-
-export const toggleExclusivePartialKeyAttribute = (attributes, attributeId) =>
-    toggleExclusiveAttributeSemantic({
-        attributes,
-        attributeId,
-        semantic: ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY,
-    });
 
 const findFirstAttributeMatchingAnyPredicate = (attributes, predicates) => {
     const safeAttributes = getAttributes(attributes);
