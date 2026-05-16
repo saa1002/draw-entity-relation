@@ -1,0 +1,780 @@
+const getAttributes = (attributes) =>
+    Array.isArray(attributes) ? attributes : [];
+
+const getEntities = (diagram) =>
+    Array.isArray(diagram?.entities) ? diagram.entities : [];
+
+const getRelations = (diagram) =>
+    Array.isArray(diagram?.relations) ? diagram.relations : [];
+
+const ensureOwnerAttributes = (owner) => {
+    if (!owner) {
+        return [];
+    }
+
+    if (!Array.isArray(owner.attributes)) {
+        owner.attributes = [];
+    }
+
+    return owner.attributes;
+};
+
+export const ATTRIBUTE_OWNER_TYPES = Object.freeze({
+    ENTITY: "entity",
+    RELATION: "relation",
+});
+
+export const DEFAULT_ATTRIBUTE_NAME = "Atributo";
+
+export const findAttributeIndexById = (attributes, attributeId) =>
+    getAttributes(attributes).findIndex(
+        (attribute) => attribute.idMx === attributeId,
+    );
+
+export const findAttributeTreeOwnerById = (diagram, attributeId) => {
+    for (const entity of getEntities(diagram)) {
+        const node = findAttributeNodeInTreeById(
+            entity.attributes,
+            attributeId,
+        );
+
+        if (node) {
+            return {
+                owner: entity,
+                ownerType: ATTRIBUTE_OWNER_TYPES.ENTITY,
+                ...node,
+            };
+        }
+    }
+
+    for (const relation of getRelations(diagram)) {
+        const node = findAttributeNodeInTreeById(
+            relation.attributes,
+            attributeId,
+        );
+
+        if (node) {
+            return {
+                owner: relation,
+                ownerType: ATTRIBUTE_OWNER_TYPES.RELATION,
+                ...node,
+            };
+        }
+    }
+
+    return null;
+};
+
+export const isPrimaryKeyAttribute = (attribute) => attribute?.key === true;
+
+export const isPartialKeyAttribute = (attribute) =>
+    attribute?.partialKey === true;
+
+export const isEntityAttributeOwner = (attributeOwner) =>
+    attributeOwner?.ownerType === ATTRIBUTE_OWNER_TYPES.ENTITY;
+
+export const isRelationAttributeOwner = (attributeOwner) =>
+    attributeOwner?.ownerType === ATTRIBUTE_OWNER_TYPES.RELATION;
+
+export const getAttributeCellIds = (attribute) =>
+    Array.isArray(attribute?.cell) ? attribute.cell.filter(Boolean) : [];
+
+export const getAttributeCount = (attributes) =>
+    getAttributes(attributes).length;
+
+export const isFirstAttributeForOwner = (owner) =>
+    getAttributeCount(owner?.attributes) === 0;
+
+export const getLastAttribute = (attributes) => {
+    const safeAttributes = getAttributes(attributes);
+
+    return safeAttributes.at(-1) ?? null;
+};
+
+export const generateUniqueAttributeName = (
+    attributes,
+    baseName = DEFAULT_ATTRIBUTE_NAME,
+) => {
+    const existingNames = new Set(
+        getAttributes(attributes).map((attribute) => attribute.name),
+    );
+
+    let counter = 0;
+    let candidateName = baseName;
+
+    while (existingNames.has(candidateName)) {
+        counter += 1;
+        candidateName = `${baseName} ${counter}`;
+    }
+
+    return candidateName;
+};
+
+export const getDefaultAttributeSemantics = ({
+    ownerType,
+    isFirstAttribute,
+    isWeakEntityOwner = false,
+}) => {
+    const belongsToEntity = ownerType === ATTRIBUTE_OWNER_TYPES.ENTITY;
+
+    return {
+        key: belongsToEntity && !isWeakEntityOwner && isFirstAttribute,
+        partialKey: belongsToEntity && isWeakEntityOwner && isFirstAttribute,
+    };
+};
+
+export const createAttribute = ({
+    idMx,
+    name,
+    position,
+    key = false,
+    partialKey = false,
+    multivalued = false,
+    cell,
+    offsetX = 0,
+    offsetY = 0,
+}) => ({
+    idMx,
+    name,
+    position,
+    key,
+    partialKey,
+    ...(multivalued ? { multivalued: true } : {}),
+    cell,
+    offsetX,
+    offsetY,
+});
+
+export const addAttributeToOwner = (owner, attribute) => {
+    if (!owner || !attribute) {
+        return null;
+    }
+
+    const attributes = ensureOwnerAttributes(owner);
+
+    attributes.push(attribute);
+
+    return attribute;
+};
+
+export const addChildAttributeToAttribute = (
+    parentAttribute,
+    childAttribute,
+) => {
+    if (!parentAttribute || !childAttribute) {
+        return null;
+    }
+
+    if (!Array.isArray(parentAttribute.children)) {
+        parentAttribute.children = [];
+    }
+
+    parentAttribute.children.push(childAttribute);
+
+    return childAttribute;
+};
+
+export const groupRootAttributesIntoCompositeAttribute = ({
+    owner,
+    attributeIds,
+    compositeAttribute,
+}) => {
+    if (!owner || !compositeAttribute || !Array.isArray(attributeIds)) {
+        return {
+            compositeAttribute: null,
+            childAttributes: [],
+        };
+    }
+
+    const attributes = ensureOwnerAttributes(owner);
+    const attributeIdsToGroup = new Set(attributeIds);
+
+    const selectedAttributes = attributes
+        .map((attribute, index) => ({ attribute, index }))
+        .filter(({ attribute }) => attributeIdsToGroup.has(attribute.idMx));
+
+    if (selectedAttributes.length !== attributeIdsToGroup.size) {
+        return {
+            compositeAttribute: null,
+            childAttributes: [],
+        };
+    }
+
+    const firstSelectedIndex = Math.min(
+        ...selectedAttributes.map(({ index }) => index),
+    );
+    const childAttributes = selectedAttributes.map(
+        ({ attribute }) => attribute,
+    );
+
+    compositeAttribute.children = childAttributes;
+
+    owner.attributes = attributes.filter(
+        (attribute) => !attributeIdsToGroup.has(attribute.idMx),
+    );
+    owner.attributes.splice(
+        Math.min(firstSelectedIndex, owner.attributes.length),
+        0,
+        compositeAttribute,
+    );
+
+    return {
+        compositeAttribute,
+        childAttributes,
+    };
+};
+
+export const convertSimpleAttributeToCompositeAttribute = (
+    attribute,
+    firstChildAttribute,
+) => {
+    if (!attribute || !firstChildAttribute) {
+        return null;
+    }
+
+    if (Array.isArray(attribute.children) && attribute.children.length > 0) {
+        return null;
+    }
+
+    attribute.children = [firstChildAttribute];
+
+    return firstChildAttribute;
+};
+
+const createEmptyRemovalResult = () => ({
+    removedAttribute: null,
+    removedCompositeAttribute: null,
+    promotedAttribute: null,
+});
+
+const createRemovedCompositeAttributeSnapshot = (attribute) => {
+    const { children, ...attributeWithoutChildren } = attribute;
+
+    return attributeWithoutChildren;
+};
+
+const inheritCompositeAttributeSemantics = (
+    promotedAttribute,
+    parentAttribute,
+) => {
+    if (!promotedAttribute || !parentAttribute) {
+        return promotedAttribute;
+    }
+
+    promotedAttribute.key =
+        promotedAttribute.key === true || parentAttribute.key === true;
+    promotedAttribute.partialKey =
+        promotedAttribute.partialKey === true ||
+        parentAttribute.partialKey === true;
+
+    if (isMultivaluedAttribute(parentAttribute)) {
+        promotedAttribute.multivalued = true;
+    }
+
+    promotedAttribute.offsetX =
+        (typeof parentAttribute.offsetX === "number"
+            ? parentAttribute.offsetX
+            : 0) +
+        (typeof promotedAttribute.offsetX === "number"
+            ? promotedAttribute.offsetX
+            : 0);
+
+    promotedAttribute.offsetY =
+        (typeof parentAttribute.offsetY === "number"
+            ? parentAttribute.offsetY
+            : 0) +
+        (typeof promotedAttribute.offsetY === "number"
+            ? promotedAttribute.offsetY
+            : 0);
+
+    return promotedAttribute;
+};
+
+const removeAttributeFromListById = (attributes, attributeId) => {
+    const attributeIndex = findAttributeIndexById(attributes, attributeId);
+
+    if (attributeIndex !== -1) {
+        const [removedAttribute] = attributes.splice(attributeIndex, 1);
+
+        return {
+            ...createEmptyRemovalResult(),
+            removedAttribute: removedAttribute ?? null,
+        };
+    }
+
+    for (let index = 0; index < getAttributes(attributes).length; index += 1) {
+        const attribute = attributes[index];
+
+        if (!Array.isArray(attribute.children)) {
+            continue;
+        }
+
+        const removalResult = removeAttributeFromListById(
+            attribute.children,
+            attributeId,
+        );
+
+        if (removalResult.removedAttribute) {
+            if (attribute.children.length === 0) {
+                const { children, ...attributeWithoutChildren } = attribute;
+
+                attributes[index] = attributeWithoutChildren;
+            } else if (attribute.children.length === 1) {
+                const [promotedAttribute] = attribute.children;
+
+                attributes[index] = inheritCompositeAttributeSemantics(
+                    promotedAttribute,
+                    attribute,
+                );
+
+                removalResult.removedCompositeAttribute =
+                    createRemovedCompositeAttributeSnapshot(attribute);
+                removalResult.promotedAttribute = attributes[index];
+            }
+
+            return removalResult;
+        }
+    }
+
+    return createEmptyRemovalResult();
+};
+
+export const removeAttributeFromOwnerTreeByIdWithPromotion = (
+    owner,
+    attributeId,
+) => {
+    if (!owner) {
+        return createEmptyRemovalResult();
+    }
+
+    return removeAttributeFromListById(
+        ensureOwnerAttributes(owner),
+        attributeId,
+    );
+};
+
+const createEmptySubattributeConversionResult = () => ({
+    convertedAttributes: [],
+    removedCompositeAttribute: null,
+});
+
+const convertSubattributeToSimpleAttributeInListById = (
+    attributes,
+    attributeId,
+) => {
+    for (let index = 0; index < getAttributes(attributes).length; index += 1) {
+        const attribute = attributes[index];
+
+        if (!Array.isArray(attribute.children)) {
+            continue;
+        }
+
+        const childIndex = findAttributeIndexById(
+            attribute.children,
+            attributeId,
+        );
+
+        if (childIndex !== -1) {
+            if (attribute.children.length <= 2) {
+                const convertedAttributes = attribute.children.map(
+                    (childAttribute) =>
+                        inheritCompositeAttributeSemantics(
+                            childAttribute,
+                            attribute,
+                        ),
+                );
+
+                attributes.splice(index, 1, ...convertedAttributes);
+
+                return {
+                    convertedAttributes,
+                    removedCompositeAttribute:
+                        createRemovedCompositeAttributeSnapshot(attribute),
+                };
+            }
+
+            const [convertedAttribute] = attribute.children.splice(
+                childIndex,
+                1,
+            );
+
+            const promotedAttribute = inheritCompositeAttributeSemantics(
+                convertedAttribute,
+                attribute,
+            );
+
+            attributes.splice(index + 1, 0, promotedAttribute);
+
+            return {
+                convertedAttributes: [promotedAttribute],
+                removedCompositeAttribute: null,
+            };
+        }
+
+        const conversionResult = convertSubattributeToSimpleAttributeInListById(
+            attribute.children,
+            attributeId,
+        );
+
+        if (conversionResult.convertedAttributes.length > 0) {
+            return conversionResult;
+        }
+    }
+
+    return createEmptySubattributeConversionResult();
+};
+
+export const convertSubattributeToSimpleAttributeById = (
+    owner,
+    attributeId,
+) => {
+    if (!owner) {
+        return createEmptySubattributeConversionResult();
+    }
+
+    return convertSubattributeToSimpleAttributeInListById(
+        ensureOwnerAttributes(owner),
+        attributeId,
+    );
+};
+
+export const removeAttributeFromOwnerTreeById = (owner, attributeId) =>
+    removeAttributeFromOwnerTreeByIdWithPromotion(owner, attributeId)
+        .removedAttribute;
+
+export const removeAllAttributesFromOwner = (owner) => {
+    if (!owner) {
+        return [];
+    }
+
+    const removedAttributes = [...getAttributes(owner.attributes)];
+
+    owner.attributes = [];
+
+    return removedAttributes;
+};
+
+export const updateAttributePosition = ({ attribute, owner, position }) => {
+    if (!attribute || !owner || !position) {
+        return null;
+    }
+
+    const ownerX = typeof owner.position?.x === "number" ? owner.position.x : 0;
+
+    const ownerY = typeof owner.position?.y === "number" ? owner.position.y : 0;
+
+    attribute.position = {
+        x: position.x,
+        y: position.y,
+    };
+
+    attribute.offsetX = position.x - ownerX;
+    attribute.offsetY = position.y - ownerY;
+
+    return attribute;
+};
+
+const ATTRIBUTE_KEY_SEMANTICS = Object.freeze({
+    PRIMARY_KEY: "key",
+    PARTIAL_KEY: "partialKey",
+});
+
+const rememberChangedAttributeSemantics = ({
+    changedAttributes,
+    attribute,
+    previousKey,
+    previousPartialKey,
+}) => {
+    if (
+        previousKey !== attribute.key ||
+        previousPartialKey !== attribute.partialKey
+    ) {
+        changedAttributes.push(attribute);
+    }
+};
+
+const findFirstAttributeMatchingAnyPredicate = (attributes, predicates) => {
+    const safeAttributes = getAttributes(attributes);
+
+    for (const predicate of predicates) {
+        const matchingAttribute = safeAttributes.find(predicate);
+
+        if (matchingAttribute) {
+            return matchingAttribute;
+        }
+    }
+
+    return null;
+};
+
+const convertExclusiveAttributeSemantic = ({
+    attributes,
+    semantic,
+    candidatePredicates,
+}) => {
+    const candidate = findFirstAttributeMatchingAnyPredicate(
+        attributes,
+        candidatePredicates,
+    );
+
+    const changedAttributes = [];
+
+    getAttributes(attributes).forEach((attribute) => {
+        const previousKey = attribute.key;
+        const previousPartialKey = attribute.partialKey;
+        const isCandidate = candidate?.idMx === attribute.idMx;
+
+        attribute.key =
+            semantic === ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY && isCandidate;
+        attribute.partialKey =
+            semantic === ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY && isCandidate;
+
+        rememberChangedAttributeSemantics({
+            changedAttributes,
+            attribute,
+            previousKey,
+            previousPartialKey,
+        });
+    });
+
+    return changedAttributes;
+};
+
+export const convertPrimaryKeyToPartialKey = (attributes) =>
+    convertExclusiveAttributeSemantic({
+        attributes,
+        semantic: ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY,
+        candidatePredicates: [isPrimaryKeyAttribute, isPartialKeyAttribute],
+    });
+
+export const convertPartialKeyToPrimaryKey = (attributes) =>
+    convertExclusiveAttributeSemantic({
+        attributes,
+        semantic: ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY,
+        candidatePredicates: [isPartialKeyAttribute, isPrimaryKeyAttribute],
+    });
+
+export const getAttributeChildren = (attribute) =>
+    getAttributes(attribute?.children);
+
+export const isCompositeAttribute = (attribute) =>
+    !!attribute && getAttributeChildren(attribute).length > 0;
+
+export const isLeafAttribute = (attribute) =>
+    !!attribute && !isCompositeAttribute(attribute);
+
+export const isMultivaluedAttribute = (attribute) =>
+    attribute?.multivalued === true;
+
+export const isCompositeMultivaluedAttribute = (attribute) =>
+    isCompositeAttribute(attribute) && isMultivaluedAttribute(attribute);
+
+export const walkAttributeTree = (attributes, visitor) => {
+    if (typeof visitor !== "function") {
+        return;
+    }
+
+    const visit = (
+        currentAttributes,
+        parent = null,
+        depth = 0,
+        ancestors = [],
+    ) => {
+        getAttributes(currentAttributes).forEach((attribute, index) => {
+            visitor(attribute, {
+                parent,
+                depth,
+                index,
+                ancestors,
+            });
+
+            visit(getAttributeChildren(attribute), attribute, depth + 1, [
+                ...ancestors,
+                attribute,
+            ]);
+        });
+    };
+
+    visit(attributes);
+};
+
+export const getAttributesInTreeMatching = (attributes, predicate) => {
+    if (typeof predicate !== "function") {
+        return [];
+    }
+
+    const matchingAttributes = [];
+
+    walkAttributeTree(attributes, (attribute, context) => {
+        if (predicate(attribute, context)) {
+            matchingAttributes.push(attribute);
+        }
+    });
+
+    return matchingAttributes;
+};
+
+export const someAttributeInTree = (attributes, predicate) =>
+    getAttributesInTreeMatching(attributes, predicate).length > 0;
+
+export const flattenAttributeTree = (attributes) =>
+    getAttributesInTreeMatching(attributes, () => true);
+
+export const getLeafAttributes = (attributes) =>
+    flattenAttributeTree(attributes).filter(isLeafAttribute);
+
+export const getPrimaryKeyAttributesInTree = (attributes) =>
+    flattenAttributeTree(attributes).filter(isPrimaryKeyAttribute);
+
+export const getPartialKeyAttributesInTree = (attributes) =>
+    flattenAttributeTree(attributes).filter(isPartialKeyAttribute);
+
+export const hasPrimaryKeyAttributeInTree = (attributes) =>
+    getPrimaryKeyAttributesInTree(attributes).length > 0;
+
+export const hasPartialKeyAttributeInTree = (attributes) =>
+    getPartialKeyAttributesInTree(attributes).length > 0;
+
+export const findAttributeInTreeById = (attributes, attributeId) =>
+    flattenAttributeTree(attributes).find(
+        (attribute) => attribute.idMx === attributeId,
+    ) ?? null;
+
+export const findAttributeNodeInTreeById = (attributes, attributeId) => {
+    let foundNode = null;
+
+    walkAttributeTree(attributes, (attribute, context) => {
+        if (!foundNode && attribute.idMx === attributeId) {
+            foundNode = {
+                attribute,
+                ...context,
+            };
+        }
+    });
+
+    return foundNode;
+};
+
+const rememberChangedRootAttribute = (changedRootAttributes, rootAttribute) => {
+    if (rootAttribute && !changedRootAttributes.includes(rootAttribute)) {
+        changedRootAttributes.push(rootAttribute);
+    }
+};
+
+export const getRootAttributeFromTreeNode = (attributeNode) =>
+    attributeNode?.ancestors?.at(0) ?? attributeNode?.attribute ?? null;
+
+const toggleExclusiveAttributeSemanticInTree = ({
+    attributes,
+    attributeId,
+    semantic,
+}) => {
+    const selectedAttributeNode = findAttributeNodeInTreeById(
+        attributes,
+        attributeId,
+    );
+
+    const selectedRootAttribute = getRootAttributeFromTreeNode(
+        selectedAttributeNode,
+    );
+
+    if (!selectedRootAttribute) {
+        return {
+            updated: false,
+            enabled: false,
+            changedAttributes: [],
+        };
+    }
+
+    const shouldEnable = selectedRootAttribute[semantic] !== true;
+    const changedRootAttributes = [];
+
+    getAttributes(attributes).forEach((rootAttribute) => {
+        walkAttributeTree([rootAttribute], (attribute) => {
+            const previousKey = attribute.key;
+            const previousPartialKey = attribute.partialKey;
+
+            if (shouldEnable) {
+                attribute.key =
+                    semantic === ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY &&
+                    attribute.idMx === selectedRootAttribute.idMx;
+
+                attribute.partialKey =
+                    semantic === ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY &&
+                    attribute.idMx === selectedRootAttribute.idMx;
+            } else if (rootAttribute.idMx === selectedRootAttribute.idMx) {
+                attribute.key = false;
+                attribute.partialKey = false;
+            }
+
+            if (
+                previousKey !== attribute.key ||
+                previousPartialKey !== attribute.partialKey
+            ) {
+                rememberChangedRootAttribute(
+                    changedRootAttributes,
+                    rootAttribute,
+                );
+            }
+        });
+    });
+
+    return {
+        updated: true,
+        enabled: shouldEnable,
+        changedAttributes: changedRootAttributes,
+    };
+};
+
+export const toggleExclusivePrimaryKeyAttributeInTree = (
+    attributes,
+    attributeId,
+) =>
+    toggleExclusiveAttributeSemanticInTree({
+        attributes,
+        attributeId,
+        semantic: ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY,
+    });
+
+export const toggleExclusivePartialKeyAttributeInTree = (
+    attributes,
+    attributeId,
+) =>
+    toggleExclusiveAttributeSemanticInTree({
+        attributes,
+        attributeId,
+        semantic: ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY,
+    });
+
+export const hasRepeatedSiblingAttributeNamesInTree = (attributes) => {
+    const attributeNames = new Set();
+
+    for (const attribute of getAttributes(attributes)) {
+        if (attributeNames.has(attribute.name)) {
+            return true;
+        }
+
+        attributeNames.add(attribute.name);
+
+        if (
+            hasRepeatedSiblingAttributeNamesInTree(
+                getAttributeChildren(attribute),
+            )
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+};
+
+export const hasEmptyCompositeAttributeInTree = (attributes) =>
+    someAttributeInTree(
+        attributes,
+        (attribute) =>
+            Array.isArray(attribute.children) &&
+            attribute.children.length === 0,
+    );
+
+export const hasMultivaluedAttributeInTree = (attributes) =>
+    someAttributeInTree(attributes, isMultivaluedAttribute);

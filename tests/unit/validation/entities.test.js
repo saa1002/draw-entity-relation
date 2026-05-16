@@ -6,7 +6,7 @@ import {
     entitiesWithoutPK,
     entitiesWithMoreThanOnePK,
     validateGraph,
-} from '../../../src/utils/validation'
+} from '../../../src/domain/er/validation'
 
 let graph
 
@@ -91,4 +91,46 @@ describe("Strong entity primary key constraints", () => {
         expect(entitiesWithMoreThanOnePK(graph)).toBe(true)
         expect(validateGraph(graph).noEntitiesWithMoreThanOnePK).toBe(false)
     })
+
+    test("A strong entity with a nested primary key should pass primary key presence validation", () => {
+        graph.entities.at(0).attributes = [
+            {
+                idMx: "attr-composite",
+                name: "identificador",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-nested-key",
+                        name: "codigo",
+                        key: true,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        expect(entitiesWithoutPK(graph)).toBe(false);
+        expect(validateGraph(graph).noEntitiesWithoutPK).toBe(true);
+    });
+
+    test("A nested primary key should count toward primary key uniqueness validation", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-composite",
+            name: "datos",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    idMx: "attr-nested-key",
+                    name: "codigo",
+                    key: true,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        expect(entitiesWithMoreThanOnePK(graph)).toBe(true);
+        expect(validateGraph(graph).noEntitiesWithMoreThanOnePK).toBe(false);
+    });
 })

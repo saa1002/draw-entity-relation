@@ -6,7 +6,7 @@ import {
     cardinalitiesNotValid,
     notNMRelationsWithAttributes,
     brokenRelationEntityReferences,
-} from '../../../src/utils/validation'
+} from '../../../src/domain/er/validation'
 
 let graph
 

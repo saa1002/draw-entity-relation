@@ -16,55 +16,108 @@ import {
 import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
-import { generateSQL } from "../../utils/sql";
-import { POSSIBLE_CARDINALITIES, validateGraph } from "../../utils/validation";
-import { setInitialConfiguration } from "./utils";
 import {
-    ER_FILL,
-    ER_FONT,
-    ER_FONT_FAMILY,
-    ER_FONT_SIZE,
-    ER_STROKE,
+    ATTRIBUTE_OWNER_TYPES,
+    IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY,
+    IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES,
+    POSSIBLE_CARDINALITIES,
+    addAttributeToOwner,
+    addChildAttributeToAttribute,
+    applyIdentifyingRelationCardinalities,
+    canRelationHoldAttributes,
+    clearIdentifyingRelationDomainSemantics,
+    convertPartialKeyToPrimaryKey,
+    convertPrimaryKeyToPartialKey,
+    convertSimpleAttributeToCompositeAttribute,
+    convertSubattributeToSimpleAttributeById,
+    createAttribute,
+    findAttributeTreeOwnerById,
+    findEntityById,
+    findEntityIndexById,
+    findRelationById,
+    findRelationIndexById,
+    generateUniqueAttributeName,
+    getCascadedWeakConversionCandidate,
+    getDefaultAttributeSemantics,
+    getLastAttribute,
+    getWeakAndStrongSidesForRelation,
+    getWeakSideOfIdentifyingRelation,
+    groupRootAttributesIntoCompositeAttribute,
+    isFirstAttributeForOwner,
+    isIdentifyingRelation,
+    isManyToManyRelation,
+    isMultivaluedAttribute,
+    isPrimaryKeyAttribute,
+    isRelationAttributeOwner,
+    isRelationConfigured,
+    isSelfRelation,
+    isWeakEntity,
+    relationHasBothEntitySides,
+    relationInvolvesEntity,
+    removeAllAttributesFromOwner,
+    removeAttributeFromOwnerTreeByIdWithPromotion,
+    resetRelationSides,
+    toggleExclusivePartialKeyAttributeInTree,
+    toggleExclusivePrimaryKeyAttributeInTree,
+    updateAttributePosition,
+    validateGraph,
+} from "../../domain/er";
+import { generateSQL } from "../../services/sql";
+import {
+    clearGraphCanvas,
+    connectRelationGraphSides,
+    getConfiguredRelationGraphCells,
+    installCellGeometrySyncHandlers,
+    removeEntityGraphCells,
+    removeExistingGraphCells,
+    removeRelationConfigurationGraphCells,
+    removeRelationGraphCells,
+} from "./utils/graph/graphCanvas";
+import { installGraphInteractionOverrides } from "./utils/graph/graphInteractionOverrides";
+import { installGraphLabelEditingHandler } from "./utils/graph/graphLabelEditing";
+import setInitialConfiguration from "./utils/graph/setInitialConfiguration";
+import {
     getAttributeDimensions,
     getCardinalityStyleString,
-    getEntityDimensions,
-    getEntityStyleString,
-    getRelationDimensions,
     getRelationStyleString,
-} from "./utils/diagramStyles";
+    installDiagramEditorStyles,
+    isAttributeShapeCell,
+    isEntityShapeCell,
+    isRelationShapeCell,
+} from "./utils/mxStyles/diagramStyles";
+import {
+    SAVE_FILE_RESULT,
+    clearDiagramLocalStorage,
+    exportDiagramToJsonFile,
+    exportSqlScriptToFile,
+    loadDiagramFromLocalStorage,
+    readDiagramJsonFile,
+    saveDiagramToLocalStorage,
+} from "./utils/persistence/filePersistence";
+import { createAttributeRenderingHelpers } from "./utils/rendering/attributeRendering";
+import {
+    createEntityRenderingHelpers,
+    isWeakEntityDecoratorCell,
+} from "./utils/rendering/entityRendering";
+import {
+    createRelationRenderingHelpers,
+    isIdentifyingRelationDecoratorCell,
+} from "./utils/rendering/relationRendering";
+import {
+    canAddChildAttributeToSelection,
+    canConvertSelectedSubattributeToSimple,
+    getCompositeAttributeSelectionTarget,
+    getEntityAttributeKeySelectionData,
+    getEntityMultivaluedAttributeSelectionData,
+    getSimpleEntityAttributesGroupingSelectionData,
+} from "./utils/selection/attributeSelection";
+import { syncDiagramDataFromGraph } from "./utils/sync/diagramGraphSync";
+import { reconstructDiagramGraph } from "./utils/sync/diagramReconstruction";
+import { getValidationDialogMessages } from "./utils/validation/validationMessages";
 
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 
 export default function App(props) {
-    // Apply font underline to the key attribute label text
-    const keyAttrStyle = {};
-    keyAttrStyle[mxConstants.STYLE_FONTSTYLE] = mxConstants.FONT_UNDERLINE;
-
-    // Define a style that makes a cell non-resizable and non-movable
-    const notResizeableStyle = {};
-    notResizeableStyle[mxConstants.STYLE_RESIZABLE] = 0; // Makes the cell non-resizable
-
-    const weakEntityDecoratorStyle = {};
-    weakEntityDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
-    weakEntityDecoratorStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
-    weakEntityDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
-    weakEntityDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
-    weakEntityDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
-    weakEntityDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
-    weakEntityDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
-    weakEntityDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
-
-    const identifyingRelationDecoratorStyle = {};
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_FILLCOLOR] = "none";
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKECOLOR] =
-        ER_STROKE;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_STROKEWIDTH] = 2;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_MOVABLE] = 0;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_RESIZABLE] = 0;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_EDITABLE] = 0;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_ROTABLE] = 0;
-    identifyingRelationDecoratorStyle[mxConstants.STYLE_POINTER_EVENTS] = 0;
-
     const BUILD_LABEL = `Build: ${BUILD_DATE}`;
 
     const containerRef = React.useRef(null);
@@ -76,11 +129,12 @@ export default function App(props) {
         relations: [],
     });
     const [selected, setSelected] = React.useState(null);
+    const [selectionVersion, setSelectionVersion] = React.useState(0);
+
     const [entityWithAttributesHidden, setEntityWithAttributesHidden] =
         React.useState(null);
 
     const [refreshDiagram, setRefreshDiagram] = React.useState(false);
-    const addPrimaryAttrRef = React.useRef(null);
 
     const onSelected = React.useCallback(
         (evt) => {
@@ -88,6 +142,7 @@ export default function App(props) {
                 props.onSelected(evt);
             }
             setSelected(evt.cells?.[0] ?? null);
+            setSelectionVersion((prevVersion) => prevVersion + 1);
         },
         [props],
     );
@@ -95,667 +150,152 @@ export default function App(props) {
     function accessCell(idMx) {
         return graph.model.cells[idMx];
     }
+
     const getSelectedEntityData = () =>
-        diagramRef.current.entities.find(
-            (entity) => entity.idMx === selected?.id,
+        findEntityById(diagramRef.current, selected?.id);
+
+    const getSelectedEntityAttributeKeyData = () =>
+        getEntityAttributeKeySelectionData({
+            diagram: diagramRef.current,
+            selectedCell: selected,
+        });
+
+    const getSelectedEntityMultivaluedAttributeData = () =>
+        getEntityMultivaluedAttributeSelectionData({
+            diagram: diagramRef.current,
+            selectedCell: selected,
+        });
+
+    const getSelectedSimpleEntityAttributesForGrouping = () =>
+        getSimpleEntityAttributesGroupingSelectionData({
+            diagram: diagramRef.current,
+            selectionCells:
+                typeof graph?.getSelectionCells === "function"
+                    ? graph.getSelectionCells()
+                    : [],
+        });
+
+    const getCompositeAttributeNameFromUser = (owner) => {
+        const defaultName = generateUniqueAttributeName(
+            owner?.attributes,
+            "Atributo compuesto",
         );
 
-    const getSelectedEntityAttributeData = () => {
-        for (const entity of diagramRef.current.entities) {
-            const attribute = entity.attributes.find(
-                (attr) => attr.idMx === selected?.id,
-            );
+        const compositeName = window.prompt(
+            "Nombre del atributo compuesto:",
+            defaultName,
+        );
 
-            if (attribute) {
-                return {
-                    entity,
-                    attribute,
-                };
-            }
-        }
-
-        return null;
+        return compositeName?.trim() ?? "";
     };
 
-    const getSelectedRelationData = () =>
-        diagramRef.current.relations.find(
-            (relation) => relation.idMx === selected?.id,
+    const hasSiblingAttributeWithName = ({
+        owner,
+        name,
+        ignoredAttributeIds = [],
+    }) => {
+        const ignoredIds = new Set(ignoredAttributeIds);
+
+        return (owner?.attributes ?? []).some(
+            (attribute) =>
+                !ignoredIds.has(attribute.idMx) && attribute.name === name,
         );
+    };
+    const getSelectedRelationData = () =>
+        findRelationById(diagramRef.current, selected?.id) ?? null;
 
     const saveToLocalStorage = () => {
-        const diagramData = JSON.stringify(diagramRef.current);
-        localStorage.setItem("diagramData", diagramData);
+        saveDiagramToLocalStorage(diagramRef.current);
     };
 
-    const getAttributeStyleString = (attribute) => {
-        const baseStyle = [
-            "shape=ellipse",
-            "perimeter=ellipsePerimeter",
-            "align=center",
-            "verticalAlign=middle",
-            "spacing=0",
-            "whiteSpace=wrap",
-            "overflow=hidden",
-            "resizable=0",
-            `fillColor=${ER_FILL}`,
-            `strokeColor=${ER_STROKE}`,
-            "strokeWidth=1",
-            `fontColor=${ER_FONT}`,
-            `fontSize=${ER_FONT_SIZE}`,
-            `fontFamily=${ER_FONT_FAMILY}`,
-        ].join(";");
-
-        if (attribute?.key) {
-            return `${baseStyle};keyAttrStyle`;
-        }
-
-        return baseStyle;
-    };
-
-    const normalizeAttribute = (attribute) => ({
-        ...attribute,
-        key: attribute.key ?? false,
-        partialKey: attribute.partialKey ?? false,
-        cell: Array.isArray(attribute.cell)
-            ? [attribute.cell[0] ?? attribute.idMx, attribute.cell[1] ?? null]
-            : [attribute.idMx, null],
-    });
-
-    const normalizeEntity = (entity) => ({
-        ...entity,
-        weak: entity.weak ?? false,
-        ownerEntityId: entity.ownerEntityId ?? null,
-        identifyingRelationId: entity.identifyingRelationId ?? null,
-        attributes: (entity.attributes || []).map(normalizeAttribute),
-    });
-
-    const normalizeRelationAttribute = (attribute) => ({
-        ...attribute,
-        partialKey: attribute.partialKey ?? false,
-        cell: Array.isArray(attribute.cell)
-            ? [attribute.cell[0] ?? attribute.idMx, attribute.cell[1] ?? null]
-            : [attribute.idMx, null],
-    });
-
-    const normalizeRelation = (relation) => ({
-        ...relation,
-        isIdentifying: relation.isIdentifying ?? false,
-        attributes: (relation.attributes || []).map(normalizeRelationAttribute),
-    });
-
-    const normalizeDiagramData = (diagramData) => ({
-        entities: (diagramData?.entities || []).map(normalizeEntity),
-        relations: (diagramData?.relations || []).map(normalizeRelation),
-    });
-
-    const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
-    const WEAK_ENTITY_DECORATOR_OFFSET = 4;
-    const IDENTIFYING_RELATION_DECORATOR_SUFFIX = "__identifying_decorator";
-    const IDENTIFYING_RELATION_DECORATOR_OFFSET = 4;
-    const IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX =
-        "__identifying_weak_edge_decorator";
-    const IDENTIFYING_RELATION_EDGE_PARALLEL_GAP = 5;
-    const DISCRIMINANT_UNDERLINE_SUFFIX = "__discriminant_underline";
-    const DISCRIMINANT_UNDERLINE_MARGIN_X = 16;
-    const DISCRIMINANT_UNDERLINE_OFFSET_Y = 12;
-
-    const isWeakEntityDecoratorCell = (cell) =>
-        !!cell?.id && String(cell.id).endsWith(WEAK_ENTITY_DECORATOR_SUFFIX);
-
-    const isDiscriminantUnderlineCell = (cell) =>
-        !!cell?.id && String(cell.id).endsWith(DISCRIMINANT_UNDERLINE_SUFFIX);
-
-    const syncWeakEntityDecorator = (entityCell) => {
-        if (!entityCell) return;
-
-        const decorator = accessCell(getWeakEntityDecoratorId(entityCell.id));
-        if (!decorator || !decorator.geometry || !entityCell.geometry) return;
-
-        decorator.geometry.x =
-            entityCell.geometry.x + WEAK_ENTITY_DECORATOR_OFFSET;
-        decorator.geometry.y =
-            entityCell.geometry.y + WEAK_ENTITY_DECORATOR_OFFSET;
-        decorator.geometry.width = Math.max(
-            1,
-            entityCell.geometry.width - WEAK_ENTITY_DECORATOR_OFFSET * 2,
-        );
-        decorator.geometry.height = Math.max(
-            1,
-            entityCell.geometry.height - WEAK_ENTITY_DECORATOR_OFFSET * 2,
-        );
-
-        graph.refresh(decorator);
-        graph.orderCells(false, [decorator]);
-    };
-
-    const getWeakEntityDecoratorId = (entityId) =>
-        `${entityId}${WEAK_ENTITY_DECORATOR_SUFFIX}`;
-
-    const createWeakEntityDecorator = (entity) => {
-        const { width, height } = getEntityDimensions(entity.name);
-        return graph.insertVertex(
-            null,
-            getWeakEntityDecoratorId(entity.idMx),
-            "",
-            entity.position.x + WEAK_ENTITY_DECORATOR_OFFSET,
-            entity.position.y + WEAK_ENTITY_DECORATOR_OFFSET,
-            Math.max(1, width - WEAK_ENTITY_DECORATOR_OFFSET * 2),
-            Math.max(1, height - WEAK_ENTITY_DECORATOR_OFFSET * 2),
-            "weakEntityDecoratorStyle;shape=rectangle",
-        );
-    };
-    const ensureWeakEntityDecorator = (entityCell, entityData) => {
-        const existingDecorator = accessCell(
-            getWeakEntityDecoratorId(entityCell.id),
-        );
-
-        if (existingDecorator) {
-            syncWeakEntityDecorator(entityCell);
+    const showSaveFileResultToast = (result) => {
+        if (result === SAVE_FILE_RESULT.SAVED) {
+            toast.success("Archivo guardado correctamente.");
             return;
         }
 
-        createWeakEntityDecorator(entityData);
-        syncWeakEntityDecorator(entityCell);
-    };
-
-    const removeWeakEntityDecorator = (entityId) => {
-        const decorator = accessCell(getWeakEntityDecoratorId(entityId));
-        if (decorator) {
-            graph.removeCells([decorator]);
-        }
-    };
-
-    const isIdentifyingRelationDecoratorCell = (cell) =>
-        !!cell?.id &&
-        String(cell.id).endsWith(IDENTIFYING_RELATION_DECORATOR_SUFFIX);
-
-    const syncIdentifyingRelationDecorator = (relationCell) => {
-        if (!relationCell) return;
-
-        const decorator = accessCell(
-            getIdentifyingRelationDecoratorId(relationCell.id),
-        );
-        if (!decorator || !decorator.geometry || !relationCell.geometry) return;
-
-        decorator.geometry.x =
-            relationCell.geometry.x + IDENTIFYING_RELATION_DECORATOR_OFFSET;
-        decorator.geometry.y =
-            relationCell.geometry.y + IDENTIFYING_RELATION_DECORATOR_OFFSET;
-        decorator.geometry.width = Math.max(
-            1,
-            relationCell.geometry.width -
-                IDENTIFYING_RELATION_DECORATOR_OFFSET * 2,
-        );
-        decorator.geometry.height = Math.max(
-            1,
-            relationCell.geometry.height -
-                IDENTIFYING_RELATION_DECORATOR_OFFSET * 2,
-        );
-
-        graph.refresh(decorator);
-        graph.orderCells(false, [decorator]);
-    };
-
-    const getIdentifyingRelationDecoratorId = (relationId) =>
-        `${relationId}${IDENTIFYING_RELATION_DECORATOR_SUFFIX}`;
-
-    const createIdentifyingRelationDecorator = (relation) => {
-        const { width, height } = getRelationDimensions(relation.name);
-        return graph.insertVertex(
-            null,
-            getIdentifyingRelationDecoratorId(relation.idMx),
-            "",
-            relation.position.x + IDENTIFYING_RELATION_DECORATOR_OFFSET,
-            relation.position.y + IDENTIFYING_RELATION_DECORATOR_OFFSET,
-            Math.max(1, width - IDENTIFYING_RELATION_DECORATOR_OFFSET * 2),
-            Math.max(1, height - IDENTIFYING_RELATION_DECORATOR_OFFSET * 2),
-            "identifyingRelationDecoratorStyle;shape=rhombus",
-        );
-    };
-    const ensureIdentifyingRelationDecorator = (relationCell, relationData) => {
-        const existingDecorator = accessCell(
-            getIdentifyingRelationDecoratorId(relationCell.id),
-        );
-
-        if (existingDecorator) {
-            syncIdentifyingRelationDecorator(relationCell);
+        if (result === SAVE_FILE_RESULT.CANCELLED) {
+            toast("Guardado cancelado.");
             return;
         }
 
-        createIdentifyingRelationDecorator(relationData);
-        syncIdentifyingRelationDecorator(relationCell);
+        if (result === SAVE_FILE_RESULT.UNSUPPORTED) {
+            toast.error(
+                "Tu navegador no permite elegir dónde guardar el archivo.",
+            );
+            return;
+        }
+
+        toast.error("No se pudo guardar el archivo.");
     };
 
-    const removeIdentifyingRelationDecorator = (relationId) => {
-        const decorator = accessCell(
-            getIdentifyingRelationDecoratorId(relationId),
-        );
-        if (decorator) {
-            graph.removeCells([decorator]);
-        }
-    };
+    const {
+        getWeakEntityDecoratorId,
+        createWeakEntityDecorator,
+        syncWeakEntityDecorator,
+        ensureWeakEntityDecorator,
+        removeWeakEntityDecorator,
+    } = createEntityRenderingHelpers({
+        graph,
+        accessCell,
+    });
+
+    const {
+        syncSelfRelationEdges,
+        syncIdentifyingRelationDecorator,
+        ensureIdentifyingRelationDecorator,
+        removeIdentifyingRelationDecorator,
+        syncIdentifyingRelationEdgeDecorator,
+        ensureIdentifyingRelationEdgeDecorator,
+        removeIdentifyingRelationEdgeDecorator,
+    } = createRelationRenderingHelpers({
+        graph,
+        accessCell,
+        mxPoint,
+        mxGeometry,
+        getWeakSideOfIdentifyingRelation: (relationData) =>
+            getWeakSideOfIdentifyingRelation(diagramRef.current, relationData),
+    });
+
+    const {
+        getAttributesCells,
+        removeAttributesCells,
+        syncOwnerAttributePositions,
+        syncDiscriminantUnderline,
+        ensureDiscriminantUnderline,
+        syncMultivaluedAttributeDecorator,
+        ensureMultivaluedAttributeDecorator,
+        syncAttributeVisualRepresentation,
+        syncAttributeChildrenPositions,
+        removeAttributeConnectionEdges,
+        reparentAttributeCellToCurrentOwner,
+        createAttributeGraphCells,
+        setOwnerAttributesVisible,
+    } = createAttributeRenderingHelpers({
+        graph,
+        accessCell,
+        mxPoint,
+        mxGeometry,
+        updateAttributePosition,
+    });
 
     const clearIdentifyingRelationSemantics = (relationId) => {
-        if (!relationId) return;
-
-        const relation = diagramRef.current.relations.find(
-            (item) => item.idMx === relationId,
+        const { relation } = clearIdentifyingRelationDomainSemantics(
+            diagramRef.current,
+            relationId,
         );
 
-        if (relation) {
-            relation.isIdentifying = false;
-            removeIdentifyingRelationDecorator(relation.idMx);
-            removeIdentifyingRelationEdgeDecorator(relation.idMx);
+        if (!relation) return;
 
-            const relationCell = accessCell(relation.idMx);
-            if (relationCell) {
-                graph
-                    .getModel()
-                    .setStyle(relationCell, getRelationStyleString(relation));
-            }
-        }
+        removeIdentifyingRelationDecorator(relation.idMx);
+        removeIdentifyingRelationEdgeDecorator(relation.idMx);
 
-        diagramRef.current.entities.forEach((entity) => {
-            if (entity.identifyingRelationId === relationId) {
-                entity.identifyingRelationId = null;
-                entity.ownerEntityId = null;
-            }
-        });
-    };
-    const isIdentifyingRelationEdgeDecoratorCell = (cell) =>
-        !!cell?.id &&
-        String(cell.id).endsWith(IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX);
+        const relationCell = accessCell(relation.idMx);
 
-    const getIdentifyingRelationEdgeDecoratorId = (relationId) =>
-        `${relationId}${IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX}`;
-
-    const getWeakEntityForIdentifyingRelation = (relation) =>
-        diagramRef.current.entities.find(
-            (entity) => entity.identifyingRelationId === relation?.idMx,
-        ) ?? null;
-
-    const getWeakSideOfIdentifyingRelation = (relationData) => {
-        const weakEntity = getWeakEntityForIdentifyingRelation(relationData);
-        if (!weakEntity) return null;
-
-        if (relationData?.side1?.entity?.idMx === weakEntity.idMx) {
-            return relationData.side1;
-        }
-
-        if (relationData?.side2?.entity?.idMx === weakEntity.idMx) {
-            return relationData.side2;
-        }
-
-        return null;
-    };
-
-    const getWeakAndStrongSidesForRelation = (relationData) => {
-        const emptyResult = {
-            weakEntity: null,
-            strongEntity: null,
-            weakSide: null,
-            strongSide: null,
-        };
-
-        if (!relationData) {
-            return emptyResult;
-        }
-
-        const side1Entity =
-            diagramRef.current.entities.find(
-                (entity) => entity.idMx === relationData?.side1?.entity?.idMx,
-            ) ?? null;
-
-        const side2Entity =
-            diagramRef.current.entities.find(
-                (entity) => entity.idMx === relationData?.side2?.entity?.idMx,
-            ) ?? null;
-
-        if (!side1Entity || !side2Entity) {
-            return emptyResult;
-        }
-
-        // Identifying relationships may not be reflexive: a weak entity cannot
-        // identify itself.
-        if (side1Entity.idMx === side2Entity.idMx) {
-            return emptyResult;
-        }
-
-        const makeResult = (weakEntity, ownerEntity, weakSide, ownerSide) => ({
-            weakEntity,
-            // Keep the historical names so the rest of the component needs the
-            // smallest possible change. In cascaded weak entities this value is
-            // the owner entity, not necessarily a strong one.
-            strongEntity: ownerEntity,
-            weakSide,
-            strongSide: ownerSide,
-        });
-
-        const side1IsWeak = side1Entity.weak === true;
-        const side2IsWeak = side2Entity.weak === true;
-
-        if (side1IsWeak && !side2IsWeak) {
-            return makeResult(
-                side1Entity,
-                side2Entity,
-                relationData.side1,
-                relationData.side2,
-            );
-        }
-
-        if (!side1IsWeak && side2IsWeak) {
-            return makeResult(
-                side2Entity,
-                side1Entity,
-                relationData.side2,
-                relationData.side1,
-            );
-        }
-
-        if (!side1IsWeak && !side2IsWeak) {
-            return emptyResult;
-        }
-
-        // Both sides are weak. If one of them is already identified by a
-        // previous owner, it can act as the owner in a cascaded dependency.
-        // The other weak entity becomes the new dependent entity.
-        if (side1IsWeak && side2IsWeak) {
-            const side1AlreadyHasOwner =
-                !!side1Entity.identifyingRelationId &&
-                !!side1Entity.ownerEntityId;
-
-            const side2AlreadyHasOwner =
-                !!side2Entity.identifyingRelationId &&
-                !!side2Entity.ownerEntityId;
-
-            const side1CanBecomeDependent =
-                !side1Entity.identifyingRelationId ||
-                side1Entity.identifyingRelationId === relationData.idMx;
-
-            const side2CanBecomeDependent =
-                !side2Entity.identifyingRelationId ||
-                side2Entity.identifyingRelationId === relationData.idMx;
-
-            if (side1AlreadyHasOwner && side2CanBecomeDependent) {
-                return makeResult(
-                    side2Entity,
-                    side1Entity,
-                    relationData.side2,
-                    relationData.side1,
-                );
-            }
-
-            if (side2AlreadyHasOwner && side1CanBecomeDependent) {
-                return makeResult(
-                    side1Entity,
-                    side2Entity,
-                    relationData.side1,
-                    relationData.side2,
-                );
-            }
-        }
-
-        // Both sides are weak: this is valid only for cascaded weak entities.
-        // Infer the dependent weak side from the existing cardinalities. The
-        // dependent side must be N, and the owner side must be 1.
-        const side1Maximum = relationData.side1?.cardinality?.split(":")?.[1];
-        const side2Maximum = relationData.side2?.cardinality?.split(":")?.[1];
-
-        if (side1Maximum === "N" && side2Maximum === "1") {
-            return makeResult(
-                side1Entity,
-                side2Entity,
-                relationData.side1,
-                relationData.side2,
-            );
-        }
-
-        if (side2Maximum === "N" && side1Maximum === "1") {
-            return makeResult(
-                side2Entity,
-                side1Entity,
-                relationData.side2,
-                relationData.side1,
-            );
-        }
-
-        // If the relation is already marked as identifying, the dependent side
-        // can also be recovered from the entity metadata.
-        if (
-            side1Entity.identifyingRelationId === relationData.idMx &&
-            side2Entity.identifyingRelationId !== relationData.idMx
-        ) {
-            return makeResult(
-                side1Entity,
-                side2Entity,
-                relationData.side1,
-                relationData.side2,
-            );
-        }
-
-        if (
-            side2Entity.identifyingRelationId === relationData.idMx &&
-            side1Entity.identifyingRelationId !== relationData.idMx
-        ) {
-            return makeResult(
-                side2Entity,
-                side1Entity,
-                relationData.side2,
-                relationData.side1,
-            );
-        }
-
-        return emptyResult;
-    };
-
-    const getCascadedWeakConversionCandidate = (relationData) => {
-        if (!relationData) return null;
-
-        const side1Entity =
-            diagramRef.current.entities.find(
-                (entity) => entity.idMx === relationData?.side1?.entity?.idMx,
-            ) ?? null;
-
-        const side2Entity =
-            diagramRef.current.entities.find(
-                (entity) => entity.idMx === relationData?.side2?.entity?.idMx,
-            ) ?? null;
-
-        if (!side1Entity || !side2Entity) {
-            return null;
-        }
-
-        if (side1Entity.idMx === side2Entity.idMx) {
-            return null;
-        }
-
-        // This helper only handles the UX case where both entities are still strong.
-        if (side1Entity.weak || side2Entity.weak) {
-            return null;
-        }
-
-        const side1OwnsWeakEntities = diagramRef.current.entities.some(
-            (entity) =>
-                entity.weak === true &&
-                entity.ownerEntityId === side1Entity.idMx &&
-                !!entity.identifyingRelationId,
-        );
-
-        const side2OwnsWeakEntities = diagramRef.current.entities.some(
-            (entity) =>
-                entity.weak === true &&
-                entity.ownerEntityId === side2Entity.idMx &&
-                !!entity.identifyingRelationId,
-        );
-
-        // If none or both can be inferred, do not guess.
-        if (side1OwnsWeakEntities === side2OwnsWeakEntities) {
-            return null;
-        }
-
-        if (side1OwnsWeakEntities) {
-            return {
-                weakEntity: side1Entity,
-                ownerEntity: side2Entity,
-            };
-        }
-
-        return {
-            weakEntity: side2Entity,
-            ownerEntity: side1Entity,
-        };
-    };
-
-    const getParallelTerminalPointsFromMainEdge = (mainEdge) => {
-        if (!mainEdge) return null;
-
-        const source = graph.getModel().getTerminal(mainEdge, true);
-        const target = graph.getModel().getTerminal(mainEdge, false);
-
-        if (source) {
-            graph.view.invalidate(source);
-        }
-
-        if (target) {
-            graph.view.invalidate(target);
-        }
-
-        graph.view.invalidate(mainEdge);
-        graph.view.validate();
-
-        const state = graph.view.getState(mainEdge);
-        const absolutePoints = state?.absolutePoints?.filter(Boolean);
-
-        if (!absolutePoints || absolutePoints.length < 2) return null;
-
-        const start = absolutePoints[0];
-        const end = absolutePoints[absolutePoints.length - 1];
-
-        const dx = end.x - start.x;
-        const dy = end.y - start.y;
-        const length = Math.hypot(dx, dy) || 1;
-
-        const normalX = -dy / length;
-        const normalY = dx / length;
-
-        return {
-            source: new mxPoint(
-                start.x + normalX * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
-                start.y + normalY * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
-            ),
-            target: new mxPoint(
-                end.x + normalX * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
-                end.y + normalY * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
-            ),
-        };
-    };
-
-    const createIdentifyingRelationEdgeDecorator = (
-        relationCell,
-        relationData,
-    ) => {
-        const weakSide = getWeakSideOfIdentifyingRelation(relationData);
-        const mainEdge = accessCell(weakSide?.edgeId);
-
-        if (!mainEdge) return null;
-
-        const parallelPoints = getParallelTerminalPointsFromMainEdge(mainEdge);
-        if (!parallelPoints) return null;
-
-        const edge = graph.insertEdge(
-            null,
-            getIdentifyingRelationEdgeDecoratorId(relationData.idMx),
-            null,
-            null,
-            null,
-            [
-                `strokeColor=${ER_STROKE}`,
-                "strokeWidth=1",
-                "endArrow=none",
-                "dashed=0",
-                "editable=0",
-                "movable=0",
-                "resizable=0",
-                "rounded=0",
-                "pointerEvents=0",
-                "edgeStyle=none",
-            ].join(";"),
-        );
-
-        if (!edge.geometry) {
-            edge.geometry = new mxGeometry();
-        }
-
-        edge.geometry.relative = false;
-        edge.geometry.points = null;
-        edge.geometry.setTerminalPoint(parallelPoints.source, true);
-        edge.geometry.setTerminalPoint(parallelPoints.target, false);
-
-        graph.orderCells(true, [edge]);
-        return edge;
-    };
-
-    const syncIdentifyingRelationEdgeDecorator = (
-        relationCell,
-        relationData,
-    ) => {
-        const edge = accessCell(
-            getIdentifyingRelationEdgeDecoratorId(relationData.idMx),
-        );
-        const weakSide = getWeakSideOfIdentifyingRelation(relationData);
-        const mainEdge = accessCell(weakSide?.edgeId);
-
-        if (!edge || !mainEdge) return;
-
-        const parallelPoints = getParallelTerminalPointsFromMainEdge(mainEdge);
-        if (!parallelPoints) return;
-
-        graph.getModel().beginUpdate();
-        try {
-            graph.getModel().setTerminal(edge, null, true);
-            graph.getModel().setTerminal(edge, null, false);
-
-            const geometry = edge.geometry
-                ? edge.geometry.clone()
-                : new mxGeometry();
-
-            geometry.relative = false;
-            geometry.points = null;
-            geometry.setTerminalPoint(parallelPoints.source, true);
-            geometry.setTerminalPoint(parallelPoints.target, false);
-
-            graph.getModel().setGeometry(edge, geometry);
-        } finally {
-            graph.getModel().endUpdate();
-        }
-
-        graph.refresh(edge);
-        graph.orderCells(true, [edge]);
-    };
-
-    const ensureIdentifyingRelationEdgeDecorator = (
-        relationCell,
-        relationData,
-    ) => {
-        const existingEdge = accessCell(
-            getIdentifyingRelationEdgeDecoratorId(relationData.idMx),
-        );
-
-        if (existingEdge) {
-            syncIdentifyingRelationEdgeDecorator(relationCell, relationData);
-            return;
-        }
-
-        createIdentifyingRelationEdgeDecorator(relationCell, relationData);
-        syncIdentifyingRelationEdgeDecorator(relationCell, relationData);
-    };
-
-    const removeIdentifyingRelationEdgeDecorator = (relationId) => {
-        const edge = accessCell(
-            getIdentifyingRelationEdgeDecoratorId(relationId),
-        );
-        if (edge) {
-            graph.removeCells([edge]);
+        if (relationCell) {
+            graph
+                .getModel()
+                .setStyle(relationCell, getRelationStyleString(relation));
         }
     };
 
@@ -779,369 +319,80 @@ export default function App(props) {
     const removeRelationAttributes = (relationData) => {
         if (!relationData) return;
 
-        const attributeCellsToRemove = relationData.attributes
-            .flatMap((attribute) => [
-                accessCell(attribute?.cell?.[0]),
-                accessCell(attribute?.cell?.[1]),
-            ])
-            .filter(Boolean);
+        const removedAttributes = removeAllAttributesFromOwner(relationData);
 
-        if (attributeCellsToRemove.length > 0) {
-            graph.removeCells(attributeCellsToRemove);
-        }
+        removeAttributesCells(removedAttributes);
 
-        relationData.attributes = [];
         relationData.canHoldAttributes = false;
     };
 
-    const applyIdentifyingRelationCardinalities = (relationData) => {
-        const { weakSide, strongSide } =
-            getWeakAndStrongSidesForRelation(relationData);
+    const removeRelationConfiguration = (relation) => {
+        if (!relation) return;
 
-        if (!weakSide || !strongSide) {
-            return false;
-        }
+        clearIdentifyingRelationSemantics(relation.idMx);
 
-        weakSide.cardinality = "0:N";
-        strongSide.cardinality = "1:1";
+        removeRelationConfigurationGraphCells({
+            graph,
+            relation,
+            accessCell,
+            getAttributesCells,
+        });
 
-        removeRelationAttributes(relationData);
-        syncRelationCardinalityLabels(relationData);
-
-        return true;
+        resetRelationSides(relation);
     };
-
-    const getDiscriminantUnderlineId = (attributeId) =>
-        `${attributeId}${DISCRIMINANT_UNDERLINE_SUFFIX}`;
-
-    const getDiscriminantUnderlinePoints = (attributeCell) => {
-        if (!attributeCell?.geometry) return null;
-
-        const { x, y, width, height } = attributeCell.geometry;
-
-        const startX = x + DISCRIMINANT_UNDERLINE_MARGIN_X;
-        const endX =
-            x +
-            Math.max(
-                DISCRIMINANT_UNDERLINE_MARGIN_X + 1,
-                width - DISCRIMINANT_UNDERLINE_MARGIN_X,
-            );
-        const underlineY = y + height / 2 + DISCRIMINANT_UNDERLINE_OFFSET_Y;
-
-        return {
-            source: new mxPoint(startX, underlineY),
-            target: new mxPoint(endX, underlineY),
-        };
-    };
-
-    const createDiscriminantUnderline = (attributeCell) => {
-        const points = getDiscriminantUnderlinePoints(attributeCell);
-        if (!points) return null;
-
-        const edge = graph.insertEdge(
-            null,
-            getDiscriminantUnderlineId(attributeCell.id),
-            null,
-            null,
-            null,
-            [
-                `strokeColor=${ER_FONT}`,
-                "strokeWidth=2",
-                "endArrow=none",
-                "dashed=1",
-                "editable=0",
-                "movable=0",
-                "resizable=0",
-                "rounded=0",
-                "pointerEvents=0",
-                "edgeStyle=none",
-            ].join(";"),
-        );
-
-        if (!edge.geometry) {
-            edge.geometry = new mxGeometry();
-        }
-
-        edge.geometry.relative = false;
-        edge.geometry.points = null;
-        edge.geometry.setTerminalPoint(points.source, true);
-        edge.geometry.setTerminalPoint(points.target, false);
-
-        graph.orderCells(false, [edge]);
-        return edge;
-    };
-
-    const syncDiscriminantUnderline = (attributeCell) => {
-        if (!attributeCell) return;
-
-        const underline = accessCell(
-            getDiscriminantUnderlineId(attributeCell.id),
-        );
-        if (!underline) return;
-
-        const points = getDiscriminantUnderlinePoints(attributeCell);
-        if (!points) return;
-
-        graph.getModel().beginUpdate();
-        try {
-            graph.getModel().setTerminal(underline, null, true);
-            graph.getModel().setTerminal(underline, null, false);
-
-            if (!underline.geometry) {
-                underline.geometry = new mxGeometry();
-            }
-
-            underline.geometry.relative = false;
-            underline.geometry.points = null;
-            underline.geometry.setTerminalPoint(points.source, true);
-            underline.geometry.setTerminalPoint(points.target, false);
-        } finally {
-            graph.getModel().endUpdate();
-        }
-
-        graph.refresh(underline);
-        graph.orderCells(false, [underline]);
-    };
-
-    const ensureDiscriminantUnderline = (attributeCell) => {
-        const existingUnderline = accessCell(
-            getDiscriminantUnderlineId(attributeCell.id),
-        );
-
-        if (existingUnderline) {
-            syncDiscriminantUnderline(attributeCell);
-            return;
-        }
-
-        createDiscriminantUnderline(attributeCell);
-        syncDiscriminantUnderline(attributeCell);
-    };
-
-    const removeDiscriminantUnderline = (attributeId) => {
-        const underline = accessCell(getDiscriminantUnderlineId(attributeId));
-        if (underline) {
-            graph.removeCells([underline]);
-        }
-    };
-
-    const getAttributeDataById = (attributeId) => {
-        for (const entity of diagramRef.current.entities) {
-            const attribute = entity.attributes.find(
-                (attr) => attr.idMx === attributeId,
-            );
-            if (attribute) return attribute;
-        }
-
-        for (const relation of diagramRef.current.relations) {
-            const attribute = relation.attributes.find(
-                (attr) => attr.idMx === attributeId,
-            );
-            if (attribute) return attribute;
-        }
-
-        return null;
-    };
-
-    const syncAttributeSemanticRepresentation = (attribute) => {
-        const attributeCell = accessCell(attribute.idMx);
-
-        if (!attributeCell) return;
-
-        graph
-            .getModel()
-            .setStyle(attributeCell, getAttributeStyleString(attribute));
-
-        if (attribute.partialKey) {
-            ensureDiscriminantUnderline(attributeCell);
-        } else {
-            removeDiscriminantUnderline(attribute.idMx);
-        }
-    };
+    const getAttributeDataById = (attributeId) =>
+        findAttributeTreeOwnerById(diagramRef.current, attributeId)
+            ?.attribute ?? null;
 
     const convertEntityPrimaryKeyToPartialKey = (entity) => {
-        const discriminantCandidate =
-            entity.attributes.find((attribute) => attribute.key) ??
-            entity.attributes.find((attribute) => attribute.partialKey) ??
-            null;
+        const changedAttributes = convertPrimaryKeyToPartialKey(
+            entity?.attributes,
+        );
 
-        entity.attributes.forEach((attribute) => {
-            attribute.key = false;
-            attribute.partialKey =
-                discriminantCandidate?.idMx === attribute.idMx;
-
-            syncAttributeSemanticRepresentation(attribute);
-        });
+        changedAttributes.forEach(syncAttributeVisualRepresentation);
     };
 
     const convertEntityPartialKeyToPrimaryKey = (entity) => {
-        const primaryKeyCandidate =
-            entity.attributes.find((attribute) => attribute.partialKey) ??
-            entity.attributes.find((attribute) => attribute.key) ??
-            null;
+        const changedAttributes = convertPartialKeyToPrimaryKey(
+            entity?.attributes,
+        );
 
-        entity.attributes.forEach((attribute) => {
-            attribute.partialKey = false;
-            attribute.key = primaryKeyCandidate?.idMx === attribute.idMx;
+        changedAttributes.forEach(syncAttributeVisualRepresentation);
+    };
 
-            syncAttributeSemanticRepresentation(attribute);
+    const recreateGraphFromDiagram = (diagramData) => {
+        if (!diagramData) return;
+
+        diagramRef.current = diagramData;
+
+        reconstructDiagramGraph({
+            graph,
+            diagram: diagramRef.current,
+            accessCell,
+            mxPoint,
+            createWeakEntityDecorator,
+            ensureDiscriminantUnderline,
+            ensureMultivaluedAttributeDecorator,
+            ensureIdentifyingRelationDecorator,
+            ensureIdentifyingRelationEdgeDecorator,
         });
     };
+
     const recreateGraphFromLocalStorage = () => {
-        const recreateAttribute = (attribute, source) => {
-            let target;
-            let edge;
-            const { width, height } = getAttributeDimensions(attribute.name);
-            // Recreate attribute
-            target = graph.insertVertex(
-                null,
-                attribute.idMx,
-                attribute.name,
-                attribute.position.x,
-                attribute.position.y,
-                width,
-                height,
-                getAttributeStyleString(attribute),
-            );
+        const savedData = loadDiagramFromLocalStorage();
 
-            const storedEdgeId = attribute.cell?.at(1) ?? null;
+        recreateGraphFromDiagram(savedData);
+    };
 
-            edge = graph.insertEdge(source, storedEdgeId, null, source, target);
+    const syncAndPersistDiagramData = () => {
+        syncDiagramDataFromGraph({
+            diagram: diagramRef.current,
+            graph,
+            accessCell,
+            updateAttributePosition,
+        });
 
-            attribute.cell = [target.id, edge.id];
-
-            if (attribute.partialKey) {
-                ensureDiscriminantUnderline(target);
-            }
-
-            graph.orderCells(true, [edge]); // Move front the selected entity so the new vertex aren't on top
-        };
-        const recreateEntity = (entity) => {
-            const { width, height } = getEntityDimensions(entity.name);
-
-            const source = graph.insertVertex(
-                null,
-                entity.idMx,
-                entity.name,
-                entity.position.x,
-                entity.position.y,
-                width,
-                height,
-                getEntityStyleString(),
-            );
-
-            if (entity.weak) {
-                const decorator = createWeakEntityDecorator(entity);
-                graph.orderCells(false, [decorator]); // Move front the selected entity so the new vertex aren't on top
-            }
-
-            for (const attribute of entity.attributes) {
-                recreateAttribute(attribute, source);
-            }
-        };
-
-        const recreateRelation = (relation) => {
-            const { width, height } = getRelationDimensions(relation.name);
-
-            const source = graph.insertVertex(
-                null,
-                relation.idMx,
-                relation.name,
-                relation.position.x,
-                relation.position.y,
-                width,
-                height,
-                getRelationStyleString(relation),
-            );
-
-            if (relation.isIdentifying) {
-                ensureIdentifyingRelationDecorator(source, relation);
-            }
-
-            for (const attribute of relation.attributes) {
-                recreateAttribute(attribute, source);
-            }
-
-            if (relation.side1.idMx !== "" && relation.side2.idMx !== "") {
-                const target1 = accessCell(relation.side1.entity.idMx);
-                const target2 = accessCell(relation.side2.entity.idMx);
-
-                const edge1 = graph.insertEdge(
-                    source,
-                    relation.side1.edgeId, // id
-                    null,
-                    source,
-                    target1,
-                );
-                const edge2 = graph.insertEdge(
-                    source,
-                    relation.side2.edgeId, // id
-                    null,
-                    source,
-                    target2,
-                );
-                const cardinality1 = graph.insertVertex(
-                    edge1,
-                    relation.side1.cell,
-                    relation.side1.cardinality === ""
-                        ? "X:X"
-                        : relation.side1.cardinality,
-                    0,
-                    0,
-                    1,
-                    1,
-                    getCardinalityStyleString(),
-                    true,
-                );
-                const cardinality2 = graph.insertVertex(
-                    edge2,
-                    relation.side2.cell,
-                    relation.side2.cardinality === ""
-                        ? "X:X"
-                        : relation.side2.cardinality,
-                    0,
-                    0,
-                    1,
-                    1,
-                    getCardinalityStyleString(),
-                    true,
-                );
-                graph.updateCellSize(cardinality1);
-                graph.updateCellSize(cardinality2);
-                if (target1 && target2) {
-                    if (target1.id === target2.id) {
-                        const x1 =
-                            target1.geometry.x + target1.geometry.width / 2;
-                        const x2 =
-                            source.geometry.x + source.geometry.width / 2;
-                        const y1 =
-                            target1.geometry.y + target1.geometry.height / 2;
-                        const y2 =
-                            source.geometry.y + source.geometry.height / 2;
-
-                        edge1.geometry.points = [new mxPoint(x2, y1)];
-                        edge2.geometry.points = [new mxPoint(x1, y2)];
-                    }
-                }
-                if (relation.isIdentifying) {
-                    ensureIdentifyingRelationEdgeDecorator(source, relation);
-                }
-                graph.orderCells(true, [edge1, edge2]); // Move front the selected entity so the new vertex aren't on top
-            }
-        };
-
-        // Recreate the graph
-        if (localStorage.getItem("diagramData")) {
-            const savedData = JSON.parse(localStorage.getItem("diagramData"));
-            diagramRef.current = normalizeDiagramData(savedData); // Deep clone the saved data
-
-            for (const entity of diagramRef.current.entities) {
-                recreateEntity(entity);
-            }
-
-            for (const relation of diagramRef.current.relations) {
-                recreateRelation(relation);
-            }
-        }
+        saveToLocalStorage();
     };
 
     React.useEffect(() => {
@@ -1150,21 +401,6 @@ export default function App(props) {
             setGraph(new mxGraph(containerRef.current));
         }
         if (graph) {
-            // Override the isCellSelectable function
-            mxGraph.prototype.isCellSelectable = function (cell) {
-                if (
-                    this.model.isEdge(cell) ||
-                    isWeakEntityDecoratorCell(cell) ||
-                    isIdentifyingRelationDecoratorCell(cell) ||
-                    isIdentifyingRelationEdgeDecoratorCell(cell) ||
-                    isDiscriminantUnderlineCell(cell)
-                ) {
-                    return false;
-                }
-                // Default behavior for other cells
-                return this.isCellsSelectable() && !this.isCellLocked(cell);
-            };
-
             // Expose mxGraph instance only for Playwright E2E
             if (typeof window !== "undefined" && window.__PW__) {
                 window.__DEBUG_GRAPH__ = graph;
@@ -1174,168 +410,38 @@ export default function App(props) {
 
             graph.getSelectionModel().addListener(mxEvent.CHANGE, onSelected);
 
-            const defaultEdgeStyle = graph
-                .getStylesheet()
-                .getDefaultEdgeStyle();
-            defaultEdgeStyle[mxConstants.STYLE_ENDARROW] = "";
-            defaultEdgeStyle[mxConstants.STYLE_STROKECOLOR] = ER_STROKE;
-            defaultEdgeStyle[mxConstants.STYLE_FONTCOLOR] = ER_FONT;
-            defaultEdgeStyle[mxConstants.STYLE_PERIMETER_SPACING] = 0;
-            defaultEdgeStyle[mxConstants.STYLE_SOURCE_PERIMETER_SPACING] = 0;
-            defaultEdgeStyle[mxConstants.STYLE_TARGET_PERIMETER_SPACING] = 0;
+            installDiagramEditorStyles({ graph, mxConstants });
 
-            graph.getStylesheet().putCellStyle("keyAttrStyle", keyAttrStyle);
-            graph
-                .getStylesheet()
-                .putCellStyle(
-                    "weakEntityDecoratorStyle",
-                    weakEntityDecoratorStyle,
-                );
-            graph
-                .getStylesheet()
-                .putCellStyle(
-                    "identifyingRelationDecoratorStyle",
-                    identifyingRelationDecoratorStyle,
-                );
-            graph
-                .getStylesheet()
-                .putCellStyle("notResizeableStyle", notResizeableStyle);
+            const cleanupGraphInteractionOverrides =
+                installGraphInteractionOverrides({
+                    graph,
+                    mxGraph,
+                    accessCell,
+                    getDiagram: () => diagramRef.current,
+                });
 
-            const originalCellLabelChanged = graph.cellLabelChanged;
-
-            graph.cellLabelChanged = function (cell, newValue, autoSize) {
-                originalCellLabelChanged.call(this, cell, newValue, autoSize);
-
-                if (!cell?.style) return;
-
-                this.getModel().beginUpdate();
-                try {
-                    if (cell.style.includes("shape=ellipse")) {
-                        const { width, height } =
-                            getAttributeDimensions(newValue);
-                        cell.geometry.width = width;
-                        cell.geometry.height = height;
-                        const attributeData = getAttributeDataById(cell.id);
-                        if (attributeData?.partialKey) {
-                            syncDiscriminantUnderline(cell);
-                        }
-                    } else if (
-                        cell.style.includes("shape=rectangle") &&
-                        !isWeakEntityDecoratorCell(cell)
-                    ) {
-                        const { width, height } = getEntityDimensions(newValue);
-                        cell.geometry.width = width;
-                        cell.geometry.height = height;
-
-                        const entityData = diagramRef.current.entities.find(
-                            (entity) => entity.idMx === cell.id,
-                        );
-
-                        if (entityData?.weak) {
-                            syncWeakEntityDecorator(cell);
-                        }
-                        if (entityData?.identifyingRelationId) {
-                            const relationData =
-                                diagramRef.current.relations.find(
-                                    (relation) =>
-                                        relation.idMx ===
-                                        entityData.identifyingRelationId,
-                                );
-                            const relationCell = accessCell(relationData?.idMx);
-
-                            if (relationData && relationCell) {
-                                syncIdentifyingRelationEdgeDecorator(
-                                    relationCell,
-                                    relationData,
-                                );
-                            }
-                        }
-                    } else if (
-                        cell.style.includes("shape=rhombus") &&
-                        !isIdentifyingRelationDecoratorCell(cell)
-                    ) {
-                        const { width, height } =
-                            getRelationDimensions(newValue);
-                        cell.geometry.width = width;
-                        cell.geometry.height = height;
-                        const relationData = diagramRef.current.relations.find(
-                            (relation) => relation.idMx === cell.id,
-                        );
-
-                        if (relationData?.isIdentifying) {
-                            syncIdentifyingRelationDecorator(cell);
-                            syncIdentifyingRelationEdgeDecorator(
-                                cell,
-                                relationData,
-                            );
-                        }
-                    }
-                } finally {
-                    this.getModel().endUpdate();
-                }
-
-                this.refresh(cell);
-            };
-
-            const getUnderlyingInteractiveCell = (cell) => {
-                if (!cell?.id) return cell;
-
-                const id = String(cell.id);
-
-                if (id.endsWith(WEAK_ENTITY_DECORATOR_SUFFIX)) {
-                    return accessCell(
-                        id.slice(0, -WEAK_ENTITY_DECORATOR_SUFFIX.length),
-                    );
-                }
-
-                if (id.endsWith(IDENTIFYING_RELATION_DECORATOR_SUFFIX)) {
-                    return accessCell(
-                        id.slice(
-                            0,
-                            -IDENTIFYING_RELATION_DECORATOR_SUFFIX.length,
+            const cleanupGraphLabelEditingHandler =
+                installGraphLabelEditingHandler({
+                    graph,
+                    getDiagram: () => diagramRef.current,
+                    accessCell,
+                    isWeakEntity,
+                    isIdentifyingRelation,
+                    isWeakEntityDecoratorCell,
+                    isIdentifyingRelationDecoratorCell,
+                    findEntityById,
+                    findRelationById,
+                    getAttributeOwnerById: (attributeId) =>
+                        findAttributeTreeOwnerById(
+                            diagramRef.current,
+                            attributeId,
                         ),
-                    );
-                }
-
-                if (id.endsWith(IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX)) {
-                    return accessCell(
-                        id.slice(
-                            0,
-                            -IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX.length,
-                        ),
-                    );
-                }
-
-                if (id.endsWith(DISCRIMINANT_UNDERLINE_SUFFIX)) {
-                    return accessCell(
-                        id.slice(0, -DISCRIMINANT_UNDERLINE_SUFFIX.length),
-                    );
-                }
-
-                return cell;
-            };
-
-            const originalGetCellForEvent = graph.getCellForEvent;
-
-            graph.getCellForEvent = function (evt) {
-                const cell = originalGetCellForEvent.call(this, evt);
-                return getUnderlyingInteractiveCell(cell);
-            };
-
-            const originalGetInitialCellForEvent =
-                graph.graphHandler.getInitialCellForEvent;
-
-            graph.graphHandler.getInitialCellForEvent = function (me) {
-                const cell = originalGetInitialCellForEvent.call(this, me);
-                return getUnderlyingInteractiveCell(cell);
-            };
-
-            const originalDblClick = graph.dblClick;
-
-            graph.dblClick = function (evt, cell) {
-                const interactiveCell = getUnderlyingInteractiveCell(cell);
-                originalDblClick.call(this, evt, interactiveCell);
-            };
+                    syncAttributeVisualRepresentation,
+                    syncWeakEntityDecorator,
+                    syncIdentifyingRelationDecorator,
+                    syncIdentifyingRelationEdgeDecorator,
+                    updateDiagramData: syncAndPersistDiagramData,
+                });
 
             recreateGraphFromLocalStorage();
 
@@ -1343,73 +449,11 @@ export default function App(props) {
                 graph
                     .getSelectionModel()
                     .removeListener(mxEvent.CHANGE, onSelected);
-                graph.cellLabelChanged = originalCellLabelChanged;
-                graph.getCellForEvent = originalGetCellForEvent;
-                graph.graphHandler.getInitialCellForEvent =
-                    originalGetInitialCellForEvent;
-                graph.dblClick = originalDblClick;
+                cleanupGraphLabelEditingHandler();
+                cleanupGraphInteractionOverrides();
             };
         }
     }, [graph, onSelected]);
-
-    const updateEntityAttributes = (entity) => {
-        if (entity.attributes) {
-            entity.attributes.forEach((attr) => {
-                if (graph.model.cells.hasOwnProperty(attr.idMx)) {
-                    const cellDataAttr = accessCell(attr.idMx);
-
-                    let cellEdgeAttr = null;
-                    const storedEdgeId = attr?.cell?.[1];
-
-                    if (storedEdgeId) {
-                        cellEdgeAttr = accessCell(storedEdgeId);
-                    }
-
-                    if (!cellEdgeAttr && cellDataAttr) {
-                        const connectedEdges =
-                            graph.getEdges(cellDataAttr) || [];
-                        cellEdgeAttr = connectedEdges[0] ?? null;
-                    }
-
-                    if (!cellDataAttr || !cellEdgeAttr) {
-                        return;
-                    }
-
-                    attr.name = cellDataAttr.value;
-                    attr.position.x = cellDataAttr.geometry.x;
-                    attr.position.y = cellDataAttr.geometry.y;
-                    attr.cell = [cellDataAttr.id, cellEdgeAttr.id];
-                }
-            });
-        }
-    };
-
-    const updateDiagramData = () => {
-        diagramRef.current.entities.forEach((entity) => {
-            if (graph.model.cells.hasOwnProperty(entity.idMx)) {
-                const cellData = accessCell(entity.idMx);
-
-                entity.name = cellData.value;
-                entity.position.x = cellData.geometry.x;
-                entity.position.y = cellData.geometry.y;
-
-                updateEntityAttributes(entity);
-            }
-        });
-
-        diagramRef.current.relations.forEach((relation) => {
-            if (graph.model.cells.hasOwnProperty(relation.idMx)) {
-                const cellData = accessCell(relation.idMx);
-
-                relation.name = cellData.value;
-                relation.position.x = cellData.geometry.x;
-                relation.position.y = cellData.geometry.y;
-
-                updateEntityAttributes(relation);
-            }
-        });
-        saveToLocalStorage();
-    };
 
     const refreshGraph = () => {
         const graphView = graph.getDefaultParent();
@@ -1417,237 +461,47 @@ export default function App(props) {
         view.refresh();
     };
 
-    const handleEntityMove = (selected) => {
-        const selectedEntityDiag = diagramRef.current.entities.find(
-            (entity) => entity.idMx === selected.id,
-        );
-
-        selectedEntityDiag?.attributes.forEach((attribute) => {
-            const attributeCell = accessCell(attribute.cell.at(0));
-            attributeCell.geometry.x = selected.geometry.x + attribute.offsetX;
-            attributeCell.geometry.y = selected.geometry.y + attribute.offsetY;
-
-            if (attribute.partialKey) {
-                syncDiscriminantUnderline(attributeCell);
-            }
-        });
-
-        if (selectedEntityDiag?.weak) {
-            syncWeakEntityDecorator(selected);
-        }
-
-        if (selectedEntityDiag?.identifyingRelationId) {
-            const relationData = diagramRef.current.relations.find(
-                (relation) =>
-                    relation.idMx === selectedEntityDiag.identifyingRelationId,
-            );
-            const relationCell = accessCell(relationData?.idMx);
-
-            if (relationData && relationCell) {
-                syncIdentifyingRelationEdgeDecorator(
-                    relationCell,
-                    relationData,
-                );
-            }
-        }
-
-        refreshGraph();
-    };
-
-    const handleRelationMove = (selected) => {
-        const selectedRelationDiag = diagramRef.current.relations.find(
-            (relation) => relation.idMx === selected.id,
-        );
-        if (selectedRelationDiag.canHoldAttributes) {
-            selectedRelationDiag?.attributes.forEach((attribute) => {
-                const attributeCell = accessCell(attribute.cell.at(0));
-                attributeCell.geometry.x =
-                    selected.geometry.x + attribute.offsetX;
-                attributeCell.geometry.y =
-                    selected.geometry.y + attribute.offsetY;
-
-                if (attribute.partialKey) {
-                    syncDiscriminantUnderline(attributeCell);
-                }
-            });
-            refreshGraph();
-        }
-        if (
-            selectedRelationDiag.side1.entity.idMx !== "" &&
-            selectedRelationDiag.side2.entity.idMx !== "" &&
-            selectedRelationDiag.side1.entity.idMx ===
-                selectedRelationDiag.side2.entity.idMx
-        ) {
-            const target1 = accessCell(selectedRelationDiag.side1.entity.idMx);
-            const source = selected;
-            const edge1 = accessCell(selectedRelationDiag.side1.edgeId);
-            const edge2 = accessCell(selectedRelationDiag.side2.edgeId);
-
-            const x1 = target1.geometry.x + target1.geometry.width / 2;
-            const x2 = source.geometry.x + source.geometry.width / 2;
-            const y1 = target1.geometry.y + target1.geometry.height / 2;
-            const y2 = source.geometry.y + source.geometry.height / 2;
-
-            edge1.geometry.points = [new mxPoint(x2, y1)];
-            edge2.geometry.points = [new mxPoint(x1, y2)];
-        }
-        if (selectedRelationDiag?.isIdentifying) {
-            syncIdentifyingRelationDecorator(selected);
-            syncIdentifyingRelationEdgeDecorator(
-                selected,
-                selectedRelationDiag,
-            );
-        }
-    };
-
-    const handleAttributeMove = (selected) => {
-        let parentEntity = diagramRef.current.entities.find((entity) =>
-            entity.attributes.some((attr) => attr.idMx === selected.id),
-        );
-        // If no parent entity found, check if it's an N:M relation
-        if (!parentEntity) {
-            parentEntity = diagramRef.current.relations.find((relation) =>
-                relation.attributes.some((attr) => attr.idMx === selected.id),
-            );
-        }
-
-        if (parentEntity) {
-            const attribute = parentEntity.attributes.find(
-                (attr) => attr.idMx === selected.id,
-            );
-
-            if (attribute) {
-                // Update offset
-                attribute.offsetX =
-                    selected.geometry.x - parentEntity.position.x;
-                attribute.offsetY =
-                    selected.geometry.y - parentEntity.position.y;
-                if (attribute.partialKey) {
-                    syncDiscriminantUnderline(selected);
-                }
-            }
-        }
-    };
-
-    const onCellsResized = (evt) => {
-        const cells = evt.getProperty("cells") || [];
-
-        cells.forEach((cell) => {
-            if (
-                cell?.style?.includes("shape=rectangle") &&
-                !isWeakEntityDecoratorCell(cell)
-            ) {
-                const entityData = diagramRef.current.entities.find(
-                    (entity) => entity.idMx === cell.id,
-                );
-
-                if (entityData?.weak) {
-                    syncWeakEntityDecorator(cell);
-                }
-
-                if (entityData?.identifyingRelationId) {
-                    const relationData = diagramRef.current.relations.find(
-                        (relation) =>
-                            relation.idMx === entityData.identifyingRelationId,
-                    );
-                    const relationCell = accessCell(relationData?.idMx);
-
-                    if (relationData && relationCell) {
-                        syncIdentifyingRelationEdgeDecorator(
-                            relationCell,
-                            relationData,
-                        );
-                    }
-                }
-            }
-            if (
-                cell.style.includes("shape=rhombus") &&
-                !isIdentifyingRelationDecoratorCell(cell)
-            ) {
-                const relationData = diagramRef.current.relations.find(
-                    (relation) => relation.idMx === cell.id,
-                );
-
-                if (!relationData) return;
-
-                if (
-                    relationData.side1?.entity?.idMx !== "" &&
-                    relationData.side2?.entity?.idMx !== "" &&
-                    relationData.side1?.entity?.idMx ===
-                        relationData.side2?.entity?.idMx
-                ) {
-                    const target = accessCell(relationData.side1.entity.idMx);
-                    const edge1 = accessCell(relationData.side1.edgeId);
-                    const edge2 = accessCell(relationData.side2.edgeId);
-
-                    if (target && edge1 && edge2) {
-                        const x1 =
-                            target.geometry.x + target.geometry.width / 2;
-                        const x2 = cell.geometry.x + cell.geometry.width / 2;
-                        const y1 =
-                            target.geometry.y + target.geometry.height / 2;
-                        const y2 = cell.geometry.y + cell.geometry.height / 2;
-
-                        edge1.geometry.points = [new mxPoint(x2, y1)];
-                        edge2.geometry.points = [new mxPoint(x1, y2)];
-                    }
-                }
-
-                if (relationData.isIdentifying) {
-                    syncIdentifyingRelationDecorator(cell);
-                    syncIdentifyingRelationEdgeDecorator(cell, relationData);
-                }
-            }
-        });
-
-        refreshGraph();
-        updateDiagramData();
-    };
-
-    const onCellsMoved = (_evt) => {
-        if (selected) {
-            if (
-                selected?.style?.includes("shape=rectangle") &&
-                !isWeakEntityDecoratorCell(selected)
-            ) {
-                handleEntityMove(selected);
-            } else if (
-                selected?.style?.includes("shape=rhombus") &&
-                !isIdentifyingRelationDecoratorCell(selected)
-            ) {
-                handleRelationMove(selected);
-            } else if (selected?.style?.includes("shape=ellipse")) {
-                handleAttributeMove(selected);
-            }
-        }
-        // Ensure that the diagram is updated before
-        updateDiagramData();
-    };
-
     React.useEffect(() => {
-        if (graph) {
-            // Define the listener as a function to refer it for removal
-            const handleCellsMoved = (_sender, evt) => {
-                onCellsMoved(evt);
-            };
+        if (!graph) return;
 
-            const handleCellsResized = (_sender, evt) => {
-                onCellsResized(evt);
-            };
+        const cleanupCellGeometrySyncHandlers = installCellGeometrySyncHandlers(
+            {
+                graph,
+                mxEvent,
+                getSelectedCell: () => selected,
+                getDiagram: () => diagramRef.current,
+                accessCell,
+                isEntityShapeCell,
+                isRelationShapeCell,
+                isAttributeShapeCell,
+                isWeakEntityDecoratorCell,
+                isIdentifyingRelationDecoratorCell,
+                findEntityById,
+                findRelationById,
+                findAttributeTreeOwnerById,
+                isWeakEntity,
+                isSelfRelation,
+                isIdentifyingRelation,
+                canRelationHoldAttributes,
+                updateAttributePosition,
+                syncOwnerAttributePositions,
+                syncAttributeChildrenPositions,
+                syncAttributeVisualRepresentation,
+                syncWeakEntityDecorator,
+                syncSelfRelationEdges,
+                syncIdentifyingRelationDecorator,
+                syncIdentifyingRelationEdgeDecorator,
+                syncMultivaluedAttributeDecorator,
+                syncDiscriminantUnderline,
+                refreshGraph,
+                syncAndPersistDiagramData,
+            },
+        );
 
-            // Add the listener
-            graph.addListener(mxEvent.CELLS_MOVED, handleCellsMoved);
-            graph.addListener(mxEvent.CELLS_RESIZED, handleCellsResized);
+        syncAndPersistDiagramData();
 
-            updateDiagramData();
-
-            // Cleanup function to remove the listener
-            return () => {
-                graph.removeListener(handleCellsMoved);
-                graph.removeListener(handleCellsResized);
-            };
-        }
-    }, [graph, selected, diagramRef, refreshDiagram]);
+        return cleanupCellGeometrySyncHandlers;
+    }, [graph, selected, refreshDiagram]);
 
     const pushCellsBack = (moveBack) => () => {
         graph.orderCells(moveBack);
@@ -1657,240 +511,406 @@ export default function App(props) {
         let selectedDiag;
         let isRelation = false;
         if (
-            selected?.style?.includes("shape=rectangle") &&
+            isEntityShapeCell(selected) &&
             !isWeakEntityDecoratorCell(selected)
         ) {
-            selectedDiag = diagramRef.current.entities.find(
-                (entity) => entity.idMx === selected.id,
-            );
-        } else if (selected?.style?.includes("shape=rhombus")) {
-            selectedDiag = diagramRef.current.relations.find(
-                (relation) => relation.idMx === selected.id,
-            );
+            selectedDiag = findEntityById(diagramRef.current, selected.id);
+        } else if (isRelationShapeCell(selected)) {
+            selectedDiag = findRelationById(diagramRef.current, selected.id);
             isRelation = true;
         }
 
-        const isFirstAttribute = (selectedDiag?.attributes?.length ?? 0) === 0;
-        const isWeakEntity = !isRelation && selectedDiag?.weak === true;
+        if (!selectedDiag) return;
 
-        const shouldAddPrimaryKey =
-            isFirstAttribute && !isWeakEntity && !isRelation;
-        const shouldAddPartialKey = isFirstAttribute && isWeakEntity;
+        const ownerType = isRelation
+            ? ATTRIBUTE_OWNER_TYPES.RELATION
+            : ATTRIBUTE_OWNER_TYPES.ENTITY;
 
-        addPrimaryAttrRef.current = shouldAddPrimaryKey;
+        const semantics = getDefaultAttributeSemantics({
+            ownerType,
+            isFirstAttribute: isFirstAttributeForOwner(selectedDiag),
+            isWeakEntityOwner: !isRelation && isWeakEntity(selectedDiag),
+        });
+
         const source = selected;
 
-        // Initial offset
         let offsetX = 120;
         let offsetY = -40;
 
-        if (selectedDiag?.attributes?.length) {
-            const lastAttribute =
-                selectedDiag.attributes[selectedDiag.attributes.length - 1];
+        const lastAttribute = getLastAttribute(selectedDiag.attributes);
+
+        if (lastAttribute) {
             const lastAttrCell = graph.getModel().getCell(lastAttribute.idMx);
-            offsetX = lastAttrCell.geometry.x - source.geometry.x;
-            offsetY = lastAttrCell.geometry.y - source.geometry.y + 20;
+
+            if (lastAttrCell?.geometry) {
+                offsetX = lastAttrCell.geometry.x - source.geometry.x;
+                offsetY = lastAttrCell.geometry.y - source.geometry.y + 20;
+            }
         }
 
-        const newX = selected.geometry.x + offsetX;
-        const newY = selected.geometry.y + offsetY;
-
-        // Function to generate a unique attribute name
-        const generateUniqueAttributeName = (baseName, existingAttributes) => {
-            let counter = 0;
-            let uniqueName = baseName;
-
-            const nameExists = (name) => {
-                return existingAttributes.some((attr) => attr.name === name);
-            };
-
-            while (nameExists(uniqueName)) {
-                counter++;
-                uniqueName = `${baseName} ${counter}`;
-            }
-
-            return uniqueName;
-        };
-
-        const baseAttributeName = "Atributo";
-        const existingAttributes = selectedDiag.attributes || [];
         const uniqueAttributeName = generateUniqueAttributeName(
-            baseAttributeName,
-            existingAttributes,
-        );
-        const newAttributeData = {
-            key: shouldAddPrimaryKey,
-            partialKey: shouldAddPartialKey,
-        };
-
-        const { width, height } = getAttributeDimensions(uniqueAttributeName);
-
-        const target = graph.insertVertex(
-            null,
-            null,
-            uniqueAttributeName, // Unique attribute name as placeholder
-            newX,
-            newY,
-            width,
-            height,
-            getAttributeStyleString(newAttributeData),
+            selectedDiag.attributes,
         );
 
-        const edge = graph.insertEdge(selected, null, null, source, target);
-        graph.orderCells(false); // Move front the selected entity so the new vertex aren't on top
+        const { target, edge } = createAttributeGraphCells({
+            name: uniqueAttributeName,
+            source,
+            offsetX,
+            offsetY,
+            semantics,
+        });
 
-        if (!isRelation && selectedDiag?.weak) {
+        if (!isRelation && isWeakEntity(selectedDiag)) {
             syncWeakEntityDecorator(selected);
         }
 
-        if (shouldAddPartialKey) {
-            ensureDiscriminantUnderline(target);
-        }
+        addAttributeToOwner(
+            selectedDiag,
+            createAttribute({
+                idMx: target.id,
+                name: target.value,
+                position: {
+                    x: target.geometry.x,
+                    y: target.geometry.y,
+                },
+                key: semantics.key,
+                partialKey: semantics.partialKey,
+                cell: [target.id, edge.id],
+                offsetX: target.geometry.x - selected.geometry.x,
+                offsetY: target.geometry.y - selected.geometry.y,
+            }),
+        );
 
-        if (!isRelation) {
-            // Update diagram state
-            diagramRef.current.entities
-                .find((entity) => entity.idMx === selected.id)
-                .attributes.push({
-                    idMx: target.id,
-                    name: target.value,
-                    position: {
-                        x: target.geometry.x,
-                        y: target.geometry.y,
-                    },
-                    key: shouldAddPrimaryKey,
-                    partialKey: shouldAddPartialKey,
-                    cell: [target.id, edge.id],
-                    offsetX: target.geometry.x - selected.geometry.x,
-                    offsetY: target.geometry.y - selected.geometry.y,
-                });
-        } else if (isRelation) {
-            // Update diagram state
-            diagramRef.current.relations
-                .find((relation) => relation.idMx === selected.id)
-                .attributes.push({
-                    idMx: target.id,
-                    name: target.value,
-                    position: {
-                        x: target.geometry.x,
-                        y: target.geometry.y,
-                    },
-                    partialKey: false,
-                    cell: [target.id, edge.id],
-                    offsetX: target.geometry.x - selected.geometry.x,
-                    offsetY: target.geometry.y - selected.geometry.y,
-                });
-        }
-        updateDiagramData();
+        syncAndPersistDiagramData();
         toast.success("Atributo insertado");
     };
 
-    const hideAttributes = (isRelationNM) => {
-        const selectedEntity = !isRelationNM
-            ? diagramRef.current.entities.find(
-                  ({ idMx }) => idMx === selected.id,
-              )
-            : diagramRef.current.relations.find(
-                  ({ idMx }) => idMx === selected.id,
-              );
-        selectedEntity.attributes.forEach(({ cell, idMx, partialKey }) => {
-            accessCell(cell.at(0)).setVisible(false);
-            accessCell(cell.at(1)).setVisible(false);
+    const getSelectedCompositeAttributeTarget = (attributeOwner) =>
+        getCompositeAttributeSelectionTarget(attributeOwner);
 
-            if (partialKey) {
-                const underline = accessCell(getDiscriminantUnderlineId(idMx));
-                if (underline) {
-                    underline.setVisible(false);
-                }
-            }
+    const canAddChildAttributeToSelectedAttribute = (attributeOwner) =>
+        canAddChildAttributeToSelection(attributeOwner);
+
+    const createSiblingSubattribute = ({
+        parentAttribute,
+        source,
+        childAttributes,
+        offsetX,
+        offsetY,
+        name = generateUniqueAttributeName(childAttributes),
+    }) => {
+        const semantics = {
+            key: false,
+            partialKey: false,
+        };
+
+        const { target, edge } = createAttributeGraphCells({
+            name,
+            source,
+            offsetX,
+            offsetY,
+            semantics,
         });
 
-        const updatedAttributesHidden = { ...entityWithAttributesHidden };
-        updatedAttributesHidden[selected.id] = true;
-        setEntityWithAttributesHidden(updatedAttributesHidden);
+        const childAttribute = createAttribute({
+            idMx: target.id,
+            name: target.value,
+            position: {
+                x: target.geometry.x,
+                y: target.geometry.y,
+            },
+            key: false,
+            partialKey: false,
+            cell: [target.id, edge.id],
+            offsetX,
+            offsetY,
+        });
+
+        addChildAttributeToAttribute(parentAttribute, childAttribute);
+
+        return childAttribute;
+    };
+
+    const groupSelectedSimpleAttributesIntoComposite = () => {
+        const selectionData = getSelectedSimpleEntityAttributesForGrouping();
+
+        if (!selectionData) {
+            toast.error(
+                "Selecciona al menos dos atributos simples de la misma entidad.",
+            );
+            return;
+        }
+
+        const { owner, attributeOwners } = selectionData;
+        const childAttributes = attributeOwners.map(
+            (attributeOwner) => attributeOwner.attribute,
+        );
+        const childAttributeIds = childAttributes.map(
+            (attribute) => attribute.idMx,
+        );
+        const compositeName = getCompositeAttributeNameFromUser(owner);
+
+        if (!compositeName) {
+            toast.error("El atributo compuesto necesita un nombre.");
+            return;
+        }
+
+        if (
+            hasSiblingAttributeWithName({
+                owner,
+                name: compositeName,
+                ignoredAttributeIds: childAttributeIds,
+            })
+        ) {
+            toast.error("Ya existe un atributo con ese nombre en la entidad.");
+            return;
+        }
+
+        const ownerCell = accessCell(owner.idMx);
+
+        if (!ownerCell?.geometry) return;
+
+        const childAttributeCells = childAttributes
+            .map((attribute) => accessCell(attribute.idMx))
+            .filter((cell) => cell?.geometry);
+
+        if (childAttributeCells.length !== childAttributes.length) {
+            toast.error(
+                "No se pudieron localizar los atributos seleccionados.",
+            );
+            return;
+        }
+
+        const averageChildX =
+            childAttributeCells.reduce(
+                (sum, cell) => sum + cell.geometry.x,
+                0,
+            ) / childAttributeCells.length;
+
+        const averageChildY =
+            childAttributeCells.reduce(
+                (sum, cell) => sum + cell.geometry.y,
+                0,
+            ) / childAttributeCells.length;
+
+        const offsetX = averageChildX - ownerCell.geometry.x;
+        const offsetY = averageChildY - ownerCell.geometry.y;
+
+        const createdCompositeCells = createAttributeGraphCells({
+            name: compositeName,
+            source: ownerCell,
+            offsetX,
+            offsetY,
+            semantics: {
+                key: false,
+                partialKey: false,
+            },
+        });
+
+        if (!createdCompositeCells) return;
+
+        const { target, edge } = createdCompositeCells;
+
+        const compositeAttribute = createAttribute({
+            idMx: target.id,
+            name: compositeName,
+            position: {
+                x: target.geometry.x,
+                y: target.geometry.y,
+            },
+            key: false,
+            partialKey: false,
+            cell: [target.id, edge.id],
+            offsetX,
+            offsetY,
+        });
+
+        childAttributes.forEach(removeAttributeConnectionEdges);
+
+        const groupingResult = groupRootAttributesIntoCompositeAttribute({
+            owner,
+            attributeIds: childAttributeIds,
+            compositeAttribute,
+        });
+
+        if (!groupingResult.compositeAttribute) {
+            removeAttributesCells([compositeAttribute]);
+            toast.error("No se pudieron agrupar los atributos seleccionados.");
+            return;
+        }
+
+        childAttributes.forEach((attribute) => {
+            reparentAttributeCellToCurrentOwner({
+                attribute,
+                attributeOwner: findAttributeTreeOwnerById(
+                    diagramRef.current,
+                    attribute.idMx,
+                ),
+            });
+        });
+
+        syncAttributeVisualRepresentation(compositeAttribute);
+
+        graph.setSelectionCell(target);
+        refreshGraph();
+        syncAndPersistDiagramData();
+        setRefreshDiagram((prevState) => !prevState);
+
+        toast.success("Atributos agrupados en un atributo compuesto");
+    };
+
+    const addChildAttribute = () => {
+        if (!isAttributeShapeCell(selected)) return;
+
+        const attributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected.id,
+        );
+
+        if (!attributeOwner) return;
+
+        if (!canAddChildAttributeToSelectedAttribute(attributeOwner)) {
+            toast.error(
+                "No se puede convertir directamente un atributo multivaluado simple en compuesto.",
+            );
+            return;
+        }
+
+        const { compositeAttribute } =
+            getSelectedCompositeAttributeTarget(attributeOwner);
+
+        const source = accessCell(compositeAttribute.idMx);
+
+        if (!source) return;
+
+        if (
+            attributeOwner.depth === 0 &&
+            !compositeAttribute.children &&
+            !isMultivaluedAttribute(compositeAttribute)
+        ) {
+            const originalAttributeName = compositeAttribute.name;
+            const { target, edge } = createAttributeGraphCells({
+                name: originalAttributeName,
+                source,
+                offsetX: 120,
+                offsetY: -40,
+                semantics: {
+                    key: false,
+                    partialKey: false,
+                },
+            });
+
+            const originalLeaf = createAttribute({
+                idMx: target.id,
+                name: target.value,
+                position: {
+                    x: target.geometry.x,
+                    y: target.geometry.y,
+                },
+                key: false,
+                partialKey: false,
+                cell: [target.id, edge.id],
+                offsetX: 120,
+                offsetY: -40,
+            });
+
+            convertSimpleAttributeToCompositeAttribute(
+                compositeAttribute,
+                originalLeaf,
+            );
+        }
+
+        const childAttributes = compositeAttribute.children ?? [];
+
+        let offsetX = 120;
+        let offsetY = 40;
+
+        const lastChildAttribute = getLastAttribute(childAttributes);
+
+        if (lastChildAttribute) {
+            const lastChildCell = graph
+                .getModel()
+                .getCell(lastChildAttribute.idMx);
+
+            if (lastChildCell?.geometry) {
+                offsetX = lastChildCell.geometry.x - source.geometry.x;
+                offsetY = lastChildCell.geometry.y - source.geometry.y + 40;
+            }
+        }
+
+        createSiblingSubattribute({
+            parentAttribute: compositeAttribute,
+            source,
+            childAttributes,
+            offsetX,
+            offsetY,
+        });
+
+        syncAttributeVisualRepresentation(compositeAttribute);
+
+        syncAndPersistDiagramData();
+        toast.success("Subatributo hermano insertado");
+    };
+
+    const setAttributesVisibility = (isRelationNM, visible) => {
+        const selectedOwner = !isRelationNM
+            ? findEntityById(diagramRef.current, selected.id)
+            : findRelationById(diagramRef.current, selected.id);
+
+        if (!selectedOwner) return;
+
+        setOwnerAttributesVisible(selectedOwner, visible);
+
+        setEntityWithAttributesHidden((currentAttributesHidden) => ({
+            ...(currentAttributesHidden ?? {}),
+            [selected.id]: !visible,
+        }));
 
         refreshGraph();
+    };
+
+    const hideAttributes = (isRelationNM) => {
+        setAttributesVisibility(isRelationNM, false);
     };
 
     const showAttributes = (isRelationNM) => {
-        const selectedEntity = !isRelationNM
-            ? diagramRef.current.entities.find(
-                  ({ idMx }) => idMx === selected.id,
-              )
-            : diagramRef.current.relations.find(
-                  ({ idMx }) => idMx === selected.id,
-              );
-        selectedEntity.attributes.forEach(({ cell, idMx, partialKey }) => {
-            accessCell(cell.at(0)).setVisible(true);
-            accessCell(cell.at(1)).setVisible(true);
-
-            if (partialKey) {
-                const underline = accessCell(getDiscriminantUnderlineId(idMx));
-                if (underline) {
-                    underline.setVisible(true);
-                }
-            }
-        });
-
-        const updatedAttributesHidden = { ...entityWithAttributesHidden };
-        updatedAttributesHidden[selected.id] = false;
-        setEntityWithAttributesHidden(updatedAttributesHidden);
-
-        refreshGraph();
+        setAttributesVisibility(isRelationNM, true);
     };
 
     const toggleAttrKey = () => {
-        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        const selectedEntityAttribute = getSelectedEntityAttributeKeyData();
         if (!selectedEntityAttribute) return;
 
-        const { entity, attribute: selectedAttribute } =
+        const { entity, attribute, selectedAttribute } =
             selectedEntityAttribute;
 
-        if (entity.weak) {
+        if (isMultivaluedAttribute(attribute)) {
+            toast.error("Una clave no puede ser multivaluada.");
+            return;
+        }
+
+        if (isWeakEntity(entity)) {
             toast.error(
                 "Una entidad débil no puede tener clave primaria. Usa un atributo discriminante.",
             );
             return;
         }
 
-        const shouldSetAsKey = !selectedAttribute.key;
+        const result = toggleExclusivePrimaryKeyAttributeInTree(
+            entity.attributes,
+            selectedAttribute.idMx,
+        );
 
-        entity.attributes.forEach((attribute) => {
-            const attributeCell = accessCell(attribute.idMx);
+        if (!result.updated) return;
 
-            if (attribute.idMx === selected.id) {
-                const wasPartialKey = attribute.partialKey === true;
-
-                attribute.key = shouldSetAsKey;
-
-                if (shouldSetAsKey) {
-                    attribute.partialKey = false;
-
-                    if (wasPartialKey) {
-                        removeDiscriminantUnderline(attribute.idMx);
-                    }
-                }
-            } else if (shouldSetAsKey) {
-                // Solo mantenemos unicidad de PK si estamos activando una nueva clave
-                attribute.key = false;
-            }
-
-            if (attributeCell) {
-                graph
-                    .getModel()
-                    .setStyle(
-                        attributeCell,
-                        getAttributeStyleString(attribute),
-                    );
-            }
-        });
+        result.changedAttributes.forEach(syncAttributeVisualRepresentation);
 
         refreshGraph();
-        updateDiagramData();
+        syncAndPersistDiagramData();
         setRefreshDiagram((prevState) => !prevState);
 
         toast.success(
-            shouldSetAsKey
+            result.enabled
                 ? "Atributo marcado como clave"
                 : "Clave eliminada del atributo",
         );
@@ -1898,13 +918,13 @@ export default function App(props) {
 
     const toggleWeakEntity = () => {
         if (!selected) return;
-        if (!selected?.style?.includes("shape=rectangle")) return;
+        if (!isEntityShapeCell(selected)) return;
         if (isWeakEntityDecoratorCell(selected)) return;
 
         const entity = getSelectedEntityData();
         if (!entity) return;
 
-        const shouldBecomeWeak = !entity.weak;
+        const shouldBecomeWeak = !isWeakEntity(entity);
 
         entity.weak = shouldBecomeWeak;
 
@@ -1920,64 +940,47 @@ export default function App(props) {
         }
 
         refreshGraph();
-        updateDiagramData();
+        syncAndPersistDiagramData();
         setRefreshDiagram((prevState) => !prevState);
     };
 
     const togglePartialKey = () => {
         if (!selected) return;
-        if (!selected?.style?.includes("shape=ellipse")) return;
+        if (!isAttributeShapeCell(selected)) return;
 
-        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        const selectedEntityAttribute = getSelectedEntityAttributeKeyData();
         if (!selectedEntityAttribute) return;
 
-        const { entity, attribute: selectedAttribute } =
+        const { entity, attribute, selectedAttribute } =
             selectedEntityAttribute;
 
-        if (!entity.weak) {
+        if (!isWeakEntity(entity)) {
             toast.error(
                 "Solo las entidades débiles pueden tener atributo discriminante.",
             );
             return;
         }
 
-        const shouldSetAsPartialKey = !selectedAttribute.partialKey;
+        if (isMultivaluedAttribute(attribute)) {
+            toast.error("Un discriminante no puede ser multivaluado.");
+            return;
+        }
 
-        entity.attributes.forEach((attribute) => {
-            const attributeCell = accessCell(attribute.idMx);
+        const result = toggleExclusivePartialKeyAttributeInTree(
+            entity.attributes,
+            selectedAttribute.idMx,
+        );
 
-            if (attribute.idMx === selected.id) {
-                attribute.partialKey = shouldSetAsPartialKey;
+        if (!result.updated) return;
 
-                if (shouldSetAsPartialKey) {
-                    attribute.key = false;
-                }
-            } else if (shouldSetAsPartialKey) {
-                attribute.partialKey = false;
-            }
-
-            if (attributeCell) {
-                graph
-                    .getModel()
-                    .setStyle(
-                        attributeCell,
-                        getAttributeStyleString(attribute),
-                    );
-
-                if (attribute.partialKey) {
-                    ensureDiscriminantUnderline(attributeCell);
-                } else {
-                    removeDiscriminantUnderline(attribute.idMx);
-                }
-            }
-        });
+        result.changedAttributes.forEach(syncAttributeVisualRepresentation);
 
         refreshGraph();
-        updateDiagramData();
+        syncAndPersistDiagramData();
         setRefreshDiagram((prevState) => !prevState);
 
         toast.success(
-            shouldSetAsPartialKey
+            result.enabled
                 ? "Atributo marcado como discriminante"
                 : "Discriminante eliminado",
         );
@@ -1986,28 +989,25 @@ export default function App(props) {
     const toggleIdentifyingRelation = () => {
         if (!selected) return;
         if (isIdentifyingRelationDecoratorCell(selected)) return;
-        if (!selected?.style?.includes("shape=rhombus")) return;
+        if (!isRelationShapeCell(selected)) return;
 
         const relation = getSelectedRelationData();
         if (!relation) return;
 
         let { weakEntity, strongEntity: ownerEntity } =
-            getWeakAndStrongSidesForRelation(relation);
+            getWeakAndStrongSidesForRelation(diagramRef.current, relation);
 
-        let convertedStrongEntityToWeak = false;
-
-        if (!relation.isIdentifying) {
-            if (
-                !relation.side1?.entity?.idMx ||
-                !relation.side2?.entity?.idMx
-            ) {
+        if (!isIdentifyingRelation(relation)) {
+            if (!relationHasBothEntitySides(relation)) {
                 toast.error("Configura primero los dos lados de la relación.");
                 return;
             }
 
             if (!weakEntity || !ownerEntity) {
-                const conversionCandidate =
-                    getCascadedWeakConversionCandidate(relation);
+                const conversionCandidate = getCascadedWeakConversionCandidate(
+                    diagramRef.current,
+                    relation,
+                );
 
                 if (!conversionCandidate) {
                     toast.error(
@@ -2018,8 +1018,6 @@ export default function App(props) {
 
                 weakEntity = conversionCandidate.weakEntity;
                 ownerEntity = conversionCandidate.ownerEntity;
-                convertedStrongEntityToWeak = true;
-
                 weakEntity.weak = true;
                 convertEntityPrimaryKeyToPartialKey(weakEntity);
 
@@ -2043,7 +1041,10 @@ export default function App(props) {
             weakEntity.ownerEntityId = ownerEntity.idMx;
 
             const identifyingCardinalitiesApplied =
-                applyIdentifyingRelationCardinalities(relation);
+                applyIdentifyingRelationCardinalities(
+                    diagramRef.current,
+                    relation,
+                );
 
             if (!identifyingCardinalitiesApplied) {
                 relation.isIdentifying = false;
@@ -2055,6 +1056,9 @@ export default function App(props) {
                 );
                 return;
             }
+
+            removeRelationAttributes(relation);
+            syncRelationCardinalityLabels(relation);
 
             ensureIdentifyingRelationDecorator(selected, relation);
             ensureIdentifyingRelationEdgeDecorator(selected, relation);
@@ -2075,8 +1079,47 @@ export default function App(props) {
         }
 
         refreshGraph();
-        updateDiagramData();
+        syncAndPersistDiagramData();
         setRefreshDiagram((prevState) => !prevState);
+    };
+
+    const toggleMultivaluedAttribute = () => {
+        const selectedEntityAttribute =
+            getSelectedEntityMultivaluedAttributeData();
+
+        if (!selectedEntityAttribute) return;
+
+        const { attribute } = selectedEntityAttribute;
+
+        if (attribute.key) {
+            toast.error("Una clave no puede ser multivaluada.");
+            return;
+        }
+
+        if (attribute.partialKey) {
+            toast.error("Un discriminante no puede ser multivaluado.");
+            return;
+        }
+
+        const shouldBecomeMultivalued = !isMultivaluedAttribute(attribute);
+
+        if (shouldBecomeMultivalued) {
+            attribute.multivalued = true;
+        } else {
+            attribute.multivalued = undefined;
+        }
+
+        syncAttributeVisualRepresentation(attribute);
+
+        refreshGraph();
+        syncAndPersistDiagramData();
+        setRefreshDiagram((prevState) => !prevState);
+
+        toast.success(
+            shouldBecomeMultivalued
+                ? "Atributo marcado como multivaluado"
+                : "Multivaluado eliminado del atributo",
+        );
     };
 
     const MoveBackAndFrontButtons = () =>
@@ -2101,7 +1144,7 @@ export default function App(props) {
 
     const AddAttributeButton = () => {
         if (
-            selected?.style?.includes("shape=rectangle") &&
+            isEntityShapeCell(selected) &&
             !isWeakEntityDecoratorCell(selected)
         ) {
             return (
@@ -2118,10 +1161,9 @@ export default function App(props) {
 
     const RelationAddAttributeButton = () => {
         if (
-            selected?.style?.includes("shape=rhombus") &&
-            diagramRef.current.relations.find(
-                (entity) => entity.idMx === selected?.id,
-            )?.canHoldAttributes
+            canRelationHoldAttributes(
+                findRelationById(diagramRef.current, selected?.id),
+            )
         ) {
             return (
                 <button
@@ -2135,15 +1177,90 @@ export default function App(props) {
         }
     };
 
+    const GroupSelectedAttributesButton = () => {
+        void selectionVersion;
+
+        if (!getSelectedSimpleEntityAttributesForGrouping()) {
+            return;
+        }
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={groupSelectedSimpleAttributesIntoComposite}
+            >
+                Agrupar en atributo compuesto
+            </button>
+        );
+    };
+
+    const AddChildAttributeButton = () => {
+        if (!isAttributeShapeCell(selected)) {
+            return;
+        }
+
+        const selectedAttributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected?.id,
+        );
+
+        if (!selectedAttributeOwner) {
+            return;
+        }
+
+        if (!canAddChildAttributeToSelectedAttribute(selectedAttributeOwner)) {
+            return;
+        }
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={addChildAttribute}
+            >
+                Añadir subatributo hermano
+            </button>
+        );
+    };
+
+    const ConvertSubattributeToSimpleButton = () => {
+        if (!isAttributeShapeCell(selected)) {
+            return;
+        }
+
+        const selectedAttributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected?.id,
+        );
+
+        if (
+            !canConvertSelectedSubattributeToSimpleAttribute(
+                selectedAttributeOwner,
+            )
+        ) {
+            return;
+        }
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={convertSelectedSubattributeToSimpleAttribute}
+            >
+                Convertir en atributo simple
+            </button>
+        );
+    };
+
     const ToggleAttributesButton = () => {
         const isEntity =
-            selected?.style?.includes("shape=rectangle") &&
-            !isWeakEntityDecoratorCell(selected);
+            isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
         const isRelationNM =
-            selected?.style?.includes("shape=rhombus") &&
-            diagramRef.current.relations.find(
-                (entity) => entity.idMx === selected?.id,
-            )?.canHoldAttributes;
+            isRelationShapeCell(selected) &&
+            canRelationHoldAttributes(
+                findRelationById(diagramRef.current, selected?.id),
+            );
 
         if (isEntity || isRelationNM) {
             if (
@@ -2182,13 +1299,13 @@ export default function App(props) {
     };
 
     const ToggleAttrKeyButton = () => {
-        const isAttribute = selected?.style?.includes("shape=ellipse");
+        const isAttribute = isAttributeShapeCell(selected);
 
         if (!isAttribute) {
             return;
         }
 
-        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        const selectedEntityAttribute = getSelectedEntityAttributeKeyData();
 
         if (!selectedEntityAttribute) {
             return;
@@ -2196,7 +1313,11 @@ export default function App(props) {
 
         const { entity, attribute } = selectedEntityAttribute;
 
-        if (entity.weak) {
+        if (isMultivaluedAttribute(attribute)) {
+            return;
+        }
+
+        if (isWeakEntity(entity)) {
             return;
         }
 
@@ -2212,8 +1333,8 @@ export default function App(props) {
     };
 
     const TogglePartialKeyButton = () => {
-        const isAttribute = selected?.style?.includes("shape=ellipse");
-        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        const isAttribute = isAttributeShapeCell(selected);
+        const selectedEntityAttribute = getSelectedEntityAttributeKeyData();
 
         if (!isAttribute || !selectedEntityAttribute) {
             return;
@@ -2221,7 +1342,11 @@ export default function App(props) {
 
         const { entity, attribute } = selectedEntityAttribute;
 
-        if (!entity.weak) {
+        if (isMultivaluedAttribute(attribute)) {
+            return;
+        }
+
+        if (!isWeakEntity(entity)) {
             return;
         }
 
@@ -2242,10 +1367,44 @@ export default function App(props) {
         );
     };
 
+    const ToggleMultivaluedAttributeButton = () => {
+        const isAttribute = isAttributeShapeCell(selected);
+        const selectedEntityAttribute =
+            getSelectedEntityMultivaluedAttributeData();
+
+        if (!isAttribute || !selectedEntityAttribute) {
+            return;
+        }
+
+        const { attribute, isCompositeMultivaluedTarget } =
+            selectedEntityAttribute;
+
+        if (attribute.key || attribute.partialKey) {
+            return;
+        }
+
+        const label = isCompositeMultivaluedTarget
+            ? isMultivaluedAttribute(attribute)
+                ? "Quitar multivaluado del compuesto"
+                : "Marcar compuesto como multivaluado"
+            : isMultivaluedAttribute(attribute)
+              ? "Quitar multivaluado"
+              : "Marcar multivaluado";
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={toggleMultivaluedAttribute}
+            >
+                {label}
+            </button>
+        );
+    };
+
     const ToggleWeakEntityButton = () => {
         const isEntity =
-            selected?.style?.includes("shape=rectangle") &&
-            !isWeakEntityDecoratorCell(selected);
+            isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
 
         const selectedEntityDiag = getSelectedEntityData();
 
@@ -2256,7 +1415,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={toggleWeakEntity}
                 >
-                    {selectedEntityDiag.weak
+                    {isWeakEntity(selectedEntityDiag)
                         ? "Quitar entidad débil"
                         : "Marcar como entidad débil"}
                 </button>
@@ -2265,7 +1424,7 @@ export default function App(props) {
     };
 
     const ToggleIdentifyingRelationButton = () => {
-        const isRelation = selected?.style?.includes("shape=rhombus");
+        const isRelation = isRelationShapeCell(selected);
         const selectedRelationDiag = getSelectedRelationData();
 
         if (isRelation && selectedRelationDiag) {
@@ -2275,7 +1434,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={toggleIdentifyingRelation}
                 >
-                    {selectedRelationDiag.isIdentifying
+                    {isIdentifyingRelation(selectedRelationDiag)
                         ? "Desmarcar como dependencia por identificación"
                         : "Marcar como dependencia por identificación"}
                 </button>
@@ -2284,9 +1443,8 @@ export default function App(props) {
     };
 
     const RelationConfigurationButton = () => {
-        const isRelation = selected?.style?.includes("shape=rhombus");
+        const isRelation = isRelationShapeCell(selected);
         const [open, setOpen] = React.useState(false);
-        const [acceptDisabled, setAcceptDisabled] = React.useState(true);
 
         const handleClickOpen = () => {
             setOpen(true);
@@ -2298,135 +1456,37 @@ export default function App(props) {
 
         const handleAccept = () => {
             const source = selected;
-            const relation = diagramRef.current.relations.find(
-                (relation) => relation.idMx === source.id,
-            );
+            const relation = findRelationById(diagramRef.current, source.id);
 
-            if (relation.isIdentifying) {
+            if (!relation) return;
+            if (!side1?.idMx || !side2?.idMx) return;
+
+            if (isIdentifyingRelation(relation)) {
                 clearIdentifyingRelationSemantics(relation.idMx);
             }
 
-            if (relation.side1.idMx !== "" && relation.side2.idMx !== "") {
-                // Find the previous edges
-                const cardinality1 = accessCell(relation.side1.idMx);
-                const cardinality2 = accessCell(relation.side2.idMx);
-                const edge1 = accessCell(relation.side1.edgeId);
-                const edge2 = accessCell(relation.side2.edgeId);
-                let attributesToDelete = [];
+            if (isRelationConfigured(relation)) {
+                removeExistingGraphCells(
+                    graph,
+                    getConfiguredRelationGraphCells({ relation, accessCell }),
+                );
 
-                // Remove the previous edges from the graph
-                if (cardinality1) {
-                    graph.removeCells([cardinality1]);
-                }
-                if (cardinality2) {
-                    graph.removeCells([cardinality2]);
-                }
-                // Remove the previous edges from the graph
-                if (edge1) {
-                    graph.removeCells([edge1]);
-                }
-                if (edge2) {
-                    graph.removeCells([edge2]);
-                }
-                if (relation.canHoldAttributes) {
-                    for (const attribute of relation.attributes) {
-                        attributesToDelete.push(
-                            accessCell(attribute.cell.at(0)),
-                        );
-                        attributesToDelete.push(
-                            accessCell(attribute.cell.at(1)),
-                        );
-                    }
-                    graph.removeCells(attributesToDelete);
+                removeRelationAttributes(relation);
 
-                    relation.canHoldAttributes = false;
-                    relation.attributes = [];
-                }
-
-                relation.side1 = {
-                    cardinality: "X:X",
-                    cell: "",
-                    edgeId: "",
-                    entity: { idMx: "" },
-                    idMx: "",
-                };
-                relation.side2 = {
-                    cardinality: "X:X",
-                    cell: "",
-                    edgeId: "",
-                    entity: { idMx: "" },
-                    idMx: "",
-                };
+                resetRelationSides(relation, { cardinality: "X:X" });
             }
 
-            const target1 = accessCell(side1.idMx);
-            const target2 = accessCell(side2.idMx);
+            connectRelationGraphSides({
+                graph,
+                relationCell: source,
+                relation,
+                side1EntityCell: accessCell(side1.idMx),
+                side2EntityCell: accessCell(side2.idMx),
+                cardinalityStyle: getCardinalityStyleString(),
+                syncSelfRelationEdges,
+            });
 
-            const edge1 = graph.insertEdge(
-                selected,
-                null,
-                null,
-                source,
-                target1,
-            );
-            const edge2 = graph.insertEdge(
-                selected,
-                null,
-                null,
-                source,
-                target2,
-            );
-            const cardinality1 = graph.insertVertex(
-                edge1,
-                null,
-                "X:X",
-                0,
-                0,
-                1,
-                1,
-                getCardinalityStyleString(),
-                true,
-            );
-            const cardinality2 = graph.insertVertex(
-                edge2,
-                null,
-                "X:X",
-                0,
-                0,
-                1,
-                1,
-                getCardinalityStyleString(),
-                true,
-            );
-            graph.updateCellSize(cardinality1);
-            graph.updateCellSize(cardinality2);
-
-            const selectedDiag = diagramRef.current.relations.find(
-                (entity) => entity.idMx === selected?.id,
-            );
-            selectedDiag.side1.idMx = cardinality1.id;
-            selectedDiag.side2.idMx = cardinality2.id;
-
-            selectedDiag.side1.edgeId = edge1.id;
-            selectedDiag.side2.edgeId = edge2.id;
-
-            selectedDiag.side1.cell = cardinality1.id;
-            selectedDiag.side2.cell = cardinality2.id;
-            selectedDiag.side1.entity.idMx = side1.idMx;
-            selectedDiag.side2.entity.idMx = side2.idMx;
-
-            if (target1 === target2) {
-                const x1 = target1.geometry.x + target1.geometry.width / 2;
-                const x2 = source.geometry.x + source.geometry.width / 2;
-                const y1 = target1.geometry.y + target1.geometry.height / 2;
-                const y2 = source.geometry.y + source.geometry.height / 2;
-
-                edge1.geometry.points = [new mxPoint(x2, y1)];
-                edge2.geometry.points = [new mxPoint(x1, y2)];
-            }
-            graph.orderCells(true, [edge1, edge2]); // Move the new edges to the back
-
-            saveToLocalStorage();
+            syncAndPersistDiagramData();
 
             setOpen(false);
             setSide1("");
@@ -2436,20 +1496,14 @@ export default function App(props) {
         const [side1, setSide1] = React.useState("");
         const [side2, setSide2] = React.useState("");
 
+        const acceptDisabled = side1 === "" || side2 === "";
+
         const handleChangeSide1 = (event) => {
             setSide1(event.target.value);
         };
         const handleChangeSide2 = (event) => {
             setSide2(event.target.value);
         };
-
-        React.useEffect(() => {
-            if (side1 !== "" && side2 !== "") {
-                setAcceptDisabled(false);
-            } else {
-                setAcceptDisabled(true);
-            }
-        }, [side1, side2]);
 
         if (isRelation) {
             return (
@@ -2544,12 +1598,9 @@ export default function App(props) {
     };
 
     const RelationCardinalitiesButton = () => {
-        const isRelation = selected?.style?.includes("shape=rhombus");
-        const selectedDiag = diagramRef.current.relations.find(
-            (entity) => entity.idMx === selected?.id,
-        );
+        const isRelation = isRelationShapeCell(selected);
+        const selectedDiag = findRelationById(diagramRef.current, selected?.id);
         const [open, setOpen] = React.useState(false);
-        const [acceptDisabled, setAcceptDisabled] = React.useState(true);
 
         const handleClickOpen = () => {
             setSide1(selectedDiag?.side1?.cardinality ?? "");
@@ -2562,13 +1613,17 @@ export default function App(props) {
         };
 
         const handleAccept = () => {
-            if (selectedDiag.isIdentifying && !side1IsWeak && !side2IsWeak) {
+            if (
+                isIdentifyingRelation(selectedDiag) &&
+                !side1IsWeak &&
+                !side2IsWeak
+            ) {
                 toast.error(
                     "No se pudieron resolver los lados de la relación de dependencia por identificación.",
                 );
                 return;
             }
-            if (selectedDiag.isIdentifying) {
+            if (isIdentifyingRelation(selectedDiag)) {
                 if (side1IsWeak) {
                     selectedDiag.side1.cardinality = side1;
                     selectedDiag.side2.cardinality = "1:1";
@@ -2582,7 +1637,7 @@ export default function App(props) {
                 selectedDiag.side1.cardinality = side1;
                 selectedDiag.side2.cardinality = side2;
 
-                if (side1.endsWith(":N") && side2.endsWith(":N")) {
+                if (isManyToManyRelation(selectedDiag)) {
                     selectedDiag.canHoldAttributes = true;
                 } else {
                     removeRelationAttributes(selectedDiag);
@@ -2595,11 +1650,13 @@ export default function App(props) {
             setSide1("");
             setSide2("");
             setOpen(false);
-            updateDiagramData();
+            syncAndPersistDiagramData();
         };
 
         const [side1, setSide1] = React.useState("");
         const [side2, setSide2] = React.useState("");
+
+        const acceptDisabled = side1 === "" || side2 === "";
 
         const handleChangeSide1 = (event) => {
             setSide1(event.target.value);
@@ -2608,51 +1665,43 @@ export default function App(props) {
             setSide2(event.target.value);
         };
 
-        React.useEffect(() => {
-            if (side1 !== "" && side2 !== "") {
-                setAcceptDisabled(false);
-            } else {
-                setAcceptDisabled(true);
-            }
-        }, [side1, side2]);
-
-        const { weakSide, strongSide } =
-            getWeakAndStrongSidesForRelation(selectedDiag);
+        const { weakSide, strongSide } = getWeakAndStrongSidesForRelation(
+            diagramRef.current,
+            selectedDiag,
+        );
 
         const side1IsWeak =
-            selectedDiag?.isIdentifying &&
+            isIdentifyingRelation(selectedDiag) &&
             weakSide?.entity?.idMx === selectedDiag?.side1?.entity?.idMx;
 
         const side2IsWeak =
-            selectedDiag?.isIdentifying &&
+            isIdentifyingRelation(selectedDiag) &&
             weakSide?.entity?.idMx === selectedDiag?.side2?.entity?.idMx;
 
         const side1IsStrong =
-            selectedDiag?.isIdentifying &&
+            isIdentifyingRelation(selectedDiag) &&
             strongSide?.entity?.idMx === selectedDiag?.side1?.entity?.idMx;
 
         const side2IsStrong =
-            selectedDiag?.isIdentifying &&
+            isIdentifyingRelation(selectedDiag) &&
             strongSide?.entity?.idMx === selectedDiag?.side2?.entity?.idMx;
 
         const getAllowedCardinalitiesForSide = (sideKey) => {
-            if (!selectedDiag?.isIdentifying) {
+            if (!isIdentifyingRelation(selectedDiag)) {
                 return POSSIBLE_CARDINALITIES;
             }
 
             const isWeakSide = sideKey === "side1" ? side1IsWeak : side2IsWeak;
 
             if (isWeakSide) {
-                return ["0:N", "1:N"];
+                return IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES;
             }
 
-            return ["1:1"];
+            return [IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY];
         };
 
         if (isRelation) {
-            const isConfigured =
-                selectedDiag?.side1.idMx !== "" &&
-                selectedDiag?.side2.idMx !== "";
+            const isConfigured = isRelationConfigured(selectedDiag);
 
             const side1EntityName =
                 accessCell(selectedDiag?.side1?.entity?.idMx)?.value ??
@@ -2704,8 +1753,9 @@ export default function App(props) {
                                             label={side1EntityName}
                                             onChange={handleChangeSide1}
                                             disabled={
-                                                selectedDiag?.isIdentifying &&
-                                                side1IsStrong
+                                                isIdentifyingRelation(
+                                                    selectedDiag,
+                                                ) && side1IsStrong
                                             }
                                         >
                                             {getAllowedCardinalitiesForSide(
@@ -2731,8 +1781,9 @@ export default function App(props) {
                                             label={side2EntityName}
                                             onChange={handleChangeSide2}
                                             disabled={
-                                                selectedDiag?.isIdentifying &&
-                                                side2IsStrong
+                                                isIdentifyingRelation(
+                                                    selectedDiag,
+                                                ) && side2IsStrong
                                             }
                                         >
                                             {getAllowedCardinalitiesForSide(
@@ -2768,96 +1819,39 @@ export default function App(props) {
 
     const DeleteEntityButton = () => {
         const isEntity =
-            selected?.style?.includes("shape=rectangle") &&
-            !isWeakEntityDecoratorCell(selected);
+            isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
+
         function deleteEntity() {
             // Find the entity in diagramRef.current.entities
-            const entityIndex = diagramRef.current.entities.findIndex(
-                (entity) => entity.idMx === selected.id,
+            const entityIndex = findEntityIndexById(
+                diagramRef.current,
+                selected.id,
             );
 
-            if (entityIndex !== -1) {
-                const entity = diagramRef.current.entities[entityIndex];
-
-                // Remove the entity from diagramRef.current.entities
-                diagramRef.current.entities.splice(entityIndex, 1);
-
-                // Find the corresponding cell in graph.model.cells
-                const cell = accessCell(entity.idMx);
-                const weakDecorator = entity.weak
-                    ? accessCell(getWeakEntityDecoratorId(entity.idMx))
-                    : null;
-                if (cell) {
-                    // Collect the attribute cells to delete
-                    const attributeCells = entity.attributes
-                        .flatMap((attr) => [
-                            accessCell(attr.cell.at(0)),
-                            accessCell(getDiscriminantUnderlineId(attr.idMx)),
-                        ])
-                        .filter(Boolean);
-
-                    // Remove the entity's cell and its attributes from the graph
-                    graph.removeCells(
-                        weakDecorator
-                            ? [weakDecorator, cell, ...attributeCells]
-                            : [cell, ...attributeCells],
-                    );
-                    // Check and remove relations involving this entity
-                    diagramRef.current.relations.forEach((relation, index) => {
-                        if (
-                            relation.side1.entity.idMx === entity.idMx ||
-                            relation.side2.entity.idMx === entity.idMx
-                        ) {
-                            clearIdentifyingRelationSemantics(relation.idMx);
-
-                            // Find the corresponding cells in graph.model.cells for the relation
-                            const side1Cell = accessCell(relation.side1.cell);
-                            const side2Cell = accessCell(relation.side2.cell);
-                            const edge1Cell = accessCell(relation.side1.edgeId);
-                            const edge2Cell = accessCell(relation.side2.edgeId);
-
-                            // Collect the relation's attribute cells to delete
-                            const relationAttributeCells = relation.attributes
-                                .flatMap((attr) => [
-                                    accessCell(attr.cell.at(0)),
-                                    accessCell(
-                                        getDiscriminantUnderlineId(attr.idMx),
-                                    ),
-                                ])
-                                .filter(Boolean);
-
-                            // Remove the relation's cells and its attributes from the graph
-                            graph.removeCells([
-                                side1Cell,
-                                side2Cell,
-                                edge1Cell,
-                                edge2Cell,
-                                ...relationAttributeCells,
-                            ]);
-
-                            // Reinitialize the relation sides
-                            diagramRef.current.relations[index].side1 = {
-                                idMx: "",
-                                cardinality: "",
-                                cell: "",
-                                edgeId: "",
-                                entity: { idMx: "" },
-                            };
-                            diagramRef.current.relations[index].side2 = {
-                                idMx: "",
-                                cardinality: "",
-                                cell: "",
-                                edgeId: "",
-                                entity: { idMx: "" },
-                            };
-                            diagramRef.current.relations[
-                                index
-                            ].canHoldAttributes = false;
-                        }
-                    });
-                }
+            if (entityIndex === -1) {
+                syncAndPersistDiagramData();
+                return;
             }
-            updateDiagramData();
+
+            const entity = diagramRef.current.entities[entityIndex];
+
+            diagramRef.current.entities.splice(entityIndex, 1);
+
+            removeEntityGraphCells({
+                graph,
+                entity,
+                accessCell,
+                getAttributesCells,
+                getWeakEntityDecoratorId,
+                isWeakEntity,
+            });
+
+            diagramRef.current.relations
+                .filter((relation) =>
+                    relationInvolvesEntity(relation, entity.idMx),
+                )
+                .forEach(removeRelationConfiguration);
+            syncAndPersistDiagramData();
         }
         if (isEntity) {
             return (
@@ -2872,155 +1866,160 @@ export default function App(props) {
         }
     };
 
+    const canConvertSelectedSubattributeToSimpleAttribute = (attributeOwner) =>
+        canConvertSelectedSubattributeToSimple(attributeOwner);
+
+    const convertSelectedSubattributeToSimpleAttribute = () => {
+        if (!isAttributeShapeCell(selected)) return;
+
+        const attributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected.id,
+        );
+
+        if (!canConvertSelectedSubattributeToSimpleAttribute(attributeOwner)) {
+            return;
+        }
+
+        const { owner } = attributeOwner;
+
+        const { convertedAttributes, removedCompositeAttribute } =
+            convertSubattributeToSimpleAttributeById(owner, selected.id);
+
+        if (convertedAttributes.length === 0) return;
+
+        convertedAttributes.forEach(removeAttributeConnectionEdges);
+
+        removeAttributesCells([removedCompositeAttribute].filter(Boolean));
+
+        convertedAttributes.forEach((attribute) => {
+            reparentAttributeCellToCurrentOwner({
+                attribute,
+                attributeOwner: findAttributeTreeOwnerById(
+                    diagramRef.current,
+                    attribute.idMx,
+                ),
+            });
+        });
+
+        syncAndPersistDiagramData();
+
+        toast.success(
+            convertedAttributes.length > 1
+                ? "Subatributos convertidos en atributos simples"
+                : "Subatributo convertido en atributo simple",
+        );
+    };
+
     const DeleteAttributeButton = () => {
-        const isAttribute = selected?.style?.includes("shape=ellipse");
-        let isKey;
-        let isFromRelation = false;
+        const isAttribute = isAttributeShapeCell(selected);
 
-        for (const entity of diagramRef.current.entities) {
-            for (const attribute of entity.attributes) {
-                if (attribute.idMx === selected?.id) {
-                    isKey = attribute.key;
-                    break; // Exit the inner loop once the matching attribute is found
-                }
-            }
-
-            if (isKey !== undefined) {
-                break; // Exit the outer loop once the matching attribute is found
-            }
+        if (!isAttribute) {
+            return;
         }
 
-        for (const relation of diagramRef.current.relations) {
-            for (const attribute of relation.attributes) {
-                if (attribute.idMx === selected?.id) {
-                    isFromRelation = true;
-                    break;
-                }
-            }
+        const selectedAttributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected?.id,
+        );
+
+        if (!selectedAttributeOwner) {
+            return;
         }
 
-        function deleteAttribute(isRelation) {
-            if (!isRelation) {
-                // Find the entity that contains the attribute
-                const entity = diagramRef.current.entities.find((entity) =>
-                    entity.attributes.some((attr) => attr.idMx === selected.id),
-                );
+        const isKey = isPrimaryKeyAttribute(selectedAttributeOwner?.attribute);
+        const isFromRelation = isRelationAttributeOwner(selectedAttributeOwner);
 
-                if (entity) {
-                    // Find the attribute index
-                    const attrIndex = entity.attributes.findIndex(
-                        (attr) => attr.idMx === selected.id,
-                    );
+        const canDeleteAttribute = isFromRelation || !isKey;
 
-                    if (attrIndex !== -1) {
-                        const attribute = entity.attributes[attrIndex];
-
-                        // Remove the attribute from the entity
-                        entity.attributes.splice(attrIndex, 1);
-
-                        const cells = [
-                            ...attribute.cell.map(
-                                (cellId) => graph.model.cells[cellId],
-                            ),
-                            accessCell(
-                                getDiscriminantUnderlineId(attribute.idMx),
-                            ),
-                        ].filter(Boolean);
-
-                        if (cells.length) {
-                            // Remove the cells from the graph
-                            graph.removeCells(cells);
-                        }
-                    }
-                }
-            } else {
-                // Find the relation that contains the attribute
-                const relation = diagramRef.current.relations.find((relation) =>
-                    relation.attributes.some(
-                        (attr) => attr.idMx === selected.id,
-                    ),
-                );
-
-                if (relation) {
-                    // Find the attribute index
-                    const attrIndex = relation.attributes.findIndex(
-                        (attr) => attr.idMx === selected.id,
-                    );
-
-                    if (attrIndex !== -1) {
-                        const attribute = relation.attributes[attrIndex];
-
-                        // Remove the attribute from the relation
-                        relation.attributes.splice(attrIndex, 1);
-
-                        const cells = [
-                            ...attribute.cell.map(
-                                (cellId) => graph.model.cells[cellId],
-                            ),
-                            accessCell(
-                                getDiscriminantUnderlineId(attribute.idMx),
-                            ),
-                        ].filter(Boolean);
-
-                        if (cells.length) {
-                            // Remove the cells from the graph
-                            graph.removeCells(cells);
-                        }
-                    }
-                }
-            }
-            updateDiagramData();
+        if (!canDeleteAttribute) {
+            return;
         }
 
-        if (
-            (isAttribute && !isKey && !isFromRelation) ||
-            (isAttribute && isFromRelation)
-        ) {
-            return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={() => deleteAttribute(isFromRelation)}
-                >
-                    Borrar
-                </button>
+        function deleteAttribute() {
+            const attributeOwner = findAttributeTreeOwnerById(
+                diagramRef.current,
+                selected.id,
             );
+
+            if (!attributeOwner) return;
+
+            const { owner } = attributeOwner;
+
+            const parentAttribute = attributeOwner.parent;
+
+            const {
+                removedAttribute,
+                removedCompositeAttribute,
+                promotedAttribute,
+            } = removeAttributeFromOwnerTreeByIdWithPromotion(
+                owner,
+                selected.id,
+            );
+
+            if (!removedAttribute) return;
+
+            removeAttributesCells(
+                [removedAttribute, removedCompositeAttribute].filter(Boolean),
+            );
+
+            reparentAttributeCellToCurrentOwner({
+                attribute: promotedAttribute,
+                attributeOwner: promotedAttribute
+                    ? findAttributeTreeOwnerById(
+                          diagramRef.current,
+                          promotedAttribute.idMx,
+                      )
+                    : null,
+            });
+
+            if (!promotedAttribute && parentAttribute) {
+                syncAttributeVisualRepresentation(parentAttribute);
+            }
+
+            refreshGraph();
+            syncAndPersistDiagramData();
         }
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={deleteAttribute}
+            >
+                Borrar
+            </button>
+        );
     };
 
     const DeleteRelationButton = () => {
-        const isRelation = selected?.style?.includes("shape=rhombus");
+        const isRelation = isRelationShapeCell(selected);
 
         function deleteRelation() {
             // Find the relation in diagramRef.current.relations
-            const relationIndex = diagramRef.current.relations.findIndex(
-                (relation) => relation.idMx === selected.id,
+            const relationIndex = findRelationIndexById(
+                diagramRef.current,
+                selected.id,
             );
 
-            if (relationIndex !== -1) {
-                const relation = diagramRef.current.relations[relationIndex];
-
-                clearIdentifyingRelationSemantics(relation.idMx);
-
-                // Remove the relation from diagramRef.current.relations
-                diagramRef.current.relations.splice(relationIndex, 1);
-
-                const cell = accessCell(relation.idMx);
-
-                if (cell) {
-                    // Remove the attributes associated with the entity
-                    const attributeCells = relation.attributes
-                        .flatMap((attr) => [
-                            accessCell(attr.cell.at(0)),
-                            accessCell(getDiscriminantUnderlineId(attr.idMx)),
-                        ])
-                        .filter(Boolean);
-
-                    // Remove the cell and its attributes from the graph
-                    graph.removeCells([cell, ...attributeCells]);
-                }
+            if (relationIndex === -1) {
+                syncAndPersistDiagramData();
+                return;
             }
-            updateDiagramData();
+
+            const relation = diagramRef.current.relations[relationIndex];
+
+            clearIdentifyingRelationSemantics(relation.idMx);
+
+            diagramRef.current.relations.splice(relationIndex, 1);
+
+            removeRelationGraphCells({
+                graph,
+                relation,
+                accessCell,
+                getAttributesCells,
+            });
+
+            syncAndPersistDiagramData();
         }
 
         if (isRelation) {
@@ -3036,40 +2035,6 @@ export default function App(props) {
         }
     };
 
-    const saveFileWithPicker = async ({
-        content,
-        fileName,
-        mimeType,
-        pickerTypes,
-    }) => {
-        if (!window.showSaveFilePicker) {
-            toast.error(
-                "Tu navegador no permite elegir dónde guardar el archivo.",
-            );
-            return;
-        }
-
-        try {
-            const fileHandle = await window.showSaveFilePicker({
-                suggestedName: fileName,
-                types: pickerTypes,
-            });
-
-            const writable = await fileHandle.createWritable();
-            await writable.write(new Blob([content], { type: mimeType }));
-            await writable.close();
-
-            toast.success("Archivo guardado correctamente.");
-        } catch (error) {
-            if (error?.name === "AbortError") {
-                toast("Guardado cancelado.");
-                return;
-            }
-
-            toast.error("No se pudo guardar el archivo.");
-        }
-    };
-
     const GenerateSQLButton = () => {
         const [open, setOpen] = React.useState(false);
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
@@ -3077,86 +2042,13 @@ export default function App(props) {
 
         const handleClickOpen = () => {
             setRefreshDiagram((prevState) => !prevState);
+
             const diagnostics = validateGraph(diagramRef.current);
 
-            if (diagnostics.isValid) {
-                setAcceptDisabled(false);
-                setValidationMessages([
-                    "¿Deseas pasar a tablas el diagrama E-R?",
-                ]);
-            } else {
-                setAcceptDisabled(true);
-                const messages = [
-                    "No se ha podido generar el script SQL por los siguientes errores:",
-                ];
-                if (!diagnostics.notEmpty)
-                    messages.push("El diagrama está vacío.");
-                if (!diagnostics.noRepeatedNames)
-                    messages.push(
-                        "Hay entidades o relaciones con nombres repetidos.",
-                    );
-                if (!diagnostics.noRepeatedAttrNames)
-                    messages.push("Hay atributos repetidos en una entidad.");
-                if (!diagnostics.noEntitiesWithoutAttributes)
-                    messages.push("Hay entidades sin atributos.");
-                if (!diagnostics.noEntitiesWithoutPK)
-                    messages.push("Hay entidades sin clave primaria.");
-                if (!diagnostics.noWeakEntitiesWithPrimaryKey)
-                    messages.push(
-                        "Hay entidades débiles con clave primaria normal.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithoutPartialKey)
-                    messages.push(
-                        "Hay entidades débiles sin atributo discriminante.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithMoreThanOnePartialKey)
-                    messages.push(
-                        "Hay entidades débiles con más de un atributo discriminante.",
-                    );
-                if (!diagnostics.noStrongEntitiesWithPartialKey)
-                    messages.push(
-                        "Hay entidades fuertes con atributo discriminante.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithoutIdentifyingRelation)
-                    messages.push(
-                        "Hay entidades débiles sin relación de dependencia por identificación.",
-                    );
-                if (!diagnostics.noInvalidIdentifyingRelations)
-                    messages.push(
-                        "Hay relaciones de dependencia por identificación que no conectan una entidad débil dependiente con una entidad propietaria distinta.",
-                    );
-                if (!diagnostics.noInvalidIdentifyingCardinalities)
-                    messages.push(
-                        "Hay relaciones de dependencia por identificación con cardinalidades no válidas.",
-                    );
-                if (!diagnostics.noInconsistentWeakEntityOwnership)
-                    messages.push(
-                        "Hay entidades débiles cuya entidad propietaria es inconsistente.",
-                    );
-                if (!diagnostics.noMultipleIdentifyingRelationsPerWeakEntity)
-                    messages.push(
-                        "Hay entidades débiles con más de una relación de dependencia por identificación como entidad dependiente.",
-                    );
-                if (!diagnostics.noAttributesInNonNMRelations)
-                    messages.push(
-                        "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
-                    );
-                if (!diagnostics.noUnconnectedRelations)
-                    messages.push("Hay relaciones desconectadas.");
-                if (!diagnostics.noSQLIdentifierCollisions)
-                    messages.push(
-                        "Hay nombres que colisionan al normalizar identificadores SQL.",
-                    );
-                if (!diagnostics.noBrokenRelationEntityReferences)
-                    messages.push(
-                        "Hay relaciones que apuntan a entidades inexistentes.",
-                    );
-                if (!diagnostics.noNotValidCardinalities)
-                    messages.push(
-                        "Hay cardinalidades no válidas en las relaciones.",
-                    );
-                setValidationMessages(messages);
-            }
+            setAcceptDisabled(!diagnostics.isValid);
+            setValidationMessages(
+                getValidationDialogMessages(diagnostics, "sql"),
+            );
             setOpen(true);
         };
 
@@ -3169,19 +2061,9 @@ export default function App(props) {
 
             const sqlScript = generateSQL(diagramRef.current);
 
-            await saveFileWithPicker({
-                content: sqlScript,
-                fileName: "tables.sql",
-                mimeType: "text/plain;charset=utf-8",
-                pickerTypes: [
-                    {
-                        description: "SQL file",
-                        accept: {
-                            "text/plain": [".sql"],
-                        },
-                    },
-                ],
-            });
+            const result = await exportSqlScriptToFile(sqlScript);
+
+            showSaveFileResultToast(result);
         };
 
         return (
@@ -3233,82 +2115,10 @@ export default function App(props) {
             setRefreshDiagram((prevState) => !prevState);
             const diagnostics = validateGraph(diagramRef.current);
 
-            if (diagnostics.isValid) {
-                setAcceptDisabled(false);
-                setValidationMessages([
-                    "¿Deseas exportar el diagrama en formato JSON?",
-                ]);
-            } else {
-                setAcceptDisabled(true);
-                const messages = [
-                    "No se ha podido exportar el diagrama en formato JSON por los siguientes errores:",
-                ];
-                if (!diagnostics.notEmpty)
-                    messages.push("El diagrama está vacío.");
-                if (!diagnostics.noRepeatedNames)
-                    messages.push("Hay entidades con nombres repetidos.");
-                if (!diagnostics.noRepeatedAttrNames)
-                    messages.push("Hay atributos repetidos en una entidad.");
-                if (!diagnostics.noEntitiesWithoutAttributes)
-                    messages.push("Hay entidades sin atributos.");
-                if (!diagnostics.noEntitiesWithoutPK)
-                    messages.push("Hay entidades sin clave primaria.");
-                if (!diagnostics.noWeakEntitiesWithPrimaryKey)
-                    messages.push(
-                        "Hay entidades débiles con clave primaria normal.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithoutPartialKey)
-                    messages.push(
-                        "Hay entidades débiles sin atributo discriminante.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithMoreThanOnePartialKey)
-                    messages.push(
-                        "Hay entidades débiles con más de un atributo discriminante.",
-                    );
-                if (!diagnostics.noStrongEntitiesWithPartialKey)
-                    messages.push(
-                        "Hay entidades fuertes con atributo discriminante.",
-                    );
-                if (!diagnostics.noWeakEntitiesWithoutIdentifyingRelation)
-                    messages.push(
-                        "Hay entidades débiles sin relación de dependencia por identificación.",
-                    );
-                if (!diagnostics.noInvalidIdentifyingRelations)
-                    messages.push(
-                        "Hay relaciones de dependencia por identificación que no conectan una entidad débil dependiente con una entidad propietaria distinta.",
-                    );
-                if (!diagnostics.noInvalidIdentifyingCardinalities)
-                    messages.push(
-                        "Hay relaciones de dependencia por identificación con cardinalidades no válidas.",
-                    );
-                if (!diagnostics.noInconsistentWeakEntityOwnership)
-                    messages.push(
-                        "Hay entidades débiles cuya entidad propietaria es inconsistente.",
-                    );
-                if (!diagnostics.noMultipleIdentifyingRelationsPerWeakEntity)
-                    messages.push(
-                        "Hay entidades débiles con más de una relación de dependencia por identificación como entidad dependiente.",
-                    );
-                if (!diagnostics.noAttributesInNonNMRelations)
-                    messages.push(
-                        "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
-                    );
-                if (!diagnostics.noUnconnectedRelations)
-                    messages.push("Hay relaciones desconectadas.");
-                if (!diagnostics.noSQLIdentifierCollisions)
-                    messages.push(
-                        "Hay nombres que colisionan al normalizar identificadores SQL.",
-                    );
-                if (!diagnostics.noBrokenRelationEntityReferences)
-                    messages.push(
-                        "Hay relaciones que apuntan a entidades inexistentes.",
-                    );
-                if (!diagnostics.noNotValidCardinalities)
-                    messages.push(
-                        "Hay cardinalidades no válidas en las relaciones.",
-                    );
-                setValidationMessages(messages);
-            }
+            setAcceptDisabled(!diagnostics.isValid);
+            setValidationMessages(
+                getValidationDialogMessages(diagnostics, "exportJson"),
+            );
             setOpen(true);
         };
 
@@ -3319,21 +2129,9 @@ export default function App(props) {
         const handleAccept = async () => {
             setOpen(false);
 
-            const jsonString = JSON.stringify(diagramRef.current, null, 2);
+            const result = await exportDiagramToJsonFile(diagramRef.current);
 
-            await saveFileWithPicker({
-                content: jsonString,
-                fileName: "diagram.json",
-                mimeType: "application/json;charset=utf-8",
-                pickerTypes: [
-                    {
-                        description: "JSON file",
-                        accept: {
-                            "application/json": [".json"],
-                        },
-                    },
-                ],
-            });
+            showSaveFileResultToast(result);
         };
 
         return (
@@ -3381,6 +2179,7 @@ export default function App(props) {
         const [validationMessages, setValidationMessages] = React.useState([]);
 
         const handleClickOpen = () => {
+            setValidationMessages([]);
             setOpen(true);
         };
 
@@ -3388,120 +2187,37 @@ export default function App(props) {
             setOpen(false);
         };
 
-        const handleFileChange = (event) => {
+        const handleFileChange = async (event) => {
             const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const importedDiagram = JSON.parse(e.target.result);
-                        const diagnostics = validateGraph(importedDiagram);
-                        const messages = [
-                            "No se ha podido importar el diagrama por los siguientes errores:",
-                        ];
-                        if (!diagnostics.notEmpty)
-                            messages.push("El diagrama está vacío.");
-                        if (!diagnostics.noRepeatedNames)
-                            messages.push(
-                                "Hay entidades con nombres repetidos.",
-                            );
-                        if (!diagnostics.noRepeatedAttrNames)
-                            messages.push(
-                                "Hay atributos repetidos en una entidad.",
-                            );
-                        if (!diagnostics.noEntitiesWithoutAttributes)
-                            messages.push("Hay entidades sin atributos.");
-                        if (!diagnostics.noEntitiesWithoutPK)
-                            messages.push("Hay entidades sin clave primaria.");
-                        if (!diagnostics.noEntitiesWithMoreThanOnePK)
-                            messages.push(
-                                "Hay entidades con más de una clave primaria.",
-                            );
-                        if (!diagnostics.noNMRelationsWithPK)
-                            messages.push(
-                                "Hay relaciones N-M con clave primaria.",
-                            );
-                        if (!diagnostics.noWeakEntitiesWithPrimaryKey)
-                            messages.push(
-                                "Hay entidades débiles con clave primaria normal.",
-                            );
-                        if (!diagnostics.noWeakEntitiesWithoutPartialKey)
-                            messages.push(
-                                "Hay entidades débiles sin atributo discriminante.",
-                            );
-                        if (
-                            !diagnostics.noWeakEntitiesWithMoreThanOnePartialKey
-                        )
-                            messages.push(
-                                "Hay entidades débiles con más de un atributo discriminante.",
-                            );
-                        if (!diagnostics.noStrongEntitiesWithPartialKey)
-                            messages.push(
-                                "Hay entidades fuertes con atributo discriminante.",
-                            );
-                        if (
-                            !diagnostics.noWeakEntitiesWithoutIdentifyingRelation
-                        )
-                            messages.push(
-                                "Hay entidades débiles sin relación de dependencia por identificación.",
-                            );
-                        if (!diagnostics.noInvalidIdentifyingRelations)
-                            messages.push(
-                                "Hay relaciones de dependencia por identificación que no conectan una entidad débil dependiente con una entidad propietaria distinta.",
-                            );
-                        if (!diagnostics.noInvalidIdentifyingCardinalities)
-                            messages.push(
-                                "Hay relaciones de dependencia por identificación con cardinalidades no válidas.",
-                            );
-                        if (!diagnostics.noInconsistentWeakEntityOwnership)
-                            messages.push(
-                                "Hay entidades débiles cuya entidad propietaria es inconsistente.",
-                            );
-                        if (
-                            !diagnostics.noMultipleIdentifyingRelationsPerWeakEntity
-                        )
-                            messages.push(
-                                "Hay entidades débiles con más de una relación de dependencia por identificación como entidad dependiente.",
-                            );
-                        if (!diagnostics.noAttributesInNonNMRelations)
-                            messages.push(
-                                "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
-                            );
-                        if (!diagnostics.noUnconnectedRelations)
-                            messages.push("Hay relaciones desconectadas.");
-                        if (!diagnostics.noSQLIdentifierCollisions)
-                            messages.push(
-                                "Hay nombres que colisionan al normalizar identificadores SQL.",
-                            );
-                        if (!diagnostics.noBrokenRelationEntityReferences)
-                            messages.push(
-                                "Hay relaciones que apuntan a entidades inexistentes.",
-                            );
-                        if (!diagnostics.noNotValidCardinalities)
-                            messages.push(
-                                "Hay cardinalidades no válidas en las relaciones.",
-                            );
-                        setValidationMessages(messages);
 
-                        if (diagnostics.isValid) {
-                            resetCanvas();
-                            localStorage.setItem(
-                                "diagramData",
-                                JSON.stringify(importedDiagram),
-                            );
-                            recreateGraphFromLocalStorage();
-                            setOpen(false);
-                            toast.success("Diagrama importado con éxito.");
-                        } else {
-                            toast.error(
-                                "El diagrama no se ha podido porque no es válido.",
-                            );
-                        }
-                    } catch (error) {
-                        toast.error("El diagrama no se ha podido importar.");
-                    }
-                };
-                reader.readAsText(file);
+            if (!file) return;
+
+            try {
+                const importedDiagram = await readDiagramJsonFile(file);
+                const diagnostics = validateGraph(importedDiagram);
+
+                setValidationMessages(
+                    getValidationDialogMessages(diagnostics, "importJson"),
+                );
+
+                if (diagnostics.isValid) {
+                    resetCanvas();
+                    saveDiagramToLocalStorage(importedDiagram);
+                    recreateGraphFromDiagram(importedDiagram);
+                    setOpen(false);
+                    toast.success("Diagrama importado con éxito.");
+                } else {
+                    toast.error(
+                        "El diagrama no se ha podido importar porque no es válido.",
+                    );
+                }
+            } catch (error) {
+                setValidationMessages([
+                    "No se ha podido importar el diagrama porque el archivo JSON no es válido.",
+                ]);
+                toast.error("El diagrama no se ha podido importar.");
+            } finally {
+                event.target.value = "";
             }
         };
 
@@ -3546,15 +2262,8 @@ export default function App(props) {
     const resetCanvas = () => {
         diagramRef.current.entities = [];
         diagramRef.current.relations = [];
-        localStorage.removeItem("diagramData");
-
-        // Filter out cells that aren't key 0 or 1
-        const cellsToRemove = Object.keys(graph.model.cells)
-            .filter((key) => key !== "0" && key !== "1")
-            .map((key) => graph.model.cells[key]);
-
-        // Remove the filtered cells
-        graph.removeCells(cellsToRemove);
+        clearDiagramLocalStorage();
+        clearGraphCanvas(graph);
     };
 
     const ResetCanvasButton = () => {
@@ -3617,9 +2326,13 @@ export default function App(props) {
 
                 <div>{AddAttributeButton()}</div>
                 <div>{RelationAddAttributeButton()}</div>
+                <div>{GroupSelectedAttributesButton()}</div>
+                <div>{AddChildAttributeButton()}</div>
+                <div>{ConvertSubattributeToSimpleButton()}</div>
                 <div>{ToggleAttributesButton()}</div>
                 <div>{ToggleAttrKeyButton()}</div>
                 <div>{TogglePartialKeyButton()}</div>
+                <div>{ToggleMultivaluedAttributeButton()}</div>
                 <div>{ToggleWeakEntityButton()}</div>
                 <div>{ToggleIdentifyingRelationButton()}</div>
 

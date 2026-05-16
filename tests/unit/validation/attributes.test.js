@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     repeatedAttributesInEntity,
+    emptyCompositeAttributes,
+    nestedCompositeAttributes,
+    unsupportedMultivaluedAttributes,
     nmRelationsWithPK,
-    sqlIdentifierCollisions,
     validateGraph,
-} from '../../../src/utils/validation'
+} from '../../../src/domain/er/validation'
 
 let graph
 
@@ -37,7 +39,89 @@ describe("Attribute name uniqueness", () => {
         graph.relations.at(0).attributes.at(1).name = graph.relations.at(0).attributes.at(0).name
         expect(repeatedAttributesInEntity(graph)).toBe(true);
         expect(validateGraph(graph).noRepeatedAttrNames).toBe(false)
-    })    
+    })
+    test("Composite attributes can't have repeated sibling attribute names", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-composite",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    idMx: "attr-street-1",
+                    name: "calle",
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    idMx: "attr-street-2",
+                    name: "calle",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        expect(repeatedAttributesInEntity(graph)).toBe(true);
+        expect(validateGraph(graph).noRepeatedAttrNames).toBe(false);
+    });
+    
+    test("Attributes in different composite branches may reuse the same leaf name", () => {
+        graph.entities.at(0).attributes.push(
+            {
+                idMx: "attr-address",
+                name: "direccion",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-address-street",
+                        name: "calle",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+            {
+                idMx: "attr-billing-address",
+                name: "direccion_facturacion",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-billing-street",
+                        name: "calle",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        );
+
+        expect(repeatedAttributesInEntity(graph)).toBe(false);
+        expect(validateGraph(graph).noRepeatedAttrNames).toBe(true);
+    });
+
+    test("Relations that cannot hold attributes are ignored when checking repeated attribute names", () => {
+        graph.relations.at(0).canHoldAttributes = false;
+        graph.relations.at(0).attributes = [
+            {
+                idMx: "attr-relation-1",
+                name: "fecha",
+                key: false,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-relation-2",
+                name: "fecha",
+                key: false,
+                partialKey: false,
+            },
+        ];
+
+        expect(repeatedAttributesInEntity(graph)).toBe(false);
+        expect(validateGraph(graph).noRepeatedAttrNames).toBe(true);
+    });    
 })
 
 describe("N:M relation attribute constraints", ()=> {
@@ -58,17 +142,250 @@ describe("N:M relation attribute constraints", ()=> {
         expect(nmRelationsWithPK(graph)).toBe(true);
         expect(validateGraph(graph).noNMRelationsWithPK).toBe(false);
     })
+    
+    test("N:M relations can't have nested primary key attributes", () => {
+        expect(nmRelationsWithPK(graph)).toBe(false);
 
+        graph.relations.at(0).attributes = [
+            {
+                idMx: "attr-composite",
+                name: "periodo",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-nested-key",
+                        name: "id",
+                        key: true,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        expect(nmRelationsWithPK(graph)).toBe(true);
+        expect(validateGraph(graph).noNMRelationsWithPK).toBe(false);
+    });
 })
 
-describe("SQL identifier normalization", () => {
-    test("Attributes normalized for SQL should not collide", () => {
-        expect(sqlIdentifierCollisions(graph)).toBe(false)
+describe("Composite attribute structure", () => {
+    test("Explicit empty composite attributes should be invalid", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-empty-composite",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+            children: [],
+        });
 
-        graph.entities.at(0).attributes.at(0).name = "código"
-        graph.entities.at(0).attributes.at(1).name = "codigo"
+        expect(emptyCompositeAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noEmptyCompositeAttributes).toBe(false);
+    });
 
-        expect(sqlIdentifierCollisions(graph)).toBe(true)
-        expect(validateGraph(graph).noSQLIdentifierCollisions).toBe(false)
-    })
-})
+    test("Nested explicit empty composite attributes should be invalid", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-composite",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    idMx: "attr-empty-nested-composite",
+                    name: "ubicacion",
+                    key: false,
+                    partialKey: false,
+                    children: [],
+                },
+            ],
+        });
+
+        expect(emptyCompositeAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noEmptyCompositeAttributes).toBe(false);
+    });
+    
+    test("Composite attributes can't contain nested composite attributes", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-address",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    idMx: "attr-location",
+                    name: "ubicacion",
+                    key: false,
+                    partialKey: false,
+                    children: [
+                        {
+                            idMx: "attr-city",
+                            name: "ciudad",
+                            key: false,
+                            partialKey: false,
+                        },
+                    ],
+                },
+            ],
+        });
+
+        expect(nestedCompositeAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noNestedCompositeAttributes).toBe(false);
+    });
+    
+    test("Relations that cannot hold attributes are ignored when checking empty composite attributes", () => {
+        graph.relations.at(0).canHoldAttributes = false;
+        graph.relations.at(0).attributes = [
+            {
+                idMx: "attr-empty-composite-relation",
+                name: "periodo",
+                key: false,
+                partialKey: false,
+                children: [],
+            },
+        ];
+
+        expect(emptyCompositeAttributes(graph)).toBe(false);
+        expect(validateGraph(graph).noEmptyCompositeAttributes).toBe(true);
+    });
+});
+
+describe("Multivalued attribute constraints", () => {
+    test("Simple entity multivalued attributes should be valid", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-phones",
+            name: "telefonos",
+            key: false,
+            partialKey: false,
+            multivalued: true,
+        });
+
+        expect(unsupportedMultivaluedAttributes(graph)).toBe(false);
+        expect(validateGraph(graph).noUnsupportedMultivaluedAttributes).toBe(
+            true,
+        );
+    });
+
+    test("Primary key attributes can't be multivalued", () => {
+        graph.entities.at(0).attributes.at(0).multivalued = true;
+
+        expect(unsupportedMultivaluedAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noUnsupportedMultivaluedAttributes).toBe(
+            false,
+        );
+    });
+
+    test("Partial key attributes can't be multivalued", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-partial",
+            name: "codigo",
+            key: false,
+            partialKey: true,
+            multivalued: true,
+        });
+
+        expect(unsupportedMultivaluedAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noUnsupportedMultivaluedAttributes).toBe(
+            false,
+        );
+    });
+
+    test("Top-level composite entity multivalued attributes should be valid", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-contact",
+            name: "contacto",
+            key: false,
+            partialKey: false,
+            multivalued: true,
+            children: [
+                {
+                    idMx: "attr-phone",
+                    name: "telefono",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        expect(unsupportedMultivaluedAttributes(graph)).toBe(false);
+        expect(validateGraph(graph).noUnsupportedMultivaluedAttributes).toBe(
+            true,
+        );
+    });
+
+    test("Primary key leaves inside composite multivalued attributes are unsupported", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-contact",
+            name: "contacto",
+            key: false,
+            partialKey: false,
+            multivalued: true,
+            children: [
+                {
+                    idMx: "attr-phone",
+                    name: "telefono",
+                    key: true,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        expect(unsupportedMultivaluedAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noUnsupportedMultivaluedAttributes).toBe(
+            false,
+        );
+    });
+
+    test("Partial key leaves inside composite multivalued attributes are unsupported", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-contact",
+            name: "contacto",
+            key: false,
+            partialKey: false,
+            multivalued: true,
+            children: [
+                {
+                    idMx: "attr-phone",
+                    name: "telefono",
+                    key: false,
+                    partialKey: true,
+                },
+            ],
+        });
+
+        expect(unsupportedMultivaluedAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noUnsupportedMultivaluedAttributes).toBe(
+            false,
+        );
+    });
+
+    test("Nested attributes can't be multivalued yet", () => {
+        graph.entities.at(0).attributes.push({
+            idMx: "attr-contact",
+            name: "contacto",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    idMx: "attr-phone",
+                    name: "telefono",
+                    key: false,
+                    partialKey: false,
+                    multivalued: true,
+                },
+            ],
+        });
+
+        expect(unsupportedMultivaluedAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noUnsupportedMultivaluedAttributes).toBe(
+            false,
+        );
+    });
+
+    test("Relation attributes can't be multivalued yet", () => {
+        graph.relations.at(0).attributes.at(0).multivalued = true;
+
+        expect(unsupportedMultivaluedAttributes(graph)).toBe(true);
+        expect(validateGraph(graph).noUnsupportedMultivaluedAttributes).toBe(
+            false,
+        );
+    });  
+});

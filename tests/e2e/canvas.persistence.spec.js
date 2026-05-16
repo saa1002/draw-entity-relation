@@ -4,6 +4,8 @@ import {
     addEntity,
     addRelation,
     configureRelationSides,
+    enableMxGraphDebug,
+    expectAttributeCellVisible,
     expectSavedDiagramState,
     getSavedDiagram,
 } from '../helpers/canvas';
@@ -14,6 +16,10 @@ import {
     resetDiagram,
     seedSavedDiagram,
 } from '../helpers/persistence';
+
+test.beforeEach(async ({ page }) => {
+    await enableMxGraphDebug(page);
+});
 
 test('relation configuration persists after accept and survives reload', async ({ page }) => {
     await page.goto('/');
@@ -234,5 +240,114 @@ test('export/import round-trip preserves diagram structure', async ({ page }) =>
     const exportedAfter = await exportCurrentDiagram(page);
 
     // The export/import/export cycle should preserve the persisted structure
+    expect(exportedAfter).toEqual(exportedBefore);
+});
+
+test('export/import round-trip preserves nested attribute trees', async ({ page }) => {
+    const diagram = {
+        entities: [
+            {
+                idMx: '10',
+                name: 'Documento',
+                position: { x: 100, y: 100 },
+                weak: false,
+                ownerEntityId: null,
+                identifyingRelationId: null,
+                attributes: [
+                    {
+                        idMx: '20',
+                        name: 'codigo',
+                        position: { x: 220, y: 100 },
+                        key: true,
+                        partialKey: false,
+                        cell: ['20', 'edge_attr_codigo'],
+                        offsetX: 120,
+                        offsetY: 0,
+                        children: [
+                            {
+                                idMx: '21',
+                                name: 'serie',
+                                position: { x: 340, y: 70 },
+                                key: false,
+                                partialKey: false,
+                                cell: ['21', 'edge_attr_serie'],
+                                offsetX: 120,
+                                offsetY: -30,
+                            },
+                            {
+                                idMx: '22',
+                                name: 'numero',
+                                position: { x: 340, y: 130 },
+                                key: false,
+                                partialKey: false,
+                                cell: ['22', 'edge_attr_numero'],
+                                offsetX: 120,
+                                offsetY: 30,
+                            },
+                        ],
+                    },
+                    {
+                        idMx: '23',
+                        name: 'descripcion',
+                        position: { x: 220, y: 180 },
+                        key: false,
+                        partialKey: false,
+                        multivalued: true,
+                        cell: ['23', 'edge_attr_descripcion'],
+                        offsetX: 120,
+                        offsetY: 80,
+                    },
+                ],
+            },
+        ],
+        relations: [],
+    };
+
+    await seedSavedDiagram(page, diagram);
+
+    await page.goto('/');
+
+    await expect(page.locator('.mxgraph-drawing-container')).toBeVisible();
+
+    await expect(page.getByText('Documento', { exact: true })).toBeVisible();
+    await expect(page.getByText('codigo', { exact: true })).toHaveCount(0);
+    await expectAttributeCellVisible(page, 'Documento', 'codigo', true);
+    await expect(page.getByText('serie', { exact: true })).toBeVisible();
+    await expect(page.getByText('numero', { exact: true })).toBeVisible();
+    await expect(page.getByText('descripcion', { exact: true })).toBeVisible();
+
+    const exportedBefore = await exportCurrentDiagram(page);
+
+    expect(exportedBefore.entities[0].attributes[0].children.map(
+        (attribute) => attribute.name,
+    )).toEqual(['serie', 'numero']);
+
+    expect(exportedBefore.entities[0].attributes[0].children.map(
+        (attribute) => attribute.cell[1],
+    )).toEqual(['edge_attr_serie', 'edge_attr_numero']);
+
+    expect(exportedBefore.entities[0].attributes[1]).toMatchObject({
+        name: 'descripcion',
+        multivalued: true,
+    });
+
+    await resetDiagram(page);
+
+    await expect(page.getByText('Documento', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('codigo', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('serie', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('numero', { exact: true })).toHaveCount(0);
+
+    await importDiagram(page, exportedBefore);
+
+    await expect(page.getByText('Documento', { exact: true })).toBeVisible();
+    await expect(page.getByText('codigo', { exact: true })).toHaveCount(0);
+    await expectAttributeCellVisible(page, 'Documento', 'codigo', true);
+    await expect(page.getByText('serie', { exact: true })).toBeVisible();
+    await expect(page.getByText('numero', { exact: true })).toBeVisible();
+    await expect(page.getByText('descripcion', { exact: true })).toBeVisible();
+
+    const exportedAfter = await exportCurrentDiagram(page);
+
     expect(exportedAfter).toEqual(exportedBefore);
 });
