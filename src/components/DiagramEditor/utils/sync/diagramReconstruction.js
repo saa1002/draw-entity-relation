@@ -89,16 +89,14 @@ export const reconstructDiagramGraph = ({
 
         graph.orderCells(true, [edge]);
 
-        const shouldPassMultivaluedDecoratorToFirstChild =
+        const shouldPassMultivaluedDecoratorToChildren =
             (attribute.multivalued === true || inheritedMultivalued) &&
             isCompositeAttribute;
 
-        childAttributes.forEach((childAttribute, index) => {
+        childAttributes.forEach((childAttribute) => {
             recreateAttribute(childAttribute, target, {
                 inheritedKey: effectiveKey,
-                inheritedPartialKey: effectivePartialKey,
-                inheritedMultivalued:
-                    shouldPassMultivaluedDecoratorToFirstChild && index === 0,
+                inheritedMultivalued: shouldPassMultivaluedDecoratorToChildren,
             });
         });
     };

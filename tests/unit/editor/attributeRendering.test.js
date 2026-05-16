@@ -370,7 +370,7 @@ describe('attribute rendering helpers', () => {
         expect(cells['attr-address'].style).toContain('fontSize=0')
     })
 
-    test('renders composite multivalued attributes on the first visible child', () => {
+    test('renders composite multivalued attributes on every visible child', () => {
         const firstChildDecoratorId =
             getMultivaluedAttributeDecoratorId('attr-contact-label');
         const rootDecoratorId =
@@ -418,10 +418,15 @@ describe('attribute rendering helpers', () => {
         });
 
         expect(cells[rootDecoratorId]).toBeUndefined();
+
         expect(cells[firstChildDecoratorId]).toMatchObject({
             id: firstChildDecoratorId,
             style: 'multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0',
         });
-        expect(cells[secondChildDecoratorId]).toBeUndefined();
+
+        expect(cells[secondChildDecoratorId]).toMatchObject({
+            id: secondChildDecoratorId,
+            style: 'multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0',
+        });
     });
 })

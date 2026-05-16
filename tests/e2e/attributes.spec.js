@@ -495,7 +495,7 @@ test('toggle composite multivalued attributes and persist across reloads', async
         page.getByRole('button', {
             name: 'Marcar compuesto como multivaluado',
         }),
-    ).toHaveCount(0);
+    ).toBeVisible();
 
     await page.getByText('contacto', { exact: true }).click();
 
@@ -562,7 +562,7 @@ test('toggle composite multivalued attributes and persist across reloads', async
         page.getByRole('button', {
             name: 'Quitar multivaluado del compuesto',
         }),
-    ).toHaveCount(0);
+    ).toBeVisible();
 
     await page.getByText('contacto', { exact: true }).click();
 

@@ -189,19 +189,6 @@ export default function App(props) {
         const selectedAttribute = attributeOwner.attribute;
         const rootChildren = getAttributeChildren(rootAttribute);
 
-        if (rootChildren.length > 0) {
-            const firstVisibleChild = rootChildren[0];
-
-            const isRootSelected =
-                selectedAttribute.idMx === rootAttribute.idMx;
-            const isFirstVisibleChildSelected =
-                selectedAttribute.idMx === firstVisibleChild.idMx;
-
-            if (!isRootSelected && !isFirstVisibleChildSelected) {
-                return null;
-            }
-        }
-
         return {
             ...attributeOwner,
             attribute: rootAttribute,
