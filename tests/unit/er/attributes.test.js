@@ -3,8 +3,6 @@ import {
     addChildAttributeToAttribute,
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
-    toggleExclusivePartialKeyAttribute,
-    toggleExclusivePrimaryKeyAttribute,
     toggleExclusivePartialKeyAttributeInTree,
     convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
@@ -754,6 +752,83 @@ describe("Hierarchical attribute helpers", () => {
 
         expect(hasRepeatedSiblingAttributeNamesInTree(attributes)).toBe(true);
     }); 
+})
+
+describe("Tree attribute key semantic transitions", () => {
+    test("toggleExclusivePrimaryKeyAttributeInTree marks the root attribute when selecting a child", () => {
+        const attributes = [
+            {
+                idMx: "attr-id",
+                name: "id",
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-address",
+                name: "address",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-street",
+                        name: "street",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ]
+
+        const result = toggleExclusivePrimaryKeyAttributeInTree(
+            attributes,
+            "attr-street",
+        )
+
+        expect(result).toMatchObject({
+            updated: true,
+            enabled: true,
+        })
+        expect(attributes[0]).toMatchObject({ key: false, partialKey: false })
+        expect(attributes[1]).toMatchObject({ key: true, partialKey: false })
+        expect(attributes[1].children[0]).toMatchObject({
+            key: false,
+            partialKey: false,
+        })
+    })
+
+    test("toggleExclusivePartialKeyAttributeInTree marks the root attribute when selecting a child", () => {
+        const attributes = [
+            {
+                idMx: "attr-code",
+                name: "code",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-series",
+                        name: "series",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ]
+
+        const result = toggleExclusivePartialKeyAttributeInTree(
+            attributes,
+            "attr-series",
+        )
+
+        expect(result).toMatchObject({
+            updated: true,
+            enabled: true,
+        })
+        expect(attributes[0]).toMatchObject({ key: false, partialKey: true })
+        expect(attributes[0].children[0]).toMatchObject({
+            key: false,
+            partialKey: false,
+        })
+    })
 })
 
 describe("Flat attribute key semantic transitions", () => {
