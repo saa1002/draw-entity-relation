@@ -9,16 +9,6 @@ let oneOneGraph
 const { expectSQLToContain, expectSQLNotToContain } =
     buildSQLAssertions(expect)
 
-const extract1NTables = () => {
-    const filteredTables = filterTables(oneNGraph)
-    return process1NRelation(filteredTables.at(0))
-}
-
-const extract11Tables = () => {
-    const filteredTables = filterTables(oneOneGraph)
-    return process11Relation(filteredTables.at(0))
-}
-
 beforeEach(() => {
     oneNGraph = loadGraphFixture('1-n-relation.json')
     oneOneGraph = loadGraphFixture('1-1-relation.json')

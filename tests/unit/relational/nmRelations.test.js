@@ -12,7 +12,7 @@ beforeEach(() => {
 })
 
 describe("N:M relation extraction", () => {
-        test("should create a junction table with both foreign keys as a composite primary key", () => {
+    test("should create a junction table with both foreign keys as a composite primary key", () => {
         const filteredTables = filterTables(nMGraph)
         const tables = processNMRelation(filteredTables.at(0))
 

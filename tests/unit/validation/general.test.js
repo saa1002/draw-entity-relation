@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from 'vitest'
+import { beforeEach, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import { validateGraph } from '../../../src/domain/er/validation'
 
