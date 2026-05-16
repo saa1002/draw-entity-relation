@@ -17,9 +17,8 @@ export const installGraphLabelEditingHandler = ({
     isIdentifyingRelationDecoratorCell,
     findEntityById,
     findRelationById,
-    getAttributeDataById,
-    syncDiscriminantUnderline,
-    syncMultivaluedAttributeDecorator,
+    getAttributeOwnerById,
+    syncAttributeVisualRepresentation,
     syncWeakEntityDecorator,
     syncIdentifyingRelationDecorator,
     syncIdentifyingRelationEdgeDecorator,
@@ -48,6 +47,7 @@ export const installGraphLabelEditingHandler = ({
         if (!cell?.style) return;
 
         const identifyingRelationEdgesToSync = [];
+        let editedAttributeId = null;
 
         const diagram = getDiagram();
 
@@ -64,15 +64,7 @@ export const installGraphLabelEditingHandler = ({
                     height,
                 });
 
-                const attributeData = getAttributeDataById(cell.id);
-
-                if (attributeData?.multivalued) {
-                    syncMultivaluedAttributeDecorator(cell);
-                }
-
-                if (attributeData?.partialKey) {
-                    syncDiscriminantUnderline(cell);
-                }
+                editedAttributeId = cell.id;
             } else if (
                 isEntityShapeCell(cell) &&
                 !isWeakEntityDecoratorCell(cell)
@@ -131,6 +123,18 @@ export const installGraphLabelEditingHandler = ({
             }
         } finally {
             this.getModel().endUpdate();
+        }
+
+        if (editedAttributeId) {
+            updateDiagramData();
+
+            const attributeOwner = getAttributeOwnerById(editedAttributeId);
+            const rootAttribute =
+                attributeOwner?.ancestors?.at(0) ?? attributeOwner?.attribute;
+
+            if (rootAttribute) {
+                syncAttributeVisualRepresentation(rootAttribute);
+            }
         }
 
         graph.view.invalidate(cell, false, true);

@@ -431,9 +431,12 @@ export default function App(props) {
                     isIdentifyingRelationDecoratorCell,
                     findEntityById,
                     findRelationById,
-                    getAttributeDataById,
-                    syncDiscriminantUnderline,
-                    syncMultivaluedAttributeDecorator,
+                    getAttributeOwnerById: (attributeId) =>
+                        findAttributeTreeOwnerById(
+                            diagramRef.current,
+                            attributeId,
+                        ),
+                    syncAttributeVisualRepresentation,
                     syncWeakEntityDecorator,
                     syncIdentifyingRelationDecorator,
                     syncIdentifyingRelationEdgeDecorator,
