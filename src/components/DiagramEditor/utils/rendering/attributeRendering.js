@@ -470,6 +470,7 @@ export const createAttributeRenderingHelpers = ({
         childAttributes.forEach((childAttribute) => {
             syncAttributeVisualRepresentation(childAttribute, {
                 inheritedKey: effectiveKey,
+                inheritedPartialKey: effectivePartialKey,
                 inheritedMultivalued: shouldPassMultivaluedDecoratorToChildren,
             });
         });
@@ -531,6 +532,7 @@ export const createAttributeRenderingHelpers = ({
 
         childAttributes.forEach((childAttribute) => {
             syncAttributePositionFromParent(childAttribute, attributeCell, {
+                inheritedPartialKey: effectivePartialKey,
                 inheritedMultivalued: shouldPassMultivaluedDecoratorToChildren,
             });
         });
@@ -556,6 +558,7 @@ export const createAttributeRenderingHelpers = ({
         try {
             childAttributes.forEach((childAttribute) => {
                 syncAttributePositionFromParent(childAttribute, attributeCell, {
+                    inheritedPartialKey: attribute?.partialKey === true,
                     inheritedMultivalued:
                         shouldPassMultivaluedDecoratorToChildren,
                 });

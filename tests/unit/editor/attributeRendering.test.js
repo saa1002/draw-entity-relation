@@ -1,9 +1,14 @@
 import { describe, expect, test } from 'vitest'
 
-import { COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE,
-getAttributeDisplayValue,
-getAttributeRenderDimensions,
-getAttributeStyleString,createAttributeRenderingHelpers, getMultivaluedAttributeDecoratorId, } from '../../../src/components/DiagramEditor/utils/rendering/attributeRendering'
+import {
+    COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE,
+    createAttributeRenderingHelpers,
+    getAttributeDisplayValue,
+    getAttributeRenderDimensions,
+    getAttributeStyleString,
+    getDiscriminantUnderlineId,
+    getMultivaluedAttributeDecoratorId,
+} from "../../../src/components/DiagramEditor/utils/rendering/attributeRendering";
 
 const createCell = (
     id,
@@ -34,15 +39,43 @@ const createHelpers = (cells, graphOverrides = {}) => {
                 cells[id] = cell
                 return cell
             },
+            insertEdge: (_parent, id, value, source, target, style) => {
+                const cell = {
+                    id,
+                    value,
+                    source,
+                    target,
+                    style,
+                    geometry: null,
+                }
+
+                cells[id] = cell
+
+                return cell
+            },
             removeCells: () => {},
             refresh: () => {},
             orderCells: () => {},
             ...graphOverrides,
         },
         accessCell: (id) => cells[id] ?? null,
-        mxPoint: (x, y) => ({ x, y }),
-        mxGeometry: function geometry() {
-            this.setTerminalPoint = () => {}
+        mxPoint: function MxPoint(x, y) {
+            this.x = x
+            this.y = y
+        },
+        mxGeometry: function MxGeometry() {
+            this.relative = false
+            this.points = null
+            this.sourcePoint = null
+            this.targetPoint = null
+
+            this.setTerminalPoint = function setTerminalPoint(point, isSource) {
+                if (isSource) {
+                    this.sourcePoint = point
+                } else {
+                    this.targetPoint = point
+                }
+            }
         },
         getAttributeDimensions: () => ({
             width: 70,
@@ -429,4 +462,63 @@ describe('attribute rendering helpers', () => {
             style: 'multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0',
         });
     });
+
+    test("renders composite discriminant attributes on every visible child", () => {
+        const rootUnderlineId = getDiscriminantUnderlineId("attr-code")
+        const firstChildUnderlineId =
+            getDiscriminantUnderlineId("attr-series")
+        const secondChildUnderlineId =
+            getDiscriminantUnderlineId("attr-number")
+
+        const cells = {
+            "attr-code": createCell("attr-code", {
+                x: 100,
+                y: 120,
+                width: 90,
+                height: 40,
+            }),
+            "attr-series": createCell("attr-series", {
+                x: 220,
+                y: 100,
+                width: 90,
+                height: 40,
+            }),
+            "attr-number": createCell("attr-number", {
+                x: 220,
+                y: 160,
+                width: 90,
+                height: 40,
+            }),
+        }
+
+        const helpers = createHelpers(cells)
+
+        helpers.syncAttributeVisualRepresentation({
+            idMx: "attr-code",
+            name: "code",
+            partialKey: true,
+            children: [
+                {
+                    idMx: "attr-series",
+                    name: "series",
+                },
+                {
+                    idMx: "attr-number",
+                    name: "number",
+                },
+            ],
+        })
+
+        expect(cells[rootUnderlineId]).toBeUndefined()
+
+        expect(cells[firstChildUnderlineId]).toMatchObject({
+            id: firstChildUnderlineId,
+            style: expect.stringContaining("dashed=1"),
+        })
+
+        expect(cells[secondChildUnderlineId]).toMatchObject({
+            id: secondChildUnderlineId,
+            style: expect.stringContaining("dashed=1"),
+        })
+    })
 })
