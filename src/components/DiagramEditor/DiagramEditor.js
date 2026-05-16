@@ -43,6 +43,7 @@ import {
     getLastAttribute,
     getWeakAndStrongSidesForRelation,
     getWeakSideOfIdentifyingRelation,
+    groupRootAttributesIntoCompositeAttribute,
     isCompositeAttribute,
     isEntityAttributeOwner,
     isFirstAttributeForOwner,
@@ -123,6 +124,8 @@ export default function App(props) {
         relations: [],
     });
     const [selected, setSelected] = React.useState(null);
+    const [selectionVersion, setSelectionVersion] = React.useState(0);
+
     const [entityWithAttributesHidden, setEntityWithAttributesHidden] =
         React.useState(null);
 
@@ -134,6 +137,7 @@ export default function App(props) {
                 props.onSelected(evt);
             }
             setSelected(evt.cells?.[0] ?? null);
+            setSelectionVersion((prevVersion) => prevVersion + 1);
         },
         [props],
     );
@@ -206,6 +210,107 @@ export default function App(props) {
         };
     };
 
+    const getSelectedSimpleEntityAttributesForGrouping = () => {
+        const selectionCells =
+            typeof graph?.getSelectionCells === "function"
+                ? graph.getSelectionCells()
+                : [];
+
+        if (
+            selectionCells.length < 2 ||
+            !selectionCells.every(isAttributeShapeCell)
+        ) {
+            return null;
+        }
+
+        const selectedAttributeOwners = selectionCells
+            .map((cell) =>
+                findAttributeTreeOwnerById(diagramRef.current, cell.id),
+            )
+            .filter(Boolean);
+
+        if (selectedAttributeOwners.length !== selectionCells.length) {
+            return null;
+        }
+
+        if (!selectedAttributeOwners.every(isEntityAttributeOwner)) {
+            return null;
+        }
+
+        const [firstAttributeOwner] = selectedAttributeOwners;
+        const owner = firstAttributeOwner.owner;
+
+        const allAttributesBelongToSameEntity = selectedAttributeOwners.every(
+            (attributeOwner) => attributeOwner.owner?.idMx === owner?.idMx,
+        );
+
+        if (!allAttributesBelongToSameEntity) {
+            return null;
+        }
+
+        const allAttributesAreGroupable = selectedAttributeOwners.every(
+            ({ attribute, depth }) =>
+                depth === 0 &&
+                !isCompositeAttribute(attribute) &&
+                !isMultivaluedAttribute(attribute) &&
+                !attribute.key &&
+                !attribute.partialKey,
+        );
+
+        if (!allAttributesAreGroupable) {
+            return null;
+        }
+
+        const uniqueAttributeOwners = [];
+        const seenAttributeIds = new Set();
+
+        selectedAttributeOwners.forEach((attributeOwner) => {
+            const attributeId = attributeOwner.attribute?.idMx;
+
+            if (!attributeId || seenAttributeIds.has(attributeId)) {
+                return;
+            }
+
+            seenAttributeIds.add(attributeId);
+            uniqueAttributeOwners.push(attributeOwner);
+        });
+
+        if (uniqueAttributeOwners.length < 2) {
+            return null;
+        }
+
+        return {
+            owner,
+            attributeOwners: uniqueAttributeOwners,
+        };
+    };
+
+    const getCompositeAttributeNameFromUser = (owner) => {
+        const defaultName = generateUniqueAttributeName(
+            owner?.attributes,
+            "Atributo compuesto",
+        );
+
+        const compositeName = window.prompt(
+            "Nombre del atributo compuesto:",
+            defaultName,
+        );
+
+        return compositeName?.trim() ?? "";
+    };
+
+    const hasSiblingAttributeWithName = ({
+        owner,
+        name,
+        ignoredAttributeIds = [],
+    }) => {
+        const ignoredIds = new Set(ignoredAttributeIds);
+
+        return (owner?.attributes ?? []).some(
+            (attribute) =>
+                !ignoredIds.has(attribute.idMx) && attribute.name === name,
+        );
+    };
     const getSelectedRelationData = () =>
         findRelationById(diagramRef.current, selected?.id) ?? null;
 
@@ -669,6 +774,134 @@ export default function App(props) {
         return childAttribute;
     };
 
+    const groupSelectedSimpleAttributesIntoComposite = () => {
+        const selectionData = getSelectedSimpleEntityAttributesForGrouping();
+
+        if (!selectionData) {
+            toast.error(
+                "Selecciona al menos dos atributos simples de la misma entidad.",
+            );
+            return;
+        }
+
+        const { owner, attributeOwners } = selectionData;
+        const childAttributes = attributeOwners.map(
+            (attributeOwner) => attributeOwner.attribute,
+        );
+        const childAttributeIds = childAttributes.map(
+            (attribute) => attribute.idMx,
+        );
+        const compositeName = getCompositeAttributeNameFromUser(owner);
+
+        if (!compositeName) {
+            toast.error("El atributo compuesto necesita un nombre.");
+            return;
+        }
+
+        if (
+            hasSiblingAttributeWithName({
+                owner,
+                name: compositeName,
+                ignoredAttributeIds: childAttributeIds,
+            })
+        ) {
+            toast.error("Ya existe un atributo con ese nombre en la entidad.");
+            return;
+        }
+
+        const ownerCell = accessCell(owner.idMx);
+
+        if (!ownerCell?.geometry) return;
+
+        const childAttributeCells = childAttributes
+            .map((attribute) => accessCell(attribute.idMx))
+            .filter((cell) => cell?.geometry);
+
+        if (childAttributeCells.length !== childAttributes.length) {
+            toast.error(
+                "No se pudieron localizar los atributos seleccionados.",
+            );
+            return;
+        }
+
+        const averageChildX =
+            childAttributeCells.reduce(
+                (sum, cell) => sum + cell.geometry.x,
+                0,
+            ) / childAttributeCells.length;
+
+        const averageChildY =
+            childAttributeCells.reduce(
+                (sum, cell) => sum + cell.geometry.y,
+                0,
+            ) / childAttributeCells.length;
+
+        const offsetX = averageChildX - ownerCell.geometry.x;
+        const offsetY = averageChildY - ownerCell.geometry.y;
+
+        const createdCompositeCells = createAttributeGraphCells({
+            name: compositeName,
+            source: ownerCell,
+            offsetX,
+            offsetY,
+            semantics: {
+                key: false,
+                partialKey: false,
+            },
+        });
+
+        if (!createdCompositeCells) return;
+
+        const { target, edge } = createdCompositeCells;
+
+        const compositeAttribute = createAttribute({
+            idMx: target.id,
+            name: compositeName,
+            position: {
+                x: target.geometry.x,
+                y: target.geometry.y,
+            },
+            key: false,
+            partialKey: false,
+            cell: [target.id, edge.id],
+            offsetX,
+            offsetY,
+        });
+
+        childAttributes.forEach(removeAttributeConnectionEdges);
+
+        const groupingResult = groupRootAttributesIntoCompositeAttribute({
+            owner,
+            attributeIds: childAttributeIds,
+            compositeAttribute,
+        });
+
+        if (!groupingResult.compositeAttribute) {
+            removeAttributesCells([compositeAttribute]);
+            toast.error("No se pudieron agrupar los atributos seleccionados.");
+            return;
+        }
+
+        childAttributes.forEach((attribute) => {
+            reparentAttributeCellToCurrentOwner({
+                attribute,
+                attributeOwner: findAttributeTreeOwnerById(
+                    diagramRef.current,
+                    attribute.idMx,
+                ),
+            });
+        });
+
+        syncAttributeVisualRepresentation(compositeAttribute);
+
+        graph.setSelectionCell(target);
+        refreshGraph();
+        syncAndPersistDiagramData();
+        setRefreshDiagram((prevState) => !prevState);
+
+        toast.success("Atributos agrupados en un atributo compuesto");
+    };
+
     const addChildAttribute = () => {
         if (!isAttributeShapeCell(selected)) return;
 
@@ -1085,6 +1318,24 @@ export default function App(props) {
                 </button>
             );
         }
+    };
+
+    const GroupSelectedAttributesButton = () => {
+        void selectionVersion;
+
+        if (!getSelectedSimpleEntityAttributesForGrouping()) {
+            return;
+        }
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={groupSelectedSimpleAttributesIntoComposite}
+            >
+                Agrupar en atributo compuesto
+            </button>
+        );
     };
 
     const AddChildAttributeButton = () => {
@@ -2221,6 +2472,7 @@ export default function App(props) {
 
                 <div>{AddAttributeButton()}</div>
                 <div>{RelationAddAttributeButton()}</div>
+                <div>{GroupSelectedAttributesButton()}</div>
                 <div>{AddChildAttributeButton()}</div>
                 <div>{ConvertSubattributeToSimpleButton()}</div>
                 <div>{ToggleAttributesButton()}</div>

@@ -8,6 +8,7 @@ import {
     toggleExclusivePartialKeyAttributeInTree,
     convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
+    groupRootAttributesIntoCompositeAttribute,
     createAttribute,
     isCompositeMultivaluedAttribute,
     isMultivaluedAttribute,
@@ -316,6 +317,48 @@ describe("Hierarchical attribute helpers", () => {
             children: [firstChildAttribute],
         });
     }); 
+
+    test("groupRootAttributesIntoCompositeAttribute should move selected root attributes under a new composite root", () => {
+        const owner = {
+            attributes: [
+                { idMx: "attr-id", name: "id", key: true },
+                { idMx: "attr-street", name: "calle", key: false },
+                { idMx: "attr-number", name: "numero", key: false },
+                { idMx: "attr-email", name: "email", key: false },
+            ],
+        };
+        const compositeAttribute = {
+            idMx: "attr-address",
+            name: "direccion",
+            key: false,
+            partialKey: false,
+        };
+
+        const result = groupRootAttributesIntoCompositeAttribute({
+            owner,
+            attributeIds: ["attr-street", "attr-number"],
+            compositeAttribute,
+        });
+
+        expect(result.compositeAttribute).toBe(compositeAttribute);
+        expect(result.childAttributes.map((attribute) => attribute.idMx)).toEqual([
+            "attr-street",
+            "attr-number",
+        ]);
+        expect(owner.attributes.map((attribute) => attribute.idMx)).toEqual([
+            "attr-id",
+            "attr-address",
+            "attr-email",
+        ]);
+        expect(owner.attributes[1]).toMatchObject({
+            idMx: "attr-address",
+            name: "direccion",
+            children: [
+                { idMx: "attr-street", name: "calle" },
+                { idMx: "attr-number", name: "numero" },
+            ],
+        });
+    });
        
     test("removeAttributeFromOwnerTreeById should delete empty children arrays", () => {
         const owner = {

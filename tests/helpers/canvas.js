@@ -356,6 +356,43 @@ export async function selectAttributeByName(page, ownerName, attributeName) {
     }, attribute.idMx);
 }
 
+export async function selectAttributesByName(page, ownerName, attributeNames) {
+    await expect
+        .poll(async () => {
+            const attributes = await Promise.all(
+                attributeNames.map((attributeName) =>
+                    getSavedAttribute(page, ownerName, attributeName),
+                ),
+            );
+
+            return attributes.every((attribute) => Boolean(attribute?.idMx));
+        })
+        .toBe(true);
+
+    const attributes = await Promise.all(
+        attributeNames.map((attributeName) =>
+            getSavedAttribute(page, ownerName, attributeName),
+        ),
+    );
+    const attributeIds = attributes.map((attribute) => attribute.idMx);
+
+    await page.waitForFunction((ids) => {
+        const graph = window.__DEBUG_GRAPH__;
+        return ids.every((attributeId) =>
+            Boolean(graph?.getModel?.()?.getCell?.(attributeId)),
+        );
+    }, attributeIds);
+
+    await page.evaluate((ids) => {
+        const graph = window.__DEBUG_GRAPH__;
+        const cells = ids
+            .map((attributeId) => graph.getModel().getCell(attributeId))
+            .filter(Boolean);
+
+        graph.setSelectionCells(cells);
+    }, attributeIds);
+}
+
 export async function expectAttributeCellVisible(
     page,
     ownerName,
@@ -489,3 +526,4 @@ export async function clickCompositeAttributeConnector(
 
     await page.mouse.click(centerPoint.x, centerPoint.y);
 }
+

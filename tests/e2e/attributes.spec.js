@@ -8,6 +8,7 @@ import {
     expectAttributeCellVisible,
     expectSavedEntityAttributeToMatch,
     getSavedEntity,
+    selectAttributesByName,
     selectAttributeByName,
     selectEntity,
     renameElement,
@@ -1071,4 +1072,63 @@ test('do not select composite connector directly', async ({ page }) => {
     await expect(
         page.getByRole('button', { name: 'Convertir en clave' }),
     ).toHaveCount(0);
+});
+
+test('group selected simple entity attributes into a composite attribute', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+    await renameElement(page, 'Atributo', 'id');
+
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+    await renameElement(page, 'Atributo', 'calle');
+
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedEntity(page);
+    await renameElement(page, 'Atributo', 'numero');
+
+    await selectAttributesByName(page, 'Entidad', ['calle', 'numero']);
+
+    page.once('dialog', async (dialog) => {
+        expect(dialog.message()).toContain('Nombre del atributo compuesto');
+        await dialog.accept('direccion');
+    });
+
+    await page
+        .getByRole('button', { name: 'Agrupar en atributo compuesto' })
+        .click();
+
+    await expect(
+        page.getByText('Atributos agrupados en un atributo compuesto').last(),
+    ).toBeVisible();
+
+    await expect
+        .poll(async () => {
+            const entity = await getSavedEntity(page, 'Entidad');
+
+            return entity?.attributes?.map((attribute) => ({
+                name: attribute.name,
+                key: attribute.key,
+                partialKey: attribute.partialKey,
+                childNames: attribute.children?.map((child) => child.name),
+            }));
+        })
+        .toEqual([
+            {
+                name: 'id',
+                key: true,
+                partialKey: false,
+                childNames: undefined,
+            },
+            {
+                name: 'direccion',
+                key: false,
+                partialKey: false,
+                childNames: ['calle', 'numero'],
+            },
+        ]);
 });

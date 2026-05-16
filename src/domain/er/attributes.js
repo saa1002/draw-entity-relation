@@ -237,6 +237,56 @@ export const addChildAttributeToAttribute = (
     return childAttribute;
 };
 
+export const groupRootAttributesIntoCompositeAttribute = ({
+    owner,
+    attributeIds,
+    compositeAttribute,
+}) => {
+    if (!owner || !compositeAttribute || !Array.isArray(attributeIds)) {
+        return {
+            compositeAttribute: null,
+            childAttributes: [],
+        };
+    }
+
+    const attributes = ensureOwnerAttributes(owner);
+    const attributeIdsToGroup = new Set(attributeIds);
+
+    const selectedAttributes = attributes
+        .map((attribute, index) => ({ attribute, index }))
+        .filter(({ attribute }) => attributeIdsToGroup.has(attribute.idMx));
+
+    if (selectedAttributes.length !== attributeIdsToGroup.size) {
+        return {
+            compositeAttribute: null,
+            childAttributes: [],
+        };
+    }
+
+    const firstSelectedIndex = Math.min(
+        ...selectedAttributes.map(({ index }) => index),
+    );
+    const childAttributes = selectedAttributes.map(
+        ({ attribute }) => attribute,
+    );
+
+    compositeAttribute.children = childAttributes;
+
+    owner.attributes = attributes.filter(
+        (attribute) => !attributeIdsToGroup.has(attribute.idMx),
+    );
+    owner.attributes.splice(
+        Math.min(firstSelectedIndex, owner.attributes.length),
+        0,
+        compositeAttribute,
+    );
+
+    return {
+        compositeAttribute,
+        childAttributes,
+    };
+};
+
 export const convertSimpleAttributeToCompositeAttribute = (
     attribute,
     firstChildAttribute,
