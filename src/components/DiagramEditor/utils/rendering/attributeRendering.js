@@ -378,9 +378,15 @@ export const createAttributeRenderingHelpers = ({
 
     const syncAttributeVisualRepresentation = (
         attribute,
-        { inheritedKey = false, inheritedMultivalued = false } = {},
+        {
+            inheritedKey = false,
+            inheritedPartialKey = false,
+            inheritedMultivalued = false,
+        } = {},
     ) => {
         const effectiveKey = inheritedKey || attribute?.key === true;
+        const effectivePartialKey =
+            inheritedPartialKey || attribute?.partialKey === true;
         const attributeCell = accessCell(attribute.idMx);
         const isCompositeAttribute =
             isCompositeAttributeForRendering(attribute);
@@ -444,7 +450,10 @@ export const createAttributeRenderingHelpers = ({
                 removeMultivaluedAttributeDecorator(attribute.idMx);
             }
 
-            if (attribute.partialKey) {
+            const shouldRenderDiscriminantUnderline =
+                effectivePartialKey && !isCompositeAttribute;
+
+            if (shouldRenderDiscriminantUnderline) {
                 ensureDiscriminantUnderline(attributeCell);
             } else {
                 removeDiscriminantUnderline(attribute.idMx);
@@ -461,6 +470,7 @@ export const createAttributeRenderingHelpers = ({
         childAttributes.forEach((childAttribute, index) => {
             syncAttributeVisualRepresentation(childAttribute, {
                 inheritedKey: effectiveKey,
+                inheritedPartialKey: effectivePartialKey,
                 inheritedMultivalued:
                     shouldPassMultivaluedDecoratorToFirstChild && index === 0,
             });
@@ -484,7 +494,7 @@ export const createAttributeRenderingHelpers = ({
     const syncAttributePositionFromParent = (
         attribute,
         parentCell,
-        { inheritedMultivalued = false } = {},
+        { inheritedPartialKey = false, inheritedMultivalued = false } = {},
     ) => {
         const attributeCell = accessCell(
             attribute.cell?.at(0) ?? attribute.idMx,
@@ -502,6 +512,8 @@ export const createAttributeRenderingHelpers = ({
 
         const isCompositeAttribute =
             isCompositeAttributeForRendering(attribute);
+        const effectivePartialKey =
+            inheritedPartialKey || attribute?.partialKey === true;
         const shouldSyncMultivaluedDecorator =
             (isMultivaluedAttribute(attribute) || inheritedMultivalued) &&
             !isCompositeAttribute;
@@ -510,7 +522,7 @@ export const createAttributeRenderingHelpers = ({
             syncMultivaluedAttributeDecorator(attributeCell);
         }
 
-        if (attribute.partialKey) {
+        if (effectivePartialKey && !isCompositeAttribute) {
             syncDiscriminantUnderline(attributeCell);
         }
 
@@ -521,6 +533,7 @@ export const createAttributeRenderingHelpers = ({
 
         childAttributes.forEach((childAttribute, index) => {
             syncAttributePositionFromParent(childAttribute, attributeCell, {
+                inheritedPartialKey: effectivePartialKey,
                 inheritedMultivalued:
                     shouldPassMultivaluedDecoratorToFirstChild && index === 0,
             });

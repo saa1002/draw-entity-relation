@@ -783,10 +783,11 @@ const rememberChangedRootAttribute = (changedRootAttributes, rootAttribute) => {
 export const getRootAttributeFromTreeNode = (attributeNode) =>
     attributeNode?.ancestors?.at(0) ?? attributeNode?.attribute ?? null;
 
-export const toggleExclusivePrimaryKeyAttributeInTree = (
+const toggleExclusiveAttributeSemanticInTree = ({
     attributes,
     attributeId,
-) => {
+    semantic,
+}) => {
     const selectedAttributeNode = findAttributeNodeInTreeById(
         attributes,
         attributeId,
@@ -804,7 +805,7 @@ export const toggleExclusivePrimaryKeyAttributeInTree = (
         };
     }
 
-    const shouldSetAsKey = !selectedRootAttribute.key;
+    const shouldEnable = selectedRootAttribute[semantic] !== true;
     const changedRootAttributes = [];
 
     getAttributes(attributes).forEach((rootAttribute) => {
@@ -812,9 +813,14 @@ export const toggleExclusivePrimaryKeyAttributeInTree = (
             const previousKey = attribute.key;
             const previousPartialKey = attribute.partialKey;
 
-            if (shouldSetAsKey) {
-                attribute.key = attribute.idMx === selectedRootAttribute.idMx;
-                attribute.partialKey = false;
+            if (shouldEnable) {
+                attribute.key =
+                    semantic === ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY &&
+                    attribute.idMx === selectedRootAttribute.idMx;
+
+                attribute.partialKey =
+                    semantic === ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY &&
+                    attribute.idMx === selectedRootAttribute.idMx;
             } else if (rootAttribute.idMx === selectedRootAttribute.idMx) {
                 attribute.key = false;
                 attribute.partialKey = false;
@@ -834,10 +840,30 @@ export const toggleExclusivePrimaryKeyAttributeInTree = (
 
     return {
         updated: true,
-        enabled: shouldSetAsKey,
+        enabled: shouldEnable,
         changedAttributes: changedRootAttributes,
     };
 };
+
+export const toggleExclusivePrimaryKeyAttributeInTree = (
+    attributes,
+    attributeId,
+) =>
+    toggleExclusiveAttributeSemanticInTree({
+        attributes,
+        attributeId,
+        semantic: ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY,
+    });
+
+export const toggleExclusivePartialKeyAttributeInTree = (
+    attributes,
+    attributeId,
+) =>
+    toggleExclusiveAttributeSemanticInTree({
+        attributes,
+        attributeId,
+        semantic: ATTRIBUTE_KEY_SEMANTICS.PARTIAL_KEY,
+    });
 
 export const hasRepeatedSiblingAttributeNamesInTree = (attributes) => {
     const attributeNames = new Set();

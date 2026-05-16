@@ -31,7 +31,6 @@ import {
     convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
     createAttribute,
-    findAttributeOwnerById,
     findAttributeTreeOwnerById,
     findEntityById,
     findEntityIndexById,
@@ -60,7 +59,7 @@ import {
     removeAllAttributesFromOwner,
     removeAttributeFromOwnerTreeByIdWithPromotion,
     resetRelationSides,
-    toggleExclusivePartialKeyAttribute,
+    toggleExclusivePartialKeyAttributeInTree,
     toggleExclusivePrimaryKeyAttributeInTree,
     updateAttributePosition,
     validateGraph,
@@ -145,22 +144,6 @@ export default function App(props) {
 
     const getSelectedEntityData = () =>
         findEntityById(diagramRef.current, selected?.id);
-
-    const getSelectedEntityAttributeData = () => {
-        const attributeOwner = findAttributeOwnerById(
-            diagramRef.current,
-            selected?.id,
-        );
-
-        if (!isEntityAttributeOwner(attributeOwner)) {
-            return null;
-        }
-
-        return {
-            entity: attributeOwner.owner,
-            attribute: attributeOwner.attribute,
-        };
-    };
 
     const getSelectedEntityAttributeKeyData = () => {
         const attributeOwner = findAttributeTreeOwnerById(
@@ -875,10 +858,11 @@ export default function App(props) {
         if (!selected) return;
         if (!isAttributeShapeCell(selected)) return;
 
-        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        const selectedEntityAttribute = getSelectedEntityAttributeKeyData();
         if (!selectedEntityAttribute) return;
 
-        const { entity, attribute } = selectedEntityAttribute;
+        const { entity, attribute, selectedAttribute } =
+            selectedEntityAttribute;
 
         if (!isWeakEntity(entity)) {
             toast.error(
@@ -892,9 +876,9 @@ export default function App(props) {
             return;
         }
 
-        const result = toggleExclusivePartialKeyAttribute(
+        const result = toggleExclusivePartialKeyAttributeInTree(
             entity.attributes,
-            selected.id,
+            selectedAttribute.idMx,
         );
 
         if (!result.updated) return;
@@ -1242,7 +1226,7 @@ export default function App(props) {
 
     const TogglePartialKeyButton = () => {
         const isAttribute = isAttributeShapeCell(selected);
-        const selectedEntityAttribute = getSelectedEntityAttributeData();
+        const selectedEntityAttribute = getSelectedEntityAttributeKeyData();
 
         if (!isAttribute || !selectedEntityAttribute) {
             return;

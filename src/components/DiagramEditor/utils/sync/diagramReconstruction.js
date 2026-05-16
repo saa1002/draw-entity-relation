@@ -34,9 +34,15 @@ export const reconstructDiagramGraph = ({
     const recreateAttribute = (
         attribute,
         source,
-        { inheritedKey = false, inheritedMultivalued = false } = {},
+        {
+            inheritedKey = false,
+            inheritedPartialKey = false,
+            inheritedMultivalued = false,
+        } = {},
     ) => {
         const effectiveKey = inheritedKey || attribute?.key === true;
+        const effectivePartialKey =
+            inheritedPartialKey || attribute?.partialKey === true;
 
         const { width, height } = getAttributeRenderDimensions(
             attribute,
@@ -69,7 +75,7 @@ export const reconstructDiagramGraph = ({
         const childAttributes = getAttributeChildren(attribute);
         const isCompositeAttribute = childAttributes.length > 0;
 
-        if (attribute.partialKey) {
+        if (effectivePartialKey && !isCompositeAttribute) {
             ensureDiscriminantUnderline(target);
         }
 
@@ -90,6 +96,7 @@ export const reconstructDiagramGraph = ({
         childAttributes.forEach((childAttribute, index) => {
             recreateAttribute(childAttribute, target, {
                 inheritedKey: effectiveKey,
+                inheritedPartialKey: effectivePartialKey,
                 inheritedMultivalued:
                     shouldPassMultivaluedDecoratorToFirstChild && index === 0,
             });

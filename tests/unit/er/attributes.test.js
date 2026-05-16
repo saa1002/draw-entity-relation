@@ -5,6 +5,7 @@ import {
     convertPrimaryKeyToPartialKey,
     toggleExclusivePartialKeyAttribute,
     toggleExclusivePrimaryKeyAttribute,
+    toggleExclusivePartialKeyAttributeInTree,
     convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
     createAttribute,
@@ -803,6 +804,98 @@ describe("Hierarchical attribute helpers", () => {
             ],
         });
     });  
+    test("toggleExclusivePartialKeyAttributeInTree should toggle the root composite attribute when a leaf is selected", () => {
+        const attributes = [
+            {
+                idMx: "attr-id",
+                name: "id",
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-code",
+                name: "codigo",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-series",
+                        name: "serie",
+                        key: false,
+                        partialKey: false,
+                    },
+                    {
+                        idMx: "attr-number",
+                        name: "numero",
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        const enabledResult = toggleExclusivePartialKeyAttributeInTree(
+            attributes,
+            "attr-series",
+        );
+
+        expect(enabledResult).toMatchObject({
+            updated: true,
+            enabled: true,
+        });
+
+        expect(attributes[0]).toMatchObject({
+            name: "id",
+            key: false,
+            partialKey: false,
+        });
+
+        expect(attributes[1]).toMatchObject({
+            name: "codigo",
+            key: false,
+            partialKey: true,
+            children: [
+                {
+                    name: "serie",
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    name: "numero",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+
+        const disabledResult = toggleExclusivePartialKeyAttributeInTree(
+            attributes,
+            "attr-number",
+        );
+
+        expect(disabledResult).toMatchObject({
+            updated: true,
+            enabled: false,
+        });
+
+        expect(attributes[1]).toMatchObject({
+            name: "codigo",
+            key: false,
+            partialKey: false,
+            children: [
+                {
+                    name: "serie",
+                    key: false,
+                    partialKey: false,
+                },
+                {
+                    name: "numero",
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        });
+    });
 })
 
 describe("Flat attribute key semantic transitions", () => {
