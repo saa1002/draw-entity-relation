@@ -1,3 +1,5 @@
+import { getRelationSideKeys } from "../../../../domain/er/relations";
+
 export const removeExistingGraphCells = (graph, cells) => {
     if (!graph?.removeCells) return;
 
@@ -26,12 +28,11 @@ export const clearGraphCanvas = (graph) => {
 export const getConfiguredRelationGraphCells = ({ relation, accessCell }) => {
     if (!relation || typeof accessCell !== "function") return [];
 
-    return [
-        relation.side1?.idMx,
-        relation.side2?.idMx,
-        relation.side1?.edgeId,
-        relation.side2?.edgeId,
-    ]
+    return getRelationSideKeys(relation)
+        .flatMap((sideKey) => [
+            relation[sideKey]?.idMx,
+            relation[sideKey]?.edgeId,
+        ])
         .map((cellId) => accessCell(cellId))
         .filter(Boolean);
 };
@@ -86,47 +87,49 @@ export const connectRelationGraphSides = ({
     relation,
     side1EntityCell,
     side2EntityCell,
+    side3EntityCell,
     cardinalityStyle,
     syncSelfRelationEdges,
 }) => {
+    const sideKeys = getRelationSideKeys(relation);
+    const entityCellsBySideKey = {
+        side1: side1EntityCell,
+        side2: side2EntityCell,
+        side3: side3EntityCell,
+    };
+
     if (
         !graph ||
         !relationCell ||
         !relation ||
-        !side1EntityCell ||
-        !side2EntityCell
+        sideKeys.some((sideKey) => !entityCellsBySideKey[sideKey])
     ) {
         return null;
     }
 
-    const side1 = connectRelationSideGraphCell({
-        graph,
-        relationCell,
-        relation,
-        sideKey: "side1",
-        entityCell: side1EntityCell,
-        cardinalityStyle,
-    });
+    const connectedSides = sideKeys.reduce((result, sideKey) => {
+        result[sideKey] = connectRelationSideGraphCell({
+            graph,
+            relationCell,
+            relation,
+            sideKey,
+            entityCell: entityCellsBySideKey[sideKey],
+            cardinalityStyle,
+        });
 
-    const side2 = connectRelationSideGraphCell({
-        graph,
-        relationCell,
-        relation,
-        sideKey: "side2",
-        entityCell: side2EntityCell,
-        cardinalityStyle,
-    });
+        return result;
+    }, {});
 
-    if (side1EntityCell === side2EntityCell) {
+    if (sideKeys.length === 2 && side1EntityCell === side2EntityCell) {
         syncSelfRelationEdges?.(relationCell, relation);
     }
 
-    graph.orderCells(true, [side1.edge, side2.edge]);
+    graph.orderCells(
+        true,
+        Object.values(connectedSides).map((side) => side.edge),
+    );
 
-    return {
-        side1,
-        side2,
-    };
+    return connectedSides;
 };
 
 export const installCellGeometrySyncHandlers = ({

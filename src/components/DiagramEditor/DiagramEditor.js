@@ -21,6 +21,7 @@ import {
     IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY,
     IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES,
     POSSIBLE_CARDINALITIES,
+    RELATION_ARITIES,
     addAttributeToOwner,
     addChildAttributeToAttribute,
     applyIdentifyingRelationCardinalities,
@@ -31,6 +32,7 @@ import {
     convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
     createAttribute,
+    createEmptyRelationSide,
     findAttributeTreeOwnerById,
     findEntityById,
     findEntityIndexById,
@@ -40,9 +42,12 @@ import {
     getCascadedWeakConversionCandidate,
     getDefaultAttributeSemantics,
     getLastAttribute,
+    getRelationArity,
+    getRelationSideKeys,
     getWeakAndStrongSidesForRelation,
     getWeakSideOfIdentifyingRelation,
     groupRootAttributesIntoCompositeAttribute,
+    isBinaryRelation,
     isFirstAttributeForOwner,
     isIdentifyingRelation,
     isManyToManyRelation,
@@ -302,18 +307,17 @@ export default function App(props) {
     const syncRelationCardinalityLabels = (relationData) => {
         if (!relationData) return;
 
-        const side1Label = accessCell(relationData?.side1?.cell);
-        const side2Label = accessCell(relationData?.side2?.cell);
+        getRelationSideKeys(relationData).forEach((sideKey) => {
+            const sideLabel = accessCell(relationData?.[sideKey]?.cell);
 
-        if (side1Label) {
-            graph.model.setValue(side1Label, relationData.side1.cardinality);
-            graph.updateCellSize(side1Label);
-        }
-
-        if (side2Label) {
-            graph.model.setValue(side2Label, relationData.side2.cardinality);
-            graph.updateCellSize(side2Label);
-        }
+            if (sideLabel) {
+                graph.model.setValue(
+                    sideLabel,
+                    relationData[sideKey].cardinality,
+                );
+                graph.updateCellSize(sideLabel);
+            }
+        });
     };
 
     const removeRelationAttributes = (relationData) => {
@@ -1427,7 +1431,11 @@ export default function App(props) {
         const isRelation = isRelationShapeCell(selected);
         const selectedRelationDiag = getSelectedRelationData();
 
-        if (isRelation && selectedRelationDiag) {
+        if (
+            isRelation &&
+            selectedRelationDiag &&
+            isBinaryRelation(selectedRelationDiag)
+        ) {
             return (
                 <button
                     type="button"
@@ -1445,8 +1453,23 @@ export default function App(props) {
     const RelationConfigurationButton = () => {
         const isRelation = isRelationShapeCell(selected);
         const [open, setOpen] = React.useState(false);
+        const [relationArity, setRelationArity] = React.useState(
+            RELATION_ARITIES.BINARY,
+        );
+        const [side1, setSide1] = React.useState("");
+        const [side2, setSide2] = React.useState("");
+        const [side3, setSide3] = React.useState("");
+
+        const selectedArityIsTernary =
+            relationArity === RELATION_ARITIES.TERNARY;
 
         const handleClickOpen = () => {
+            const relation = findRelationById(diagramRef.current, selected?.id);
+
+            setRelationArity(getRelationArity(relation));
+            setSide1("");
+            setSide2("");
+            setSide3("");
             setOpen(true);
         };
 
@@ -1454,25 +1477,49 @@ export default function App(props) {
             setOpen(false);
         };
 
+        const applySelectedRelationArity = (relation) => {
+            if (selectedArityIsTernary) {
+                relation.arity = RELATION_ARITIES.TERNARY;
+                relation.side3 = relation.side3 ?? createEmptyRelationSide();
+                return;
+            }
+
+            relation.arity = undefined;
+            relation.side3 = undefined;
+        };
+
         const handleAccept = () => {
             const source = selected;
             const relation = findRelationById(diagramRef.current, source.id);
 
             if (!relation) return;
-            if (!side1?.idMx || !side2?.idMx) return;
+
+            if (
+                !side1?.idMx ||
+                !side2?.idMx ||
+                (selectedArityIsTernary && !side3?.idMx)
+            ) {
+                return;
+            }
 
             if (isIdentifyingRelation(relation)) {
                 clearIdentifyingRelationSemantics(relation.idMx);
             }
 
-            if (isRelationConfigured(relation)) {
+            const wasConfigured = isRelationConfigured(relation);
+
+            if (wasConfigured) {
                 removeExistingGraphCells(
                     graph,
                     getConfiguredRelationGraphCells({ relation, accessCell }),
                 );
 
                 removeRelationAttributes(relation);
+            }
 
+            applySelectedRelationArity(relation);
+
+            if (wasConfigured) {
                 resetRelationSides(relation, { cardinality: "X:X" });
             }
 
@@ -1482,6 +1529,9 @@ export default function App(props) {
                 relation,
                 side1EntityCell: accessCell(side1.idMx),
                 side2EntityCell: accessCell(side2.idMx),
+                side3EntityCell: selectedArityIsTernary
+                    ? accessCell(side3.idMx)
+                    : null,
                 cardinalityStyle: getCardinalityStyleString(),
                 syncSelfRelationEdges,
             });
@@ -1489,20 +1539,37 @@ export default function App(props) {
             syncAndPersistDiagramData();
 
             setOpen(false);
+            setRelationArity(RELATION_ARITIES.BINARY);
             setSide1("");
             setSide2("");
+            setSide3("");
         };
 
-        const [side1, setSide1] = React.useState("");
-        const [side2, setSide2] = React.useState("");
+        const acceptDisabled =
+            side1 === "" ||
+            side2 === "" ||
+            (selectedArityIsTernary && side3 === "");
 
-        const acceptDisabled = side1 === "" || side2 === "";
+        const handleChangeRelationArity = (event) => {
+            const nextArity = Number(event.target.value);
+
+            setRelationArity(nextArity);
+
+            if (nextArity !== RELATION_ARITIES.TERNARY) {
+                setSide3("");
+            }
+        };
 
         const handleChangeSide1 = (event) => {
             setSide1(event.target.value);
         };
+
         const handleChangeSide2 = (event) => {
             setSide2(event.target.value);
+        };
+
+        const handleChangeSide3 = (event) => {
+            setSide3(event.target.value);
         };
 
         if (isRelation) {
@@ -1531,13 +1598,36 @@ export default function App(props) {
                             <Box sx={{ minHeight: 10 }} />
                             <Box sx={{ minWidth: 120 }}>
                                 <FormControl fullWidth>
+                                    <InputLabel id="relation-arity-label">
+                                        Tipo de relación
+                                    </InputLabel>
+                                    <Select
+                                        id="relation-arity"
+                                        value={relationArity}
+                                        label="Tipo de relación"
+                                        onChange={handleChangeRelationArity}
+                                    >
+                                        <MenuItem
+                                            value={RELATION_ARITIES.BINARY}
+                                        >
+                                            Binaria
+                                        </MenuItem>
+                                        <MenuItem
+                                            value={RELATION_ARITIES.TERNARY}
+                                        >
+                                            Ternaria
+                                        </MenuItem>
+                                    </Select>
+                                </FormControl>
+                                <Box sx={{ minHeight: 10 }} />
+                                <FormControl fullWidth>
                                     <InputLabel id="side1-label">
                                         Lado 1
                                     </InputLabel>
                                     <Select
                                         id="side1"
                                         value={side1}
-                                        label="Age"
+                                        label="Lado 1"
                                         onChange={handleChangeSide1}
                                     >
                                         {diagramRef.current.entities.map(
@@ -1579,6 +1669,37 @@ export default function App(props) {
                                         )}
                                     </Select>
                                 </FormControl>
+                                {selectedArityIsTernary && (
+                                    <>
+                                        <Box sx={{ minHeight: 10 }} />
+                                        <FormControl fullWidth>
+                                            <InputLabel id="side3-label">
+                                                Lado 3
+                                            </InputLabel>
+                                            <Select
+                                                id="side3"
+                                                value={side3}
+                                                label="Lado 3"
+                                                onChange={handleChangeSide3}
+                                            >
+                                                {diagramRef.current.entities.map(
+                                                    (entity) => {
+                                                        return (
+                                                            <MenuItem
+                                                                key={
+                                                                    entity.idMx
+                                                                }
+                                                                value={entity}
+                                                            >
+                                                                {entity.name}
+                                                            </MenuItem>
+                                                        );
+                                                    },
+                                                )}
+                                            </Select>
+                                        </FormControl>
+                                    </>
+                                )}
                             </Box>
                         </DialogContent>
                         <DialogActions>
