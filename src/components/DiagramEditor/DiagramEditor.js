@@ -22,6 +22,7 @@ import {
     IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES,
     POSSIBLE_CARDINALITIES,
     RELATION_ARITIES,
+    TERNARY_RELATION_CARDINALITIES,
     addAttributeToOwner,
     addChildAttributeToAttribute,
     applyIdentifyingRelationCardinalities,
@@ -56,6 +57,7 @@ import {
     isRelationAttributeOwner,
     isRelationConfigured,
     isSelfRelation,
+    isTernaryRelation,
     isWeakEntity,
     relationHasBothEntitySides,
     relationInvolvesEntity,
@@ -1843,6 +1845,10 @@ export default function App(props) {
         };
 
         const getAllowedCardinalitiesForSide = (sideKey) => {
+            if (isTernaryRelation(selectedDiag)) {
+                return TERNARY_RELATION_CARDINALITIES;
+            }
+
             if (!isIdentifyingRelation(selectedDiag)) {
                 return POSSIBLE_CARDINALITIES;
             }
@@ -1864,8 +1870,22 @@ export default function App(props) {
             accessCell(selectedDiag?.[sideKey]?.entity?.idMx)?.value ??
             `Lado ${sideKey.replace("side", "")}`;
 
+        const cardinalityIsAllowedForSide = (sideKey) => {
+            const cardinality = getCardinalityForSide(sideKey);
+
+            if (cardinality === "") {
+                return false;
+            }
+
+            if (isTernaryRelation(selectedDiag)) {
+                return TERNARY_RELATION_CARDINALITIES.includes(cardinality);
+            }
+
+            return true;
+        };
+
         const acceptDisabled = sideKeys.some(
-            (sideKey) => getCardinalityForSide(sideKey) === "",
+            (sideKey) => !cardinalityIsAllowedForSide(sideKey),
         );
 
         if (isRelation) {

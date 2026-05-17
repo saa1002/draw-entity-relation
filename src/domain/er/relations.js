@@ -10,6 +10,8 @@ const getRelations = (diagram) =>
 
 export const POSSIBLE_CARDINALITIES = ["0:1", "0:N", "1:1", "1:N"];
 
+export const TERNARY_RELATION_CARDINALITIES = ["0:1", "0:N"];
+
 export const DEFAULT_IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITY = "0:N";
 
 export const IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES = [

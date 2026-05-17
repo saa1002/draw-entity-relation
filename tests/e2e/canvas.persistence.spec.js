@@ -94,21 +94,19 @@ test('ternary relationship configuration persists after reload', async ({ page }
     await configureTernaryRelationCardinalities(
         page,
         'Relación',
-        '1:N',
+        '0:N',
         '0:1',
-        '1:1',
+        '0:N',
     );
 
-    await expect(page.getByText('1:N', { exact: true })).toBeVisible();
-    await expect(page.getByText('0:1', { exact: true })).toBeVisible();
-    await expect(page.getByText('1:1', { exact: true })).toBeVisible();
+    await expect(page.getByText('0:N', { exact: true })).toHaveCount(2);
+    await expect(page.getByText('0:1', { exact: true })).toHaveCount(1);
 
     await page.reload();
 
     await expect(page.getByText('Relación', { exact: true })).toBeVisible();
-    await expect(page.getByText('1:N', { exact: true })).toBeVisible();
-    await expect(page.getByText('0:1', { exact: true })).toBeVisible();
-    await expect(page.getByText('1:1', { exact: true })).toBeVisible();
+    await expect(page.getByText('0:N', { exact: true })).toHaveCount(2);
+    await expect(page.getByText('0:1', { exact: true })).toHaveCount(1);
 
     await expectSavedDiagramState(
         page,
@@ -132,9 +130,9 @@ test('ternary relationship configuration persists after reload', async ({ page }
         },
         {
             arity: 3,
-            side1Cardinality: '1:N',
+            side1Cardinality: '0:N',
             side2Cardinality: '0:1',
-            side3Cardinality: '1:1',
+            side3Cardinality: '0:N',
             side1HasEdge: true,
             side2HasEdge: true,
             side3HasEdge: true,

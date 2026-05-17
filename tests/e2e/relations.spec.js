@@ -11,10 +11,12 @@ import {
     expectSavedDiagramState,
     expectSavedRelationAttributeToMatch,
     expectSavedRelationToMatch,
+    openRelationCardinalitiesDialog,
     openRelationConfigDialog,
     selectEntity,
     selectRelation,
     selectRelationArity,
+    selectRelationCardinality,
     selectRelationSide,
 } from '../helpers/canvas';
 
@@ -187,28 +189,57 @@ test('configure cardinalities for a ternary relationship', async ({ page }) => {
         'Entidad 2',
     );
 
-    await configureTernaryRelationCardinalities(
+    const dialog = await openRelationCardinalitiesDialog(page, 'Relación');
+
+    await dialog.locator('#side1-to-side2').click();
+
+    await expect(
+        page.getByRole('option', { name: '0:1', exact: true }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole('option', { name: '0:N', exact: true }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole('option', { name: '1:1', exact: true }),
+    ).toHaveCount(0);
+    await expect(
+        page.getByRole('option', { name: '1:N', exact: true }),
+    ).toHaveCount(0);
+
+    await page.getByRole('option', { name: '0:N', exact: true }).click();
+
+    await selectRelationCardinality(
         page,
-        'Relación',
-        '1:N',
+        dialog,
+        'side2-to-side1',
         '0:1',
-        '1:1',
+    );
+    await selectRelationCardinality(
+        page,
+        dialog,
+        'side3-cardinality',
+        '0:N',
     );
 
-    await expect(page.getByText('1:N', { exact: true })).toBeVisible();
-    await expect(page.getByText('0:1', { exact: true })).toBeVisible();
-    await expect(page.getByText('1:1', { exact: true })).toBeVisible();
+    const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
+    await expect(acceptBtn).toBeEnabled();
+
+    await acceptBtn.click();
+    await expect(dialog).toBeHidden();
+
+    await expect(page.getByText('0:N', { exact: true })).toHaveCount(2);
+    await expect(page.getByText('0:1', { exact: true })).toHaveCount(1);
 
     await expectSavedRelationToMatch(page, 'Relación', {
         arity: 3,
         side1: {
-            cardinality: '1:N',
+            cardinality: '0:N',
         },
         side2: {
             cardinality: '0:1',
         },
         side3: {
-            cardinality: '1:1',
+            cardinality: '0:N',
         },
         canHoldAttributes: false,
     });
