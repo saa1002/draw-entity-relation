@@ -2,7 +2,9 @@ import { isMultivaluedAttribute } from "../er/attributes";
 import {
     findMandatoryOneToOneMergeRelationForEntity,
     getRelationSideCardinality,
+    getRelationSideKeys,
     isSelfRelation,
+    isTernaryRelation,
 } from "../er/relations";
 import {
     projectAttributeTreeToColumns,
@@ -41,6 +43,25 @@ export function filterTables(graph) {
     }
 
     function processRelation(relation) {
+        if (isTernaryRelation(relation)) {
+            const table = {
+                name: relation.name,
+                type: "TERNARY",
+                attributes: [...relation.attributes],
+            };
+
+            getRelationSideKeys(relation).forEach((sideKey) => {
+                const side = relation[sideKey];
+                table[sideKey] = {
+                    entity: entities.find((e) => e.idMx === side.entity.idMx),
+                    cardinality: getRelationSideCardinality(side),
+                };
+                usedEntities.add(side.entity.idMx);
+            });
+
+            return table;
+        }
+
         const side1 = relation.side1;
         const side2 = relation.side2;
         const side1Cardinality = getRelationSideCardinality(side1);
@@ -204,6 +225,8 @@ function buildRelationForeignKeyAttributes({
     entity,
     relationName,
     suffix,
+    key = true,
+    notnull = false,
 }) {
     const foreignKeyGroup = `${relationName}_${entity.idMx}_${suffix}`;
 
@@ -211,14 +234,22 @@ function buildRelationForeignKeyAttributes({
         .map((keyColumn) => keyColumn.referencedColumn)
         .join("_")}_${relationName}_${suffix}`;
 
-    return keyColumns.map((keyColumn) => ({
-        name: `${keyColumn.name}_${relationName}_${suffix}`,
-        key: true,
-        foreign_key: entity.name,
-        foreign_key_column: keyColumn.referencedColumn,
-        foreign_key_group: foreignKeyGroup,
-        foreign_key_constraint: constraintName,
-    }));
+    return keyColumns.map((keyColumn) => {
+        const attribute = {
+            name: `${keyColumn.name}_${relationName}_${suffix}`,
+            key,
+            foreign_key: entity.name,
+            foreign_key_column: keyColumn.referencedColumn,
+            foreign_key_group: foreignKeyGroup,
+            foreign_key_constraint: constraintName,
+        };
+
+        if (notnull) {
+            attribute.notnull = true;
+        }
+
+        return attribute;
+    });
 }
 
 function buildForeignKeyCopyAttributes({
@@ -473,6 +504,81 @@ export function processNMRelation(relation, graph) {
     return [firstTable, secondTable, thirdTable];
 }
 
+function getTernaryCandidateKeySideIndexes(sides) {
+    const oneSideIndexes = sides
+        .map((side, index) => ({ side, index }))
+        .filter(({ side }) => side.cardinality.maximum === "1")
+        .map(({ index }) => index);
+
+    if (oneSideIndexes.length === 0) {
+        return [sides.map((_, index) => index)];
+    }
+
+    return oneSideIndexes.map((oneSideIndex) =>
+        sides
+            .map((_, index) => index)
+            .filter((index) => index !== oneSideIndex),
+    );
+}
+
+export function processTernaryRelation(relation, graph) {
+    const sides = [relation.side1, relation.side2, relation.side3];
+    const candidateKeySideIndexes = getTernaryCandidateKeySideIndexes(sides);
+    const primaryKeySideIndexes = new Set(candidateKeySideIndexes.at(0));
+    const uniqueCandidateKeySideIndexes = candidateKeySideIndexes.slice(1);
+
+    const entityTables = sides.map((side) => buildEntityTable(side.entity));
+    const relationTableAttributes = [];
+    const attributesBySideIndex = [];
+
+    sides.forEach((side, index) => {
+        const entityKeyColumns = getEntityPrimaryKeyColumns(side.entity, graph);
+
+        if (entityKeyColumns.length === 0) {
+            throw new Error(
+                `No se puede procesar la relación ternaria "${relation.name}" porque un lado no tiene columnas de clave.`,
+            );
+        }
+
+        const sideAttributes = buildRelationForeignKeyAttributes({
+            keyColumns: entityKeyColumns,
+            entity: side.entity,
+            relationName: relation.name,
+            suffix: String(index + 1),
+            key: primaryKeySideIndexes.has(index),
+            notnull: !primaryKeySideIndexes.has(index),
+        });
+
+        attributesBySideIndex[index] = sideAttributes;
+        relationTableAttributes.push(...sideAttributes);
+    });
+
+    const uniqueConstraints = uniqueCandidateKeySideIndexes.map(
+        (candidateKeyIndexes, index) => ({
+            name: `${relation.name}_candidate_${index + 2}`,
+            columns: candidateKeyIndexes.flatMap((sideIndex) =>
+                attributesBySideIndex[sideIndex].map(
+                    (attribute) => attribute.name,
+                ),
+            ),
+        }),
+    );
+
+    const relationTable = {
+        name: relation.name,
+        attributes: [
+            ...relationTableAttributes,
+            ...buildRelationAttributes(relation.attributes),
+        ],
+    };
+
+    if (uniqueConstraints.length > 0) {
+        relationTable.uniqueConstraints = uniqueConstraints;
+    }
+
+    return [...entityTables, relationTable];
+}
+
 function applyWeakEntitySemantics(tableMap, graph) {
     for (const entity of graph.entities) {
         if (!entity.weak) continue;
@@ -555,6 +661,8 @@ function processRelationalTable(table, graph) {
             return process1NRelation(table, graph);
         case "N:M":
             return processNMRelation(table, graph);
+        case "TERNARY":
+            return processTernaryRelation(table, graph);
         default:
             return table.type ? [table] : [buildEntityTable(table)];
     }
@@ -586,8 +694,10 @@ function normalizeRelationalTableIdentifiers(tables) {
         table.name = normalizeIdentifier(table.name);
 
         const attributeNames = new Set();
+        const attributeNameMap = new Map();
 
         table.attributes.forEach((attr) => {
+            const originalName = attr.name;
             const baseName = normalizeIdentifier(attr.name);
             let uniqueName = baseName;
 
@@ -603,7 +713,22 @@ function normalizeRelationalTableIdentifiers(tables) {
 
             attr.name = uniqueName;
             attributeNames.add(uniqueName);
+            attributeNameMap.set(originalName, uniqueName);
         });
+
+        if (Array.isArray(table.uniqueConstraints)) {
+            table.uniqueConstraints = table.uniqueConstraints.map(
+                (constraint) => ({
+                    ...constraint,
+                    name: normalizeIdentifier(constraint.name),
+                    columns: constraint.columns.map(
+                        (column) =>
+                            attributeNameMap.get(column) ??
+                            normalizeIdentifier(column),
+                    ),
+                }),
+            );
+        }
     }
 
     return tables;
