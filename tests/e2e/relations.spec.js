@@ -6,6 +6,7 @@ import {
     addRelation,
     configureRelationCardinalities,
     configureRelationSides,
+    configureTernaryRelationCardinalities,
     configureTernaryRelationSides,
     expectSavedDiagramState,
     expectSavedRelationAttributeToMatch,
@@ -167,6 +168,49 @@ test('configure ternary relationship participants', async ({ page }) => {
             side3HasCardinalityCell: true,
         },
     );
+});
+
+test('configure cardinalities for a ternary relationship', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 420, y: 180 });
+    await addEntity(page, 'Entidad 2', { x: 300, y: 420 });
+    await addRelation(page, 'Relación', { x: 300, y: 300 });
+
+    await configureTernaryRelationSides(
+        page,
+        'Relación',
+        'Entidad',
+        'Entidad 1',
+        'Entidad 2',
+    );
+
+    await configureTernaryRelationCardinalities(
+        page,
+        'Relación',
+        '1:N',
+        '0:1',
+        '1:1',
+    );
+
+    await expect(page.getByText('1:N', { exact: true })).toBeVisible();
+    await expect(page.getByText('0:1', { exact: true })).toBeVisible();
+    await expect(page.getByText('1:1', { exact: true })).toBeVisible();
+
+    await expectSavedRelationToMatch(page, 'Relación', {
+        arity: 3,
+        side1: {
+            cardinality: '1:N',
+        },
+        side2: {
+            cardinality: '0:1',
+        },
+        side3: {
+            cardinality: '1:1',
+        },
+        canHoldAttributes: false,
+    });
 });
 
 test('configure cardinalities for a configured relationship', async ({ page }) => {

@@ -289,6 +289,41 @@ export async function configureRelationCardinalities(
     await expect(dialog).toBeHidden();
 }
 
+export async function configureTernaryRelationCardinalities(
+    page,
+    relationName,
+    side1Cardinality,
+    side2Cardinality,
+    side3Cardinality,
+) {
+    const dialog = await openRelationCardinalitiesDialog(page, relationName);
+
+    await selectRelationCardinality(
+        page,
+        dialog,
+        'side1-to-side2',
+        side1Cardinality,
+    );
+    await selectRelationCardinality(
+        page,
+        dialog,
+        'side2-to-side1',
+        side2Cardinality,
+    );
+    await selectRelationCardinality(
+        page,
+        dialog,
+        'side3-cardinality',
+        side3Cardinality,
+    );
+
+    const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
+    await expect(acceptBtn).toBeEnabled();
+
+    await acceptBtn.click();
+    await expect(dialog).toBeHidden();
+}
+
 export async function markSelectedRelationAsIdentifying(page) {
     await page
         .getByRole('button', {
