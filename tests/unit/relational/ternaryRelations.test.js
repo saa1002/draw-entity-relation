@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { RELATION_ARITIES } from '../../../src/domain/er/relations'
 import {
     filterTables,
+    mapErDiagramToRelationalModel,
     processTernaryRelation,
 } from '../../../src/domain/relational/erToRelationalModel'
 
@@ -149,6 +150,168 @@ describe('Ternary relation extraction', () => {
             {
                 name: 'Imparte_candidate_2',
                 columns: ['id_asignatura_Imparte_1', 'id_grupo_Imparte_3'],
+            },
+        ])
+    })
+})
+
+describe('Additional ternary relation mapping coverage', () => {
+    test('should represent all additional candidate keys as unique constraints for 1:1:1 cardinalities', () => {
+        const graph = createTernaryGraph({
+            side1Cardinality: '0:1',
+            side2Cardinality: '0:1',
+            side3Cardinality: '0:1',
+        })
+        const filteredTables = filterTables(graph)
+
+        const tables = processTernaryRelation(filteredTables.at(0), graph)
+        const relationTable = tables.at(3)
+        const foreignKeys = relationTable.attributes.slice(0, 3)
+
+        expect(foreignKeys.map((attr) => attr.key)).toEqual([
+            false,
+            true,
+            true,
+        ])
+        expect(foreignKeys.map((attr) => attr.notnull ?? false)).toEqual([
+            true,
+            false,
+            false,
+        ])
+        expect(relationTable.uniqueConstraints).toEqual([
+            {
+                name: 'Imparte_candidate_2',
+                columns: ['id_asignatura_Imparte_1', 'id_grupo_Imparte_3'],
+            },
+            {
+                name: 'Imparte_candidate_3',
+                columns: [
+                    'id_asignatura_Imparte_1',
+                    'id_profesor_Imparte_2',
+                ],
+            },
+        ])
+    })
+
+    test('should use all leaf columns from a composite primary key in a ternary relation table', () => {
+        const graph = createTernaryGraph()
+
+        graph.entities.at(0).attributes = [
+            {
+                idMx: 'entity-asignatura-composite-key',
+                name: 'codigo',
+                key: true,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: 'entity-asignatura-key-serie',
+                        name: 'serie',
+                        key: false,
+                        partialKey: false,
+                    },
+                    {
+                        idMx: 'entity-asignatura-key-numero',
+                        name: 'numero',
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ]
+
+        const filteredTables = filterTables(graph)
+
+        const tables = processTernaryRelation(filteredTables.at(0), graph)
+        const relationTable = tables.at(3)
+
+        expect(relationTable.attributes.map((attr) => attr.name)).toEqual([
+            'serie_Imparte_1',
+            'numero_Imparte_1',
+            'id_profesor_Imparte_2',
+            'id_grupo_Imparte_3',
+            'horas',
+        ])
+        expect(
+            relationTable.attributes.slice(0, 2).map(
+                (attr) => attr.foreign_key_column,
+            ),
+        ).toEqual(['serie', 'numero'])
+        expect(
+            relationTable.attributes.slice(0, 4).map((attr) => attr.key),
+        ).toEqual([true, true, true, true])
+    })
+
+    test('should project composite relation attributes in the ternary relation table', () => {
+        const graph = createTernaryGraph()
+
+        graph.relations.at(0).attributes = [
+            {
+                idMx: 'relation-attribute-periodo',
+                name: 'periodo',
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: 'relation-attribute-inicio',
+                        name: 'inicio',
+                        key: false,
+                        partialKey: false,
+                    },
+                    {
+                        idMx: 'relation-attribute-fin',
+                        name: 'fin',
+                        key: false,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ]
+
+        const filteredTables = filterTables(graph)
+
+        const tables = processTernaryRelation(filteredTables.at(0), graph)
+        const relationTable = tables.at(3)
+
+        expect(relationTable.attributes.map((attr) => attr.name)).toEqual([
+            'id_asignatura_Imparte_1',
+            'id_profesor_Imparte_2',
+            'id_grupo_Imparte_3',
+            'inicio',
+            'fin',
+        ])
+        expect(
+            relationTable.attributes.some((attr) => attr.name === 'periodo'),
+        ).toBe(false)
+    })
+
+    test('should normalize ternary unique constraint names and columns in the full relational model', () => {
+        const graph = createTernaryGraph({
+            side1Cardinality: '0:1',
+            side2Cardinality: '0:1',
+            side3Cardinality: '0:N',
+        })
+
+        graph.relations.at(0).name = 'Imparte Curso'
+
+        const relationalModel = mapErDiagramToRelationalModel(graph)
+        const relationTable = relationalModel.tables.find(
+            (table) => table.name === 'Imparte_Curso',
+        )
+
+        expect(relationTable).toBeDefined()
+        expect(relationTable.attributes.map((attr) => attr.name)).toEqual([
+            'id_asignatura_Imparte_Curso_1',
+            'id_profesor_Imparte_Curso_2',
+            'id_grupo_Imparte_Curso_3',
+            'horas',
+        ])
+        expect(relationTable.uniqueConstraints).toEqual([
+            {
+                name: 'Imparte_Curso_candidate_2',
+                columns: [
+                    'id_asignatura_Imparte_Curso_1',
+                    'id_grupo_Imparte_Curso_3',
+                ],
             },
         ])
     })
