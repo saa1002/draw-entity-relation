@@ -12,6 +12,7 @@ import {
     expectSavedRelationAttributeToMatch,
     expectSavedRelationToMatch,
     openRelationConfigDialog,
+    selectEntity,
     selectRelation,
     selectRelationArity,
     selectRelationSide,
@@ -268,4 +269,147 @@ test('allow attributes on many-to-many relationships', async ({ page }) => {
     await expectSavedRelationAttributeToMatch(page, 'Relación', 0, {
         name: 'Atributo',
     });
+});
+
+test('reconfigure a ternary relationship back to binary', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 420, y: 180 });
+    await addEntity(page, 'Entidad 2', { x: 300, y: 420 });
+    await addRelation(page, 'Relación', { x: 300, y: 300 });
+
+    await configureTernaryRelationSides(
+        page,
+        'Relación',
+        'Entidad',
+        'Entidad 1',
+        'Entidad 2',
+    );
+
+    await expect(page.getByText('X:X', { exact: true })).toHaveCount(3);
+
+    const dialog = await openRelationConfigDialog(page, 'Relación');
+    const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
+
+    await selectRelationArity(page, dialog, 'Binaria');
+    await selectRelationSide(page, dialog, 'side1', 'Entidad 2');
+    await selectRelationSide(page, dialog, 'side2', 'Entidad');
+
+    await expect(acceptBtn).toBeEnabled();
+
+    await acceptBtn.click();
+    await expect(dialog).toBeHidden();
+
+    await expect(page.getByText('X:X', { exact: true })).toHaveCount(2);
+
+    await expectSavedDiagramState(
+        page,
+        (diagram) => {
+            const relation = diagram.relations.find(
+                (relationItem) => relationItem.name === 'Relación',
+            );
+            const entity = diagram.entities.find(
+                (entityItem) => entityItem.name === 'Entidad',
+            );
+            const entity2 = diagram.entities.find(
+                (entityItem) => entityItem.name === 'Entidad 2',
+            );
+
+            return {
+                arity: relation?.arity ?? null,
+                side3IsMissing: !Object.prototype.hasOwnProperty.call(
+                    relation ?? {},
+                    'side3',
+                ),
+                side1IsEntity2:
+                    relation?.side1?.entity?.idMx === entity2?.idMx,
+                side2IsEntity:
+                    relation?.side2?.entity?.idMx === entity?.idMx,
+                side1Cardinality: relation?.side1?.cardinality,
+                side2Cardinality: relation?.side2?.cardinality,
+                canHoldAttributes: relation?.canHoldAttributes,
+            };
+        },
+        {
+            arity: null,
+            side3IsMissing: true,
+            side1IsEntity2: true,
+            side2IsEntity: true,
+            side1Cardinality: 'X:X',
+            side2Cardinality: 'X:X',
+            canHoldAttributes: false,
+        },
+    );
+});
+
+test('do not offer identifying relationship action for ternary relationships', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 420, y: 180 });
+    await addEntity(page, 'Entidad 2', { x: 300, y: 420 });
+    await addRelation(page, 'Relación', { x: 300, y: 300 });
+
+    await configureTernaryRelationSides(
+        page,
+        'Relación',
+        'Entidad',
+        'Entidad 1',
+        'Entidad 2',
+    );
+
+    await selectRelation(page, 'Relación');
+
+    await expect(
+        page.getByRole('button', {
+            name: 'Marcar como dependencia por identificación',
+        }),
+    ).toHaveCount(0);
+});
+
+test('block export when a ternary relationship repeats participating entities', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 420, y: 180 });
+    await addRelation(page, 'Relación', { x: 300, y: 300 });
+
+    await selectEntity(page, 'Entidad');
+    await addAttributeToSelectedElement(page);
+
+    await selectEntity(page, 'Entidad 1');
+    await addAttributeToSelectedElement(page);
+
+    await configureTernaryRelationSides(
+        page,
+        'Relación',
+        'Entidad',
+        'Entidad',
+        'Entidad 1',
+    );
+
+    await configureTernaryRelationCardinalities(
+        page,
+        'Relación',
+        '0:N',
+        '0:N',
+        '0:N',
+    );
+
+    await page.getByRole('button', { name: 'Exportar JSON' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(
+        dialog.getByText('Exportación diagrama en JSON'),
+    ).toBeVisible();
+
+    await expect(
+        dialog.getByText(
+            'Hay relaciones ternarias con entidades participantes repetidas.',
+        ),
+    ).toBeVisible();
+
+    await expect(dialog.getByRole('button', { name: 'Aceptar' })).toBeDisabled();
 });
