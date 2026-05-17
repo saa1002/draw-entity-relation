@@ -60,7 +60,7 @@ const createTableSQL = (table) => {
             ? `, \n  PRIMARY KEY (${primaryKeyColumns.join(", ")})`
             : "";
 
-    const uniqueClauses = [...uniqueGroups.values()]
+    const groupedUniqueClauses = [...uniqueGroups.values()]
         .map((group) => {
             const firstAttribute = group[0];
             const constraintName = normalizeIdentifier(
@@ -76,9 +76,25 @@ const createTableSQL = (table) => {
         })
         .join("");
 
+    const explicitUniqueClauses = Array.isArray(table.uniqueConstraints)
+        ? table.uniqueConstraints
+              .map((constraint) => {
+                  const constraintName = normalizeIdentifier(
+                      constraint.name ?? constraint.columns.join("_"),
+                  );
+
+                  const uniqueColumns = constraint.columns
+                      .map((column) => normalizeIdentifier(column))
+                      .join(", ");
+
+                  return `, \n  CONSTRAINT UQ_${constraintName} UNIQUE (${uniqueColumns})`;
+              })
+              .join("")
+        : "";
+
     return `CREATE TABLE ${normalizeIdentifier(
         table.name,
-    )} (\n  ${columns}${primaryKeyClause}${uniqueClauses}\n);`;
+    )} (\n  ${columns}${primaryKeyClause}${groupedUniqueClauses}${explicitUniqueClauses}\n);`;
 };
 
 const createForeignKeySQL = (table) => {
