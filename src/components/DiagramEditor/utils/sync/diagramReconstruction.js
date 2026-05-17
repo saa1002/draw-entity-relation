@@ -1,5 +1,7 @@
 import {
     getAttributeChildren,
+    getRelationSideKeys,
+    isBinaryRelation,
     isIdentifyingRelation,
     isRelationConfigured,
     isWeakEntity,
@@ -149,71 +151,79 @@ export const reconstructDiagramGraph = ({
         }
 
         if (isRelationConfigured(relation)) {
-            const target1 = accessCell(relation.side1.entity.idMx);
-            const target2 = accessCell(relation.side2.entity.idMx);
+            const connectedSides = getRelationSideKeys(relation).map(
+                (sideKey) => {
+                    const relationSide = relation[sideKey];
+                    const target = accessCell(relationSide.entity.idMx);
 
-            const edge1 = graph.insertEdge(
-                source,
-                relation.side1.edgeId,
-                null,
-                source,
-                target1,
+                    const edge = graph.insertEdge(
+                        source,
+                        relationSide.edgeId,
+                        null,
+                        source,
+                        target,
+                    );
+
+                    const cardinality = graph.insertVertex(
+                        edge,
+                        relationSide.cell,
+                        relationSide.cardinality === ""
+                            ? "X:X"
+                            : relationSide.cardinality,
+                        0,
+                        0,
+                        1,
+                        1,
+                        getCardinalityStyleString(),
+                        true,
+                    );
+
+                    graph.updateCellSize(cardinality);
+
+                    return {
+                        sideKey,
+                        target,
+                        edge,
+                        cardinality,
+                    };
+                },
             );
 
-            const edge2 = graph.insertEdge(
-                source,
-                relation.side2.edgeId,
-                null,
-                source,
-                target2,
-            );
+            if (isBinaryRelation(relation)) {
+                const side1 = connectedSides.find(
+                    (connectedSide) => connectedSide.sideKey === "side1",
+                );
+                const side2 = connectedSides.find(
+                    (connectedSide) => connectedSide.sideKey === "side2",
+                );
 
-            const cardinality1 = graph.insertVertex(
-                edge1,
-                relation.side1.cell,
-                relation.side1.cardinality === ""
-                    ? "X:X"
-                    : relation.side1.cardinality,
-                0,
-                0,
-                1,
-                1,
-                getCardinalityStyleString(),
-                true,
-            );
+                if (
+                    side1?.target &&
+                    side2?.target &&
+                    side1.target.id === side2.target.id
+                ) {
+                    const x1 =
+                        side1.target.geometry.x +
+                        side1.target.geometry.width / 2;
+                    const x2 = source.geometry.x + source.geometry.width / 2;
+                    const y1 =
+                        side1.target.geometry.y +
+                        side1.target.geometry.height / 2;
+                    const y2 = source.geometry.y + source.geometry.height / 2;
 
-            const cardinality2 = graph.insertVertex(
-                edge2,
-                relation.side2.cell,
-                relation.side2.cardinality === ""
-                    ? "X:X"
-                    : relation.side2.cardinality,
-                0,
-                0,
-                1,
-                1,
-                getCardinalityStyleString(),
-                true,
-            );
-
-            graph.updateCellSize(cardinality1);
-            graph.updateCellSize(cardinality2);
-
-            if (target1 && target2 && target1.id === target2.id) {
-                const x1 = target1.geometry.x + target1.geometry.width / 2;
-                const x2 = source.geometry.x + source.geometry.width / 2;
-                const y1 = target1.geometry.y + target1.geometry.height / 2;
-                const y2 = source.geometry.y + source.geometry.height / 2;
-
-                edge1.geometry.points = [new mxPoint(x2, y1)];
-                edge2.geometry.points = [new mxPoint(x1, y2)];
+                    side1.edge.geometry.points = [new mxPoint(x2, y1)];
+                    side2.edge.geometry.points = [new mxPoint(x1, y2)];
+                }
             }
 
             if (isIdentifyingRelation(relation)) {
                 ensureIdentifyingRelationEdgeDecorator(source, relation);
             }
 
-            graph.orderCells(true, [edge1, edge2]);
+            graph.orderCells(
+                true,
+                connectedSides.map((connectedSide) => connectedSide.edge),
+            );
         }
     };
 
