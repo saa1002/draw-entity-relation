@@ -1,6 +1,10 @@
 import { hasPrimaryKeyAttributeInTree } from "../../attributes";
 import { findEntityById } from "../../entities";
-import { POSSIBLE_CARDINALITIES } from "../../relations";
+import {
+    POSSIBLE_CARDINALITIES,
+    getRelationSides,
+    relationHasAllSideIds,
+} from "../../relations";
 
 // True if there is an N:M relation that has a key
 export function nmRelationsWithPK(graph) {
@@ -20,12 +24,7 @@ export function nmRelationsWithPK(graph) {
 
 export function relationsUnconnected(graph) {
     for (const relation of graph.relations) {
-        if (
-            !relation.side1.idMx ||
-            !relation.side2.idMx ||
-            relation.side1.idMx === "" ||
-            relation.side2.idMx === ""
-        ) {
+        if (!relationHasAllSideIds(relation)) {
             return true; // Found an unconnected relation
         }
     }
@@ -35,18 +34,20 @@ export function relationsUnconnected(graph) {
 
 export function brokenRelationEntityReferences(graph) {
     for (const relation of graph.relations) {
-        const side1EntityId = relation?.side1?.entity?.idMx;
-        const side2EntityId = relation?.side2?.entity?.idMx;
+        const entityIds = getRelationSides(relation).map(
+            (side) => side?.entity?.idMx ?? "",
+        );
 
         // Las relaciones no configuradas ya las cubre relationsUnconnected
-        if (!side1EntityId || !side2EntityId) {
+        if (entityIds.some((entityId) => !entityId)) {
             continue;
         }
 
-        const side1Exists = findEntityById(graph, side1EntityId) !== null;
-        const side2Exists = findEntityById(graph, side2EntityId) !== null;
+        const hasBrokenReference = entityIds.some(
+            (entityId) => findEntityById(graph, entityId) === null,
+        );
 
-        if (!side1Exists || !side2Exists) {
+        if (hasBrokenReference) {
             return true;
         }
     }
@@ -66,14 +67,11 @@ export function notNMRelationsWithAttributes(graph) {
 
 export function cardinalitiesNotValid(graph) {
     for (const relation of graph.relations) {
-        const side1Cardinality = relation.side1.cardinality;
-        const side2Cardinality = relation.side2.cardinality;
+        const hasInvalidCardinality = getRelationSides(relation).some(
+            (side) => !POSSIBLE_CARDINALITIES.includes(side?.cardinality),
+        );
 
-        // Check if the cardinalities are not in the possible list
-        if (
-            !POSSIBLE_CARDINALITIES.includes(side1Cardinality) ||
-            !POSSIBLE_CARDINALITIES.includes(side2Cardinality)
-        ) {
+        if (hasInvalidCardinality) {
             return true; // Found an invalid cardinality
         }
     }

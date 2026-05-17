@@ -49,9 +49,11 @@ export const relationHasAllEntitySides = (relation) =>
 
 export const relationHasBothEntitySides = relationHasAllEntitySides;
 
+export const relationHasAllSideIds = (relation) =>
+    getRelationSides(relation).every((side) => !!side?.idMx);
+
 export const isRelationConfigured = (relation) =>
-    relationHasAllEntitySides(relation) &&
-    getRelationSides(relation).every((side) => side?.idMx !== "");
+    relationHasAllEntitySides(relation) && relationHasAllSideIds(relation);
 
 export const getRelationSideCardinality = (side = {}) => {
     const [minimum = "", maximum = ""] = String(side.cardinality ?? "").split(

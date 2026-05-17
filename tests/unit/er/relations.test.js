@@ -8,6 +8,7 @@ import {
     isManyToManyRelation,
     isRelationConfigured,
     isSelfRelation,
+    relationHasAllSideIds,
     relationHasBothEntitySides,
     relationInvolvesEntity,
     resetRelationSides,
@@ -55,12 +56,21 @@ describe("Relation participant helpers", () => {
 
     test("detect configured binary relations", () => {
         expect(relationHasBothEntitySides(createRelation())).toBe(true);
+        expect(relationHasAllSideIds(createRelation())).toBe(true);
         expect(isRelationConfigured(createRelation())).toBe(true);
 
         expect(
             relationHasBothEntitySides(
                 createRelation({
                     side2: createSide({ idMx: "side-2", entityId: "" }),
+                }),
+            ),
+        ).toBe(false);
+
+        expect(
+            relationHasAllSideIds(
+                createRelation({
+                    side2: createSide({ idMx: "", entityId: "entity-2" }),
                 }),
             ),
         ).toBe(false);
