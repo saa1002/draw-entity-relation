@@ -1,3 +1,5 @@
+import { RELATION_ARITIES, getRelationArity } from "./relations";
+
 const normalizePosition = (position) => ({
     x: typeof position?.x === "number" ? position.x : 0,
     y: typeof position?.y === "number" ? position.y : 0,
@@ -55,19 +57,31 @@ export const normalizeRelationSide = (side = {}) => ({
     },
 });
 
-export const normalizeRelation = (relation = {}) => ({
-    ...relation,
-    idMx: relation.idMx ?? "",
-    name: relation.name ?? "",
-    position: normalizePosition(relation.position),
-    isIdentifying: relation.isIdentifying ?? false,
-    canHoldAttributes: relation.canHoldAttributes ?? false,
-    side1: normalizeRelationSide(relation.side1),
-    side2: normalizeRelationSide(relation.side2),
-    attributes: Array.isArray(relation.attributes)
-        ? relation.attributes.map(normalizeRelationAttribute)
-        : [],
-});
+export const normalizeRelation = (relation = {}) => {
+    const relationArity = getRelationArity(relation);
+    const { arity, side3, ...relationBase } = relation;
+
+    const normalizedRelation = {
+        ...relationBase,
+        idMx: relation.idMx ?? "",
+        name: relation.name ?? "",
+        position: normalizePosition(relation.position),
+        isIdentifying: relation.isIdentifying ?? false,
+        canHoldAttributes: relation.canHoldAttributes ?? false,
+        side1: normalizeRelationSide(relation.side1),
+        side2: normalizeRelationSide(relation.side2),
+        attributes: Array.isArray(relation.attributes)
+            ? relation.attributes.map(normalizeRelationAttribute)
+            : [],
+    };
+
+    if (relationArity === RELATION_ARITIES.TERNARY) {
+        normalizedRelation.arity = RELATION_ARITIES.TERNARY;
+        normalizedRelation.side3 = normalizeRelationSide(side3);
+    }
+
+    return normalizedRelation;
+};
 
 export const normalizeDiagramData = (diagramData = {}) => ({
     entities: Array.isArray(diagramData.entities)

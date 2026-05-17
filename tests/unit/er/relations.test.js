@@ -2,16 +2,21 @@ import { describe, expect, test } from "vitest";
 import {
     BINARY_RELATION_SIDE_KEYS,
     createEmptyRelationSide,
+    getRelationArity,
     getRelationEntityIds,
     getRelationSideKeys,
     getRelationSides,
+    isBinaryRelation,
     isManyToManyRelation,
     isRelationConfigured,
     isSelfRelation,
+    isTernaryRelation,
     relationHasAllSideIds,
     relationHasBothEntitySides,
     relationInvolvesEntity,
+    RELATION_ARITIES,
     resetRelationSides,
+    TERNARY_RELATION_SIDE_KEYS,
 } from "../../../src/domain/er/relations";
 
 const createSide = ({
@@ -32,6 +37,13 @@ const createRelation = (overrides = {}) => ({
     side2: createSide({ idMx: "side-2", entityId: "entity-2" }),
     canHoldAttributes: true,
     ...overrides,
+});
+
+const createTernaryRelation = (overrides = {}) =>
+    createRelation({
+        arity: RELATION_ARITIES.TERNARY,
+        side3: createSide({ idMx: "side-3", entityId: "entity-3" }),
+        ...overrides,
 });
 
 describe("Relation participant helpers", () => {
@@ -128,4 +140,53 @@ describe("Relation participant helpers", () => {
         );
         expect(relation.canHoldAttributes).toBe(false);
     });
+
+    test("reset ternary relation sides through side keys", () => {
+        const relation = createTernaryRelation();
+
+        resetRelationSides(relation, { cardinality: "X:X" });
+
+        expect(relation.side1).toEqual(
+            createEmptyRelationSide({ cardinality: "X:X" }),
+        );
+        expect(relation.side2).toEqual(
+            createEmptyRelationSide({ cardinality: "X:X" }),
+        );
+        expect(relation.side3).toEqual(
+            createEmptyRelationSide({ cardinality: "X:X" }),
+        );
+        expect(relation.canHoldAttributes).toBe(false);
+    });
+
+    test("treat relations without explicit arity as binary", () => {
+        const relation = createRelation();
+
+        expect(getRelationArity(relation)).toBe(RELATION_ARITIES.BINARY);
+        expect(isBinaryRelation(relation)).toBe(true);
+        expect(isTernaryRelation(relation)).toBe(false);
+    });
+
+    test("return ternary side keys and sides when arity is ternary", () => {
+        const relation = createTernaryRelation();
+
+        expect(getRelationArity(relation)).toBe(RELATION_ARITIES.TERNARY);
+        expect(isBinaryRelation(relation)).toBe(false);
+        expect(isTernaryRelation(relation)).toBe(true);
+        expect(getRelationSideKeys(relation)).toEqual(
+            TERNARY_RELATION_SIDE_KEYS,
+        );
+        expect(getRelationSides(relation)).toEqual([
+            relation.side1,
+            relation.side2,
+            relation.side3,
+        ]);
+    });
+
+    test("return configured entity ids for ternary relations", () => {
+        expect(getRelationEntityIds(createTernaryRelation())).toEqual([
+            "entity-1",
+            "entity-2",
+            "entity-3",
+        ]);
+    });    
 });

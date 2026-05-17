@@ -32,9 +32,29 @@ export const isIdentifyingRelation = (relation) =>
 export const canRelationHoldAttributes = (relation) =>
     relation?.canHoldAttributes === true;
 
-export const BINARY_RELATION_SIDE_KEYS = ["side1", "side2"];
+export const RELATION_ARITIES = {
+    BINARY: 2,
+    TERNARY: 3,
+};
 
-export const getRelationSideKeys = () => BINARY_RELATION_SIDE_KEYS;
+export const BINARY_RELATION_SIDE_KEYS = ["side1", "side2"];
+export const TERNARY_RELATION_SIDE_KEYS = ["side1", "side2", "side3"];
+
+export const getRelationArity = (relation) =>
+    relation?.arity === RELATION_ARITIES.TERNARY
+        ? RELATION_ARITIES.TERNARY
+        : RELATION_ARITIES.BINARY;
+
+export const isBinaryRelation = (relation) =>
+    getRelationArity(relation) === RELATION_ARITIES.BINARY;
+
+export const isTernaryRelation = (relation) =>
+    getRelationArity(relation) === RELATION_ARITIES.TERNARY;
+
+export const getRelationSideKeys = (relation) =>
+    isTernaryRelation(relation)
+        ? TERNARY_RELATION_SIDE_KEYS
+        : BINARY_RELATION_SIDE_KEYS;
 
 export const getRelationSides = (relation) =>
     getRelationSideKeys(relation).map((sideKey) => relation?.[sideKey] ?? null);
