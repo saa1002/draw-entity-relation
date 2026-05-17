@@ -390,7 +390,7 @@ test('export/import round-trip preserves ternary relationship structure', async 
                 attributes: [],
                 side1: {
                     idMx: 'card_proveedor_suministra',
-                    cardinality: '1:N',
+                    cardinality: '0:N',
                     cell: 'card_proveedor_suministra',
                     edgeId: 'edge_rel_proveedor',
                     entity: { idMx: '10' },
@@ -404,7 +404,7 @@ test('export/import round-trip preserves ternary relationship structure', async 
                 },
                 side3: {
                     idMx: 'card_proyecto_suministra',
-                    cardinality: '1:1',
+                    cardinality: '0:1',
                     cell: 'card_proyecto_suministra',
                     edgeId: 'edge_rel_proyecto',
                     entity: { idMx: '30' },
@@ -423,9 +423,8 @@ test('export/import round-trip preserves ternary relationship structure', async 
     await expect(page.getByText('Producto', { exact: true })).toBeVisible();
     await expect(page.getByText('Proyecto', { exact: true })).toBeVisible();
     await expect(page.getByText('Suministra', { exact: true })).toBeVisible();
-    await expect(page.getByText('1:N', { exact: true })).toBeVisible();
-    await expect(page.getByText('0:1', { exact: true })).toBeVisible();
-    await expect(page.getByText('1:1', { exact: true })).toBeVisible();
+    await expect(page.getByText('0:N', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('0:1', { exact: true })).toHaveCount(2);
 
     const exportedBefore = await exportCurrentDiagram(page);
 
@@ -442,9 +441,8 @@ test('export/import round-trip preserves ternary relationship structure', async 
     await expect(page.getByText('Producto', { exact: true })).toBeVisible();
     await expect(page.getByText('Proyecto', { exact: true })).toBeVisible();
     await expect(page.getByText('Suministra', { exact: true })).toBeVisible();
-    await expect(page.getByText('1:N', { exact: true })).toBeVisible();
-    await expect(page.getByText('0:1', { exact: true })).toBeVisible();
-    await expect(page.getByText('1:1', { exact: true })).toBeVisible();
+    await expect(page.getByText('0:N', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('0:1', { exact: true })).toHaveCount(2);
 
     const exportedAfter = await exportCurrentDiagram(page);
 

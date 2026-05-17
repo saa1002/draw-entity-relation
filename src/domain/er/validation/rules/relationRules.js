@@ -3,6 +3,7 @@ import { findEntityById } from "../../entities";
 import {
     POSSIBLE_CARDINALITIES,
     getRelationEntityIds,
+    getRelationSideCardinality,
     getRelationSides,
     isIdentifyingRelation,
     isRelationConfigured,
@@ -95,6 +96,28 @@ export function ternaryRelationsWithRepeatedParticipants(graph) {
 export function identifyingTernaryRelations(graph) {
     for (const relation of graph.relations) {
         if (isTernaryRelation(relation) && isIdentifyingRelation(relation)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function ternaryRelationsWithMandatoryCardinalities(graph) {
+    for (const relation of graph.relations) {
+        if (!isTernaryRelation(relation)) {
+            continue;
+        }
+
+        if (!isRelationConfigured(relation)) {
+            continue;
+        }
+
+        const hasMandatoryMinimumCardinality = getRelationSides(relation).some(
+            (side) => getRelationSideCardinality(side).minimum === "1",
+        );
+
+        if (hasMandatoryMinimumCardinality) {
             return true;
         }
     }

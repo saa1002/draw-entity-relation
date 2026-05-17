@@ -18,6 +18,7 @@ import {
     repeatedEntities,
     sqlIdentifierCollisions,
     strongEntitiesWithPartialKey,
+    ternaryRelationsWithMandatoryCardinalities,
     ternaryRelationsWithRepeatedParticipants,
     unsupportedMultivaluedAttributes,
     weakEntitiesWithMoreThanOnePartialKey,
@@ -91,6 +92,10 @@ export const VALIDATION_RULES = [
     {
         diagnostic: "noIdentifyingTernaryRelations",
         fails: identifyingTernaryRelations,
+    },
+    {
+        diagnostic: "noTernaryRelationsWithMandatoryCardinalities",
+        fails: ternaryRelationsWithMandatoryCardinalities,
     },
     {
         diagnostic: "noSQLIdentifierCollisions",

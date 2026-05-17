@@ -127,6 +127,10 @@ const VALIDATION_MESSAGE_DEFINITIONS = [
             "Las relaciones ternarias no pueden ser relaciones de dependencia por identificación.",
     },
     {
+        key: "noTernaryRelationsWithMandatoryCardinalities",
+        message: "Hay relaciones ternarias con cardinalidades obligatorias.",
+    },
+    {
         key: "noNotValidCardinalities",
         message: "Hay cardinalidades no válidas en las relaciones.",
     },

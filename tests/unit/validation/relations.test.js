@@ -9,6 +9,7 @@ import {
     brokenRelationEntityReferences,
     ternaryRelationsWithRepeatedParticipants,
     identifyingTernaryRelations,
+    ternaryRelationsWithMandatoryCardinalities,
 } from '../../../src/domain/er/validation'
 
 let graph
@@ -29,8 +30,8 @@ const configureTernaryRelation = (
         side1EntityId = '2',
         side2EntityId = '3',
         side3EntityId = '19',
-        side1Cardinality = '1:1',
-        side2Cardinality = '1:N',
+        side1Cardinality = '0:1',
+        side2Cardinality = '0:N',
         side3Cardinality = '0:N',
     } = {},
 ) => {
@@ -191,11 +192,13 @@ describe("Ternary relationships", () => {
         expect(cardinalitiesNotValid(graph)).toBe(false)
         expect(ternaryRelationsWithRepeatedParticipants(graph)).toBe(false)
         expect(identifyingTernaryRelations(graph)).toBe(false)
+        expect(ternaryRelationsWithMandatoryCardinalities(graph)).toBe(false)
         expect(diagnostics.noUnconnectedRelations).toBe(true)
         expect(diagnostics.noBrokenRelationEntityReferences).toBe(true)
         expect(diagnostics.noNotValidCardinalities).toBe(true)
         expect(diagnostics.noTernaryRelationsWithRepeatedParticipants).toBe(true)
         expect(diagnostics.noIdentifyingTernaryRelations).toBe(true)
+        expect(diagnostics.noTernaryRelationsWithMandatoryCardinalities).toBe(true)
         expect(diagnostics.isValid).toBe(true)
     })
 
@@ -270,5 +273,27 @@ describe("Ternary relationships", () => {
         expect(identifyingTernaryRelations(graph)).toBe(true)
         expect(diagnostics.noIdentifyingTernaryRelations).toBe(false)
         expect(diagnostics.isValid).toBe(false)
+    })
+
+    test("A ternary relation cannot use mandatory minimum cardinalities", () => {
+        configureTernaryRelation(graph.relations.at(1), {
+            side2Cardinality: '1:N',
+        })
+
+        const diagnostics = validateGraph(graph)
+
+        expect(ternaryRelationsWithMandatoryCardinalities(graph)).toBe(true)
+        expect(diagnostics.noTernaryRelationsWithMandatoryCardinalities).toBe(false)
+        expect(diagnostics.isValid).toBe(false)
+    })
+
+    test("Binary relations can still use mandatory minimum cardinalities", () => {
+        graph.relations.at(1).side1.cardinality = '1:N'
+        graph.relations.at(1).side2.cardinality = '1:1'
+
+        const diagnostics = validateGraph(graph)
+
+        expect(ternaryRelationsWithMandatoryCardinalities(graph)).toBe(false)
+        expect(diagnostics.noTernaryRelationsWithMandatoryCardinalities).toBe(true)
     })
 })

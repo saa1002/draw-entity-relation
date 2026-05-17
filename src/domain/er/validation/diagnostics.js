@@ -13,6 +13,7 @@ export const DEFAULT_DIAGNOSTICS = {
     noBrokenRelationEntityReferences: true,
     noTernaryRelationsWithRepeatedParticipants: true,
     noIdentifyingTernaryRelations: true,
+    noTernaryRelationsWithMandatoryCardinalities: true,
     noNotValidCardinalities: true,
     noSQLIdentifierCollisions: true,
     noWeakEntitiesWithoutPartialKey: true,
