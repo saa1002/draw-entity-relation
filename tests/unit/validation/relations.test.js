@@ -1,14 +1,59 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { loadGraphFixture } from '../../helpers/graphLoader'
+import { RELATION_ARITIES } from '../../../src/domain/er/relations'
 import {
     relationsUnconnected,
     validateGraph,
     cardinalitiesNotValid,
     notNMRelationsWithAttributes,
     brokenRelationEntityReferences,
+    ternaryRelationsWithRepeatedParticipants,
+    identifyingTernaryRelations,
 } from '../../../src/domain/er/validation'
 
 let graph
+
+const createRelationSide = ({ idMx, entityId, cardinality = '1:1' }) => ({
+    idMx,
+    cardinality,
+    cell: idMx,
+    edgeId: '',
+    entity: {
+        idMx: entityId,
+    },
+})
+
+const configureTernaryRelation = (
+    relation,
+    {
+        side1EntityId = '2',
+        side2EntityId = '3',
+        side3EntityId = '19',
+        side1Cardinality = '1:1',
+        side2Cardinality = '1:N',
+        side3Cardinality = '0:N',
+    } = {},
+) => {
+    relation.arity = RELATION_ARITIES.TERNARY
+    relation.side1 = createRelationSide({
+        idMx: '23',
+        entityId: side1EntityId,
+        cardinality: side1Cardinality,
+    })
+    relation.side2 = createRelationSide({
+        idMx: '24',
+        entityId: side2EntityId,
+        cardinality: side2Cardinality,
+    })
+    relation.side3 = createRelationSide({
+        idMx: '25',
+        entityId: side3EntityId,
+        cardinality: side3Cardinality,
+    })
+    relation.canHoldAttributes = false
+    relation.isIdentifying = false
+    relation.attributes = []
+}
 
 beforeEach(() => {
     graph = loadGraphFixture('example.json')
@@ -134,3 +179,96 @@ describe("Cardinalities", () => {
         expect(validateGraph(graph).noNotValidCardinalities).toBe(false)
     });    
 });
+
+describe("Ternary relationships", () => {
+    test("A ternary relation with three configured distinct entities and valid cardinalities should be valid", () => {
+        configureTernaryRelation(graph.relations.at(1))
+
+        const diagnostics = validateGraph(graph)
+
+        expect(relationsUnconnected(graph)).toBe(false)
+        expect(brokenRelationEntityReferences(graph)).toBe(false)
+        expect(cardinalitiesNotValid(graph)).toBe(false)
+        expect(ternaryRelationsWithRepeatedParticipants(graph)).toBe(false)
+        expect(identifyingTernaryRelations(graph)).toBe(false)
+        expect(diagnostics.noUnconnectedRelations).toBe(true)
+        expect(diagnostics.noBrokenRelationEntityReferences).toBe(true)
+        expect(diagnostics.noNotValidCardinalities).toBe(true)
+        expect(diagnostics.noTernaryRelationsWithRepeatedParticipants).toBe(true)
+        expect(diagnostics.noIdentifyingTernaryRelations).toBe(true)
+        expect(diagnostics.isValid).toBe(true)
+    })
+
+    test("A ternary relation with an unconfigured entity side should be unconnected", () => {
+        configureTernaryRelation(graph.relations.at(1), {
+            side3EntityId: '',
+        })
+
+        const diagnostics = validateGraph(graph)
+
+        expect(relationsUnconnected(graph)).toBe(true)
+        expect(diagnostics.noUnconnectedRelations).toBe(false)
+        expect(diagnostics.isValid).toBe(false)
+    })
+
+    test("A ternary relation should reference existing entities on all sides", () => {
+        configureTernaryRelation(graph.relations.at(1), {
+            side3EntityId: 'non-existing-entity-id',
+        })
+
+        const diagnostics = validateGraph(graph)
+
+        expect(relationsUnconnected(graph)).toBe(false)
+        expect(brokenRelationEntityReferences(graph)).toBe(true)
+        expect(diagnostics.noBrokenRelationEntityReferences).toBe(false)
+        expect(diagnostics.isValid).toBe(false)
+    })
+
+    test("A ternary relation should have valid cardinalities on all sides", () => {
+        configureTernaryRelation(graph.relations.at(1), {
+            side3Cardinality: 'X:X',
+        })
+
+        const diagnostics = validateGraph(graph)
+
+        expect(cardinalitiesNotValid(graph)).toBe(true)
+        expect(diagnostics.noNotValidCardinalities).toBe(false)
+        expect(diagnostics.isValid).toBe(false)
+    })
+
+    test("A ternary relation cannot repeat one of its participating entities", () => {
+        configureTernaryRelation(graph.relations.at(1), {
+            side2EntityId: '2',
+        })
+
+        const diagnostics = validateGraph(graph)
+
+        expect(ternaryRelationsWithRepeatedParticipants(graph)).toBe(true)
+        expect(diagnostics.noTernaryRelationsWithRepeatedParticipants).toBe(false)
+        expect(diagnostics.isValid).toBe(false)
+    })
+
+    test("A ternary relation cannot be reflexive with the same entity on all sides", () => {
+        configureTernaryRelation(graph.relations.at(1), {
+            side2EntityId: '2',
+            side3EntityId: '2',
+        })
+
+        const diagnostics = validateGraph(graph)
+
+        expect(ternaryRelationsWithRepeatedParticipants(graph)).toBe(true)
+        expect(diagnostics.noTernaryRelationsWithRepeatedParticipants).toBe(false)
+        expect(diagnostics.isValid).toBe(false)
+    })
+
+    test("A ternary relation cannot be identifying", () => {
+        configureTernaryRelation(graph.relations.at(1))
+        graph.relations.at(1).isIdentifying = true
+
+        const diagnostics = validateGraph(graph)
+
+        expect(identifyingTernaryRelations(graph)).toBe(true)
+        expect(diagnostics.noIdentifyingTernaryRelations).toBe(false)
+        expect(diagnostics.isValid).toBe(false)
+    })
+})

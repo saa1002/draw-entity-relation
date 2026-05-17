@@ -7,6 +7,7 @@ import {
     entitiesWithoutPK,
     identifyingRelationCardinalitiesNotValid,
     identifyingRelationsNotValid,
+    identifyingTernaryRelations,
     inconsistentWeakEntityOwnership,
     multipleIdentifyingRelationsPerWeakEntity,
     nestedCompositeAttributes,
@@ -17,6 +18,7 @@ import {
     repeatedEntities,
     sqlIdentifierCollisions,
     strongEntitiesWithPartialKey,
+    ternaryRelationsWithRepeatedParticipants,
     unsupportedMultivaluedAttributes,
     weakEntitiesWithMoreThanOnePartialKey,
     weakEntitiesWithPrimaryKey,
@@ -81,6 +83,14 @@ export const VALIDATION_RULES = [
     {
         diagnostic: "noBrokenRelationEntityReferences",
         fails: brokenRelationEntityReferences,
+    },
+    {
+        diagnostic: "noTernaryRelationsWithRepeatedParticipants",
+        fails: ternaryRelationsWithRepeatedParticipants,
+    },
+    {
+        diagnostic: "noIdentifyingTernaryRelations",
+        fails: identifyingTernaryRelations,
     },
     {
         diagnostic: "noSQLIdentifierCollisions",

@@ -2,9 +2,18 @@ import { hasPrimaryKeyAttributeInTree } from "../../attributes";
 import { findEntityById } from "../../entities";
 import {
     POSSIBLE_CARDINALITIES,
+    getRelationEntityIds,
     getRelationSides,
-    relationHasAllSideIds,
+    isIdentifyingRelation,
+    isRelationConfigured,
+    isTernaryRelation,
 } from "../../relations";
+
+const relationHasRepeatedEntityParticipants = (relation) => {
+    const entityIds = getRelationEntityIds(relation);
+
+    return new Set(entityIds).size !== entityIds.length;
+};
 
 // True if there is an N:M relation that has a key
 export function nmRelationsWithPK(graph) {
@@ -24,7 +33,7 @@ export function nmRelationsWithPK(graph) {
 
 export function relationsUnconnected(graph) {
     for (const relation of graph.relations) {
-        if (!relationHasAllSideIds(relation)) {
+        if (!isRelationConfigured(relation)) {
             return true; // Found an unconnected relation
         }
     }
@@ -59,6 +68,34 @@ export function notNMRelationsWithAttributes(graph) {
     for (const relation of graph.relations) {
         if (!relation.canHoldAttributes && relation.attributes.length > 0) {
             return true; // Found an relation that cant hold attributes that holds them
+        }
+    }
+
+    return false;
+}
+
+export function ternaryRelationsWithRepeatedParticipants(graph) {
+    for (const relation of graph.relations) {
+        if (!isTernaryRelation(relation)) {
+            continue;
+        }
+
+        if (!isRelationConfigured(relation)) {
+            continue;
+        }
+
+        if (relationHasRepeatedEntityParticipants(relation)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function identifyingTernaryRelations(graph) {
+    for (const relation of graph.relations) {
+        if (isTernaryRelation(relation) && isIdentifyingRelation(relation)) {
+            return true;
         }
     }
 
