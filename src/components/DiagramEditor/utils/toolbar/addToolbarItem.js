@@ -1,4 +1,5 @@
 import { default as MxGraph } from "mxgraph";
+import { createRelationData } from "../../../../domain/er/relations";
 import {
     getEntityDimensions,
     getRelationDimensions,
@@ -92,28 +93,16 @@ export default function addToolbarItem(
             });
         }
         if (addRelationToDiagram) {
-            diagramRef.current.relations.push({
-                idMx: vertex.id,
-                name: vertex.value,
-                position: { x: vertex.geometry.x, y: vertex.geometry.y },
-                side1: {
-                    idMx: "",
-                    cardinality: "",
-                    cell: "",
-                    edgeId: "",
-                    entity: { idMx: "" },
-                },
-                side2: {
-                    idMx: "",
-                    cardinality: "",
-                    cell: "",
-                    edgeId: "",
-                    entity: { idMx: "" },
-                },
-                canHoldAttributes: false,
-                isIdentifying: false,
-                attributes: [],
-            });
+            diagramRef.current.relations.push(
+                createRelationData({
+                    idMx: vertex.id,
+                    name: vertex.value,
+                    position: {
+                        x: vertex.geometry.x,
+                        y: vertex.geometry.y,
+                    },
+                }),
+            );
         }
 
         graph.setSelectionCell(vertex);

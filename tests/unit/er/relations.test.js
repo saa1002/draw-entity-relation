@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
     BINARY_RELATION_SIDE_KEYS,
     createEmptyRelationSide,
+    createRelationData,
     getRelationArity,
     getRelationEntityIds,
     getRelationSideKeys,
@@ -188,5 +189,58 @@ describe("Relation participant helpers", () => {
             "entity-2",
             "entity-3",
         ]);
+    });
+    
+    test("create binary relation data by default", () => {
+        const relation = createRelationData({
+            idMx: "relation-1",
+            name: "Works",
+            position: { x: 10, y: 20 },
+        });
+
+        expect(relation).toEqual({
+            idMx: "relation-1",
+            name: "Works",
+            position: { x: 10, y: 20 },
+            side1: createEmptyRelationSide(),
+            side2: createEmptyRelationSide(),
+            canHoldAttributes: false,
+            isIdentifying: false,
+            attributes: [],
+        });
+    });
+
+    test("create ternary relation data with explicit arity", () => {
+        const relation = createRelationData({
+            idMx: "relation-1",
+            name: "Supplies",
+            position: { x: 10, y: 20 },
+            arity: RELATION_ARITIES.TERNARY,
+        });
+
+        expect(relation).toEqual({
+            idMx: "relation-1",
+            name: "Supplies",
+            position: { x: 10, y: 20 },
+            arity: RELATION_ARITIES.TERNARY,
+            side1: createEmptyRelationSide(),
+            side2: createEmptyRelationSide(),
+            side3: createEmptyRelationSide(),
+            canHoldAttributes: false,
+            isIdentifying: false,
+            attributes: [],
+        });
+    });
+
+    test("ignore unsupported relation arities when creating relation data", () => {
+        const relation = createRelationData({
+            idMx: "relation-1",
+            name: "InvalidArity",
+            arity: 4,
+        });
+
+        expect(relation).not.toHaveProperty("arity");
+        expect(relation).not.toHaveProperty("side3");
+        expect(getRelationArity(relation)).toBe(RELATION_ARITIES.BINARY);
     });    
 });

@@ -115,6 +115,31 @@ export const createEmptyRelationSide = ({ cardinality = "" } = {}) => ({
     entity: { idMx: "" },
 });
 
+export const createRelationData = ({
+    idMx = "",
+    name = "",
+    position = { x: 0, y: 0 },
+    arity = RELATION_ARITIES.BINARY,
+} = {}) => {
+    const relation = {
+        idMx,
+        name,
+        position,
+        side1: createEmptyRelationSide(),
+        side2: createEmptyRelationSide(),
+        canHoldAttributes: false,
+        isIdentifying: false,
+        attributes: [],
+    };
+
+    if (arity === RELATION_ARITIES.TERNARY) {
+        relation.arity = RELATION_ARITIES.TERNARY;
+        relation.side3 = createEmptyRelationSide();
+    }
+
+    return relation;
+};
+
 export const resetRelationSides = (relation, { cardinality = "" } = {}) => {
     if (!relation) {
         return null;
