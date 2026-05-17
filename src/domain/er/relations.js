@@ -32,13 +32,26 @@ export const isIdentifyingRelation = (relation) =>
 export const canRelationHoldAttributes = (relation) =>
     relation?.canHoldAttributes === true;
 
-export const relationHasBothEntitySides = (relation) =>
-    !!relation?.side1?.entity?.idMx && !!relation?.side2?.entity?.idMx;
+export const BINARY_RELATION_SIDE_KEYS = ["side1", "side2"];
+
+export const getRelationSideKeys = () => BINARY_RELATION_SIDE_KEYS;
+
+export const getRelationSides = (relation) =>
+    getRelationSideKeys(relation).map((sideKey) => relation?.[sideKey] ?? null);
+
+export const getRelationEntityIds = (relation) =>
+    getRelationSides(relation)
+        .map((side) => side?.entity?.idMx ?? "")
+        .filter(Boolean);
+
+export const relationHasAllEntitySides = (relation) =>
+    getRelationSides(relation).every((side) => !!side?.entity?.idMx);
+
+export const relationHasBothEntitySides = relationHasAllEntitySides;
 
 export const isRelationConfigured = (relation) =>
-    relationHasBothEntitySides(relation) &&
-    relation?.side1?.idMx !== "" &&
-    relation?.side2?.idMx !== "";
+    relationHasAllEntitySides(relation) &&
+    getRelationSides(relation).every((side) => side?.idMx !== "");
 
 export const getRelationSideCardinality = (side = {}) => {
     const [minimum = "", maximum = ""] = String(side.cardinality ?? "").split(
@@ -54,18 +67,23 @@ export const getRelationSideCardinality = (side = {}) => {
 export const getRelationSideMaximum = (side) =>
     getRelationSideCardinality(side).maximum;
 
-export const isSelfRelation = (relation) =>
-    relationHasBothEntitySides(relation) &&
-    relation.side1.entity.idMx === relation.side2.entity.idMx;
+export const isSelfRelation = (relation) => {
+    const entityIds = getRelationEntityIds(relation);
+
+    return (
+        relationHasBothEntitySides(relation) &&
+        entityIds.length === getRelationSideKeys(relation).length &&
+        entityIds.every((entityId) => entityId === entityIds[0])
+    );
+};
 
 export const relationInvolvesEntity = (relation, entityId) =>
-    !!entityId &&
-    (relation?.side1?.entity?.idMx === entityId ||
-        relation?.side2?.entity?.idMx === entityId);
+    !!entityId && getRelationEntityIds(relation).includes(entityId);
 
 export const isManyToManyRelation = (relation) =>
-    relation?.side1?.cardinality?.endsWith(":N") === true &&
-    relation?.side2?.cardinality?.endsWith(":N") === true;
+    getRelationSides(relation).every(
+        (side) => side?.cardinality?.endsWith(":N") === true,
+    );
 
 export const createEmptyRelationSide = ({ cardinality = "" } = {}) => ({
     idMx: "",
@@ -80,8 +98,9 @@ export const resetRelationSides = (relation, { cardinality = "" } = {}) => {
         return null;
     }
 
-    relation.side1 = createEmptyRelationSide({ cardinality });
-    relation.side2 = createEmptyRelationSide({ cardinality });
+    getRelationSideKeys(relation).forEach((sideKey) => {
+        relation[sideKey] = createEmptyRelationSide({ cardinality });
+    });
     relation.canHoldAttributes = false;
 
     return relation;
