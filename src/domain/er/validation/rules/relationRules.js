@@ -2,6 +2,7 @@ import { hasPrimaryKeyAttributeInTree } from "../../attributes";
 import { findEntityById } from "../../entities";
 import {
     POSSIBLE_CARDINALITIES,
+    canRelationTypeHoldAttributes,
     getRelationEntityIds,
     getRelationSideCardinality,
     getRelationSides,
@@ -67,8 +68,11 @@ export function brokenRelationEntityReferences(graph) {
 
 export function notNMRelationsWithAttributes(graph) {
     for (const relation of graph.relations) {
-        if (!relation.canHoldAttributes && relation.attributes.length > 0) {
-            return true; // Found an relation that cant hold attributes that holds them
+        if (
+            !canRelationTypeHoldAttributes(relation) &&
+            relation.attributes.length > 0
+        ) {
+            return true; // Found a relation that cannot hold attributes but holds them
         }
     }
 

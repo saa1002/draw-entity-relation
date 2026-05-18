@@ -126,6 +126,35 @@ describe("Attributes in non N:M relations", () => {
         expect(notNMRelationsWithAttributes(graph)).toBe(true);
         expect(validateGraph(graph).noAttributesInNonNMRelations).toBe(false)
     });
+
+    test("Ternary relations can have attributes regardless of maximum cardinalities", () => {
+        configureTernaryRelation(graph.relations.at(1), {
+            side1Cardinality: '0:1',
+            side2Cardinality: '0:1',
+            side3Cardinality: '0:1',
+        })
+
+        graph.relations.at(1).attributes = [
+            {
+                idMx: 'ternary-attribute-1',
+                name: 'nota',
+                position: {
+                    x: 560,
+                    y: 130,
+                },
+                cell: [
+                    'ternary-attribute-1',
+                    'ternary-attribute-edge-1',
+                ],
+            },
+        ]
+
+        const diagnostics = validateGraph(graph)
+
+        expect(notNMRelationsWithAttributes(graph)).toBe(false)
+        expect(diagnostics.noAttributesInNonNMRelations).toBe(true)
+        expect(diagnostics.isValid).toBe(true)
+    })
 })
 
 describe("Cardinalities", () => {

@@ -27,6 +27,7 @@ import {
     addChildAttributeToAttribute,
     applyIdentifyingRelationCardinalities,
     canRelationHoldAttributes,
+    canRelationTypeHoldAttributes,
     clearIdentifyingRelationDomainSemantics,
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
@@ -51,7 +52,6 @@ import {
     isBinaryRelation,
     isFirstAttributeForOwner,
     isIdentifyingRelation,
-    isManyToManyRelation,
     isMultivaluedAttribute,
     isPrimaryKeyAttribute,
     isRelationAttributeOwner,
@@ -1787,7 +1787,7 @@ export default function App(props) {
                         getCardinalityForSide(sideKey);
                 });
 
-                if (isManyToManyRelation(selectedDiag)) {
+                if (canRelationTypeHoldAttributes(selectedDiag)) {
                     selectedDiag.canHoldAttributes = true;
                 } else {
                     removeRelationAttributes(selectedDiag);

@@ -34,6 +34,10 @@ export const isIdentifyingRelation = (relation) =>
 export const canRelationHoldAttributes = (relation) =>
     relation?.canHoldAttributes === true;
 
+export const canRelationTypeHoldAttributes = (relation) =>
+    isTernaryRelation(relation) ||
+    (isBinaryRelation(relation) && isManyToManyRelation(relation));
+
 export const RELATION_ARITIES = {
     BINARY: 2,
     TERNARY: 3,

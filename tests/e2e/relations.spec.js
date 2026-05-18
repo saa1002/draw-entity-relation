@@ -232,16 +232,16 @@ test('configure cardinalities for a ternary relationship', async ({ page }) => {
 
     await expectSavedRelationToMatch(page, 'Relación', {
         arity: 3,
+        canHoldAttributes: true,
         side1: {
-            cardinality: '0:N',
+            cardinality: "0:N",
         },
         side2: {
-            cardinality: '0:1',
+            cardinality: "0:1",
         },
         side3: {
-            cardinality: '0:N',
+            cardinality: "0:N",
         },
-        canHoldAttributes: false,
     });
 });
 

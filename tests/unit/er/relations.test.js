@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
     BINARY_RELATION_SIDE_KEYS,
+    canRelationTypeHoldAttributes,
     createEmptyRelationSide,
     createRelationData,
     getRelationArity,
@@ -126,6 +127,36 @@ describe("Relation participant helpers", () => {
                 }),
             ),
         ).toBe(false);
+    });
+
+    test("allow attributes on binary many-to-many and ternary relations", () => {
+        expect(
+            canRelationTypeHoldAttributes(
+                createRelation({
+                    side1: createSide({ cardinality: "0:N" }),
+                    side2: createSide({ cardinality: "1:N" }),
+                }),
+            ),
+        ).toBe(true);
+
+        expect(
+            canRelationTypeHoldAttributes(
+                createRelation({
+                    side1: createSide({ cardinality: "0:N" }),
+                    side2: createSide({ cardinality: "1:1" }),
+                }),
+            ),
+        ).toBe(false);
+
+        expect(
+            canRelationTypeHoldAttributes(
+                createTernaryRelation({
+                    side1: createSide({ cardinality: "0:1" }),
+                    side2: createSide({ cardinality: "0:1" }),
+                    side3: createSide({ cardinality: "0:1" }),
+                }),
+            ),
+        ).toBe(true);
     });
 
     test("reset binary relation sides through side keys", () => {

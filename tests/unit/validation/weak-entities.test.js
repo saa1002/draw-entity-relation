@@ -516,6 +516,8 @@ describe("Canonical valid configuration", () => {
         });
 
         relation.isIdentifying = true;
+        relation.canHoldAttributes = false;
+        relation.attributes = [];
         relation.side1.entity.idMx = weakEntity.idMx;
         relation.side2.entity.idMx = strongEntity.idMx;
         relation.side1.cardinality = "0:N";
