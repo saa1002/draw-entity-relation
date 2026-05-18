@@ -261,6 +261,13 @@ export async function selectRelationCardinality(
     await page.getByRole('option', { name: cardinality, exact: true }).click();
 }
 
+function getTernaryCardinalityOptionLabel(cardinality) {
+    if (cardinality === '0:1') return '1';
+    if (cardinality === '0:N') return 'N';
+
+    return cardinality;
+}
+
 export async function configureRelationCardinalities(
     page,
     relationName,
@@ -302,19 +309,19 @@ export async function configureTernaryRelationCardinalities(
         page,
         dialog,
         'side1-to-side2',
-        side1Cardinality,
+        getTernaryCardinalityOptionLabel(side1Cardinality),
     );
     await selectRelationCardinality(
         page,
         dialog,
         'side2-to-side1',
-        side2Cardinality,
+        getTernaryCardinalityOptionLabel(side2Cardinality),
     );
     await selectRelationCardinality(
         page,
         dialog,
         'side3-cardinality',
-        side3Cardinality,
+        getTernaryCardinalityOptionLabel(side3Cardinality),
     );
 
     const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });

@@ -5,6 +5,7 @@ import {
     createEmptyRelationSide,
     createRelationData,
     getRelationArity,
+    getRelationCardinalityDisplayValue,
     getRelationEntityIds,
     getRelationSideKeys,
     getRelationSides,
@@ -157,6 +158,24 @@ describe("Relation participant helpers", () => {
                 }),
             ),
         ).toBe(true);
+    });
+
+    test("display ternary cardinalities as Chen maximum labels", () => {
+        const ternaryRelation = createTernaryRelation();
+        const binaryRelation = createRelation();
+
+        expect(
+            getRelationCardinalityDisplayValue(ternaryRelation, "0:1"),
+        ).toBe("1");
+        expect(
+            getRelationCardinalityDisplayValue(ternaryRelation, "0:N"),
+        ).toBe("N");
+        expect(
+            getRelationCardinalityDisplayValue(ternaryRelation, "X:X"),
+        ).toBe("X:X");
+        expect(
+            getRelationCardinalityDisplayValue(binaryRelation, "0:N"),
+        ).toBe("0:N");
     });
 
     test("reset binary relation sides through side keys", () => {

@@ -1,5 +1,6 @@
 import {
     getAttributeChildren,
+    getRelationCardinalityDisplayValue,
     getRelationSideKeys,
     isBinaryRelation,
     isIdentifyingRelation,
@@ -164,12 +165,18 @@ export const reconstructDiagramGraph = ({
                         target,
                     );
 
+                    const cardinalityValue =
+                        relationSide.cardinality === ""
+                            ? "X:X"
+                            : relationSide.cardinality;
+
                     const cardinality = graph.insertVertex(
                         edge,
                         relationSide.cell,
-                        relationSide.cardinality === ""
-                            ? "X:X"
-                            : relationSide.cardinality,
+                        getRelationCardinalityDisplayValue(
+                            relation,
+                            cardinalityValue,
+                        ),
                         0,
                         0,
                         1,

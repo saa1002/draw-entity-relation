@@ -95,6 +95,17 @@ export const getRelationSideCardinality = (side = {}) => {
 export const getRelationSideMaximum = (side) =>
     getRelationSideCardinality(side).maximum;
 
+export const getRelationCardinalityDisplayValue = (relation, cardinality) => {
+    if (
+        isTernaryRelation(relation) &&
+        TERNARY_RELATION_CARDINALITIES.includes(cardinality)
+    ) {
+        return getRelationSideCardinality({ cardinality }).maximum;
+    }
+
+    return cardinality;
+};
+
 export const isSelfRelation = (relation) => {
     const entityIds = getRelationEntityIds(relation);
 

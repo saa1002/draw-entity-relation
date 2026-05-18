@@ -194,11 +194,17 @@ test('configure cardinalities for a ternary relationship', async ({ page }) => {
     await dialog.locator('#side1-to-side2').click();
 
     await expect(
-        page.getByRole('option', { name: '0:1', exact: true }),
+        page.getByRole('option', { name: '1', exact: true }),
     ).toBeVisible();
     await expect(
-        page.getByRole('option', { name: '0:N', exact: true }),
+        page.getByRole('option', { name: 'N', exact: true }),
     ).toBeVisible();
+    await expect(
+        page.getByRole('option', { name: '0:1', exact: true }),
+    ).toHaveCount(0);
+    await expect(
+        page.getByRole('option', { name: '0:N', exact: true }),
+    ).toHaveCount(0);
     await expect(
         page.getByRole('option', { name: '1:1', exact: true }),
     ).toHaveCount(0);
@@ -206,19 +212,19 @@ test('configure cardinalities for a ternary relationship', async ({ page }) => {
         page.getByRole('option', { name: '1:N', exact: true }),
     ).toHaveCount(0);
 
-    await page.getByRole('option', { name: '0:N', exact: true }).click();
+    await page.getByRole('option', { name: 'N', exact: true }).click();
 
     await selectRelationCardinality(
         page,
         dialog,
         'side2-to-side1',
-        '0:1',
+        '1',
     );
     await selectRelationCardinality(
         page,
         dialog,
         'side3-cardinality',
-        '0:N',
+        'N',
     );
 
     const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
@@ -227,8 +233,8 @@ test('configure cardinalities for a ternary relationship', async ({ page }) => {
     await acceptBtn.click();
     await expect(dialog).toBeHidden();
 
-    await expect(page.getByText('0:N', { exact: true })).toHaveCount(2);
-    await expect(page.getByText('0:1', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('N', { exact: true })).toHaveCount(2);
+    await expect(page.getByText('1', { exact: true })).toHaveCount(1);
 
     await expectSavedRelationToMatch(page, 'Relación', {
         arity: 3,

@@ -1,4 +1,7 @@
-import { getRelationSideKeys } from "../../../../domain/er/relations";
+import {
+    getRelationCardinalityDisplayValue,
+    getRelationSideKeys,
+} from "../../../../domain/er/relations";
 
 export const removeExistingGraphCells = (graph, cells) => {
     if (!graph?.removeCells) return;
@@ -49,6 +52,10 @@ const connectRelationSideGraphCell = ({
 }) => {
     const cardinality =
         relation[sideKey].cardinality || DEFAULT_RELATION_CARDINALITY;
+    const cardinalityLabel = getRelationCardinalityDisplayValue(
+        relation,
+        cardinality,
+    );
 
     const edge = graph.insertEdge(
         relationCell,
@@ -61,7 +68,7 @@ const connectRelationSideGraphCell = ({
     const cardinalityCell = graph.insertVertex(
         edge,
         null,
-        cardinality,
+        cardinalityLabel,
         0,
         0,
         1,

@@ -45,6 +45,7 @@ import {
     getDefaultAttributeSemantics,
     getLastAttribute,
     getRelationArity,
+    getRelationCardinalityDisplayValue,
     getRelationSideKeys,
     getWeakAndStrongSidesForRelation,
     getWeakSideOfIdentifyingRelation,
@@ -311,11 +312,15 @@ export default function App(props) {
 
         getRelationSideKeys(relationData).forEach((sideKey) => {
             const sideLabel = accessCell(relationData?.[sideKey]?.cell);
+            const cardinality = relationData[sideKey].cardinality;
 
             if (sideLabel) {
                 graph.model.setValue(
                     sideLabel,
-                    relationData[sideKey].cardinality,
+                    getRelationCardinalityDisplayValue(
+                        relationData,
+                        cardinality,
+                    ),
                 );
                 graph.updateCellSize(sideLabel);
             }
@@ -1860,6 +1865,9 @@ export default function App(props) {
             return [IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY];
         };
 
+        const getCardinalityDisplayValue = (cardinality) =>
+            getRelationCardinalityDisplayValue(selectedDiag, cardinality);
+
         const cardinalitySelectIdsBySideKey = {
             side1: "side1-to-side2",
             side2: "side2-to-side1",
@@ -1968,7 +1976,9 @@ export default function App(props) {
                                                                     cardinality
                                                                 }
                                                             >
-                                                                {cardinality}
+                                                                {getCardinalityDisplayValue(
+                                                                    cardinality,
+                                                                )}
                                                             </MenuItem>
                                                         ))}
                                                     </Select>

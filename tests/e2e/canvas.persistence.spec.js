@@ -99,14 +99,14 @@ test('ternary relationship configuration persists after reload', async ({ page }
         '0:N',
     );
 
-    await expect(page.getByText('0:N', { exact: true })).toHaveCount(2);
-    await expect(page.getByText('0:1', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('N', { exact: true })).toHaveCount(2);
+    await expect(page.getByText('1', { exact: true })).toHaveCount(1);
 
     await page.reload();
 
     await expect(page.getByText('Relación', { exact: true })).toBeVisible();
-    await expect(page.getByText('0:N', { exact: true })).toHaveCount(2);
-    await expect(page.getByText('0:1', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('N', { exact: true })).toHaveCount(2);
+    await expect(page.getByText('1', { exact: true })).toHaveCount(1);
 
     await expectSavedDiagramState(
         page,
@@ -421,8 +421,8 @@ test('export/import round-trip preserves ternary relationship structure', async 
     await expect(page.getByText('Producto', { exact: true })).toBeVisible();
     await expect(page.getByText('Proyecto', { exact: true })).toBeVisible();
     await expect(page.getByText('Suministra', { exact: true })).toBeVisible();
-    await expect(page.getByText('0:N', { exact: true })).toHaveCount(1);
-    await expect(page.getByText('0:1', { exact: true })).toHaveCount(2);
+    await expect(page.getByText('N', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('1', { exact: true })).toHaveCount(2);
 
     const exportedBefore = await exportCurrentDiagram(page);
 
@@ -439,8 +439,8 @@ test('export/import round-trip preserves ternary relationship structure', async 
     await expect(page.getByText('Producto', { exact: true })).toBeVisible();
     await expect(page.getByText('Proyecto', { exact: true })).toBeVisible();
     await expect(page.getByText('Suministra', { exact: true })).toBeVisible();
-    await expect(page.getByText('0:N', { exact: true })).toHaveCount(1);
-    await expect(page.getByText('0:1', { exact: true })).toHaveCount(2);
+    await expect(page.getByText('N', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('1', { exact: true })).toHaveCount(2);
 
     const exportedAfter = await exportCurrentDiagram(page);
 
