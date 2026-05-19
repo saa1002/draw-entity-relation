@@ -7,7 +7,9 @@ import {
     getRelationArity,
     getRelationCardinalityDisplayValue,
     getRelationEntityIds,
+    getRelationSideDisplayName,
     getRelationSideKeys,
+    getRelationSideRole,
     getRelationSides,
     isBinaryRelation,
     isManyToManyRelation,
@@ -26,9 +28,11 @@ const createSide = ({
     idMx = "side-1",
     entityId = "entity-1",
     cardinality = "1:1",
+    role = "",
 } = {}) => ({
     idMx,
     cardinality,
+    role,
     cell: "",
     edgeId: "",
     entity: { idMx: entityId },
@@ -239,6 +243,31 @@ describe("Relation participant helpers", () => {
             "entity-2",
             "entity-3",
         ]);
+    });
+
+    test("return optional side roles and side display names", () => {
+        const relation = createTernaryRelation({
+            side1: createSide({ role: "local player" }),
+            side2: createSide({ role: "  away player  " }),
+            side3: createSide({ role: "" }),
+        });
+
+        expect(getRelationSideRole(relation.side1)).toBe("local player");
+        expect(getRelationSideRole(relation.side2)).toBe("away player");
+        expect(
+            getRelationSideDisplayName({
+                relation,
+                sideKey: "side1",
+                entityName: "Player",
+            }),
+        ).toBe("local player");
+        expect(
+            getRelationSideDisplayName({
+                relation,
+                sideKey: "side3",
+                entityName: "Date",
+            }),
+        ).toBe("Date");
     });
     
     test("create binary relation data by default", () => {

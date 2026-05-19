@@ -70,6 +70,19 @@ export const getRelationEntityIds = (relation) =>
         .map((side) => side?.entity?.idMx ?? "")
         .filter(Boolean);
 
+export const getRelationSideRole = (side = {}) =>
+    String(side?.role ?? "").trim();
+
+export const getRelationSideDisplayName = ({
+    relation,
+    sideKey,
+    entityName = "",
+} = {}) => {
+    const role = getRelationSideRole(relation?.[sideKey]);
+
+    return role || entityName || `Lado ${sideKey?.replace("side", "") ?? ""}`;
+};
+
 export const relationHasAllEntitySides = (relation) =>
     getRelationSides(relation).every((side) => !!side?.entity?.idMx);
 
@@ -124,9 +137,13 @@ export const isManyToManyRelation = (relation) =>
         (side) => side?.cardinality?.endsWith(":N") === true,
     );
 
-export const createEmptyRelationSide = ({ cardinality = "" } = {}) => ({
+export const createEmptyRelationSide = ({
+    cardinality = "",
+    role = "",
+} = {}) => ({
     idMx: "",
     cardinality,
+    role,
     cell: "",
     edgeId: "",
     entity: { idMx: "" },

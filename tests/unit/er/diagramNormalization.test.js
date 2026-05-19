@@ -124,9 +124,11 @@ describe("Relation normalization", () => {
         idMx = "side-1",
         entityId = "entity-1",
         cardinality = "1:1",
+        role = "",
     } = {}) => ({
         idMx,
         cardinality,
+        role,
         cell: idMx,
         edgeId: `edge-${idMx}`,
         entity: { idMx: entityId },
@@ -161,6 +163,29 @@ describe("Relation normalization", () => {
         expect(relation.side1.entity.idMx).toBe("entity-1")
         expect(relation.side2.entity.idMx).toBe("entity-2")
         expect(relation.side3.entity.idMx).toBe("entity-3")
+    })
+
+    test("normalizes optional relation side roles", () => {
+        const relation = normalizeRelation({
+            idMx: "relation-1",
+            name: "Plays",
+            arity: RELATION_ARITIES.TERNARY,
+            side1: createSide({
+                idMx: "side-1",
+                entityId: "entity-player",
+                role: "local player",
+            }),
+            side2: createSide({
+                idMx: "side-2",
+                entityId: "entity-player",
+                role: "away player",
+            }),
+            side3: createSide({ idMx: "side-3", entityId: "entity-date" }),
+        })
+
+        expect(relation.side1.role).toBe("local player")
+        expect(relation.side2.role).toBe("away player")
+        expect(relation.side3.role).toBe("")
     })
 
     test("falls back to binary relation shape for unsupported arities", () => {

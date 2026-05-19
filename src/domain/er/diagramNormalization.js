@@ -49,6 +49,7 @@ export const normalizeRelationSide = (side = {}) => ({
     ...side,
     idMx: side.idMx ?? "",
     cardinality: side.cardinality ?? "",
+    role: String(side.role ?? "").trim(),
     cell: side.cell ?? side.idMx ?? "",
     edgeId: side.edgeId ?? "",
     entity: {
