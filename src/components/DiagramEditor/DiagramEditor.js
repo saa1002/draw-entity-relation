@@ -1475,6 +1475,46 @@ export default function App(props) {
         const selectedArityIsTernary =
             relationArity === RELATION_ARITIES.TERNARY;
 
+        const selectedRelationSides = {
+            side1,
+            side2,
+            side3,
+        };
+
+        const getSelectedSideEntityId = (sideKey) =>
+            selectedRelationSides[sideKey]?.idMx ?? "";
+
+        const sideRequiresRole = (sideKey) => {
+            if (!selectedArityIsTernary) {
+                return false;
+            }
+
+            const sideEntityId = getSelectedSideEntityId(sideKey);
+
+            if (!sideEntityId) {
+                return false;
+            }
+
+            const repeatedSideCount = ["side1", "side2", "side3"].filter(
+                (currentSideKey) =>
+                    getSelectedSideEntityId(currentSideKey) === sideEntityId,
+            ).length;
+
+            return repeatedSideCount > 1;
+        };
+
+        const getSelectedRoleForSide = (sideKey) => {
+            if (!sideRequiresRole(sideKey)) {
+                return "";
+            }
+
+            if (sideKey === "side1") return side1Role;
+            if (sideKey === "side2") return side2Role;
+            if (sideKey === "side3") return side3Role;
+
+            return "";
+        };
+
         const handleClickOpen = () => {
             const relation = findRelationById(diagramRef.current, selected?.id);
 
@@ -1506,15 +1546,17 @@ export default function App(props) {
         const normalizeRelationRole = (role) => String(role ?? "").trim();
 
         const applySelectedRelationRoles = (relation) => {
-            relation.side1.role = selectedArityIsTernary
-                ? normalizeRelationRole(side1Role)
-                : "";
-            relation.side2.role = selectedArityIsTernary
-                ? normalizeRelationRole(side2Role)
-                : "";
+            relation.side1.role = normalizeRelationRole(
+                getSelectedRoleForSide("side1"),
+            );
+            relation.side2.role = normalizeRelationRole(
+                getSelectedRoleForSide("side2"),
+            );
 
             if (selectedArityIsTernary) {
-                relation.side3.role = normalizeRelationRole(side3Role);
+                relation.side3.role = normalizeRelationRole(
+                    getSelectedRoleForSide("side3"),
+                );
             }
         };
 
@@ -1694,12 +1736,12 @@ export default function App(props) {
                                         )}
                                     </Select>
                                 </FormControl>
-                                {selectedArityIsTernary && (
+                                {sideRequiresRole("side1") && (
                                     <>
                                         <Box sx={{ minHeight: 10 }} />
                                         <TextField
                                             id="side1-role"
-                                            label="Rol lado 1 (opcional)"
+                                            label="Rol lado 1"
                                             value={side1Role}
                                             onChange={handleChangeSide1Role}
                                             fullWidth
@@ -1731,12 +1773,12 @@ export default function App(props) {
                                         )}
                                     </Select>
                                 </FormControl>
-                                {selectedArityIsTernary && (
+                                {sideRequiresRole("side2") && (
                                     <>
                                         <Box sx={{ minHeight: 10 }} />
                                         <TextField
                                             id="side2-role"
-                                            label="Rol lado 2 (opcional)"
+                                            label="Rol lado 2"
                                             value={side2Role}
                                             onChange={handleChangeSide2Role}
                                             fullWidth
@@ -1772,14 +1814,20 @@ export default function App(props) {
                                                 )}
                                             </Select>
                                         </FormControl>
-                                        <Box sx={{ minHeight: 10 }} />
-                                        <TextField
-                                            id="side3-role"
-                                            label="Rol lado 3 (opcional)"
-                                            value={side3Role}
-                                            onChange={handleChangeSide3Role}
-                                            fullWidth
-                                        />
+                                        {sideRequiresRole("side3") && (
+                                            <>
+                                                <Box sx={{ minHeight: 10 }} />
+                                                <TextField
+                                                    id="side3-role"
+                                                    label="Rol lado 3"
+                                                    value={side3Role}
+                                                    onChange={
+                                                        handleChangeSide3Role
+                                                    }
+                                                    fullWidth
+                                                />
+                                            </>
+                                        )}
                                     </>
                                 )}
                             </Box>
