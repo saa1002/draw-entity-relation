@@ -191,6 +191,10 @@ export async function selectRelationSide(page, dialog, sideId, entityName) {
     await page.getByRole('option', { name: entityName, exact: true }).click();
 }
 
+export async function fillRelationSideRole(dialog, sideId, role) {
+    await dialog.locator(`#${sideId}-role`).fill(role);
+}
+
 export async function selectRelationArity(page, dialog, arityName) {
     await dialog.locator('#relation-arity').click();
     await page.getByRole('option', { name: arityName, exact: true }).click();
@@ -220,6 +224,7 @@ export async function configureTernaryRelationSides(
     side1Name,
     side2Name,
     side3Name,
+    { side1Role = '', side2Role = '', side3Role = '' } = {},
 ) {
     const dialog = await openRelationConfigDialog(page, relationName);
 
@@ -227,6 +232,18 @@ export async function configureTernaryRelationSides(
     await selectRelationSide(page, dialog, 'side1', side1Name);
     await selectRelationSide(page, dialog, 'side2', side2Name);
     await selectRelationSide(page, dialog, 'side3', side3Name);
+
+    if (side1Role) {
+        await fillRelationSideRole(dialog, 'side1', side1Role);
+    }
+
+    if (side2Role) {
+        await fillRelationSideRole(dialog, 'side2', side2Role);
+    }
+
+    if (side3Role) {
+        await fillRelationSideRole(dialog, 'side3', side3Role);
+    }
 
     const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
     await expect(acceptBtn).toBeEnabled();

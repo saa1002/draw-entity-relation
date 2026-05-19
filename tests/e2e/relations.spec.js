@@ -13,6 +13,7 @@ import {
     expectSavedRelationToMatch,
     openRelationCardinalitiesDialog,
     openRelationConfigDialog,
+    renameElement,
     selectEntity,
     selectRelation,
     selectRelationArity,
@@ -378,6 +379,73 @@ test('reconfigure a ternary relationship back to binary', async ({ page }) => {
             canHoldAttributes: false,
         },
     );
+});
+
+test('allow role-disambiguated repeated participants in a ternary relationship', async ({
+    page,
+}) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 520, y: 180 });
+
+    await renameElement(page, 'Entidad', 'Tenista');
+    await renameElement(page, 'Entidad 1', 'Fecha');
+
+    await addRelation(page, 'Relación', { x: 360, y: 320 });
+
+    await selectEntity(page, 'Tenista');
+    await addAttributeToSelectedElement(page);
+
+    await selectEntity(page, 'Fecha');
+    await addAttributeToSelectedElement(page);
+
+    await configureTernaryRelationSides(
+        page,
+        'Relación',
+        'Tenista',
+        'Tenista',
+        'Fecha',
+        {
+            side1Role: 'tenista local',
+            side2Role: 'tenista visitante',
+            side3Role: 'fecha',
+        },
+    );
+
+    await configureTernaryRelationCardinalities(
+        page,
+        'Relación',
+        '0:N',
+        '0:N',
+        '0:N',
+    );
+
+    await expectSavedRelationToMatch(page, 'Relación', {
+        arity: 3,
+        side1: {
+            role: 'tenista local',
+            cardinality: '0:N',
+        },
+        side2: {
+            role: 'tenista visitante',
+            cardinality: '0:N',
+        },
+        side3: {
+            role: 'fecha',
+            cardinality: '0:N',
+        },
+    });
+
+    await page.getByRole('button', { name: 'Exportar JSON' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(
+        dialog.getByText('Exportación diagrama en JSON'),
+    ).toBeVisible();
+
+    await expect(dialog.getByRole('button', { name: 'Aceptar' })).toBeEnabled();
 });
 
 test('do not offer identifying relationship action for ternary relationships', async ({ page }) => {
