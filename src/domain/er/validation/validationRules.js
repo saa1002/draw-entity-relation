@@ -18,8 +18,8 @@ import {
     repeatedEntities,
     sqlIdentifierCollisions,
     strongEntitiesWithPartialKey,
+    ternaryRelationsWithAmbiguousRepeatedParticipants,
     ternaryRelationsWithMandatoryCardinalities,
-    ternaryRelationsWithRepeatedParticipants,
     unsupportedMultivaluedAttributes,
     weakEntitiesWithMoreThanOnePartialKey,
     weakEntitiesWithPrimaryKey,
@@ -86,8 +86,8 @@ export const VALIDATION_RULES = [
         fails: brokenRelationEntityReferences,
     },
     {
-        diagnostic: "noTernaryRelationsWithRepeatedParticipants",
-        fails: ternaryRelationsWithRepeatedParticipants,
+        diagnostic: "noTernaryRelationsWithAmbiguousRepeatedParticipants",
+        fails: ternaryRelationsWithAmbiguousRepeatedParticipants,
     },
     {
         diagnostic: "noIdentifyingTernaryRelations",

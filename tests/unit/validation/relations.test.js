@@ -7,16 +7,22 @@ import {
     cardinalitiesNotValid,
     notNMRelationsWithAttributes,
     brokenRelationEntityReferences,
-    ternaryRelationsWithRepeatedParticipants,
+    ternaryRelationsWithAmbiguousRepeatedParticipants,
     identifyingTernaryRelations,
     ternaryRelationsWithMandatoryCardinalities,
 } from '../../../src/domain/er/validation'
 
 let graph
 
-const createRelationSide = ({ idMx, entityId, cardinality = '1:1' }) => ({
+const createRelationSide = ({
+    idMx,
+    entityId,
+    cardinality = '1:1',
+    role = '',
+}) => ({
     idMx,
     cardinality,
+    role,
     cell: idMx,
     edgeId: '',
     entity: {
@@ -33,6 +39,9 @@ const configureTernaryRelation = (
         side1Cardinality = '0:1',
         side2Cardinality = '0:N',
         side3Cardinality = '0:N',
+        side1Role = '',
+        side2Role = '',
+        side3Role = '',
     } = {},
 ) => {
     relation.arity = RELATION_ARITIES.TERNARY
@@ -40,16 +49,19 @@ const configureTernaryRelation = (
         idMx: '23',
         entityId: side1EntityId,
         cardinality: side1Cardinality,
+        role: side1Role,
     })
     relation.side2 = createRelationSide({
         idMx: '24',
         entityId: side2EntityId,
         cardinality: side2Cardinality,
+        role: side2Role,
     })
     relation.side3 = createRelationSide({
         idMx: '25',
         entityId: side3EntityId,
         cardinality: side3Cardinality,
+        role: side3Role,
     })
     relation.canHoldAttributes = false
     relation.isIdentifying = false
@@ -219,13 +231,13 @@ describe("Ternary relationships", () => {
         expect(relationsUnconnected(graph)).toBe(false)
         expect(brokenRelationEntityReferences(graph)).toBe(false)
         expect(cardinalitiesNotValid(graph)).toBe(false)
-        expect(ternaryRelationsWithRepeatedParticipants(graph)).toBe(false)
+        expect(ternaryRelationsWithAmbiguousRepeatedParticipants(graph)).toBe(false)
         expect(identifyingTernaryRelations(graph)).toBe(false)
         expect(ternaryRelationsWithMandatoryCardinalities(graph)).toBe(false)
         expect(diagnostics.noUnconnectedRelations).toBe(true)
         expect(diagnostics.noBrokenRelationEntityReferences).toBe(true)
         expect(diagnostics.noNotValidCardinalities).toBe(true)
-        expect(diagnostics.noTernaryRelationsWithRepeatedParticipants).toBe(true)
+        expect(diagnostics.noTernaryRelationsWithAmbiguousRepeatedParticipants).toBe(true)
         expect(diagnostics.noIdentifyingTernaryRelations).toBe(true)
         expect(diagnostics.noTernaryRelationsWithMandatoryCardinalities).toBe(true)
         expect(diagnostics.isValid).toBe(true)
@@ -268,19 +280,48 @@ describe("Ternary relationships", () => {
         expect(diagnostics.isValid).toBe(false)
     })
 
-    test("A ternary relation cannot repeat one of its participating entities", () => {
+    test("A ternary relation can repeat a participating entity when repeated roles are distinct", () => {
         configureTernaryRelation(graph.relations.at(1), {
             side2EntityId: '2',
+            side1Role: 'tenista local',
+            side2Role: 'tenista visitante',
         })
 
         const diagnostics = validateGraph(graph)
 
-        expect(ternaryRelationsWithRepeatedParticipants(graph)).toBe(true)
-        expect(diagnostics.noTernaryRelationsWithRepeatedParticipants).toBe(false)
+        expect(ternaryRelationsWithAmbiguousRepeatedParticipants(graph)).toBe(false)
+        expect(diagnostics.noTernaryRelationsWithAmbiguousRepeatedParticipants).toBe(true)
+        expect(diagnostics.isValid).toBe(true)
+    })
+
+    test("A ternary relation with repeated participants requires roles on repeated sides", () => {
+        configureTernaryRelation(graph.relations.at(1), {
+            side2EntityId: '2',
+            side1Role: 'tenista local',
+        })
+
+        const diagnostics = validateGraph(graph)
+
+        expect(ternaryRelationsWithAmbiguousRepeatedParticipants(graph)).toBe(true)
+        expect(diagnostics.noTernaryRelationsWithAmbiguousRepeatedParticipants).toBe(false)
         expect(diagnostics.isValid).toBe(false)
     })
 
-    test("A ternary relation cannot be reflexive with the same entity on all sides", () => {
+    test("A ternary relation with repeated participants requires distinct repeated roles", () => {
+        configureTernaryRelation(graph.relations.at(1), {
+            side2EntityId: '2',
+            side1Role: 'tenista',
+            side2Role: 'tenista',
+        })
+
+        const diagnostics = validateGraph(graph)
+
+        expect(ternaryRelationsWithAmbiguousRepeatedParticipants(graph)).toBe(true)
+        expect(diagnostics.noTernaryRelationsWithAmbiguousRepeatedParticipants).toBe(false)
+        expect(diagnostics.isValid).toBe(false)
+    })
+
+    test("A ternary relation with the same entity on all sides is invalid without distinct roles", () => {
         configureTernaryRelation(graph.relations.at(1), {
             side2EntityId: '2',
             side3EntityId: '2',
@@ -288,8 +329,8 @@ describe("Ternary relationships", () => {
 
         const diagnostics = validateGraph(graph)
 
-        expect(ternaryRelationsWithRepeatedParticipants(graph)).toBe(true)
-        expect(diagnostics.noTernaryRelationsWithRepeatedParticipants).toBe(false)
+        expect(ternaryRelationsWithAmbiguousRepeatedParticipants(graph)).toBe(true)
+        expect(diagnostics.noTernaryRelationsWithAmbiguousRepeatedParticipants).toBe(false)
         expect(diagnostics.isValid).toBe(false)
     })
 

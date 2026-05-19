@@ -117,9 +117,9 @@ const VALIDATION_MESSAGE_DEFINITIONS = [
         message: "Hay relaciones que apuntan a entidades inexistentes.",
     },
     {
-        key: "noTernaryRelationsWithRepeatedParticipants",
+        key: "noTernaryRelationsWithAmbiguousRepeatedParticipants",
         message:
-            "Hay relaciones ternarias con entidades participantes repetidas.",
+            "Hay relaciones ternarias con entidades participantes repetidas sin roles distintos.",
     },
     {
         key: "noIdentifyingTernaryRelations",

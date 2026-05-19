@@ -405,7 +405,9 @@ test('do not offer identifying relationship action for ternary relationships', a
     ).toHaveCount(0);
 });
 
-test('block export when a ternary relationship repeats participating entities', async ({ page }) => {
+test('block export when a ternary relationship repeats participating entities without distinct roles', async ({
+    page,
+}) => {
     await page.goto('/');
 
     await addEntity(page, 'Entidad', { x: 180, y: 180 });
@@ -444,7 +446,7 @@ test('block export when a ternary relationship repeats participating entities', 
 
     await expect(
         dialog.getByText(
-            'Hay relaciones ternarias con entidades participantes repetidas.',
+            'Hay relaciones ternarias con entidades participantes repetidas sin roles distintos.',
         ),
     ).toBeVisible();
 

@@ -5,16 +5,40 @@ import {
     canRelationTypeHoldAttributes,
     getRelationEntityIds,
     getRelationSideCardinality,
+    getRelationSideRole,
     getRelationSides,
     isIdentifyingRelation,
     isRelationConfigured,
     isTernaryRelation,
 } from "../../relations";
 
-const relationHasRepeatedEntityParticipants = (relation) => {
-    const entityIds = getRelationEntityIds(relation);
+const relationHasAmbiguousRepeatedEntityParticipants = (relation) => {
+    const sidesByEntityId = getRelationSides(relation).reduce(
+        (result, side) => {
+            const entityId = side?.entity?.idMx ?? "";
 
-    return new Set(entityIds).size !== entityIds.length;
+            if (!entityId) {
+                return result;
+            }
+
+            result[entityId] = [...(result[entityId] ?? []), side];
+
+            return result;
+        },
+        {},
+    );
+
+    return Object.values(sidesByEntityId).some((sides) => {
+        if (sides.length <= 1) {
+            return false;
+        }
+
+        const roles = sides.map(getRelationSideRole);
+
+        return (
+            roles.some((role) => !role) || new Set(roles).size !== roles.length
+        );
+    });
 };
 
 // True if there is an N:M relation that has a key
@@ -79,7 +103,7 @@ export function notNMRelationsWithAttributes(graph) {
     return false;
 }
 
-export function ternaryRelationsWithRepeatedParticipants(graph) {
+export function ternaryRelationsWithAmbiguousRepeatedParticipants(graph) {
     for (const relation of graph.relations) {
         if (!isTernaryRelation(relation)) {
             continue;
@@ -89,7 +113,7 @@ export function ternaryRelationsWithRepeatedParticipants(graph) {
             continue;
         }
 
-        if (relationHasRepeatedEntityParticipants(relation)) {
+        if (relationHasAmbiguousRepeatedEntityParticipants(relation)) {
             return true;
         }
     }
