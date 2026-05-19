@@ -409,7 +409,6 @@ test('allow role-disambiguated repeated participants in a ternary relationship',
         {
             side1Role: 'tenista local',
             side2Role: 'tenista visitante',
-            side3Role: 'fecha',
         },
     );
 
@@ -432,7 +431,7 @@ test('allow role-disambiguated repeated participants in a ternary relationship',
             cardinality: '0:N',
         },
         side3: {
-            role: 'fecha',
+            role: '',
             cardinality: '0:N',
         },
     });
