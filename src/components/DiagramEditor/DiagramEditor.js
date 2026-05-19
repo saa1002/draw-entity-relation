@@ -252,6 +252,7 @@ export default function App(props) {
 
     const {
         syncSelfRelationEdges,
+        syncRepeatedParticipantRelationEdges,
         syncIdentifyingRelationDecorator,
         ensureIdentifyingRelationDecorator,
         removeIdentifyingRelationDecorator,
@@ -388,6 +389,7 @@ export default function App(props) {
             ensureMultivaluedAttributeDecorator,
             ensureIdentifyingRelationDecorator,
             ensureIdentifyingRelationEdgeDecorator,
+            syncRepeatedParticipantRelationEdges,
         });
     };
 
@@ -502,6 +504,7 @@ export default function App(props) {
                 syncAttributeVisualRepresentation,
                 syncWeakEntityDecorator,
                 syncSelfRelationEdges,
+                syncRepeatedParticipantRelationEdges,
                 syncIdentifyingRelationDecorator,
                 syncIdentifyingRelationEdgeDecorator,
                 syncMultivaluedAttributeDecorator,
@@ -1608,6 +1611,7 @@ export default function App(props) {
                     : null,
                 cardinalityStyle: getCardinalityStyleString(),
                 syncSelfRelationEdges,
+                syncRepeatedParticipantRelationEdges,
             });
 
             syncAndPersistDiagramData();

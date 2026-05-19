@@ -97,6 +97,7 @@ export const connectRelationGraphSides = ({
     side3EntityCell,
     cardinalityStyle,
     syncSelfRelationEdges,
+    syncRepeatedParticipantRelationEdges,
 }) => {
     const sideKeys = getRelationSideKeys(relation);
     const entityCellsBySideKey = {
@@ -127,9 +128,10 @@ export const connectRelationGraphSides = ({
         return result;
     }, {});
 
-    if (sideKeys.length === 2 && side1EntityCell === side2EntityCell) {
-        syncSelfRelationEdges?.(relationCell, relation);
-    }
+    const syncRepeatedEdges =
+        syncRepeatedParticipantRelationEdges ?? syncSelfRelationEdges;
+
+    syncRepeatedEdges?.(relationCell, relation);
 
     graph.orderCells(
         true,
@@ -163,6 +165,7 @@ export const installCellGeometrySyncHandlers = ({
     syncAttributeVisualRepresentation,
     syncWeakEntityDecorator,
     syncSelfRelationEdges,
+    syncRepeatedParticipantRelationEdges,
     syncIdentifyingRelationDecorator,
     syncIdentifyingRelationEdgeDecorator,
     syncMultivaluedAttributeDecorator,
@@ -170,6 +173,27 @@ export const installCellGeometrySyncHandlers = ({
     refreshGraph,
     syncAndPersistDiagramData,
 }) => {
+    const syncRepeatedEdges =
+        syncRepeatedParticipantRelationEdges ?? syncSelfRelationEdges;
+
+    const relationInvolvesEntityCell = (relationData, entityCell) =>
+        getRelationSideKeys(relationData).some(
+            (sideKey) =>
+                relationData?.[sideKey]?.entity?.idMx === entityCell?.id,
+        );
+
+    const syncRepeatedParticipantRelationEdgesForEntity = (entityCell) => {
+        (getDiagram()?.relations ?? [])
+            .filter((relationData) =>
+                relationInvolvesEntityCell(relationData, entityCell),
+            )
+            .forEach((relationData) => {
+                const relationCell = accessCell(relationData.idMx);
+
+                syncRepeatedEdges?.(relationCell, relationData);
+            });
+    };
+
     const handleEntityMove = (cell) => {
         const entityData = findEntityById(getDiagram(), cell.id);
 
@@ -196,6 +220,8 @@ export const installCellGeometrySyncHandlers = ({
             }
         }
 
+        syncRepeatedParticipantRelationEdgesForEntity(cell);
+
         refreshGraph();
     };
 
@@ -209,9 +235,7 @@ export const installCellGeometrySyncHandlers = ({
             refreshGraph();
         }
 
-        if (isSelfRelation(relationData)) {
-            syncSelfRelationEdges(cell, relationData);
-        }
+        syncRepeatedEdges?.(cell, relationData);
 
         if (isIdentifyingRelation(relationData)) {
             syncIdentifyingRelationDecorator(cell);
@@ -272,6 +296,8 @@ export const installCellGeometrySyncHandlers = ({
                         );
                     }
                 }
+
+                syncRepeatedParticipantRelationEdgesForEntity(cell);
             }
 
             if (
@@ -282,9 +308,7 @@ export const installCellGeometrySyncHandlers = ({
 
                 if (!relationData) return;
 
-                if (isSelfRelation(relationData)) {
-                    syncSelfRelationEdges(cell, relationData);
-                }
+                syncRepeatedEdges?.(cell, relationData);
 
                 if (isIdentifyingRelation(relationData)) {
                     syncIdentifyingRelationDecorator(cell);

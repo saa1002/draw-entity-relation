@@ -2,7 +2,6 @@ import {
     getAttributeChildren,
     getRelationCardinalityDisplayValue,
     getRelationSideKeys,
-    isBinaryRelation,
     isIdentifyingRelation,
     isRelationConfigured,
     isWeakEntity,
@@ -31,6 +30,7 @@ export const reconstructDiagramGraph = ({
     ensureMultivaluedAttributeDecorator,
     ensureIdentifyingRelationDecorator,
     ensureIdentifyingRelationEdgeDecorator,
+    syncRepeatedParticipantRelationEdges,
 }) => {
     if (!graph || !diagram) return;
 
@@ -196,32 +196,7 @@ export const reconstructDiagramGraph = ({
                 },
             );
 
-            if (isBinaryRelation(relation)) {
-                const side1 = connectedSides.find(
-                    (connectedSide) => connectedSide.sideKey === "side1",
-                );
-                const side2 = connectedSides.find(
-                    (connectedSide) => connectedSide.sideKey === "side2",
-                );
-
-                if (
-                    side1?.target &&
-                    side2?.target &&
-                    side1.target.id === side2.target.id
-                ) {
-                    const x1 =
-                        side1.target.geometry.x +
-                        side1.target.geometry.width / 2;
-                    const x2 = source.geometry.x + source.geometry.width / 2;
-                    const y1 =
-                        side1.target.geometry.y +
-                        side1.target.geometry.height / 2;
-                    const y2 = source.geometry.y + source.geometry.height / 2;
-
-                    side1.edge.geometry.points = [new mxPoint(x2, y1)];
-                    side2.edge.geometry.points = [new mxPoint(x1, y2)];
-                }
-            }
+            syncRepeatedParticipantRelationEdges?.(source, relation);
 
             if (isIdentifyingRelation(relation)) {
                 ensureIdentifyingRelationEdgeDecorator(source, relation);
