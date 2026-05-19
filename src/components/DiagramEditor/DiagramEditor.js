@@ -47,6 +47,7 @@ import {
     getLastAttribute,
     getRelationArity,
     getRelationCardinalityDisplayValue,
+    getRelationSideDisplayName,
     getRelationSideKeys,
     getWeakAndStrongSidesForRelation,
     getWeakSideOfIdentifyingRelation,
@@ -1949,8 +1950,13 @@ export default function App(props) {
         };
 
         const getSideEntityName = (sideKey) =>
-            accessCell(selectedDiag?.[sideKey]?.entity?.idMx)?.value ??
-            `Lado ${sideKey.replace("side", "")}`;
+            getRelationSideDisplayName({
+                relation: selectedDiag,
+                sideKey,
+                entityName:
+                    accessCell(selectedDiag?.[sideKey]?.entity?.idMx)?.value ??
+                    "",
+            });
 
         const cardinalityIsAllowedForSide = (sideKey) => {
             const cardinality = getCardinalityForSide(sideKey);
