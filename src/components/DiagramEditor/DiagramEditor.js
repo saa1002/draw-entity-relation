@@ -12,6 +12,7 @@ import {
     InputLabel,
     MenuItem,
     Select,
+    TextField,
 } from "@mui/material";
 import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
@@ -1466,6 +1467,9 @@ export default function App(props) {
         const [side1, setSide1] = React.useState("");
         const [side2, setSide2] = React.useState("");
         const [side3, setSide3] = React.useState("");
+        const [side1Role, setSide1Role] = React.useState("");
+        const [side2Role, setSide2Role] = React.useState("");
+        const [side3Role, setSide3Role] = React.useState("");
 
         const selectedArityIsTernary =
             relationArity === RELATION_ARITIES.TERNARY;
@@ -1477,6 +1481,9 @@ export default function App(props) {
             setSide1("");
             setSide2("");
             setSide3("");
+            setSide1Role("");
+            setSide2Role("");
+            setSide3Role("");
             setOpen(true);
         };
 
@@ -1493,6 +1500,21 @@ export default function App(props) {
 
             relation.arity = undefined;
             relation.side3 = undefined;
+        };
+
+        const normalizeRelationRole = (role) => String(role ?? "").trim();
+
+        const applySelectedRelationRoles = (relation) => {
+            relation.side1.role = selectedArityIsTernary
+                ? normalizeRelationRole(side1Role)
+                : "";
+            relation.side2.role = selectedArityIsTernary
+                ? normalizeRelationRole(side2Role)
+                : "";
+
+            if (selectedArityIsTernary) {
+                relation.side3.role = normalizeRelationRole(side3Role);
+            }
         };
 
         const handleAccept = () => {
@@ -1530,6 +1552,8 @@ export default function App(props) {
                 resetRelationSides(relation, { cardinality: "X:X" });
             }
 
+            applySelectedRelationRoles(relation);
+
             connectRelationGraphSides({
                 graph,
                 relationCell: source,
@@ -1550,6 +1574,9 @@ export default function App(props) {
             setSide1("");
             setSide2("");
             setSide3("");
+            setSide1Role("");
+            setSide2Role("");
+            setSide3Role("");
         };
 
         const acceptDisabled =
@@ -1564,6 +1591,9 @@ export default function App(props) {
 
             if (nextArity !== RELATION_ARITIES.TERNARY) {
                 setSide3("");
+                setSide1Role("");
+                setSide2Role("");
+                setSide3Role("");
             }
         };
 
@@ -1577,6 +1607,18 @@ export default function App(props) {
 
         const handleChangeSide3 = (event) => {
             setSide3(event.target.value);
+        };
+
+        const handleChangeSide1Role = (event) => {
+            setSide1Role(event.target.value);
+        };
+
+        const handleChangeSide2Role = (event) => {
+            setSide2Role(event.target.value);
+        };
+
+        const handleChangeSide3Role = (event) => {
+            setSide3Role(event.target.value);
         };
 
         if (isRelation) {
@@ -1651,6 +1693,18 @@ export default function App(props) {
                                         )}
                                     </Select>
                                 </FormControl>
+                                {selectedArityIsTernary && (
+                                    <>
+                                        <Box sx={{ minHeight: 10 }} />
+                                        <TextField
+                                            id="side1-role"
+                                            label="Rol lado 1 (opcional)"
+                                            value={side1Role}
+                                            onChange={handleChangeSide1Role}
+                                            fullWidth
+                                        />
+                                    </>
+                                )}
                                 <Box sx={{ minHeight: 10 }} />
                                 <FormControl fullWidth>
                                     <InputLabel id="side2-label">
@@ -1676,6 +1730,18 @@ export default function App(props) {
                                         )}
                                     </Select>
                                 </FormControl>
+                                {selectedArityIsTernary && (
+                                    <>
+                                        <Box sx={{ minHeight: 10 }} />
+                                        <TextField
+                                            id="side2-role"
+                                            label="Rol lado 2 (opcional)"
+                                            value={side2Role}
+                                            onChange={handleChangeSide2Role}
+                                            fullWidth
+                                        />
+                                    </>
+                                )}
                                 {selectedArityIsTernary && (
                                     <>
                                         <Box sx={{ minHeight: 10 }} />
@@ -1705,6 +1771,14 @@ export default function App(props) {
                                                 )}
                                             </Select>
                                         </FormControl>
+                                        <Box sx={{ minHeight: 10 }} />
+                                        <TextField
+                                            id="side3-role"
+                                            label="Rol lado 3 (opcional)"
+                                            value={side3Role}
+                                            onChange={handleChangeSide3Role}
+                                            fullWidth
+                                        />
                                     </>
                                 )}
                             </Box>
