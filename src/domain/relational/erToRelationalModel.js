@@ -3,6 +3,7 @@ import {
     findMandatoryOneToOneMergeRelationForEntity,
     getRelationSideCardinality,
     getRelationSideKeys,
+    getRelationSideRole,
     isSelfRelation,
     isTernaryRelation,
 } from "../er/relations";
@@ -55,6 +56,7 @@ export function filterTables(graph) {
                 table[sideKey] = {
                     entity: entities.find((e) => e.idMx === side.entity.idMx),
                     cardinality: getRelationSideCardinality(side),
+                    role: getRelationSideRole(side),
                 };
                 usedEntities.add(side.entity.idMx);
             });
@@ -504,6 +506,12 @@ export function processNMRelation(relation, graph) {
     return [firstTable, secondTable, thirdTable];
 }
 
+function getTernarySideForeignKeySuffix(side, index) {
+    const role = String(side?.role ?? "").trim();
+
+    return role ? normalizeIdentifier(role) : String(index + 1);
+}
+
 function getTernaryCandidateKeySideIndexes(sides) {
     const oneSideIndexes = sides
         .map((side, index) => ({ side, index }))
@@ -544,7 +552,7 @@ export function processTernaryRelation(relation, graph) {
             keyColumns: entityKeyColumns,
             entity: side.entity,
             relationName: relation.name,
-            suffix: String(index + 1),
+            suffix: getTernarySideForeignKeySuffix(side, index),
             key: primaryKeySideIndexes.has(index),
             notnull: !primaryKeySideIndexes.has(index),
         });

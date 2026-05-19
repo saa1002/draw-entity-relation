@@ -77,6 +77,51 @@ const createTernaryGraph = ({
     }
 }
 
+const createRepeatedParticipantTernaryGraph = () => {
+    const entities = [
+        createEntity({
+            idMx: 'entity-tenista',
+            name: 'Tenista',
+            keyName: 'id_tenista',
+        }),
+        createEntity({
+            idMx: 'entity-fecha',
+            name: 'Fecha',
+            keyName: 'fecha',
+        }),
+    ]
+
+    return {
+        entities,
+        relations: [
+            {
+                idMx: 'relation-juega',
+                name: 'Juega',
+                arity: RELATION_ARITIES.TERNARY,
+                side1: {
+                    idMx: 'side-tenista-local',
+                    cardinality: '0:N',
+                    role: 'tenista local',
+                    entity: { idMx: entities[0].idMx },
+                },
+                side2: {
+                    idMx: 'side-tenista-visitante',
+                    cardinality: '0:N',
+                    role: 'tenista visitante',
+                    entity: { idMx: entities[0].idMx },
+                },
+                side3: {
+                    idMx: 'side-fecha',
+                    cardinality: '0:N',
+                    role: 'fecha',
+                    entity: { idMx: entities[1].idMx },
+                },
+                attributes: [],
+            },
+        ],
+    }
+}
+
 describe('Ternary relation table filtering', () => {
     test('should classify a ternary relation as a single ternary table candidate', () => {
         const graph = createTernaryGraph()
@@ -86,6 +131,16 @@ describe('Ternary relation table filtering', () => {
         expect(tables.length).toBe(1)
         expect(tables.at(0).type).toBe('TERNARY')
         expect(tables.at(0).side3.entity.name).toBe('Grupo')
+    })
+
+    test('should preserve ternary side roles in the intermediate relation table', () => {
+        const graph = createRepeatedParticipantTernaryGraph()
+
+        const tables = filterTables(graph)
+
+        expect(tables.at(0).side1.role).toBe('tenista local')
+        expect(tables.at(0).side2.role).toBe('tenista visitante')
+        expect(tables.at(0).side3.role).toBe('fecha')
     })
 })
 
@@ -152,6 +207,24 @@ describe('Ternary relation extraction', () => {
                 columns: ['id_asignatura_Imparte_1', 'id_grupo_Imparte_3'],
             },
         ])
+    })
+
+    test('should use side roles as foreign key suffixes for repeated ternary participants', () => {
+        const graph = createRepeatedParticipantTernaryGraph()
+        const filteredTables = filterTables(graph)
+
+        const tables = processTernaryRelation(filteredTables.at(0), graph)
+        const relationTable = tables.at(3)
+
+        expect(relationTable.attributes.map((attr) => attr.name)).toEqual([
+            'id_tenista_Juega_tenista_local',
+            'id_tenista_Juega_tenista_visitante',
+            'fecha_Juega_fecha',
+        ])
+
+        expect(
+            relationTable.attributes.map((attr) => attr.foreign_key),
+        ).toEqual(['Tenista', 'Tenista', 'Fecha'])
     })
 })
 
@@ -314,5 +387,30 @@ describe('Additional ternary relation mapping coverage', () => {
                 ],
             },
         ])
+    })
+
+    test('should keep one entity table and one role-disambiguated ternary table for repeated participants', () => {
+        const graph = createRepeatedParticipantTernaryGraph()
+
+        const relationalModel = mapErDiagramToRelationalModel(graph)
+        const relationTable = relationalModel.tables.find(
+            (table) => table.name === 'Juega',
+        )
+
+        expect(relationalModel.tables.map((table) => table.name)).toEqual([
+            'Tenista',
+            'Fecha',
+            'Juega',
+        ])
+
+        expect(relationTable.attributes.map((attr) => attr.name)).toEqual([
+            'id_tenista_Juega_tenista_local',
+            'id_tenista_Juega_tenista_visitante',
+            'fecha_Juega_fecha',
+        ])
+
+        expect(
+            relationTable.attributes.map((attr) => attr.foreign_key),
+        ).toEqual(['Tenista', 'Tenista', 'Fecha'])
     })
 })
