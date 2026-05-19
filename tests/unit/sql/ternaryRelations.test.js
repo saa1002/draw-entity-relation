@@ -79,6 +79,53 @@ const createTernaryGraph = ({
     }
 }
 
+const createRepeatedParticipantTernaryGraph = () => {
+    const entities = [
+        createEntity({
+            idMx: 'entity-tenista',
+            name: 'Tenista',
+            keyName: 'id_tenista',
+        }),
+        createEntity({
+            idMx: 'entity-fecha',
+            name: 'Fecha',
+            keyName: 'fecha',
+        }),
+    ]
+
+    return {
+        entities,
+        relations: [
+            {
+                idMx: 'relation-juega',
+                name: 'Juega',
+                arity: RELATION_ARITIES.TERNARY,
+                canHoldAttributes: true,
+                isIdentifying: false,
+                side1: {
+                    idMx: 'side-tenista-local',
+                    cardinality: '0:N',
+                    role: 'tenista local',
+                    entity: { idMx: entities[0].idMx },
+                },
+                side2: {
+                    idMx: 'side-tenista-visitante',
+                    cardinality: '0:N',
+                    role: 'tenista visitante',
+                    entity: { idMx: entities[0].idMx },
+                },
+                side3: {
+                    idMx: 'side-fecha',
+                    cardinality: '0:N',
+                    role: 'fecha',
+                    entity: { idMx: entities[1].idMx },
+                },
+                attributes: [],
+            },
+        ],
+    }
+}
+
 describe('Ternary relationship SQL generation', () => {
     test('should generate a ternary relation table with a three-column primary key for N:M:P cardinalities', () => {
         const graph = createTernaryGraph()
@@ -196,6 +243,58 @@ describe('Ternary relationship SQL generation', () => {
                 id_grupo_Imparte_3
               )
             );
+            `,
+        )
+    })
+
+    test('should generate distinct foreign keys for repeated ternary participants', () => {
+        const graph = createRepeatedParticipantTernaryGraph()
+
+        const sql = generateSQL(graph)
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Juega (
+              id_tenista_Juega_tenista_local VARCHAR(40),
+              id_tenista_Juega_tenista_visitante VARCHAR(40),
+              fecha_Juega_fecha VARCHAR(40),
+              PRIMARY KEY (
+                id_tenista_Juega_tenista_local,
+                id_tenista_Juega_tenista_visitante,
+                fecha_Juega_fecha
+              )
+            );
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Juega
+            ADD CONSTRAINT FK_id_tenista_Juega_tenista_local
+            FOREIGN KEY (id_tenista_Juega_tenista_local)
+            REFERENCES Tenista(id_tenista);
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Juega
+            ADD CONSTRAINT FK_id_tenista_Juega_tenista_visitante
+            FOREIGN KEY (id_tenista_Juega_tenista_visitante)
+            REFERENCES Tenista(id_tenista);
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Juega
+            ADD CONSTRAINT FK_fecha_Juega_fecha
+            FOREIGN KEY (fecha_Juega_fecha)
+            REFERENCES Fecha(fecha);
             `,
         )
     })
