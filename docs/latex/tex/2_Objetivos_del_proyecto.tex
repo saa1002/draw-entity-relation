@@ -1,32 +1,31 @@
 \capitulo{2}{Objetivos del proyecto}
 
-En este apartado se detallan los objetivos a completar en el desarrollo del proyecto. Distinguiremos los marcados por los requisitos software y los objetivos de carácter técnico necesarios para completar el desarrollo del proyecto.
-
 \section{Objetivos generales}
+
+El objetivo principal de este Trabajo Fin de Grado es analizar y continuar el desarrollo de una aplicación web ya existente para el diseño de diagramas Entidad-Relación. El trabajo no parte de una herramienta creada desde cero, sino de un editor heredado que ya contaba con una base funcional y que se toma como punto de partida para introducir mejoras y ampliar sus capacidades.
+
+Esta evolución se plantea manteniendo la coherencia entre las distintas partes de la aplicación. Por un lado, el usuario trabaja con una representación visual del diagrama; por otro, la aplicación mantiene un modelo interno que debe reflejar correctamente lo que se ha diseñado. A partir de ese modelo se aplican validaciones y, cuando corresponde, se realizan transformaciones hacia el modelo relacional y la generación de SQL.
+
+Por tanto, el objetivo general no se limita a añadir nuevas opciones al editor, sino a hacer que estas encajen dentro del funcionamiento global de la herramienta. Para ello resulta necesario comprender el sistema heredado, revisar sus decisiones de diseño y continuar su desarrollo de forma progresiva y controlada.
+
+\section{Objetivos específicos}
+
+A partir del objetivo general anterior, se plantean los siguientes objetivos específicos:
+
 \begin{itemize}
-\tightlist
-    \item Desarrollar una aplicación web para modelar diagramas básicos entidad-relación.
-    \item Proporcionar una interfaz sencilla y fácil de usar para el modelado de diagramas.
-    \item Implementar funcionalidades para añadir y manipular entidades y relaciones.
-    \item Permitir la validación de los diagramas modelados.
-    \item Permitir exportar e importar los diagramas modelados como JSON.
-    \item Exportar los diagramas validados a scripts SQL.
+    \item Analizar el funcionamiento del editor heredado, identificando su estructura principal, las funcionalidades existentes y las decisiones de diseño que condicionan su evolución.
+
+    \item Revisar la representación interna de los diagramas Entidad-Relación, de forma que los elementos creados por el usuario mantengan una correspondencia clara con el modelo manejado por la aplicación.
+
+    \item Ampliar las capacidades del editor incorporando nuevos elementos y comportamientos del modelo Entidad-Relación, procurando que estas ampliaciones encajen con el funcionamiento previo de la herramienta.
+
+    \item Mantener la coherencia entre la parte visual del editor, las reglas de validación aplicadas al diagrama y las transformaciones posteriores hacia el modelo relacional.
+
+    \item Revisar la generación de SQL a partir del modelo construido, comprobando que el resultado sea coherente con las decisiones de transformación aplicadas.
+
+    \item Comprobar el comportamiento de la aplicación mediante pruebas automatizadas cuando proceda y mediante revisión manual en aquellos casos que requieran validación funcional o visual.
+
+    \item Documentar el trabajo realizado, tanto desde el punto de vista del desarrollo como desde el uso de la aplicación y la evolución seguida durante el proyecto.
 \end{itemize}
 
-\section{Objetivos técnicos}
-\begin{itemize}
-\tightlist
-    \item Utilizar React para el desarrollo de la aplicación web.
-    \item Integrar la librería mxGraph para la creación y manipulación de diagramas.
-    \item Implementar un sistema de menús contextuales para facilitar la manipulación de elementos del diagrama.
-    \item Almacenar los datos de los diagramas en una estructura interna eficiente con las siguientes características:
-    \begin{itemize}
-        \item Es fácilmente procesable para la generación de las tablas SQL correspondientes.
-        \item Es fácilmente extensible para expandir las interrelaciones que pueden modelarse.
-    \end{itemize}
-    \item Implementar la funcionalidad para validación de diagramas entidad-relación.
-    \item Desarrollar la funcionalidad de exportación de diagramas a scripts SQL.
-    \item Integrar pruebas unitarias y pruebas end-to-end.
-    \item Configurar un flujo CI/CD que ejecute las pruebas y realice un despliegue automático de la aplicación en la plataforma Vercel.
-    \item Utilizar git como sistema de control de versiones, usando como repositorio remoto la plataforma GitHub.
-\end{itemize}
+Estos objetivos se plantean dentro del alcance de un Trabajo Fin de Grado, por lo que no se busca construir una herramienta profesional completa de diseño de bases de datos ni cubrir todas las variantes posibles del modelo Entidad-Relación.

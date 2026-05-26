@@ -1,74 +1,60 @@
 \capitulo{1}{Introducción}
 
-En desarrollo de software el correcto modelado de la información con la que se trata es fundamental. Una de las técnicas más utilizadas para representar la estructura de un modelo de datos, previo a su implementación en base de datos, es el modelo de diagramas entidad-relación (E-R) \cite{journals/tods/Chen76}. Estos diagramas permiten visualizar las relaciones entre diferentes entidades, así como sus atributos, facilitando así la comprensión y diseño de sistemas de información complejos.
+\section{Contexto del proyecto}
 
-En la era actual, muy centrada en el entorno web surge la necesidad de tener una aplicación web que nos permita, de manera sencilla y accesible en cualquier dispositivo, modelar diagramas entidad-relación y exportarlos fácilmente a tablas SQL. Esta herramienta tiene también un propósito académico, sirve para aprender respecto al paso a tablas SQL de un diagrama E-R.
+Cuando se diseña una base de datos, antes de crear tablas o escribir sentencias SQL, es necesario entender qué información se quiere representar y cómo se relacionan sus distintos elementos. Para ello se utilizan modelos conceptuales que permiten trabajar el diseño antes de pasar a una implementación concreta.
 
-El objetivo de este proyecto es desarrollar una aplicación web que permita modelar diagramas entidad-relación de manera sencilla, utilizando la biblioteca mxGraph en un entorno React. La aplicación no solo permite la creación y edición de estos diagramas, sino que también permite validarlos y exportarlos a un script SQL listo para ser ejecutado.
+Uno de los modelos más utilizados para esta tarea es el modelo Entidad-Relación. Mediante entidades, atributos e interrelaciones, este modelo permite representar de forma gráfica la estructura principal de un dominio. Esta representación ayuda a comprender mejor el problema y a comunicar las decisiones tomadas durante las primeras fases del diseño.
 
-Las características principales de esta versión de la herramienta incluyen:
-\begin{itemize}
-\tightlist
-    \item Aplicación web single page application (SPA) usando el framework React.
-    \item Interfaz de usuario simple y accesible que permite a los usuarios diseñar diagramas E-R de manera visual.
-    \item Uso de la biblioteca mxGraph para el modelado de los diagramas.
-    \item Soporte para modelado y relaciones más básicas de E-R como son:
-    \begin{itemize}
-    \tightlist
-        \item Interrelaciones binarias.
-        \item Interrelaciones reflexivas.
-    \end{itemize}
-    \item Validación de los diagramas para asegurar la consistencia y corrección de los modelos.
-    \item Exportación e importación de los diagramas validados a un archivo JSON, permitiendo su recuperación para posteriores ediciones.
-    \item Exportación de los diagramas validados a scripts SQL, facilitando así su implementación en bases de datos reales.
-\end{itemize}
+Este Trabajo Fin de Grado se sitúa en ese contexto: el uso de herramientas visuales para crear y revisar diagramas Entidad-Relación. En concreto, se trabaja sobre la evolución de una aplicación web orientada al modelado de este tipo de diagramas.
 
-La creación de esta aplicación responde a la necesidad de modernizar y simplificar el proceso de modelado de bases de datos, haciendo que sea accesible para un público más amplio y sin requerir de aplicaciones específicas bastando para ello tan solo un navegador web.
+\section{Motivación}
 
-En este documento se detalla el desarrollo de la aplicación, desde su concepción y diseño hasta su implementación y validación.
+Aunque existen distintas herramientas para crear diagramas, muchas de ellas están pensadas como editores gráficos generales y no siempre encajan bien con el trabajo específico sobre diagramas Entidad-Relación. En estos diagramas no solo importa dibujar elementos, sino que también debe mantenerse una relación clara entre lo que se muestra en pantalla y el significado que tiene dentro del modelo.
+
+La motivación de este trabajo surge de continuar una aplicación web ya existente para el modelado de diagramas Entidad-Relación. En lugar de comenzar desde cero, el proyecto permite trabajar sobre una base previa, analizar sus limitaciones y evolucionarla poco a poco, manteniendo una herramienta accesible desde el navegador y orientada principalmente a un uso académico.
+
+\section{Punto de partida}
+
+El proyecto parte de una aplicación web previa orientada al modelado de diagramas Entidad-Relación, desarrollada con React y la librería mxGraph. Esta aplicación ya contaba con una base funcional para trabajar con entidades, atributos y relaciones, además de incluir mecanismos de validación y generación de SQL.
+
+A partir de ese punto, este Trabajo Fin de Grado se centra en analizar el funcionamiento interno del editor y continuar su evolución. Esto implica trabajar sobre código ya existente, comprender decisiones de diseño heredadas y ampliar el soporte del sistema sin perder la relación entre la representación visual del diagrama y el modelo interno que maneja la aplicación.
+
+\section{Problema abordado}
+
+El principal problema abordado en este trabajo es la evolución de un editor de diagramas Entidad-Relación ya existente. En una herramienta de este tipo no basta con representar elementos en pantalla, ya que cada entidad, atributo o relación debe tener también un significado dentro del modelo interno de la aplicación.
+
+Por este motivo, cualquier ampliación del editor debe tener en cuenta varios aspectos al mismo tiempo: la parte visual del diagrama, los datos que se almacenan internamente, las reglas de validación y la transformación posterior hacia el modelo relacional. El trabajo se centra en avanzar en esa evolución de forma controlada, revisando el comportamiento del sistema y evitando separar la parte gráfica de la parte conceptual.
+
+\section{Alcance del trabajo}
+
+El alcance de este Trabajo Fin de Grado se centra en la evolución de un editor web de diagramas Entidad-Relación ya existente. El trabajo incluye el análisis del sistema heredado, la revisión de su funcionamiento interno, la ampliación progresiva de sus capacidades y la documentación del proceso seguido.
+
+Dentro de este alcance se consideran tanto los cambios realizados en el editor como la revisión de las reglas de validación, la transformación hacia el modelo relacional y la generación de SQL cuando corresponde. No se pretende construir una herramienta profesional completa de diseño de bases de datos ni cubrir todas las variantes posibles del modelo Entidad-Relación, sino avanzar sobre una base previa y dejar el proyecto en un estado más completo, coherente y documentado.
 
 \section{Estructura de la memoria}
+
+La memoria se organiza en varios capítulos que presentan de forma progresiva el contexto del proyecto, los objetivos perseguidos, la base teórica necesaria y el trabajo realizado durante la evolución del editor. La estructura seguida es la siguiente:
+
 \begin{itemize}
-\tightlist
-    \item
-        \textbf{Introducción: }Descripción de la situación y el tema sobre el que va a tratar el proyecto. Estructura de la memoria y de los anexos.
-    \item 
-        \textbf{Objetivos del proyecto: }Explicación de los temas que se persiguen en este proyecto.
-    \item 
-        \textbf{Conceptos teóricos: }Introducción a determinados conceptos necesarios para la comprensión del proyecto.
-    \item 
-        \textbf{Técnicas y herramientas: }Presentación de metodologías y herramientas que han sido utilizadas para llevar a cabo el proyecto. 
-    \item 
-        \textbf{Aspectos relevantes del desarrollo del proyecto: }Aspectos a destacar durante el desarrollo del proyecto
-    \item 
-        \textbf{Trabajos relacionados: } Pequeña introducción a proyectos similares y comparativa.
-    \item 
-        \textbf{Conclusiones y líneas de trabajo futuras: }Conclusiones obtenidas al final del proyecto y posibles ideas futuras.
+    \item \textbf{Introducción}: presenta el contexto general del trabajo, la motivación, el punto de partida, el problema abordado y el alcance del proyecto.
+    \item \textbf{Objetivos del proyecto}: recoge los objetivos principales del TFG y delimita las metas perseguidas durante su desarrollo.
+    \item \textbf{Conceptos teóricos}: introduce los conceptos del modelo Entidad-Relación y del modelo relacional necesarios para comprender el resto del documento.
+    \item \textbf{Técnicas y herramientas}: describe las principales tecnologías y herramientas utilizadas durante el desarrollo del proyecto.
+    \item \textbf{Aspectos relevantes del desarrollo}: explica las decisiones, cambios y problemas más importantes abordados durante la evolución del editor.
+    \item \textbf{Trabajos relacionados}: presenta otras herramientas o enfoques relacionados con la creación de diagramas y el modelado de bases de datos.
+    \item \textbf{Conclusiones y líneas de trabajo futuras}: resume los resultados obtenidos y plantea posibles mejoras o ampliaciones posteriores.
 \end{itemize}
 
 \section{Estructura de los anexos}
-\begin{itemize}
-\tightlist
-    \item 
-        \textbf{Plan de proyecto software: }Planificación temporal y viabilidad económica y legal.
-    \item 
-        \textbf{Especificación de requisitos: }Objetivos y requisitos a completar durante el desarrollo del proyecto.
-    \item 
-        \textbf{Especificación de diseño: }Recoge los diseños de datos, procedimental, arquitectónico y de interfaces.
-    \item 
-        \textbf{Documentación técnica de programación: }Guía técnica del proyecto con conceptos como instalación, organización de carpetas, ejecución del proyecto y pruebas.
-    \item 
-        \textbf{Documentación de usuario: }Gúia destinada al usuario final con explicación paso a paso referente al uso de la aplicación.
-    \item 
-        \textbf{Anexo de sostenibilización curricular: }Reflexión personal sobre los aspectos de sostenibilidad que se abordan en el trabajo.
-\end{itemize}
 
-\section{Enlaces}
-\begin{itemize}
-\tightlist
-    \item 
-        Página web del repositorio en GitHub \cite{draw-er-app:repo}
-    \item 
-        Despliegue de la aplicación en Vercel \cite{draw-er-app:web}
-\end{itemize}
+Los anexos complementan la memoria principal con información más detallada sobre la planificación, los requisitos, el diseño y el uso del sistema. Su estructura es la siguiente:
 
+\begin{itemize}
+    \item \textbf{Plan de proyecto software}: recoge la planificación del trabajo, la evolución seguida y los aspectos de viabilidad asociados al proyecto.
+    \item \textbf{Especificación de requisitos}: describe los requisitos funcionales y no funcionales considerados durante el desarrollo.
+    \item \textbf{Especificación de diseño}: presenta la organización interna del sistema, el modelo de datos y las principales decisiones de diseño.
+    \item \textbf{Documentación técnica de programación}: incluye información sobre la estructura del proyecto, instalación, ejecución y pruebas.
+    \item \textbf{Documentación de usuario}: explica el uso de la aplicación desde el punto de vista del usuario final.
+    \item \textbf{Anexo de sostenibilización curricular}: recoge una reflexión sobre la relación del trabajo con aspectos de sostenibilidad.
+\end{itemize}

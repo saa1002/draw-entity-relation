@@ -1,59 +1,37 @@
 \capitulo{4}{Técnicas y herramientas}
 
-\section{mxGraph}
-mxGraph \cite{mxgraph} es una librería JavaScript que permite la creación y manipulación de diagramas interactivos en el navegador y usa elementos vectoriales (SVG) y HTML para renderizar sus elementos. Se utiliza como base para crear aplicaciones que requieran la creación y edición de diagramas. mxGraph permite a los desarrolladores definir nodos, aristas y otros elementos gráficos, así como gestionar la disposición y estilo de estos elementos.
+\section{Entorno de desarrollo web}
 
-\section{React}
-React \cite{react} es una biblioteca de JavaScript para construir aplicaciones web interactivas. Se basa en componentes reutilizables que gestionan su propio estado. React funciona modificando el HTML que carga el navegador utilizando un DOM virtual para minimizar las actualizaciones en el DOM real, mejorando así el rendimiento de las aplicaciones web.
+El proyecto se desarrolla como una aplicación web ejecutada en el navegador. Este enfoque permite que el editor pueda utilizarse sin instalar una aplicación de escritorio específica, manteniendo gran parte de la lógica dentro del propio cliente web.
 
-\section{Material UI}
-Material UI \cite{material-ui} es una biblioteca de componentes de interfaz de usuario para React, basada en el diseño de Material Design de Google.
+El entorno de desarrollo se apoya en Node.js y npm para la gestión de dependencias y la ejecución de los scripts del proyecto. A través de estos scripts se realizan tareas habituales como arrancar la aplicación en modo desarrollo, generar la versión de producción o ejecutar las pruebas definidas.
 
-\section{Biome}
-Biome \cite{biome} es una herramienta que incorpora tanto formateo como linting para JavaScript. Ayuda a mantener un código limpio, coherente y libre de errores. En este proyecto, Biome se utiliza para asegurar la calidad del código antes de cada commit.
+Este planteamiento encaja con el tipo de herramienta desarrollada, ya que el usuario interactúa directamente con una interfaz gráfica y con un área de edición visual. Por ello, gran parte del trabajo se centra en coordinar la interfaz, la representación gráfica del diagrama y el modelo interno que mantiene la aplicación.
 
-\section{Herramientas utilizadas para validación y pruebas}
+\section{Librerías principales del editor}
 
-\subsection{Pruebas unitarias}
-Inicialmente se utilizó Jest \cite{jest} para las pruebas unitarias, pero debido a problemas con la transpilación del código, se migró a Vitest \cite{vitest}. Vitest ofrece una API igual a Jest, con lo que la migración es directa.
+La interfaz del proyecto se desarrolla utilizando React, una librería de JavaScript orientada a la construcción de interfaces de usuario mediante componentes \cite{react}. En este trabajo, React sirve como base para organizar la aplicación, gestionar sus distintas partes visuales y coordinar la interacción del usuario con el editor.
 
-\subsection{Pruebas end-to-end}
-Para las pruebas funcionales, se utiliza Playwright \cite{playwright}, una herramienta moderna que permite simular las interacciones del usuario con la aplicación en varios navegadores. Playwright ejecuta la aplicación en un entorno real y prueba las funcionalidades desde la perspectiva del usuario final.
+Para la representación y manipulación de los diagramas se utiliza mxGraph \cite{mxgraph}. Esta librería proporciona la base gráfica necesaria para trabajar con vértices, aristas y eventos dentro del área de edición. En el contexto del proyecto, mxGraph no se utiliza únicamente para dibujar elementos, sino también como parte del flujo que relaciona la representación visual del diagrama con el modelo interno de la aplicación.
 
-\subsection{Test Driven Development (TDD)}
-El desarrollo guiado por pruebas de software, o TDD \cite{wiki:tdd} es una práctica de ingeniería de software que requiere el escribir las pruebas primero y refactorizar después. En primer lugar, se escribe una prueba y se comprueba que esta prueba falla. A continuación, se implementa el código que hace que la prueba pase satisfactoriamente y finalmente se refactoriza el código con la seguridad de que este cambio no afectará a la funcionalidad. Esta técnica nos permite pensar en inputs y outputs esperados ayudándonos a desarrollar la funcionalidad desde el test, así mismo nos permite asegurarnos que posteriores cambios no romperán la funcionalidad.
+Además, el proyecto utiliza Material UI para algunos componentes de la interfaz \cite{material-ui}. Esta librería facilita la creación de elementos visuales comunes, como botones, diálogos o controles de interacción, manteniendo una apariencia más uniforme dentro de la aplicación.
 
-\section{Herramientas utilizadas para integración continua}
-La integración continua es una práctica en desarrollo de software que consiste en realizar integraciones automáticas con una gran frecuencia para así poder detectar fallos. Este concepto de integración comprende la compilación (en este caso despliegue) y ejecución de las diferentes pruebas.
+En conjunto, estas librerías permiten construir un editor web en el que la interfaz, el área gráfica y las acciones del usuario trabajan de forma coordinada. En este trabajo, lo relevante no es solo el uso de estas herramientas por separado, sino la forma en la que se integran para representar diagramas Entidad-Relación de manera coherente.
 
-\subsection{Local}
-Para la integración continua local, se utiliza Lefthook \cite{lefthook}, que es una herramienta de hooks que se ejecuta antes de cada commit. Lefthook ejecuta Biome para formatear el código y verificar su calidad en los archivos que están preparados para hacer commit.
+\section{Herramientas de validación y pruebas}
 
-\subsection{GitHub Actions}
-GitHub Actions \cite{github-actions} es una parte de la plataforma GitHub que permite automatizar flujos de integración continua mediante su definición en archivos YAML. En este proyecto, se utilizan varias acciones:
-\begin{itemize}
-\tightlist
-    \item Biome: Verifica la calidad del código.
-    \item Tests: 
-    \begin{itemize}
-        \tightlist
-        \item Instala dependencias.
-        \item Instala navegadores de Playwright.
-        \item Ejecuta tests unitarios.
-        \item Ejecuta los tests end to end de Playwright con los diferentes navegadores.
-    \end{itemize}
-\end{itemize}
+El proyecto utiliza distintas herramientas para revisar el comportamiento de la aplicación y mantener una calidad mínima en el código. Estas herramientas no sustituyen a la revisión manual del editor, especialmente en los aspectos visuales o de interacción, pero ayudan a detectar errores y regresiones durante el desarrollo.
 
-\section{Despliegue continuo}
-El despliegue continuo se realiza mediante Vercel, que permite mantener versiones de producción y preview. Vercel facilita el despliegue continuo, asegurando que la aplicación esté siempre actualizada y lista para ser utilizada.
-Permite tener la rama principal constantemente desplegada e integrar los últimos cambios de manera automática, así como probar en un despliegue real los últimos cambios previos a su integración en la rama principal.
+Para las pruebas unitarias se utiliza Vitest \cite{vitest}. Esta herramienta permite comprobar partes concretas de la lógica de la aplicación, como funciones de validación, transformación o generación de resultados, sin necesidad de ejecutar manualmente todos los flujos desde la interfaz.
 
-\section{Git}
-Git \cite{git} es el sistema de control de versiones por excelencia en el desarrollo de software. Es fundamental para trabajar en pequeños y grandes proyectos, sobre todo en aquellos donde se requiera trabajar simultáneamente en equipo.
-\subsection{Git worktrees}
-Para este proyecto se ha hecho uso extensivo de los git worktrees \cite{git-worktree}, una característica un tanto desconocida de git que permite hacer un checkout de un determinado commit o rama y tratarlo como su propio directorio.
-Permite por tanto cambiar fácilmente entre ramas sin tener problemas con archivos no commiteados.
+Además, el proyecto cuenta con pruebas end-to-end mediante Playwright \cite{playwright}. Estas pruebas permiten ejecutar escenarios completos sobre la aplicación en el navegador, simulando acciones del usuario y comprobando que determinados flujos siguen funcionando correctamente.
 
-\section{GitHub}
-GitHub es una plataforma online \cite{github} de desarrollo colaborativo que permite usarla como repositorio remoto en un repositorio git.
-No solo ofrece hosting sino que también nos proporciona diversas utilidades como gestión de issues, revisión de código, pull request y otras muchas opciones.
+Junto a las pruebas, se utiliza Biome como herramienta de formateo y análisis estático del código \cite{biome}. Su uso ayuda a mantener un estilo más uniforme y a detectar ciertos problemas antes de integrar cambios en el proyecto. También se emplea Lefthook para ejecutar comprobaciones asociadas al flujo de trabajo con Git.
+
+\section{Control de versiones y apoyo al desarrollo}
+
+Para el control de versiones se utiliza Git, lo que permite registrar los cambios realizados en el proyecto y trabajar de forma más ordenada durante el desarrollo \cite{git}. El uso de commits y ramas facilita separar las distintas tareas y mantener un historial del trabajo realizado.
+
+El proyecto se gestiona mediante GitHub, que se utiliza como repositorio remoto y como apoyo para la organización del desarrollo \cite{github}. A través de sus herramientas se pueden documentar tareas, revisar cambios y mantener una trazabilidad básica de la evolución del editor.
+
+Además de las herramientas propias del código, durante la redacción de la memoria se utiliza Overleaf como entorno de trabajo para el proyecto LaTeX. Esto permite editar la documentación de forma progresiva y comprobar que la memoria y los anexos compilan correctamente mientras se van completando los distintos capítulos.

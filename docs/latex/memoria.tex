@@ -8,8 +8,6 @@
 \usepackage{lmodern} % Scalable font
 \usepackage{microtype}
 \usepackage{placeins}
-\usepackage{listings}
-\usepackage{listingsutf8}
 
 \RequirePackage{booktabs}
 \RequirePackage[table]{xcolor}
@@ -354,10 +352,10 @@
   }
 \makeatother
 
-\newcommand{\nombre}{Rubén Maté Iturriaga} %%% cambio de comando
+\newcommand{\nombre}{Steven Paul Alba Alba} %%% cambio de comando
 
 % Datos de portada
-\title{Draw Entity-Relation App}
+\title{Evolución de un editor Entidad-Relación con React y mxGraph}
 \author{\nombre}
 \tutor{Jesús Manuel Maudes Raedo}
 \date{\today}
@@ -380,7 +378,7 @@
 
 \noindent Expone:
 
-\noindent Que el alumno D. \nombre, con DNI 71364920Z, ha realizado el Trabajo final de Grado en Ingeniería Informática titulado título de TFG. 
+\noindent Que el alumno D. Steven Paul Alba Alba, con DNI 71755156D, ha realizado el Trabajo final de Grado en Ingeniería Informática titulado Evolución de un editor Entidad-Relación con React y mxGraph.
 
 \noindent Y que dicho trabajo ha sido realizado por el alumno bajo la dirección del que suscribe, en virtud de lo cual se autoriza su presentación y defensa.
 
@@ -391,29 +389,27 @@ En Burgos, {\large \today}
 \vfill\vfill\vfill
 
 % Author and supervisor
-%\begin{minipage}{0.45\textwidth}
-%\begin{flushleft} %\large
-%Vº. Bº. del Tutor:\\[2cm]
-%D. nombre tutor
-%\end{flushleft}
-%\end{minipage}
-%\hfill
-%\begin{minipage}{0.45\textwidth}
-%\begin{flushleft} %\large
-%Vº. Bº. del co-tutor:\\[2cm]
-%D. nombre co-tutor
-%\end{flushleft}
-%\end{minipage}
-%\hfill
+\begin{minipage}{0.45\textwidth}
+\begin{flushleft} %\large
+Vº. Bº. del Tutor:\\[2cm]
+D. Jesús Manuel Maudes Raedo
+\end{flushleft}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+\begin{flushleft} %\large
+Vº. Bº. del co-tutor:\\[2cm]
+D. nombre co-tutor
+\end{flushleft}
+\end{minipage}
+\hfill
 
-%\vfill
+\vfill
 
 % para casos con solo un tutor comentar lo anterior
 % y descomentar lo siguiente
-\begin{center}
-Vº. Bº. del Tutor:\\[2cm]
-D. Jesús Manuel Maudes Raedo
-\end{center}
+%Vº. Bº. del Tutor:\\[2cm]
+%D. nombre tutor
 
 
 \newpage\null\thispagestyle{empty}\newpage
@@ -426,28 +422,28 @@ D. Jesús Manuel Maudes Raedo
 % Abstract en castellano
 \renewcommand*\abstractname{Resumen}
 \begin{abstract}
-Este proyecto permite modelar diagramas entidad-relación en una aplicación web y exportarlos a un script SQL tras su validación. Es también un punto de partida para que futuros proyectos puedan expandir su funcionalidad con relaciones más complejas. La aplicación está desarrollada en React y utiliza la librería mxGraph para la creación y manipulación de los diagramas. 
+Este Trabajo de Fin de Grado aborda la evolución de un editor web de diagramas Entidad-Relación desarrollado con React y mxGraph. El proyecto parte de una aplicación heredada y se centra en estabilizar su núcleo funcional, ampliar el soporte de elementos propios del modelo Entidad-Relación y reforzar la conexión entre la representación gráfica del diagrama, su modelo interno, la validación semántica, la transformación al modelo relacional y la generación de código SQL.
+
+El trabajo se desarrolla con un enfoque incremental, prestando especial atención a la mantenibilidad del sistema, la persistencia de los diagramas, la reconstrucción del canvas, el tratamiento de atributos compuestos y multivaluados, las entidades débiles, las relaciones binarias y el soporte de relaciones ternarias. Además, se documentan las decisiones de diseño adoptadas, las limitaciones conocidas y las posibles líneas de trabajo futuras.
 \end{abstract}
 
 \renewcommand*\abstractname{Descriptores}
 \begin{abstract}
-Modelado de bases de datos, diagramas entidad-relación, exportación a SQL, aplicación web, React, mxGraph.
+Modelo Entidad-Relación, diagramas E/R, React, mxGraph, transformación relacional, SQL, validación de modelos, aplicación web
 \end{abstract}
-
 
 \clearpage
 
 % Abstract en inglés
 \renewcommand*\abstractname{Abstract}
 \begin{abstract}
-This project allows modeling entity-relationship diagrams in a web application and exporting them to an SQL script after validation. It's also a starting point for future projects that will add features and more complex relations. Tusehe application is developed in React and uses the mxGraph library for the creation and manipulation of the diagrams.
+A \textbf{brief} presentation of the topic addressed in the project.
 \end{abstract}
 
 \renewcommand*\abstractname{Keywords}
 \begin{abstract}
-Database modeling, entity-relationship diagrams, SQL export, web application, React, mxGraph.
+keywords separated by commas.
 \end{abstract}
-
 
 \clearpage
 

@@ -10,6 +10,8 @@ const getRelations = (diagram) =>
 
 export const POSSIBLE_CARDINALITIES = ["0:1", "0:N", "1:1", "1:N"];
 
+export const TERNARY_RELATION_CARDINALITIES = ["0:1", "0:N"];
+
 export const DEFAULT_IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITY = "0:N";
 
 export const IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES = [
@@ -32,13 +34,65 @@ export const isIdentifyingRelation = (relation) =>
 export const canRelationHoldAttributes = (relation) =>
     relation?.canHoldAttributes === true;
 
-export const relationHasBothEntitySides = (relation) =>
-    !!relation?.side1?.entity?.idMx && !!relation?.side2?.entity?.idMx;
+export const canRelationTypeHoldAttributes = (relation) =>
+    isTernaryRelation(relation) ||
+    (isBinaryRelation(relation) && isManyToManyRelation(relation));
+
+export const RELATION_ARITIES = {
+    BINARY: 2,
+    TERNARY: 3,
+};
+
+export const BINARY_RELATION_SIDE_KEYS = ["side1", "side2"];
+export const TERNARY_RELATION_SIDE_KEYS = ["side1", "side2", "side3"];
+
+export const getRelationArity = (relation) =>
+    relation?.arity === RELATION_ARITIES.TERNARY
+        ? RELATION_ARITIES.TERNARY
+        : RELATION_ARITIES.BINARY;
+
+export const isBinaryRelation = (relation) =>
+    getRelationArity(relation) === RELATION_ARITIES.BINARY;
+
+export const isTernaryRelation = (relation) =>
+    getRelationArity(relation) === RELATION_ARITIES.TERNARY;
+
+export const getRelationSideKeys = (relation) =>
+    isTernaryRelation(relation)
+        ? TERNARY_RELATION_SIDE_KEYS
+        : BINARY_RELATION_SIDE_KEYS;
+
+export const getRelationSides = (relation) =>
+    getRelationSideKeys(relation).map((sideKey) => relation?.[sideKey] ?? null);
+
+export const getRelationEntityIds = (relation) =>
+    getRelationSides(relation)
+        .map((side) => side?.entity?.idMx ?? "")
+        .filter(Boolean);
+
+export const getRelationSideRole = (side = {}) =>
+    String(side?.role ?? "").trim();
+
+export const getRelationSideDisplayName = ({
+    relation,
+    sideKey,
+    entityName = "",
+} = {}) => {
+    const role = getRelationSideRole(relation?.[sideKey]);
+
+    return role || entityName || `Lado ${sideKey?.replace("side", "") ?? ""}`;
+};
+
+export const relationHasAllEntitySides = (relation) =>
+    getRelationSides(relation).every((side) => !!side?.entity?.idMx);
+
+export const relationHasBothEntitySides = relationHasAllEntitySides;
+
+export const relationHasAllSideIds = (relation) =>
+    getRelationSides(relation).every((side) => !!side?.idMx);
 
 export const isRelationConfigured = (relation) =>
-    relationHasBothEntitySides(relation) &&
-    relation?.side1?.idMx !== "" &&
-    relation?.side2?.idMx !== "";
+    relationHasAllEntitySides(relation) && relationHasAllSideIds(relation);
 
 export const getRelationSideCardinality = (side = {}) => {
     const [minimum = "", maximum = ""] = String(side.cardinality ?? "").split(
@@ -54,34 +108,80 @@ export const getRelationSideCardinality = (side = {}) => {
 export const getRelationSideMaximum = (side) =>
     getRelationSideCardinality(side).maximum;
 
-export const isSelfRelation = (relation) =>
-    relationHasBothEntitySides(relation) &&
-    relation.side1.entity.idMx === relation.side2.entity.idMx;
+export const getRelationCardinalityDisplayValue = (relation, cardinality) => {
+    if (
+        isTernaryRelation(relation) &&
+        TERNARY_RELATION_CARDINALITIES.includes(cardinality)
+    ) {
+        return getRelationSideCardinality({ cardinality }).maximum;
+    }
+
+    return cardinality;
+};
+
+export const isSelfRelation = (relation) => {
+    const entityIds = getRelationEntityIds(relation);
+
+    return (
+        relationHasBothEntitySides(relation) &&
+        entityIds.length === getRelationSideKeys(relation).length &&
+        entityIds.every((entityId) => entityId === entityIds[0])
+    );
+};
 
 export const relationInvolvesEntity = (relation, entityId) =>
-    !!entityId &&
-    (relation?.side1?.entity?.idMx === entityId ||
-        relation?.side2?.entity?.idMx === entityId);
+    !!entityId && getRelationEntityIds(relation).includes(entityId);
 
 export const isManyToManyRelation = (relation) =>
-    relation?.side1?.cardinality?.endsWith(":N") === true &&
-    relation?.side2?.cardinality?.endsWith(":N") === true;
+    getRelationSides(relation).every(
+        (side) => side?.cardinality?.endsWith(":N") === true,
+    );
 
-export const createEmptyRelationSide = ({ cardinality = "" } = {}) => ({
+export const createEmptyRelationSide = ({
+    cardinality = "",
+    role = "",
+} = {}) => ({
     idMx: "",
     cardinality,
+    role,
     cell: "",
     edgeId: "",
     entity: { idMx: "" },
 });
+
+export const createRelationData = ({
+    idMx = "",
+    name = "",
+    position = { x: 0, y: 0 },
+    arity = RELATION_ARITIES.BINARY,
+} = {}) => {
+    const relation = {
+        idMx,
+        name,
+        position,
+        side1: createEmptyRelationSide(),
+        side2: createEmptyRelationSide(),
+        canHoldAttributes: false,
+        isIdentifying: false,
+        attributes: [],
+    };
+
+    if (arity === RELATION_ARITIES.TERNARY) {
+        relation.arity = RELATION_ARITIES.TERNARY;
+        relation.side3 = createEmptyRelationSide();
+    }
+
+    return relation;
+};
 
 export const resetRelationSides = (relation, { cardinality = "" } = {}) => {
     if (!relation) {
         return null;
     }
 
-    relation.side1 = createEmptyRelationSide({ cardinality });
-    relation.side2 = createEmptyRelationSide({ cardinality });
+    getRelationSideKeys(relation).forEach((sideKey) => {
+        relation[sideKey] = createEmptyRelationSide({ cardinality });
+    });
     relation.canHoldAttributes = false;
 
     return relation;

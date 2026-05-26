@@ -12,6 +12,7 @@ import {
     InputLabel,
     MenuItem,
     Select,
+    TextField,
 } from "@mui/material";
 import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
@@ -21,16 +22,20 @@ import {
     IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY,
     IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES,
     POSSIBLE_CARDINALITIES,
+    RELATION_ARITIES,
+    TERNARY_RELATION_CARDINALITIES,
     addAttributeToOwner,
     addChildAttributeToAttribute,
     applyIdentifyingRelationCardinalities,
     canRelationHoldAttributes,
+    canRelationTypeHoldAttributes,
     clearIdentifyingRelationDomainSemantics,
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
     convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
     createAttribute,
+    createEmptyRelationSide,
     findAttributeTreeOwnerById,
     findEntityById,
     findEntityIndexById,
@@ -40,17 +45,22 @@ import {
     getCascadedWeakConversionCandidate,
     getDefaultAttributeSemantics,
     getLastAttribute,
+    getRelationArity,
+    getRelationCardinalityDisplayValue,
+    getRelationSideDisplayName,
+    getRelationSideKeys,
     getWeakAndStrongSidesForRelation,
     getWeakSideOfIdentifyingRelation,
     groupRootAttributesIntoCompositeAttribute,
+    isBinaryRelation,
     isFirstAttributeForOwner,
     isIdentifyingRelation,
-    isManyToManyRelation,
     isMultivaluedAttribute,
     isPrimaryKeyAttribute,
     isRelationAttributeOwner,
     isRelationConfigured,
     isSelfRelation,
+    isTernaryRelation,
     isWeakEntity,
     relationHasBothEntitySides,
     relationInvolvesEntity,
@@ -242,6 +252,7 @@ export default function App(props) {
 
     const {
         syncSelfRelationEdges,
+        syncRepeatedParticipantRelationEdges,
         syncIdentifyingRelationDecorator,
         ensureIdentifyingRelationDecorator,
         removeIdentifyingRelationDecorator,
@@ -302,18 +313,21 @@ export default function App(props) {
     const syncRelationCardinalityLabels = (relationData) => {
         if (!relationData) return;
 
-        const side1Label = accessCell(relationData?.side1?.cell);
-        const side2Label = accessCell(relationData?.side2?.cell);
+        getRelationSideKeys(relationData).forEach((sideKey) => {
+            const sideLabel = accessCell(relationData?.[sideKey]?.cell);
+            const cardinality = relationData[sideKey].cardinality;
 
-        if (side1Label) {
-            graph.model.setValue(side1Label, relationData.side1.cardinality);
-            graph.updateCellSize(side1Label);
-        }
-
-        if (side2Label) {
-            graph.model.setValue(side2Label, relationData.side2.cardinality);
-            graph.updateCellSize(side2Label);
-        }
+            if (sideLabel) {
+                graph.model.setValue(
+                    sideLabel,
+                    getRelationCardinalityDisplayValue(
+                        relationData,
+                        cardinality,
+                    ),
+                );
+                graph.updateCellSize(sideLabel);
+            }
+        });
     };
 
     const removeRelationAttributes = (relationData) => {
@@ -375,6 +389,7 @@ export default function App(props) {
             ensureMultivaluedAttributeDecorator,
             ensureIdentifyingRelationDecorator,
             ensureIdentifyingRelationEdgeDecorator,
+            syncRepeatedParticipantRelationEdges,
         });
     };
 
@@ -489,6 +504,7 @@ export default function App(props) {
                 syncAttributeVisualRepresentation,
                 syncWeakEntityDecorator,
                 syncSelfRelationEdges,
+                syncRepeatedParticipantRelationEdges,
                 syncIdentifyingRelationDecorator,
                 syncIdentifyingRelationEdgeDecorator,
                 syncMultivaluedAttributeDecorator,
@@ -1427,7 +1443,11 @@ export default function App(props) {
         const isRelation = isRelationShapeCell(selected);
         const selectedRelationDiag = getSelectedRelationData();
 
-        if (isRelation && selectedRelationDiag) {
+        if (
+            isRelation &&
+            selectedRelationDiag &&
+            isBinaryRelation(selectedRelationDiag)
+        ) {
             return (
                 <button
                     type="button"
@@ -1445,8 +1465,69 @@ export default function App(props) {
     const RelationConfigurationButton = () => {
         const isRelation = isRelationShapeCell(selected);
         const [open, setOpen] = React.useState(false);
+        const [relationArity, setRelationArity] = React.useState(
+            RELATION_ARITIES.BINARY,
+        );
+        const [side1, setSide1] = React.useState("");
+        const [side2, setSide2] = React.useState("");
+        const [side3, setSide3] = React.useState("");
+        const [side1Role, setSide1Role] = React.useState("");
+        const [side2Role, setSide2Role] = React.useState("");
+        const [side3Role, setSide3Role] = React.useState("");
+
+        const selectedArityIsTernary =
+            relationArity === RELATION_ARITIES.TERNARY;
+
+        const selectedRelationSides = {
+            side1,
+            side2,
+            side3,
+        };
+
+        const getSelectedSideEntityId = (sideKey) =>
+            selectedRelationSides[sideKey]?.idMx ?? "";
+
+        const sideRequiresRole = (sideKey) => {
+            if (!selectedArityIsTernary) {
+                return false;
+            }
+
+            const sideEntityId = getSelectedSideEntityId(sideKey);
+
+            if (!sideEntityId) {
+                return false;
+            }
+
+            const repeatedSideCount = ["side1", "side2", "side3"].filter(
+                (currentSideKey) =>
+                    getSelectedSideEntityId(currentSideKey) === sideEntityId,
+            ).length;
+
+            return repeatedSideCount > 1;
+        };
+
+        const getSelectedRoleForSide = (sideKey) => {
+            if (!sideRequiresRole(sideKey)) {
+                return "";
+            }
+
+            if (sideKey === "side1") return side1Role;
+            if (sideKey === "side2") return side2Role;
+            if (sideKey === "side3") return side3Role;
+
+            return "";
+        };
 
         const handleClickOpen = () => {
+            const relation = findRelationById(diagramRef.current, selected?.id);
+
+            setRelationArity(getRelationArity(relation));
+            setSide1("");
+            setSide2("");
+            setSide3("");
+            setSide1Role("");
+            setSide2Role("");
+            setSide3Role("");
             setOpen(true);
         };
 
@@ -1454,27 +1535,70 @@ export default function App(props) {
             setOpen(false);
         };
 
+        const applySelectedRelationArity = (relation) => {
+            if (selectedArityIsTernary) {
+                relation.arity = RELATION_ARITIES.TERNARY;
+                relation.side3 = relation.side3 ?? createEmptyRelationSide();
+                return;
+            }
+
+            relation.arity = undefined;
+            relation.side3 = undefined;
+        };
+
+        const normalizeRelationRole = (role) => String(role ?? "").trim();
+
+        const applySelectedRelationRoles = (relation) => {
+            relation.side1.role = normalizeRelationRole(
+                getSelectedRoleForSide("side1"),
+            );
+            relation.side2.role = normalizeRelationRole(
+                getSelectedRoleForSide("side2"),
+            );
+
+            if (selectedArityIsTernary) {
+                relation.side3.role = normalizeRelationRole(
+                    getSelectedRoleForSide("side3"),
+                );
+            }
+        };
+
         const handleAccept = () => {
             const source = selected;
             const relation = findRelationById(diagramRef.current, source.id);
 
             if (!relation) return;
-            if (!side1?.idMx || !side2?.idMx) return;
+
+            if (
+                !side1?.idMx ||
+                !side2?.idMx ||
+                (selectedArityIsTernary && !side3?.idMx)
+            ) {
+                return;
+            }
 
             if (isIdentifyingRelation(relation)) {
                 clearIdentifyingRelationSemantics(relation.idMx);
             }
 
-            if (isRelationConfigured(relation)) {
+            const wasConfigured = isRelationConfigured(relation);
+
+            if (wasConfigured) {
                 removeExistingGraphCells(
                     graph,
                     getConfiguredRelationGraphCells({ relation, accessCell }),
                 );
 
                 removeRelationAttributes(relation);
+            }
 
+            applySelectedRelationArity(relation);
+
+            if (wasConfigured) {
                 resetRelationSides(relation, { cardinality: "X:X" });
             }
+
+            applySelectedRelationRoles(relation);
 
             connectRelationGraphSides({
                 graph,
@@ -1482,27 +1606,66 @@ export default function App(props) {
                 relation,
                 side1EntityCell: accessCell(side1.idMx),
                 side2EntityCell: accessCell(side2.idMx),
+                side3EntityCell: selectedArityIsTernary
+                    ? accessCell(side3.idMx)
+                    : null,
                 cardinalityStyle: getCardinalityStyleString(),
                 syncSelfRelationEdges,
+                syncRepeatedParticipantRelationEdges,
             });
 
             syncAndPersistDiagramData();
 
             setOpen(false);
+            setRelationArity(RELATION_ARITIES.BINARY);
             setSide1("");
             setSide2("");
+            setSide3("");
+            setSide1Role("");
+            setSide2Role("");
+            setSide3Role("");
         };
 
-        const [side1, setSide1] = React.useState("");
-        const [side2, setSide2] = React.useState("");
+        const acceptDisabled =
+            side1 === "" ||
+            side2 === "" ||
+            (selectedArityIsTernary && side3 === "");
 
-        const acceptDisabled = side1 === "" || side2 === "";
+        const handleChangeRelationArity = (event) => {
+            const nextArity = Number(event.target.value);
+
+            setRelationArity(nextArity);
+
+            if (nextArity !== RELATION_ARITIES.TERNARY) {
+                setSide3("");
+                setSide1Role("");
+                setSide2Role("");
+                setSide3Role("");
+            }
+        };
 
         const handleChangeSide1 = (event) => {
             setSide1(event.target.value);
         };
+
         const handleChangeSide2 = (event) => {
             setSide2(event.target.value);
+        };
+
+        const handleChangeSide3 = (event) => {
+            setSide3(event.target.value);
+        };
+
+        const handleChangeSide1Role = (event) => {
+            setSide1Role(event.target.value);
+        };
+
+        const handleChangeSide2Role = (event) => {
+            setSide2Role(event.target.value);
+        };
+
+        const handleChangeSide3Role = (event) => {
+            setSide3Role(event.target.value);
         };
 
         if (isRelation) {
@@ -1531,13 +1694,36 @@ export default function App(props) {
                             <Box sx={{ minHeight: 10 }} />
                             <Box sx={{ minWidth: 120 }}>
                                 <FormControl fullWidth>
+                                    <InputLabel id="relation-arity-label">
+                                        Tipo de relación
+                                    </InputLabel>
+                                    <Select
+                                        id="relation-arity"
+                                        value={relationArity}
+                                        label="Tipo de relación"
+                                        onChange={handleChangeRelationArity}
+                                    >
+                                        <MenuItem
+                                            value={RELATION_ARITIES.BINARY}
+                                        >
+                                            Binaria
+                                        </MenuItem>
+                                        <MenuItem
+                                            value={RELATION_ARITIES.TERNARY}
+                                        >
+                                            Ternaria
+                                        </MenuItem>
+                                    </Select>
+                                </FormControl>
+                                <Box sx={{ minHeight: 10 }} />
+                                <FormControl fullWidth>
                                     <InputLabel id="side1-label">
                                         Lado 1
                                     </InputLabel>
                                     <Select
                                         id="side1"
                                         value={side1}
-                                        label="Age"
+                                        label="Lado 1"
                                         onChange={handleChangeSide1}
                                     >
                                         {diagramRef.current.entities.map(
@@ -1554,6 +1740,18 @@ export default function App(props) {
                                         )}
                                     </Select>
                                 </FormControl>
+                                {sideRequiresRole("side1") && (
+                                    <>
+                                        <Box sx={{ minHeight: 10 }} />
+                                        <TextField
+                                            id="side1-role"
+                                            label="Rol lado 1"
+                                            value={side1Role}
+                                            onChange={handleChangeSide1Role}
+                                            fullWidth
+                                        />
+                                    </>
+                                )}
                                 <Box sx={{ minHeight: 10 }} />
                                 <FormControl fullWidth>
                                     <InputLabel id="side2-label">
@@ -1579,6 +1777,63 @@ export default function App(props) {
                                         )}
                                     </Select>
                                 </FormControl>
+                                {sideRequiresRole("side2") && (
+                                    <>
+                                        <Box sx={{ minHeight: 10 }} />
+                                        <TextField
+                                            id="side2-role"
+                                            label="Rol lado 2"
+                                            value={side2Role}
+                                            onChange={handleChangeSide2Role}
+                                            fullWidth
+                                        />
+                                    </>
+                                )}
+                                {selectedArityIsTernary && (
+                                    <>
+                                        <Box sx={{ minHeight: 10 }} />
+                                        <FormControl fullWidth>
+                                            <InputLabel id="side3-label">
+                                                Lado 3
+                                            </InputLabel>
+                                            <Select
+                                                id="side3"
+                                                value={side3}
+                                                label="Lado 3"
+                                                onChange={handleChangeSide3}
+                                            >
+                                                {diagramRef.current.entities.map(
+                                                    (entity) => {
+                                                        return (
+                                                            <MenuItem
+                                                                key={
+                                                                    entity.idMx
+                                                                }
+                                                                value={entity}
+                                                            >
+                                                                {entity.name}
+                                                            </MenuItem>
+                                                        );
+                                                    },
+                                                )}
+                                            </Select>
+                                        </FormControl>
+                                        {sideRequiresRole("side3") && (
+                                            <>
+                                                <Box sx={{ minHeight: 10 }} />
+                                                <TextField
+                                                    id="side3-role"
+                                                    label="Rol lado 3"
+                                                    value={side3Role}
+                                                    onChange={
+                                                        handleChangeSide3Role
+                                                    }
+                                                    fullWidth
+                                                />
+                                            </>
+                                        )}
+                                    </>
+                                )}
                             </Box>
                         </DialogContent>
                         <DialogActions>
@@ -1601,10 +1856,32 @@ export default function App(props) {
         const isRelation = isRelationShapeCell(selected);
         const selectedDiag = findRelationById(diagramRef.current, selected?.id);
         const [open, setOpen] = React.useState(false);
+        const [cardinalities, setCardinalities] = React.useState({
+            side1: "",
+            side2: "",
+            side3: "",
+        });
+
+        const sideKeys = getRelationSideKeys(selectedDiag);
+
+        const getCardinalityForSide = (sideKey) => cardinalities[sideKey] ?? "";
+
+        const resetCardinalities = () => {
+            setCardinalities({
+                side1: "",
+                side2: "",
+                side3: "",
+            });
+        };
 
         const handleClickOpen = () => {
-            setSide1(selectedDiag?.side1?.cardinality ?? "");
-            setSide2(selectedDiag?.side2?.cardinality ?? "");
+            const nextCardinalities = sideKeys.reduce((result, sideKey) => {
+                result[sideKey] = selectedDiag?.[sideKey]?.cardinality ?? "";
+
+                return result;
+            }, {});
+
+            setCardinalities(nextCardinalities);
             setOpen(true);
         };
 
@@ -1623,21 +1900,26 @@ export default function App(props) {
                 );
                 return;
             }
+
             if (isIdentifyingRelation(selectedDiag)) {
                 if (side1IsWeak) {
-                    selectedDiag.side1.cardinality = side1;
+                    selectedDiag.side1.cardinality =
+                        getCardinalityForSide("side1");
                     selectedDiag.side2.cardinality = "1:1";
                 } else {
                     selectedDiag.side1.cardinality = "1:1";
-                    selectedDiag.side2.cardinality = side2;
+                    selectedDiag.side2.cardinality =
+                        getCardinalityForSide("side2");
                 }
 
                 removeRelationAttributes(selectedDiag);
             } else {
-                selectedDiag.side1.cardinality = side1;
-                selectedDiag.side2.cardinality = side2;
+                sideKeys.forEach((sideKey) => {
+                    selectedDiag[sideKey].cardinality =
+                        getCardinalityForSide(sideKey);
+                });
 
-                if (isManyToManyRelation(selectedDiag)) {
+                if (canRelationTypeHoldAttributes(selectedDiag)) {
                     selectedDiag.canHoldAttributes = true;
                 } else {
                     removeRelationAttributes(selectedDiag);
@@ -1647,22 +1929,16 @@ export default function App(props) {
             syncRelationCardinalityLabels(selectedDiag);
             refreshGraph();
 
-            setSide1("");
-            setSide2("");
+            resetCardinalities();
             setOpen(false);
             syncAndPersistDiagramData();
         };
 
-        const [side1, setSide1] = React.useState("");
-        const [side2, setSide2] = React.useState("");
-
-        const acceptDisabled = side1 === "" || side2 === "";
-
-        const handleChangeSide1 = (event) => {
-            setSide1(event.target.value);
-        };
-        const handleChangeSide2 = (event) => {
-            setSide2(event.target.value);
+        const handleChangeCardinality = (sideKey) => (event) => {
+            setCardinalities((currentCardinalities) => ({
+                ...currentCardinalities,
+                [sideKey]: event.target.value,
+            }));
         };
 
         const { weakSide, strongSide } = getWeakAndStrongSidesForRelation(
@@ -1686,30 +1962,74 @@ export default function App(props) {
             isIdentifyingRelation(selectedDiag) &&
             strongSide?.entity?.idMx === selectedDiag?.side2?.entity?.idMx;
 
+        const getSideIsWeak = (sideKey) => {
+            if (sideKey === "side1") return side1IsWeak;
+            if (sideKey === "side2") return side2IsWeak;
+
+            return false;
+        };
+
+        const getSideIsStrong = (sideKey) => {
+            if (sideKey === "side1") return side1IsStrong;
+            if (sideKey === "side2") return side2IsStrong;
+
+            return false;
+        };
+
         const getAllowedCardinalitiesForSide = (sideKey) => {
+            if (isTernaryRelation(selectedDiag)) {
+                return TERNARY_RELATION_CARDINALITIES;
+            }
+
             if (!isIdentifyingRelation(selectedDiag)) {
                 return POSSIBLE_CARDINALITIES;
             }
 
-            const isWeakSide = sideKey === "side1" ? side1IsWeak : side2IsWeak;
-
-            if (isWeakSide) {
+            if (getSideIsWeak(sideKey)) {
                 return IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES;
             }
 
             return [IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY];
         };
 
+        const getCardinalityDisplayValue = (cardinality) =>
+            getRelationCardinalityDisplayValue(selectedDiag, cardinality);
+
+        const cardinalitySelectIdsBySideKey = {
+            side1: "side1-to-side2",
+            side2: "side2-to-side1",
+            side3: "side3-cardinality",
+        };
+
+        const getSideEntityName = (sideKey) =>
+            getRelationSideDisplayName({
+                relation: selectedDiag,
+                sideKey,
+                entityName:
+                    accessCell(selectedDiag?.[sideKey]?.entity?.idMx)?.value ??
+                    "",
+            });
+
+        const cardinalityIsAllowedForSide = (sideKey) => {
+            const cardinality = getCardinalityForSide(sideKey);
+
+            if (cardinality === "") {
+                return false;
+            }
+
+            if (isTernaryRelation(selectedDiag)) {
+                return TERNARY_RELATION_CARDINALITIES.includes(cardinality);
+            }
+
+            return true;
+        };
+
+        const acceptDisabled = sideKeys.some(
+            (sideKey) => !cardinalityIsAllowedForSide(sideKey),
+        );
+
         if (isRelation) {
             const isConfigured = isRelationConfigured(selectedDiag);
-
-            const side1EntityName =
-                accessCell(selectedDiag?.side1?.entity?.idMx)?.value ??
-                "Lado 1";
-
-            const side2EntityName =
-                accessCell(selectedDiag?.side2?.entity?.idMx)?.value ??
-                "Lado 2";
 
             return (
                 <>
@@ -1739,65 +2059,66 @@ export default function App(props) {
                         {isConfigured && (
                             <DialogContent>
                                 <DialogContentText id="alert-dialog-description">
-                                    Escoger los lados de esta relación
+                                    Escoger las cardinalidades de esta relación
                                 </DialogContentText>
                                 <Box sx={{ minHeight: 10 }} />
                                 <Box sx={{ minWidth: 120 }}>
-                                    <FormControl fullWidth>
-                                        <InputLabel id="side1-to-side2-label">
-                                            {side1EntityName}
-                                        </InputLabel>
-                                        <Select
-                                            id="side1-to-side2"
-                                            value={side1}
-                                            label={side1EntityName}
-                                            onChange={handleChangeSide1}
-                                            disabled={
-                                                isIdentifyingRelation(
-                                                    selectedDiag,
-                                                ) && side1IsStrong
-                                            }
-                                        >
-                                            {getAllowedCardinalitiesForSide(
-                                                "side1",
-                                            ).map((cardinality) => (
-                                                <MenuItem
-                                                    key={cardinality}
-                                                    value={cardinality}
-                                                >
-                                                    {cardinality}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                    <Box sx={{ minHeight: 10 }} />
-                                    <FormControl fullWidth>
-                                        <InputLabel id="side2-to-side1-label">
-                                            {side2EntityName}
-                                        </InputLabel>
-                                        <Select
-                                            id="side2-to-side1"
-                                            value={side2}
-                                            label={side2EntityName}
-                                            onChange={handleChangeSide2}
-                                            disabled={
-                                                isIdentifyingRelation(
-                                                    selectedDiag,
-                                                ) && side2IsStrong
-                                            }
-                                        >
-                                            {getAllowedCardinalitiesForSide(
-                                                "side2",
-                                            ).map((cardinality) => (
-                                                <MenuItem
-                                                    key={cardinality}
-                                                    value={cardinality}
-                                                >
-                                                    {cardinality}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
+                                    {sideKeys.map((sideKey) => {
+                                        const sideEntityName =
+                                            getSideEntityName(sideKey);
+                                        const selectId =
+                                            cardinalitySelectIdsBySideKey[
+                                                sideKey
+                                            ];
+
+                                        return (
+                                            <React.Fragment key={sideKey}>
+                                                <FormControl fullWidth>
+                                                    <InputLabel
+                                                        id={`${selectId}-label`}
+                                                    >
+                                                        {sideEntityName}
+                                                    </InputLabel>
+                                                    <Select
+                                                        id={selectId}
+                                                        value={getCardinalityForSide(
+                                                            sideKey,
+                                                        )}
+                                                        label={sideEntityName}
+                                                        onChange={handleChangeCardinality(
+                                                            sideKey,
+                                                        )}
+                                                        disabled={
+                                                            isIdentifyingRelation(
+                                                                selectedDiag,
+                                                            ) &&
+                                                            getSideIsStrong(
+                                                                sideKey,
+                                                            )
+                                                        }
+                                                    >
+                                                        {getAllowedCardinalitiesForSide(
+                                                            sideKey,
+                                                        ).map((cardinality) => (
+                                                            <MenuItem
+                                                                key={
+                                                                    cardinality
+                                                                }
+                                                                value={
+                                                                    cardinality
+                                                                }
+                                                            >
+                                                                {getCardinalityDisplayValue(
+                                                                    cardinality,
+                                                                )}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+                                                <Box sx={{ minHeight: 10 }} />
+                                            </React.Fragment>
+                                        );
+                                    })}
                                 </Box>
                             </DialogContent>
                         )}

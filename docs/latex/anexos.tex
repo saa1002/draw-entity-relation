@@ -8,9 +8,6 @@
 \usepackage{lmodern} % scalable font
 \usepackage{microtype}
 \usepackage{placeins}
-\usepackage{listings}
-\usepackage{listingsutf8}
-\usepackage{adjustbox}
 
 \RequirePackage{booktabs}
 \RequirePackage[table]{xcolor}
@@ -58,14 +55,7 @@
 	\end{figure}
 }
 
-\newcommand{\imagencontamano}[3]{
-	\begin{figure}[!h]
-		\centering
-		\includegraphics[width=#3\textwidth]{#1}
-		\caption{#2}\label{fig:#1}
-	\end{figure}
-	\FloatBarrier
-}
+
 
 % El comando \figura nos permite insertar figuras comodamente, y utilizando
 % siempre el mismo formato. Los parametros son:
@@ -363,8 +353,8 @@
 
 
 % Datos de portada
-\title{Draw E-R App \\Documentación Técnica}
-\author{Rubén Maté Iturriaga}
+\title{Evolución de un editor Entidad-Relación con React y mxGraph \\Documentación Técnica}
+\author{Steven Paul Alba Alba}
 \tutor{Jesús Manuel Maudes Raedo}
 \date{\today}
 

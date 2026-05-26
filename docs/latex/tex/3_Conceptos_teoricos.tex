@@ -1,54 +1,43 @@
 \capitulo{3}{Conceptos teóricos}
-A continuación se detallan algunos de los conceptos más relevantes para la correcta comprensión de este proyecto.
 
-\section{Aplicación web}
-Una aplicación web es un programa software que se ejecuta en un servidor web y es accesible a través de un navegador mediante Internet. A diferencia de una página web tradicional, que generalmente se compone de documentos estáticos y contenido multimedia, una aplicación web ofrece interactividad avanzada y para ello requiere el uso combinado de HTML y Javascript.
+\section{Modelo Entidad-Relación}
 
-Las aplicaciones web modernas suelen estar compuestas por una interfaz de usuario (frontend) desarrollada con tecnologías como HTML, CSS y JavaScript \cite{wiki:javascript}. En concreto se suelen usar frameworks como React \cite{react}, Vue \cite{Vue} o Svelte \cite{Svelte} entre otros, siendo React el más popular de todos ellos.
+El modelo Entidad-Relación es un modelo conceptual utilizado para representar la información de un dominio antes de llevarla a una base de datos concreta. Fue propuesto por Chen como una forma de describir la información mediante entidades y relaciones, separando el diseño conceptual de los detalles propios de la implementación final \cite{chen1976}.
 
-\subsection{Single Page Application (SPA)}
-Una Single Page Application (SPA) \cite{mdn-docs:spa} es un tipo de aplicación web que interactúa con el usuario dinámicamente y se carga en una sola página HTML. En lugar de cargar páginas enteras nuevas desde el servidor, una SPA carga inicialmente la estructura básica de la aplicación y luego actualiza dinámicamente el contenido de la página modificando el DOM o lo que es lo mismo la estructura del documento HTML.
+Esta separación resulta útil porque permite razonar primero sobre el problema que se quiere representar, sin empezar directamente por tablas, columnas o sentencias SQL. De esta forma, el diseño puede centrarse en identificar qué elementos intervienen, qué información se almacena sobre ellos y cómo se relacionan entre sí.
 
-\section{Desarrollo web moderno}
-El desarrollo web moderno abarca la creación y mantenimiento de sitios y aplicaciones web. No se trata simplemente de elementos estáticos como HTML y CSS, sino que involucra el uso de JavaScript para agregar interactividad y dinamismo a las aplicaciones. JavaScript es el eje de todo y su mayor complicación es lo mucho que puede variar según el entorno de ejecución \cite{mdn-docs:frameworks-tooling}.
+En el contexto de este trabajo, el modelo Entidad-Relación sirve como base teórica para el editor desarrollado. La aplicación permite representar visualmente diagramas E/R y, a partir de esa representación, aplicar validaciones y transformaciones posteriores hacia el modelo relacional. Por ello, los elementos gráficos del editor no deben entenderse solo como dibujos, sino como partes de un modelo con significado propio.
 
-Para gestionar estas diferencias y facilitar el desarrollo, se utilizan herramientas que realizan la transpilación y el empaquetado del código.
+\section{Elementos principales del modelo}
 
-\subsection{Empaquetador}
-Un empaquetador \cite{bundler} es una herramienta que procesa y agrupa múltiples archivos de código fuente (JavaScript, CSS, imágenes, etc.) en un solo archivo o en unos pocos archivos optimizados para su posterior ejecución en el navegador.
+Un diagrama Entidad-Relación se construye a partir de varios elementos que permiten describir la información de un dominio de forma visual. Aunque existen distintas notaciones y variantes, en este trabajo se consideran especialmente los conceptos que son necesarios para entender el funcionamiento del editor y las transformaciones que se realizan posteriormente.
 
-\subsection{Transpilador}
-Un transpilador \cite{transpiler} convierte código escrito en un lenguaje de programación a otro. En el contexto del desarrollo web, un transpilador permite a los desarrolladores escribir código JavaScript con las características más recientes del lenguaje y transformarlo a una versión compatible con la mayoría de los navegadores web actuales. 
-La transpilación puede incluir la conversión de sintaxis moderna de JavaScript (ES6+), JSX (utilizado en React), y otras extensiones a JavaScript estándar que todos los navegadores pueden entender.
+Los elementos básicos del modelo son los siguientes:
 
-\subsection{Frameworks Frontend}
-Los frameworks de frontend, como React \cite{react}, Vue  \cite{Vue} y Svelte \cite{Svelte}, son esenciales en el desarrollo web moderno. Estos frameworks proporcionan estructuras y componentes reutilizables que facilitan la creación de interfaces de usuario dinámicas y complejas. Ayudan a gestionar el estado de la aplicación y la manipulación del DOM \cite{mdn-docs:dom}. Se basan en un lenguaje cuya base es Javascript pero que puede tener al mismo tiempo secciones con código Javascript, HTML y CSS.
+\begin{itemize}
+    \item \textbf{Entidades}: representan objetos o conceptos del dominio sobre los que se quiere almacenar información. Por ejemplo, en un sistema académico podrían existir entidades como alumno, asignatura o profesor.
 
-\section{UI y UX}
-UI (User Interface) y UX (User Experience) son dos conceptos clave \cite{ui-ux} en el desarrollo de aplicaciones web.
+    \item \textbf{Atributos}: describen propiedades de una entidad o de una interrelación. Algunos atributos pueden actuar como identificadores, mientras que otros simplemente aportan información adicional sobre el elemento al que pertenecen.
 
-\subsection{UI (User Interface)}
-La interfaz de usuario comprende tanto el diseño gráfico como los elementos interactivos que se utilizan para interactuar con una aplicación. Una buena UI debe ser intuitiva, atractiva y eficiente.
+    \item \textbf{Interrelaciones}: representan asociaciones entre entidades. Estas interrelaciones permiten expresar cómo participan unas entidades con otras dentro del dominio que se está modelando.
 
-\subsection{UX (User Experience)}
-La experiencia del usuario abarca todos los aspectos de la interacción del usuario con la aplicación. Un buen diseño de experiencia de usuario se enfoca en mejorar la eficiencia y la satisfacción del usuario al interactuar con la aplicación.
+    \item \textbf{Cardinalidades}: indican la forma en la que las entidades participan en una interrelación. Son importantes porque condicionan la interpretación del diagrama y también su transformación posterior al modelo relacional.
+\end{itemize}
 
+Además de estos elementos básicos, el modelo Entidad-Relación puede incluir otros conceptos más específicos, como entidades débiles, atributos compuestos, atributos multivaluados o interrelaciones de mayor grado. Estos casos permiten representar situaciones más complejas, aunque también hacen necesario mantener una mayor coherencia entre el diagrama, las reglas de validación y la transformación final.
 
-\section{Linter}
-Un linter \cite{linter} es una herramienta que analiza el código fuente para detectar errores de programación, fallos de estilo, y problemas potenciales. Utilizar un linter ayuda a mantener un código limpio, coherente y a revelar potenciales problemas que no se detectan como simples errores sintácticos. Por su naturaleza de extender al compilador tienen cierto componente de opinión y por tanto son configurables en su estilo.
+\section{Transformación al modelo relacional}
 
-\section{Integración continua}
-La integración continua (CI) \cite{continuous-integration} es una práctica en desarrollo de software que consiste en realizar integraciones automáticas con una gran frecuencia para así poder detectar fallos. Este concepto de integración comprende la compilación (en este caso despliegue) y ejecución de las diferentes pruebas. Herramientas como GitHub Actions facilitan la implementación de CI al automatizar estas tareas.
+El modelo Entidad-Relación permite describir un dominio desde un punto de vista conceptual, pero para poder implementarlo en una base de datos relacional es necesario transformarlo a una estructura formada por tablas, columnas y relaciones entre ellas. Esta transformación sirve como paso intermedio entre el diseño conceptual y la generación final de sentencias SQL.
 
-\section{Despliegue continuo}
-El despliegue continuo (CD) \cite{continuous-deployment} extiende la integración continua al proceso de despliegue, automatizando la entrega de cambios en el código a entornos de producción. Esto asegura que el software esté siempre en un estado desplegable y que las nuevas versiones se puedan lanzar rápidamente, mejorando la eficiencia y reduciendo el tiempo y esfuerzo de entrega.
+De forma general, las entidades del diagrama suelen convertirse en tablas, sus atributos pasan a ser columnas y los atributos identificadores se utilizan para definir claves primarias. Las interrelaciones entre entidades condicionan la forma en la que se crean claves foráneas o tablas intermedias, dependiendo de la cardinalidad y de la participación de cada entidad en la relación.
 
+Esta fase es importante en el contexto del proyecto porque el editor no se limita a permitir que el usuario dibuje un diagrama. El modelo construido debe poder interpretarse después para obtener una representación relacional coherente. Por ello, la aplicación necesita mantener suficiente información interna sobre entidades, atributos, claves e interrelaciones para poder realizar esta transformación de forma razonable.
 
-\section{Validación y pruebas}
-El proceso de validación y pruebas es fundamental en el desarrollo de software y garantiza que el producto funcione como se espera. Existen varios tipos de pruebas:
+\section{Generación de SQL}
 
-\subsection{Pruebas unitarias}
-Las pruebas unitarias \cite{unit-test} verifican el funcionamiento de componentes individuales del código, de manera aislada e individual.
+SQL es el lenguaje utilizado habitualmente para definir y manipular bases de datos relacionales. Dentro del contexto de este trabajo, interesa especialmente la parte relacionada con la definición de estructuras, como la creación de tablas, claves primarias y claves foráneas.
 
-\subsection{Pruebas end-to-end}
-Las pruebas end-to-end (E2E) \cite{e2e-test} simulan el comportamiento del usuario final y prueban la aplicación en su totalidad, desde el punto de vista del usuario final. Estas pruebas aseguran que todos los componentes del sistema funcionen juntos como se espera.
+Una vez que un diagrama Entidad-Relación se ha transformado en un modelo relacional, es posible generar sentencias SQL que representen esa estructura. En este proceso, las tablas resultantes se convierten en sentencias \texttt{CREATE TABLE}, los atributos se traducen a columnas y las relaciones entre tablas se expresan mediante claves foráneas.
+
+En el editor desarrollado, la generación de SQL se entiende como una fase posterior al diseño y a la validación del diagrama. Por tanto, el resultado generado depende de que el modelo interno conserve correctamente la información necesaria sobre entidades, atributos, claves e interrelaciones. De esta forma, el SQL no se genera únicamente a partir de la parte visual del diagrama, sino a partir de la interpretación interna que la aplicación mantiene de él.

@@ -117,6 +117,20 @@ const VALIDATION_MESSAGE_DEFINITIONS = [
         message: "Hay relaciones que apuntan a entidades inexistentes.",
     },
     {
+        key: "noTernaryRelationsWithAmbiguousRepeatedParticipants",
+        message:
+            "Hay relaciones ternarias con entidades participantes repetidas sin roles distintos.",
+    },
+    {
+        key: "noIdentifyingTernaryRelations",
+        message:
+            "Las relaciones ternarias no pueden ser relaciones de dependencia por identificación.",
+    },
+    {
+        key: "noTernaryRelationsWithMandatoryCardinalities",
+        message: "Hay relaciones ternarias con cardinalidades obligatorias.",
+    },
+    {
         key: "noNotValidCardinalities",
         message: "Hay cardinalidades no válidas en las relaciones.",
     },

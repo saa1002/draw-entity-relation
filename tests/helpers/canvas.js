@@ -191,6 +191,15 @@ export async function selectRelationSide(page, dialog, sideId, entityName) {
     await page.getByRole('option', { name: entityName, exact: true }).click();
 }
 
+export async function fillRelationSideRole(dialog, sideId, role) {
+    await dialog.locator(`#${sideId}-role`).fill(role);
+}
+
+export async function selectRelationArity(page, dialog, arityName) {
+    await dialog.locator('#relation-arity').click();
+    await page.getByRole('option', { name: arityName, exact: true }).click();
+}
+
 export async function configureRelationSides(
     page,
     relationName,
@@ -201,6 +210,40 @@ export async function configureRelationSides(
 
     await selectRelationSide(page, dialog, 'side1', side1Name);
     await selectRelationSide(page, dialog, 'side2', side2Name);
+
+    const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
+    await expect(acceptBtn).toBeEnabled();
+
+    await acceptBtn.click();
+    await expect(dialog).toBeHidden();
+}
+
+export async function configureTernaryRelationSides(
+    page,
+    relationName,
+    side1Name,
+    side2Name,
+    side3Name,
+    { side1Role = '', side2Role = '', side3Role = '' } = {},
+) {
+    const dialog = await openRelationConfigDialog(page, relationName);
+
+    await selectRelationArity(page, dialog, 'Ternaria');
+    await selectRelationSide(page, dialog, 'side1', side1Name);
+    await selectRelationSide(page, dialog, 'side2', side2Name);
+    await selectRelationSide(page, dialog, 'side3', side3Name);
+
+    if (side1Role) {
+        await fillRelationSideRole(dialog, 'side1', side1Role);
+    }
+
+    if (side2Role) {
+        await fillRelationSideRole(dialog, 'side2', side2Role);
+    }
+
+    if (side3Role) {
+        await fillRelationSideRole(dialog, 'side3', side3Role);
+    }
 
     const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
     await expect(acceptBtn).toBeEnabled();
@@ -235,6 +278,13 @@ export async function selectRelationCardinality(
     await page.getByRole('option', { name: cardinality, exact: true }).click();
 }
 
+function getTernaryCardinalityOptionLabel(cardinality) {
+    if (cardinality === '0:1') return '1';
+    if (cardinality === '0:N') return 'N';
+
+    return cardinality;
+}
+
 export async function configureRelationCardinalities(
     page,
     relationName,
@@ -254,6 +304,41 @@ export async function configureRelationCardinalities(
         dialog,
         'side2-to-side1',
         side2Cardinality,
+    );
+
+    const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
+    await expect(acceptBtn).toBeEnabled();
+
+    await acceptBtn.click();
+    await expect(dialog).toBeHidden();
+}
+
+export async function configureTernaryRelationCardinalities(
+    page,
+    relationName,
+    side1Cardinality,
+    side2Cardinality,
+    side3Cardinality,
+) {
+    const dialog = await openRelationCardinalitiesDialog(page, relationName);
+
+    await selectRelationCardinality(
+        page,
+        dialog,
+        'side1-to-side2',
+        getTernaryCardinalityOptionLabel(side1Cardinality),
+    );
+    await selectRelationCardinality(
+        page,
+        dialog,
+        'side2-to-side1',
+        getTernaryCardinalityOptionLabel(side2Cardinality),
+    );
+    await selectRelationCardinality(
+        page,
+        dialog,
+        'side3-cardinality',
+        getTernaryCardinalityOptionLabel(side3Cardinality),
     );
 
     const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });

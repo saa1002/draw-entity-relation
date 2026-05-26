@@ -1,3 +1,4 @@
+import { getRelationSideKeys } from "../../../../domain/er/relations";
 import { ER_STROKE, getRelationDimensions } from "../mxStyles/diagramStyles";
 import {
     buildDecoratorCellId,
@@ -13,6 +14,8 @@ export const IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX =
 
 const IDENTIFYING_RELATION_DECORATOR_OFFSET = 4;
 const IDENTIFYING_RELATION_EDGE_PARALLEL_GAP = 5;
+
+const REPEATED_PARTICIPANT_EDGE_GAP = 55;
 
 export const getIdentifyingRelationDecoratorId = (relationId) =>
     buildDecoratorCellId(relationId, IDENTIFYING_RELATION_DECORATOR_SUFFIX);
@@ -265,33 +268,134 @@ export const createRelationRenderingHelpers = ({
         }
     };
 
-    const syncSelfRelationEdges = (relationCell, relationData) => {
+    const getCellCenter = (cell) => {
+        if (!cell?.geometry) return null;
+
+        return {
+            x: cell.geometry.x + cell.geometry.width / 2,
+            y: cell.geometry.y + cell.geometry.height / 2,
+        };
+    };
+
+    const getRepeatedParticipantSideGroups = (relationData) => {
+        const sideKeys = getRelationSideKeys(relationData);
+
+        const sideGroupsByEntityId = sideKeys.reduce((result, sideKey) => {
+            const entityId = relationData?.[sideKey]?.entity?.idMx ?? "";
+
+            if (!entityId) {
+                return result;
+            }
+
+            result[entityId] = [...(result[entityId] ?? []), sideKey];
+
+            return result;
+        }, {});
+
+        return Object.values(sideGroupsByEntityId).filter(
+            (sideGroup) => sideGroup.length > 1,
+        );
+    };
+
+    const getRepeatedParticipantRoutePoints = ({
+        relationCell,
+        entityCell,
+        index,
+        sideGroupLength,
+    }) => {
+        const relationCenter = getCellCenter(relationCell);
+        const entityCenter = getCellCenter(entityCell);
+
+        if (!relationCenter || !entityCenter) return [];
+
+        if (index === 0) {
+            return [];
+        }
+
+        const relationTop = relationCell.geometry.y;
+        const entityTop = entityCell.geometry.y;
+        const relationBottom =
+            relationCell.geometry.y + relationCell.geometry.height;
+        const entityBottom = entityCell.geometry.y + entityCell.geometry.height;
+
+        if (sideGroupLength === 2 || index === 1) {
+            const routeY =
+                Math.min(relationTop, entityTop) -
+                REPEATED_PARTICIPANT_EDGE_GAP;
+
+            return [
+                new mxPoint(relationCenter.x, routeY),
+                new mxPoint(entityCenter.x, routeY),
+            ];
+        }
+
+        const routeY =
+            Math.max(relationBottom, entityBottom) +
+            REPEATED_PARTICIPANT_EDGE_GAP;
+
+        return [
+            new mxPoint(relationCenter.x, routeY),
+            new mxPoint(entityCenter.x, routeY),
+        ];
+    };
+
+    const syncRepeatedParticipantRelationEdges = (
+        relationCell,
+        relationData,
+    ) => {
         if (!relationCell || !relationData) return;
 
-        const target = accessCell(relationData.side1?.entity?.idMx);
-        const edge1 = accessCell(relationData.side1?.edgeId);
-        const edge2 = accessCell(relationData.side2?.edgeId);
+        const repeatedSideGroups =
+            getRepeatedParticipantSideGroups(relationData);
 
-        if (
-            !target?.geometry ||
-            !relationCell?.geometry ||
-            !edge1?.geometry ||
-            !edge2?.geometry
-        ) {
+        if (repeatedSideGroups.length === 0) {
             return;
         }
 
-        const x1 = target.geometry.x + target.geometry.width / 2;
-        const x2 = relationCell.geometry.x + relationCell.geometry.width / 2;
-        const y1 = target.geometry.y + target.geometry.height / 2;
-        const y2 = relationCell.geometry.y + relationCell.geometry.height / 2;
+        const updatedEdges = [];
 
-        edge1.geometry.points = [new mxPoint(x2, y1)];
-        edge2.geometry.points = [new mxPoint(x1, y2)];
+        graph.getModel().beginUpdate();
+
+        try {
+            repeatedSideGroups.forEach((sideGroup) => {
+                sideGroup.forEach((sideKey, index) => {
+                    const side = relationData[sideKey];
+                    const edge = accessCell(side?.edgeId);
+                    const entityCell = accessCell(side?.entity?.idMx);
+
+                    if (!edge || !entityCell) {
+                        return;
+                    }
+
+                    const routePoints = getRepeatedParticipantRoutePoints({
+                        relationCell,
+                        entityCell,
+                        index,
+                        sideGroupLength: sideGroup.length,
+                    });
+
+                    const geometry = edge.geometry
+                        ? edge.geometry.clone()
+                        : new mxGeometry();
+
+                    geometry.points = routePoints;
+
+                    graph.getModel().setGeometry(edge, geometry);
+                    updatedEdges.push(edge);
+                });
+            });
+        } finally {
+            graph.getModel().endUpdate();
+        }
+
+        updatedEdges.forEach((edge) => graph.refresh(edge));
     };
+
+    const syncSelfRelationEdges = syncRepeatedParticipantRelationEdges;
 
     return {
         syncSelfRelationEdges,
+        syncRepeatedParticipantRelationEdges,
         syncIdentifyingRelationDecorator,
         ensureIdentifyingRelationDecorator,
         removeIdentifyingRelationDecorator,
