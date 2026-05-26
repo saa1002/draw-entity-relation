@@ -2,169 +2,55 @@
 
 \section{Introducción}
 
-En este apéndice se detallan las decisiones de diseño tomadas durante el desarrollo. Se cubren los aspectos relacionados con el diseño de datos, el diseño procedimental y el diseño arquitectónico.
+En este anexo se describe el diseño general de la aplicación desarrollada durante el proyecto. El objetivo no es recoger todos los detalles internos del código, sino explicar las decisiones principales que permiten entender cómo se organiza el editor y cómo se relacionan sus partes más importantes.
+
+El diseño de la aplicación está condicionado por el hecho de partir de un proyecto heredado. Por tanto, una parte del trabajo consistió en comprender la estructura existente y adaptarla progresivamente para poder incorporar nuevos elementos del modelo Entidad-Relación sin romper el funcionamiento previo.
+
+En términos generales, el editor se apoya en tres ideas principales: una interfaz visual basada en el lienzo de edición, un modelo interno que representa el diagrama diseñado por el usuario y un conjunto de procesos que permiten validar ese modelo, transformarlo al modelo relacional y generar SQL a partir de él.
 
 \section{Diseño de datos}
-Esta aplicación no tiene como tal una estructura de datos definida puesto que no cuenta con un backend ni base de datos. Sin embargo sí que tiene la estructura JSON interna que contiene nuestro diagrama.
 
-\begin{figure}
-\lstset{breaklines=true, basicstyle=\footnotesize}
-\begin{lstlisting}[frame=single]
-{
-    "entities": [
-        {
-            "idMx": "2",
-            "name": "Entidad",
-            "position": {
-                "x": 254,
-                "y": 130
-            },
-            "attributes": [
-                {
-                    "idMx": "3",
-                    "key": false,
-                    "name": "Atributo",
-                    "position": {
-                        "x": 374,
-                        "y": 130
-                    }
-                },
+El diseño de datos se centra en la estructura interna utilizada por la aplicación para representar los diagramas Entidad-Relación. Aunque el usuario trabaja visualmente sobre un lienzo, la aplicación necesita mantener una representación propia del diagrama para poder guardar, validar y transformar la información introducida.
 
-            ]
-        }
-    ],
-    "relations": [
-    {
-      "idMx": "8",
-      "name": "Relacion",
-      "position": {
-        "x": 215,
-        "y": 110
-      },
-      "side1": {
-        "idMx": "11",
-        "cardinality": "0:1",
-        "cell": "11",
-        "entity": {
-          "idMx": "2"
-        }
-      },
-      "side2": {
-        "idMx": "12",
-        "cardinality": "1:N",
-        "cell": "12",
-        "entity": {
-          "idMx": "2"
-        }
-      },
-      "canHoldAttributes": false,
-      "attributes": []
-    }
-  ]
-}
-\end{lstlisting}
-\caption{Representación interna de un ejemplo de diagrama E-R.}
-\label{fig:e-r-structure}
-\end{figure}
+Esta representación interna incluye los elementos principales del modelo: entidades, atributos y relaciones. Cada uno de estos elementos almacena la información necesaria para identificarlo, mostrarlo en el editor y utilizarlo posteriormente en las operaciones de validación y transformación.
 
-En esta estructura tenemos 3 entidades definidas que son: Entidades, Relaciones y Atributos.
+En el caso de las entidades, el modelo debe conservar información como su nombre, su identificador interno y las propiedades necesarias para distinguir comportamientos especiales, como ocurre con las entidades débiles. Los atributos, por su parte, deben almacenar datos sobre su nombre, su pertenencia a una entidad o relación y sus características, como si forman parte de una clave, si son compuestos, multivaluados o discriminantes.
 
-En la figura \ref{fig:e-r-structure} podemos ver un ejemplo de un diagrama que constaría de una entidad llamada \texttt{Entidad} cuyos campos son:
-\begin{itemize}
-    \item idMx: Vinculación de id con la librería de renderización mxGraph.
-    \item position: Coordenadas de esta entidad en el canvas.
-    \item attributes: Colección de atributos que pertenecen a esta entidad de los cuáles se guardan a su vez:
-    \begin{itemize}
-        \item idMx.
-        \item key: Si son clave o no.
-        \item position.
-    \end{itemize}
-\end{itemize}
-También tenemos una relación llamada \texttt{Relación} cuyos campos son:
-\begin{itemize}
-    \item idMx: Vinculación de id con la librería de renderización mxGraph.
-    \item position: Coordenadas de esta entidad en el canvas.
-    \item canHoldAttributes: Booleano que determina si esta relación puede guardar atributos, es decir si es N:M.
-    \item attributes: Colección de atributos que pertenecen a esta relación (solo en caso de ser N:M) de los cuáles se guardan a su vez:
-    \begin{itemize}
-        \item idMx.
-        \item key: Si son clave o no.
-        \item position.
-    \end{itemize}
-    \item side1:
-    \begin{itemize}
-        \item idMx: id de la librería mxGraph que corresponde a la celda donde se guarda el label de la cardinalidad.
-        \item cardinality: Cardinalidad de este lado de la relación.
-        \item cell: Este campo es equivalente a idMx pero se conserva por compatibilidad.
-        \item entity.idMx: id de la librería mxGraph que corresponde a la celda que contiene la entidad de esta lado de la relación.
-    \end{itemize}
-    \item side2: Con campos idénticos, corresponde al otro lado de la relación.
-\end{itemize}
+Las relaciones tienen un papel especialmente importante dentro del modelo interno, ya que conectan distintos elementos y pueden contener información adicional. Además del nombre de la relación, se deben conservar sus participantes, las cardinalidades asociadas y, en los casos en los que sea necesario, los roles de participación. Esta información permite que el diagrama no dependa únicamente de la representación gráfica, sino de una estructura de datos que puede procesarse de forma más controlada.
 
-Su diagrama E-R es el siguiente: \ref{fig:structure-er}
-\imagen{structure-er}{Diagrama E-R que representa la estructura interna sobra la que funciona la aplicación.}
+Otro aspecto relevante del diseño de datos es la normalización del diagrama. Al partir de una aplicación existente y haber ido ampliando el modelo interno, algunos diagramas guardados pueden no contener todos los campos incorporados posteriormente. Por ello, la aplicación necesita adaptar los datos cargados al formato esperado, completando valores por defecto cuando sea necesario.
 
-Tanto Entidades como Relaciones pueden tener atributos asociados. En el caso de las entidades han de tener sí o sí un atributo, mientras que las relaciones pueden no tenerlo.
-Las Relaciones pueden tener 1 o más lados, estando cada uno de estos lados relacionados con 1 Entidad. Una Entidad puede aparecer suelta en un diagrama E-R asi que no tiene porqué estar asociada a un Lado.
-
-\section{Diseño procedimental}
-En esta sección se describen los procesos más complejos de la aplicación utilizando diagramas de flujo para entenderlos más fácilmente.
-
-En general ninguno de los procesos de la aplicación requiere grandes diagramas de flujo para comprenderlos. Sin embargo, sí que hay dos funcionalidades que ameritan el tener sus propios diagramas de flujo.
-
-\subsection{Mover objetos}
-Es una de las partes más complejas puesto que mover objetos ha de activar diversas tareas según el tipo de objeto que se esté moviendo.
-Los objetos pueden ser:
-\begin{itemize}
-    \item Entidades.
-    \item Relaciones.
-    \begin{itemize}
-        \item Reflexivas.
-        \item No reflexivas.
-    \end{itemize}
-    \item Atributos.
-\end{itemize}
-
-\imagen{flow-move-object}{Diagrama de flujo que representa la funcionalidad de mover objetos en el canvas de la aplicación.}
-
-\subsection{Generar el script SQL}
-El script SQL es una de las funcionalidades más complejas de la aplicación. Requiere, aparte de la validación, un gran número de pasos y tablas intermedias donde se procesan los diferentes tipos de relaciones.
-\imagencontamano{flow-generate-sql}{Diagrama de flujo que representa la funcionalidad de generar el script SQL en la aplicación.}{0.6}
-
+% TODO: revisar esta sección cuando se cierre el soporte final de ISA y agregaciones,
+% por si introducen nuevos campos en el modelo interno.
 
 \section{Diseño arquitectónico}
-El diseño arquitectónico de la aplicación es bastante simple, puesto que se basa en una arquitectura frontend utilizando React y la librería mxGraph para el modelado de los diagramas E-R.
 
-\subsection{Estructura de paquetes}
-La estructura de paquetes de la aplicación se organiza de la siguiente manera:
+La aplicación se organiza como una herramienta web desarrollada con React, en la que la interfaz de usuario y la lógica principal se ejecutan en el cliente. El editor visual se apoya en mxGraph para representar y manipular los elementos del diagrama dentro del lienzo.
 
-\imagen{package-diagram}{Estructura de paquetes de la aplicación.}
-\begin{itemize}
-    \item \textbf{src}: Contiene todo el código fuente de la aplicación.
-    \begin{itemize}
-        \item \textbf{DiagramEditor}
-        \begin{itemize}
-            \item \textbf{DiagramEditor}: Componente principal de la aplicación.
-            \item \textbf{initMxGraph}: Inicialización de la librería mxGraph.
-            \item \textbf{toolbar}: Inicialización de la barra de herramientas.
-            \end{itemize}
-        \item \textbf{utils}:
-        \begin{itemize}
-            \item \textbf{validation}: Módulo que valida la estructura interna E-R.
-            \item \textbf{sql}: Módulo que procesa y convierte la estructura interna E-R en un script SQL.
-        \end{itemize}
-    \end{itemize}
-    \item App.js: Punto de entrada de la aplicación React.
-\end{itemize}
+A nivel de diseño, puede distinguirse entre la parte visual del editor y la parte lógica de la aplicación. La parte visual se encarga de mostrar los elementos, permitir su edición y recoger las acciones del usuario. La parte lógica trabaja con el modelo interno del diagrama, que es el que se utiliza para validar, persistir y transformar la información.
 
-\subsection{Componentes de la arquitectura}
-Aunque la aplicación es puramente frontend, sí se pueden apreciar ciertos componentes externos a la aplicación:
-\begin{itemize}
-    \item \textbf{Archivos JSON}: Utilizados para la persistencia de los diagramas. Pueden ser importados.
-    \item \textbf{LocalStorage}: Almacenamiento local del navegador donde se guarda el estado del diagrama que cuyo modelado esté en curso.
-    \item \textbf{Navegador}: Medio a través del cual el usuario interactúa con la aplicación.
-\end{itemize}
+Esta separación es importante porque evita que toda la lógica dependa directamente de la posición o apariencia de los elementos en pantalla. Aunque la representación gráfica es necesaria para que el usuario pueda trabajar con el diagrama, las operaciones principales de la aplicación deben apoyarse en una estructura de datos más estable.
 
-El siguiente diagrama ilustra estos componentes y su interacción con la aplicación:
+Dentro de esta organización, pueden identificarse varios bloques funcionales. El editor de diagramas se encarga de la interacción principal con el usuario. Los módulos de dominio gestionan la representación interna del modelo Entidad-Relación y sus reglas de validación. A partir de ese modelo, otros módulos realizan la transformación al modelo relacional y la generación del script SQL final.
 
-\imagen{architecture}{Diagrama con las partes de la aplicación en su ejecución en el navegador.}
+También existe una parte relacionada con la persistencia del diagrama, que permite conservar la información creada por el usuario y recuperarla posteriormente. Esta persistencia está relacionada tanto con el almacenamiento local como con las operaciones de importación y exportación en formato JSON.
+
+% Posible figura: esquema general de arquitectura con interfaz, modelo interno,
+% validación, transformación relacional, generación SQL y persistencia.
+
+\section{Diseño procedimental}
+
+El funcionamiento principal de la aplicación puede entenderse como un flujo que comienza con la edición visual del diagrama y termina, cuando el modelo es válido, con la generación de una salida relacional o SQL.
+
+En primer lugar, el usuario interactúa con el lienzo del editor para crear o modificar entidades, atributos y relaciones. Cada una de estas acciones debe reflejarse en el modelo interno de la aplicación, de forma que el estado visual y la estructura de datos se mantengan sincronizados.
+
+Cuando el usuario solicita una operación como la generación de SQL, la aplicación no trabaja directamente sobre los elementos gráficos, sino sobre el modelo interno del diagrama. Antes de generar la salida, se ejecuta una fase de validación para comprobar que el diagrama contiene la información necesaria y que no presenta configuraciones incompletas o ambiguas.
+
+Si el modelo supera la validación, se realiza la transformación al modelo relacional. En esta fase, las entidades, atributos y relaciones se convierten en una representación basada en tablas, columnas, claves primarias y claves foráneas. Esta representación intermedia permite separar la conversión del modelo Entidad-Relación de la escritura concreta del script SQL.
+
+Finalmente, a partir del modelo relacional generado, la aplicación construye el texto SQL correspondiente. Esta última fase se encarga de producir las sentencias necesarias para crear las tablas y definir las restricciones principales derivadas del diagrama.
+
+Este diseño por fases facilita la comprensión del funcionamiento de la aplicación. Además, permite revisar cada parte del proceso de forma separada: primero la edición y sincronización del modelo, después la validación, más tarde la transformación relacional y finalmente la generación de SQL.
+
+% TODO: revisar esta sección al finalizar ISA y agregaciones, por si modifican el flujo
+% de validación, transformación o generación.
