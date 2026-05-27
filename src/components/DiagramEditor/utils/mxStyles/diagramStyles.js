@@ -133,6 +133,7 @@ export const getIsaStyleString = () =>
         `fontFamily=${ER_FONT_FAMILY}`,
         `fontSize=${ER_FONT_SIZE}`,
         "spacing=0",
+        "spacingTop=-14",
         "whiteSpace=wrap",
         "overflow=hidden",
         "editable=0",
