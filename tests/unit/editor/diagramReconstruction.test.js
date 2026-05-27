@@ -145,4 +145,98 @@ describe('diagram reconstruction', () => {
         expect(cells['isa-1'].style).toContain('shape=triangle')
         expect(cells['isa-1'].style).toContain('direction=south')
     })
+
+    test("reconstructs configured ISA hierarchy links", () => {
+        const cells = {};
+        const insertedEdges = [];
+
+        const graph = {
+            insertVertex: (_, id, value, x, y, width, height, style) => {
+                const cell = {
+                    id,
+                    value,
+                    geometry: { x, y, width, height },
+                    style,
+                };
+
+                cells[id] = cell;
+                return cell;
+            },
+            insertEdge: (_, id, __, source, target, style) => {
+                const edge = {
+                    id,
+                    source,
+                    target,
+                    style,
+                };
+
+                cells[id] = edge;
+                insertedEdges.push(edge);
+                return edge;
+            },
+            orderCells: () => {},
+        };
+
+        const diagram = {
+            entities: [
+                {
+                    idMx: "entity-parent",
+                    name: "Persona",
+                    position: { x: 100, y: 80 },
+                    attributes: [],
+                },
+                {
+                    idMx: "entity-child",
+                    name: "Alumno",
+                    position: { x: 100, y: 220 },
+                    attributes: [],
+                },
+            ],
+            relations: [],
+            isas: [
+                {
+                    idMx: "isa-1",
+                    position: { x: 110, y: 150 },
+                    generalization: {
+                        edgeId: "edge-parent",
+                        entity: { idMx: "entity-parent" },
+                    },
+                    specializations: [
+                        {
+                            edgeId: "edge-child",
+                            entity: { idMx: "entity-child" },
+                        },
+                    ],
+                },
+            ],
+        };
+
+        reconstructDiagramGraph({
+            graph,
+            diagram,
+            accessCell: (id) => cells[id],
+            mxPoint: (x, y) => ({ x, y }),
+            createWeakEntityDecorator: () => {},
+            ensureDiscriminantUnderline: () => {},
+            ensureMultivaluedAttributeDecorator: () => {},
+            ensureIdentifyingRelationDecorator: () => {},
+            ensureIdentifyingRelationEdgeDecorator: () => {},
+        });
+
+        expect(insertedEdges).toHaveLength(2);
+
+        expect(cells["edge-parent"]).toMatchObject({
+            id: "edge-parent",
+            source: cells["isa-1"],
+            target: cells["entity-parent"],
+        });
+
+        expect(cells["edge-child"]).toMatchObject({
+            id: "edge-child",
+            source: cells["isa-1"],
+            target: cells["entity-child"],
+        });
+
+        expect(cells["edge-parent"].style).toContain("endArrow=none");
+    });
 })

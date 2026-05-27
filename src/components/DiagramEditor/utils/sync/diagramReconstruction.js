@@ -3,6 +3,7 @@ import {
     getRelationCardinalityDisplayValue,
     getRelationSideKeys,
     isIdentifyingRelation,
+    isIsaConfigured,
     isRelationConfigured,
     isWeakEntity,
 } from "../../../../domain/er";
@@ -12,6 +13,7 @@ import {
     getEntityDimensions,
     getEntityStyleString,
     getIsaDimensions,
+    getIsaEdgeStyleString,
     getIsaStyleString,
     getRelationDimensions,
     getRelationStyleString,
@@ -226,6 +228,35 @@ export const reconstructDiagramGraph = ({
         );
     };
 
+    const recreateIsaLinks = (isa) => {
+        if (!isIsaConfigured(isa)) return;
+
+        const isaCell = accessCell(isa.idMx);
+
+        if (!isaCell) return;
+
+        const links = [isa.generalization, ...(isa.specializations ?? [])];
+
+        const edges = links
+            .map((link) => {
+                const target = accessCell(link?.entity?.idMx);
+
+                if (!target) return null;
+
+                return graph.insertEdge(
+                    isaCell,
+                    link.edgeId,
+                    null,
+                    isaCell,
+                    target,
+                    getIsaEdgeStyleString(),
+                );
+            })
+            .filter(Boolean);
+
+        graph.orderCells(true, edges);
+    };
+
     for (const entity of diagram.entities) {
         recreateEntity(entity);
     }
@@ -236,5 +267,9 @@ export const reconstructDiagramGraph = ({
 
     for (const isa of diagram.isas ?? []) {
         recreateIsa(isa);
+    }
+
+    for (const isa of diagram.isas ?? []) {
+        recreateIsaLinks(isa);
     }
 };

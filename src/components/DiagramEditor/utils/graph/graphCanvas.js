@@ -2,6 +2,7 @@ import {
     getRelationCardinalityDisplayValue,
     getRelationSideKeys,
 } from "../../../../domain/er/relations";
+import { getIsaEdgeStyleString } from "../mxStyles/diagramStyles";
 
 export const removeExistingGraphCells = (graph, cells) => {
     if (!graph?.removeCells) return;
@@ -51,6 +52,61 @@ export const getConfiguredIsaGraphCells = ({ isa, accessCell }) => {
     ];
 
     return edgeIds.map((cellId) => accessCell(cellId)).filter(Boolean);
+};
+
+const connectIsaLinkGraphCell = ({ graph, isaCell, link, entityCell }) => {
+    const edge = graph.insertEdge(
+        isaCell,
+        null,
+        null,
+        isaCell,
+        entityCell,
+        getIsaEdgeStyleString(),
+    );
+
+    link.edgeId = edge.id;
+    link.entity.idMx = entityCell.id;
+
+    return edge;
+};
+
+export const connectIsaGraphLinks = ({
+    graph,
+    isaCell,
+    isa,
+    generalizationEntityCell,
+    specializationEntityCells = [],
+}) => {
+    if (
+        !graph ||
+        !isaCell ||
+        !isa ||
+        !generalizationEntityCell ||
+        specializationEntityCells.length === 0
+    ) {
+        return null;
+    }
+
+    const edges = [
+        connectIsaLinkGraphCell({
+            graph,
+            isaCell,
+            link: isa.generalization,
+            entityCell: generalizationEntityCell,
+        }),
+        ...specializationEntityCells.map((entityCell, index) =>
+            connectIsaLinkGraphCell({
+                graph,
+                isaCell,
+                link: isa.specializations[index],
+                entityCell,
+            }),
+        ),
+    ];
+
+    graph.orderCells(true, edges);
+
+    return edges;
 };
 
 const DEFAULT_RELATION_CARDINALITY = "X:X";

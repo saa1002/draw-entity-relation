@@ -35,10 +35,12 @@ import {
     convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
     createAttribute,
+    createEmptyIsaLink,
     createEmptyRelationSide,
     findAttributeTreeOwnerById,
     findEntityById,
     findEntityIndexById,
+    findIsaById,
     findIsaIndexById,
     findRelationById,
     findRelationIndexById,
@@ -56,6 +58,7 @@ import {
     isBinaryRelation,
     isFirstAttributeForOwner,
     isIdentifyingRelation,
+    isIsaConfigured,
     isMultivaluedAttribute,
     isPrimaryKeyAttribute,
     isRelationAttributeOwner,
@@ -63,6 +66,7 @@ import {
     isSelfRelation,
     isTernaryRelation,
     isWeakEntity,
+    isaInvolvesEntity,
     relationHasBothEntitySides,
     relationInvolvesEntity,
     removeAllAttributesFromOwner,
@@ -76,7 +80,9 @@ import {
 import { generateSQL } from "../../services/sql";
 import {
     clearGraphCanvas,
+    connectIsaGraphLinks,
     connectRelationGraphSides,
+    getConfiguredIsaGraphCells,
     getConfiguredRelationGraphCells,
     installCellGeometrySyncHandlers,
     removeEntityGraphCells,
@@ -218,6 +224,9 @@ export default function App(props) {
     const getSelectedRelationData = () =>
         findRelationById(diagramRef.current, selected?.id) ?? null;
 
+    const getSelectedIsaData = () =>
+        findIsaById(diagramRef.current, selected?.id) ?? null;
+
     const saveToLocalStorage = () => {
         saveDiagramToLocalStorage(diagramRef.current);
     };
@@ -358,6 +367,22 @@ export default function App(props) {
 
         resetRelationSides(relation);
     };
+
+    const removeIsaConfiguration = (isa) => {
+        if (!isa) return;
+
+        removeExistingGraphCells(
+            graph,
+            getConfiguredIsaGraphCells({
+                isa,
+                accessCell,
+            }),
+        );
+
+        isa.generalization = createEmptyIsaLink();
+        isa.specializations = [];
+    };
+
     const getAttributeDataById = (attributeId) =>
         findAttributeTreeOwnerById(diagramRef.current, attributeId)
             ?.attribute ?? null;
@@ -1856,6 +1881,202 @@ export default function App(props) {
         }
     };
 
+    const IsaConfigurationButton = () => {
+        const isIsa = isIsaShapeCell(selected);
+        const [open, setOpen] = React.useState(false);
+        const [generalizationId, setGeneralizationId] = React.useState("");
+        const [specializationIds, setSpecializationIds] = React.useState([]);
+
+        const getEntityNameById = (entityId) =>
+            findEntityById(diagramRef.current, entityId)?.name ?? entityId;
+
+        const handleClickOpen = () => {
+            const isa = getSelectedIsaData();
+
+            setGeneralizationId(isa?.generalization?.entity?.idMx ?? "");
+            setSpecializationIds(
+                (isa?.specializations ?? [])
+                    .map((specialization) => specialization?.entity?.idMx)
+                    .filter(Boolean),
+            );
+            setOpen(true);
+        };
+
+        const handleClose = () => {
+            setOpen(false);
+        };
+
+        const handleChangeGeneralization = (event) => {
+            const nextGeneralizationId = event.target.value;
+
+            setGeneralizationId(nextGeneralizationId);
+            setSpecializationIds((currentSpecializationIds) =>
+                currentSpecializationIds.filter(
+                    (entityId) => entityId !== nextGeneralizationId,
+                ),
+            );
+        };
+
+        const handleChangeSpecializations = (event) => {
+            const value = event.target.value;
+
+            setSpecializationIds(
+                typeof value === "string" ? value.split(",") : value,
+            );
+        };
+
+        const handleAccept = () => {
+            const isa = getSelectedIsaData();
+
+            if (!isa || !generalizationId || specializationIds.length === 0) {
+                return;
+            }
+
+            if (specializationIds.includes(generalizationId)) {
+                toast.error(
+                    "La generalización no puede aparecer también como especialización.",
+                );
+                return;
+            }
+
+            if (isIsaConfigured(isa)) {
+                removeExistingGraphCells(
+                    graph,
+                    getConfiguredIsaGraphCells({
+                        isa,
+                        accessCell,
+                    }),
+                );
+            }
+
+            isa.generalization = createEmptyIsaLink({
+                entityId: generalizationId,
+            });
+
+            isa.specializations = specializationIds.map((entityId) =>
+                createEmptyIsaLink({
+                    entityId,
+                }),
+            );
+
+            const connectedEdges = connectIsaGraphLinks({
+                graph,
+                isaCell: selected,
+                isa,
+                generalizationEntityCell: accessCell(generalizationId),
+                specializationEntityCells: specializationIds.map(accessCell),
+            });
+
+            if (!connectedEdges) {
+                toast.error("No se pudo configurar la jerarquía ISA.");
+                return;
+            }
+
+            syncAndPersistDiagramData();
+            setOpen(false);
+            toast.success("Jerarquía ISA configurada");
+        };
+
+        const acceptDisabled =
+            generalizationId === "" ||
+            specializationIds.length === 0 ||
+            specializationIds.includes(generalizationId);
+
+        if (!isIsa) {
+            return;
+        }
+
+        return (
+            <>
+                <button
+                    type="button"
+                    className="button-toolbar-action"
+                    onClick={handleClickOpen}
+                >
+                    Configurar ISA
+                </button>
+                <Dialog open={open} onClose={handleClose}>
+                    <DialogTitle>{"Configurar ISA"}</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            Escoge una generalización y una o varias
+                            especializaciones.
+                        </DialogContentText>
+                        <Box sx={{ minHeight: 10 }} />
+                        <Box sx={{ minWidth: 260 }}>
+                            <FormControl fullWidth>
+                                <InputLabel id="isa-generalization-label">
+                                    Generalización
+                                </InputLabel>
+                                <Select
+                                    id="isa-generalization"
+                                    value={generalizationId}
+                                    label="Generalización"
+                                    onChange={handleChangeGeneralization}
+                                >
+                                    {diagramRef.current.entities.map(
+                                        (entity) => (
+                                            <MenuItem
+                                                key={entity.idMx}
+                                                value={entity.idMx}
+                                            >
+                                                {entity.name}
+                                            </MenuItem>
+                                        ),
+                                    )}
+                                </Select>
+                            </FormControl>
+
+                            <Box sx={{ minHeight: 10 }} />
+
+                            <FormControl fullWidth>
+                                <InputLabel id="isa-specializations-label">
+                                    Especializaciones
+                                </InputLabel>
+                                <Select
+                                    id="isa-specializations"
+                                    multiple
+                                    value={specializationIds}
+                                    label="Especializaciones"
+                                    onChange={handleChangeSpecializations}
+                                    renderValue={(selectedIds) =>
+                                        selectedIds
+                                            .map(getEntityNameById)
+                                            .join(", ")
+                                    }
+                                >
+                                    {diagramRef.current.entities
+                                        .filter(
+                                            (entity) =>
+                                                entity.idMx !==
+                                                generalizationId,
+                                        )
+                                        .map((entity) => (
+                                            <MenuItem
+                                                key={entity.idMx}
+                                                value={entity.idMx}
+                                            >
+                                                {entity.name}
+                                            </MenuItem>
+                                        ))}
+                                </Select>
+                            </FormControl>
+                        </Box>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClose}>Cancelar</Button>
+                        <Button
+                            onClick={handleAccept}
+                            autoFocus
+                            disabled={acceptDisabled}
+                        >
+                            Aceptar
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </>
+        );
+    };
     const RelationCardinalitiesButton = () => {
         const isRelation = isRelationShapeCell(selected);
         const selectedDiag = findRelationById(diagramRef.current, selected?.id);
@@ -2176,6 +2397,11 @@ export default function App(props) {
                     relationInvolvesEntity(relation, entity.idMx),
                 )
                 .forEach(removeRelationConfiguration);
+
+            (diagramRef.current.isas ?? [])
+                .filter((isa) => isaInvolvesEntity(isa, entity.idMx))
+                .forEach(removeIsaConfiguration);
+
             syncAndPersistDiagramData();
         }
         if (isEntity) {
@@ -2700,6 +2926,7 @@ export default function App(props) {
                 <div>{ToggleIdentifyingRelationButton()}</div>
 
                 <div>{RelationConfigurationButton()}</div>
+                <div>{IsaConfigurationButton()}</div>
                 <div>{RelationCardinalitiesButton()}</div>
 
                 <div>{DeleteEntityButton()}</div>

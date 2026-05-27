@@ -116,6 +116,17 @@ export const getRelationStyleString = (relation) => {
     return relation?.isIdentifying ? `${baseStyle};strokeWidth=1` : baseStyle;
 };
 
+export const getCardinalityStyleString = () =>
+    [
+        "fontSize=16",
+        `fontColor=${ER_FONT}`,
+        `fontFamily=${ER_FONT_FAMILY}`,
+        "fillColor=none",
+        "strokeColor=none",
+        "rounded=0",
+        "spacing=0",
+    ].join(";");
+
 export const getIsaStyleString = () =>
     [
         "shape=triangle",
@@ -139,15 +150,17 @@ export const getIsaStyleString = () =>
         "editable=0",
     ].join(";");
 
-export const getCardinalityStyleString = () =>
+export const getIsaEdgeStyleString = () =>
     [
-        "fontSize=16",
-        `fontColor=${ER_FONT}`,
-        `fontFamily=${ER_FONT_FAMILY}`,
-        "fillColor=none",
-        "strokeColor=none",
+        `strokeColor=${ER_STROKE}`,
+        "strokeWidth=1",
+        "endArrow=none",
+        "startArrow=none",
         "rounded=0",
-        "spacing=0",
+        "html=1",
+        "editable=0",
+        "movable=0",
+        "resizable=0",
     ].join(";");
 
 export const installDiagramEditorStyles = ({ graph, mxConstants }) => {
