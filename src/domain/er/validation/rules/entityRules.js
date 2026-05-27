@@ -3,6 +3,8 @@ import {
     hasPrimaryKeyAttributeInTree,
 } from "../../attributes";
 
+import { isEntityIsaSpecialization } from "./isaRules";
+
 // This function check for repeated entity name, relations
 // can't be repeated also
 // Returns true if there are repeated entity names
@@ -35,6 +37,8 @@ export function entitiesWithoutPK(graph) {
     for (const entity of graph.entities) {
         if (entity.weak) continue;
 
+        if (isEntityIsaSpecialization(graph, entity.idMx)) continue;
+
         if (!hasPrimaryKeyAttributeInTree(entity.attributes)) {
             return true;
         }
@@ -47,6 +51,8 @@ export function entitiesWithoutPK(graph) {
 // True if there is an entity that has two or more keys
 export function entitiesWithMoreThanOnePK(graph) {
     for (const entity of graph.entities) {
+        if (isEntityIsaSpecialization(graph, entity.idMx)) continue;
+
         if (getPrimaryKeyAttributesInTree(entity.attributes).length > 1) {
             return true;
         }

@@ -117,6 +117,29 @@ const VALIDATION_MESSAGE_DEFINITIONS = [
         message: "Hay relaciones que apuntan a entidades inexistentes.",
     },
     {
+        key: "noUnconnectedIsas",
+        message:
+            "Hay jerarquías ISA que no tienen una generalización y al menos una especialización conectadas.",
+    },
+    {
+        key: "noBrokenIsaEntityReferences",
+        message: "Hay jerarquías ISA que apuntan a entidades inexistentes.",
+    },
+    {
+        key: "noIsaHierarchiesWithRepeatedSpecializations",
+        message: "Hay jerarquías ISA con especializaciones repetidas.",
+    },
+    {
+        key: "noIsaHierarchiesWithGeneralizationAsSpecialization",
+        message:
+            "Hay jerarquías ISA en las que la generalización también aparece como especialización.",
+    },
+    {
+        key: "noIsaSpecializationsWithPrimaryKey",
+        message:
+            "Hay especializaciones ISA con clave primaria propia; deben heredar la clave de la generalización.",
+    },
+    {
         key: "noTernaryRelationsWithAmbiguousRepeatedParticipants",
         message:
             "Hay relaciones ternarias con entidades participantes repetidas sin roles distintos.",

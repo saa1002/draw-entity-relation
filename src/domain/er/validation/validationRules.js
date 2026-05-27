@@ -1,4 +1,5 @@
 import {
+    brokenIsaEntityReferences,
     brokenRelationEntityReferences,
     cardinalitiesNotValid,
     emptyCompositeAttributes,
@@ -9,6 +10,10 @@ import {
     identifyingRelationsNotValid,
     identifyingTernaryRelations,
     inconsistentWeakEntityOwnership,
+    isaHierarchiesUnconnected,
+    isaHierarchiesWithGeneralizationAsSpecialization,
+    isaHierarchiesWithRepeatedSpecializations,
+    isaSpecializationsWithPrimaryKey,
     multipleIdentifyingRelationsPerWeakEntity,
     nestedCompositeAttributes,
     nmRelationsWithPK,
@@ -31,7 +36,9 @@ export const VALIDATION_RULES = [
     {
         diagnostic: "notEmpty",
         fails: (graph) =>
-            graph.entities.length === 0 && graph.relations.length === 0,
+            graph.entities.length === 0 &&
+            graph.relations.length === 0 &&
+            (graph.isas?.length ?? 0) === 0,
     },
     {
         diagnostic: "noRepeatedNames",
@@ -84,6 +91,26 @@ export const VALIDATION_RULES = [
     {
         diagnostic: "noBrokenRelationEntityReferences",
         fails: brokenRelationEntityReferences,
+    },
+    {
+        diagnostic: "noUnconnectedIsas",
+        fails: isaHierarchiesUnconnected,
+    },
+    {
+        diagnostic: "noBrokenIsaEntityReferences",
+        fails: brokenIsaEntityReferences,
+    },
+    {
+        diagnostic: "noIsaHierarchiesWithRepeatedSpecializations",
+        fails: isaHierarchiesWithRepeatedSpecializations,
+    },
+    {
+        diagnostic: "noIsaHierarchiesWithGeneralizationAsSpecialization",
+        fails: isaHierarchiesWithGeneralizationAsSpecialization,
+    },
+    {
+        diagnostic: "noIsaSpecializationsWithPrimaryKey",
+        fails: isaSpecializationsWithPrimaryKey,
     },
     {
         diagnostic: "noTernaryRelationsWithAmbiguousRepeatedParticipants",
