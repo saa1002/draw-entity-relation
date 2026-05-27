@@ -3,6 +3,8 @@ import {
     normalizeAttribute,
     normalizeRelation,
     normalizeRelationAttribute,
+    normalizeIsa,
+    normalizeDiagramData,
 } from '../../../src/domain/er/diagramNormalization'
 import { RELATION_ARITIES } from '../../../src/domain/er/relations'
 
@@ -202,5 +204,51 @@ describe("Relation normalization", () => {
         expect(relation).not.toHaveProperty("side3")
         expect(relation.side1.entity.idMx).toBe("entity-1")
         expect(relation.side2.entity.idMx).toBe("entity-2")
+    })
+})
+
+describe("ISA normalization", () => {
+    test("normalizes missing ISA collections as an empty array", () => {
+        expect(
+            normalizeDiagramData({
+                entities: [],
+                relations: [],
+            }),
+        ).toEqual({
+            entities: [],
+            relations: [],
+            isas: [],
+        })
+    })
+
+    test("normalizes ISA links and position", () => {
+        const isa = normalizeIsa({
+            idMx: "isa-1",
+            generalization: {
+                edgeId: "edge-parent",
+                entity: { idMx: "entity-parent" },
+            },
+            specializations: [
+                {
+                    edgeId: "edge-child",
+                    entity: { idMx: "entity-child" },
+                },
+            ],
+        })
+
+        expect(isa).toMatchObject({
+            idMx: "isa-1",
+            position: { x: 0, y: 0 },
+            generalization: {
+                edgeId: "edge-parent",
+                entity: { idMx: "entity-parent" },
+            },
+            specializations: [
+                {
+                    edgeId: "edge-child",
+                    entity: { idMx: "entity-child" },
+                },
+            ],
+        })
     })
 })

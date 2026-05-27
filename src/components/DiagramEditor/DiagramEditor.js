@@ -137,6 +137,7 @@ export default function App(props) {
     const diagramRef = React.useRef({
         entities: [],
         relations: [],
+        isas: [],
     });
     const [selected, setSelected] = React.useState(null);
     const [selectionVersion, setSelectionVersion] = React.useState(0);
@@ -2583,6 +2584,7 @@ export default function App(props) {
     const resetCanvas = () => {
         diagramRef.current.entities = [];
         diagramRef.current.relations = [];
+        diagramRef.current.isas = [];
         clearDiagramLocalStorage();
         clearGraphCanvas(graph);
     };
