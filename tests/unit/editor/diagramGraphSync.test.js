@@ -99,4 +99,37 @@ describe('diagram graph sync', () => {
         expect(street.offsetX).toBe(80)
         expect(street.offsetY).toBe(30)
     })
+    test('syncs ISA position from graph', () => {
+        const cells = {
+            'isa-1': createVertex('isa-1', 'ISA', 240, 180),
+        }
+
+        const diagram = {
+            entities: [],
+            relations: [],
+            isas: [
+                {
+                    idMx: 'isa-1',
+                    position: { x: 0, y: 0 },
+                    generalization: {
+                        edgeId: '',
+                        entity: { idMx: '' },
+                    },
+                    specializations: [],
+                },
+            ],
+        }
+
+        syncDiagramDataFromGraph({
+            diagram,
+            graph: {
+                model: { cells },
+                getEdges: () => [],
+            },
+            accessCell: (id) => cells[id],
+            updateAttributePosition,
+        })
+
+        expect(diagram.isas[0].position).toEqual({ x: 240, y: 180 })
+    })
 })

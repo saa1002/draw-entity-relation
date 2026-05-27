@@ -40,6 +40,19 @@ export const getConfiguredRelationGraphCells = ({ relation, accessCell }) => {
         .filter(Boolean);
 };
 
+export const getConfiguredIsaGraphCells = ({ isa, accessCell }) => {
+    if (!isa || typeof accessCell !== "function") return [];
+
+    const edgeIds = [
+        isa.generalization?.edgeId,
+        ...(isa.specializations ?? []).map(
+            (specialization) => specialization?.edgeId,
+        ),
+    ];
+
+    return edgeIds.map((cellId) => accessCell(cellId)).filter(Boolean);
+};
+
 const DEFAULT_RELATION_CARDINALITY = "X:X";
 
 const connectRelationSideGraphCell = ({
@@ -413,5 +426,18 @@ export const removeRelationGraphCells = ({
         relationCell,
         ...getConfiguredRelationGraphCells({ relation, accessCell }),
         ...relationAttributeCells,
+    ]);
+};
+
+export const removeIsaGraphCells = ({ graph, isa, accessCell }) => {
+    if (!isa) return;
+
+    const isaCell = accessCell(isa.idMx);
+
+    if (!isaCell) return;
+
+    removeExistingGraphCells(graph, [
+        isaCell,
+        ...getConfiguredIsaGraphCells({ isa, accessCell }),
     ]);
 };

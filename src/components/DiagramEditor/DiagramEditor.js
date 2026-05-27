@@ -39,6 +39,7 @@ import {
     findAttributeTreeOwnerById,
     findEntityById,
     findEntityIndexById,
+    findIsaIndexById,
     findRelationById,
     findRelationIndexById,
     generateUniqueAttributeName,
@@ -80,6 +81,7 @@ import {
     installCellGeometrySyncHandlers,
     removeEntityGraphCells,
     removeExistingGraphCells,
+    removeIsaGraphCells,
     removeRelationConfigurationGraphCells,
     removeRelationGraphCells,
 } from "./utils/graph/graphCanvas";
@@ -93,6 +95,7 @@ import {
     installDiagramEditorStyles,
     isAttributeShapeCell,
     isEntityShapeCell,
+    isIsaShapeCell,
     isRelationShapeCell,
 } from "./utils/mxStyles/diagramStyles";
 import {
@@ -2357,6 +2360,43 @@ export default function App(props) {
         }
     };
 
+    const DeleteIsaButton = () => {
+        const isIsa = isIsaShapeCell(selected);
+
+        function deleteIsa() {
+            const isaIndex = findIsaIndexById(diagramRef.current, selected.id);
+
+            if (isaIndex === -1) {
+                syncAndPersistDiagramData();
+                return;
+            }
+
+            const isa = diagramRef.current.isas[isaIndex];
+
+            diagramRef.current.isas.splice(isaIndex, 1);
+
+            removeIsaGraphCells({
+                graph,
+                isa,
+                accessCell,
+            });
+
+            syncAndPersistDiagramData();
+        }
+
+        if (isIsa) {
+            return (
+                <button
+                    type="button"
+                    className="button-toolbar-action"
+                    onClick={deleteIsa}
+                >
+                    Borrar ISA
+                </button>
+            );
+        }
+    };
+
     const GenerateSQLButton = () => {
         const [open, setOpen] = React.useState(false);
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
@@ -2665,6 +2705,7 @@ export default function App(props) {
                 <div>{DeleteEntityButton()}</div>
                 <div>{DeleteRelationButton()}</div>
                 <div>{DeleteAttributeButton()}</div>
+                <div>{DeleteIsaButton()}</div>
 
                 <div>{MoveBackAndFrontButtons()}</div>
 

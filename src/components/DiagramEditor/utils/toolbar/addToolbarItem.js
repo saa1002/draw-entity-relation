@@ -1,7 +1,9 @@
 import { default as MxGraph } from "mxgraph";
+import { createIsaData } from "../../../../domain/er/isa";
 import { createRelationData } from "../../../../domain/er/relations";
 import {
     getEntityDimensions,
+    getIsaDimensions,
     getRelationDimensions,
 } from "../mxStyles/diagramStyles";
 
@@ -15,6 +17,7 @@ export default function addToolbarItem(
     diagramRef,
     addEntityToDiagram,
     addRelationToDiagram,
+    addIsaToDiagram = false,
 ) {
     // Function that is executed when the image is dropped on
     // the graph. The cell argument points to the cell under
@@ -44,6 +47,7 @@ export default function addToolbarItem(
         // Retrieve existing entities and relations
         const existingEntities = diagramRef.current.entities || [];
         const existingRelations = diagramRef.current.relations || [];
+        const existingIsas = diagramRef.current.isas || [];
 
         // Determine the base name and existing items array based on the flags
         let baseName;
@@ -55,6 +59,9 @@ export default function addToolbarItem(
         } else if (addRelationToDiagram) {
             baseName = "Relación";
             existingItems = existingRelations;
+        } else if (addIsaToDiagram) {
+            baseName = "ISA";
+            existingItems = existingIsas;
         } else {
             baseName = "Test";
             existingItems = [];
@@ -72,6 +79,10 @@ export default function addToolbarItem(
             vertex.geometry.height = height;
         } else if (addRelationToDiagram) {
             const { width, height } = getRelationDimensions(uniqueName);
+            vertex.geometry.width = width;
+            vertex.geometry.height = height;
+        } else if (addIsaToDiagram) {
+            const { width, height } = getIsaDimensions();
             vertex.geometry.width = width;
             vertex.geometry.height = height;
         }
@@ -97,6 +108,19 @@ export default function addToolbarItem(
                 createRelationData({
                     idMx: vertex.id,
                     name: vertex.value,
+                    position: {
+                        x: vertex.geometry.x,
+                        y: vertex.geometry.y,
+                    },
+                }),
+            );
+        }
+        if (addIsaToDiagram) {
+            diagramRef.current.isas = diagramRef.current.isas ?? [];
+
+            diagramRef.current.isas.push(
+                createIsaData({
+                    idMx: vertex.id,
                     position: {
                         x: vertex.geometry.x,
                         y: vertex.geometry.y,

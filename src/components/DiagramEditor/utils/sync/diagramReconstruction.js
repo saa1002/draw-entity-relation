@@ -11,6 +11,8 @@ import {
     getCardinalityStyleString,
     getEntityDimensions,
     getEntityStyleString,
+    getIsaDimensions,
+    getIsaStyleString,
     getRelationDimensions,
     getRelationStyleString,
 } from "../mxStyles/diagramStyles";
@@ -209,11 +211,30 @@ export const reconstructDiagramGraph = ({
         }
     };
 
+    const recreateIsa = (isa) => {
+        const { width, height } = getIsaDimensions();
+
+        graph.insertVertex(
+            null,
+            isa.idMx,
+            "ISA",
+            isa.position.x,
+            isa.position.y,
+            width,
+            height,
+            getIsaStyleString(),
+        );
+    };
+
     for (const entity of diagram.entities) {
         recreateEntity(entity);
     }
 
     for (const relation of diagram.relations) {
         recreateRelation(relation);
+    }
+
+    for (const isa of diagram.isas ?? []) {
+        recreateIsa(isa);
     }
 };

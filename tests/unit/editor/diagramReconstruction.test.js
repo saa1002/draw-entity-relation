@@ -84,4 +84,65 @@ describe('diagram reconstruction', () => {
         expect(childEdge.source.id).toBe('attr-address')
         expect(childEdge.target.id).toBe('attr-street')
     })
+
+    test('reconstructs ISA triangle vertices', () => {
+        const cells = {}
+
+        const graph = {
+            insertVertex: (_, id, value, x, y, width, height, style) => {
+                const cell = {
+                    id,
+                    value,
+                    geometry: { x, y, width, height },
+                    style,
+                }
+
+                cells[id] = cell
+                return cell
+            },
+            insertEdge: () => {},
+            orderCells: () => {},
+        }
+
+        const diagram = {
+            entities: [],
+            relations: [],
+            isas: [
+                {
+                    idMx: 'isa-1',
+                    position: { x: 120, y: 160 },
+                    generalization: {
+                        edgeId: '',
+                        entity: { idMx: '' },
+                    },
+                    specializations: [],
+                },
+            ],
+        }
+
+        reconstructDiagramGraph({
+            graph,
+            diagram,
+            accessCell: (id) => cells[id],
+            mxPoint: (x, y) => ({ x, y }),
+            createWeakEntityDecorator: () => {},
+            ensureDiscriminantUnderline: () => {},
+            ensureIdentifyingRelationDecorator: () => {},
+            ensureIdentifyingRelationEdgeDecorator: () => {},
+        })
+
+        expect(cells['isa-1']).toMatchObject({
+            id: 'isa-1',
+            value: 'ISA',
+            geometry: {
+                x: 120,
+                y: 160,
+                width: 70,
+                height: 55,
+            },
+        })
+
+        expect(cells['isa-1'].style).toContain('shape=triangle')
+        expect(cells['isa-1'].style).toContain('direction=south')
+    })
 })

@@ -2,6 +2,8 @@ import { default as MxGraph } from "mxgraph";
 import {
     getEntityDimensions,
     getEntityStyleString,
+    getIsaDimensions,
+    getIsaStyleString,
     getRelationDimensions,
     getRelationStyleString,
 } from "../mxStyles/diagramStyles";
@@ -42,6 +44,7 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
         value = null,
         addEntityToDiagram = null,
         addRelationToDiagram = null,
+        addIsaToDiagram = false,
     ) => {
         const vertex = new mxCell(null, new mxGeometry(0, 0, w, h), style);
         if (value) {
@@ -57,6 +60,7 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
             diagramRef,
             addEntityToDiagram,
             addRelationToDiagram,
+            addIsaToDiagram,
         );
         img.enabled = true;
 
@@ -69,6 +73,7 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
 
     const entityDims = getEntityDimensions("Entidad");
     const relationDims = getRelationDimensions("Relación");
+    const isaDims = getIsaDimensions();
 
     addVertex(
         "images/rectangle.png",
@@ -87,5 +92,15 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
         "Relación",
         false, //addEntityToDiagram
         true, //addRelationToDiagram
+    );
+    addVertex(
+        "images/triangle.png",
+        isaDims.width,
+        isaDims.height,
+        getIsaStyleString(),
+        "ISA",
+        false,
+        false,
+        true,
     );
 }

@@ -7,6 +7,9 @@ const RELATION_HEIGHT = 46;
 const ATTRIBUTE_WIDTH = 70;
 const ATTRIBUTE_HEIGHT = 34;
 
+const ISA_WIDTH = 70;
+const ISA_HEIGHT = 55;
+
 const ENTITY_HORIZONTAL_PADDING = 28;
 const RELATION_HORIZONTAL_PADDING = 24;
 const ATTRIBUTE_HORIZONTAL_PADDING = 24;
@@ -26,6 +29,8 @@ const hasCellShape = (cell, shape) =>
 export const isEntityShapeCell = (cell) => hasCellShape(cell, "rectangle");
 
 export const isRelationShapeCell = (cell) => hasCellShape(cell, "rhombus");
+
+export const isIsaShapeCell = (cell) => hasCellShape(cell, "triangle");
 
 export const isAttributeShapeCell = (cell) => hasCellShape(cell, "ellipse");
 
@@ -50,6 +55,11 @@ export const getRelationDimensions = (label = "") => {
         height: RELATION_HEIGHT,
     };
 };
+
+export const getIsaDimensions = () => ({
+    width: ISA_WIDTH,
+    height: ISA_HEIGHT,
+});
 
 export const getAttributeDimensions = (label = "") => {
     const text = String(label ?? "");
@@ -105,6 +115,28 @@ export const getRelationStyleString = (relation) => {
 
     return relation?.isIdentifying ? `${baseStyle};strokeWidth=1` : baseStyle;
 };
+
+export const getIsaStyleString = () =>
+    [
+        "shape=triangle",
+        "direction=south",
+        "perimeter=trianglePerimeter",
+        "perimeterSpacing=0",
+        "sourcePerimeterSpacing=0",
+        "targetPerimeterSpacing=0",
+        `fillColor=${ER_FILL}`,
+        `strokeColor=${ER_STROKE}`,
+        "strokeWidth=1",
+        "align=center",
+        "verticalAlign=middle",
+        `fontColor=${ER_FONT}`,
+        `fontFamily=${ER_FONT_FAMILY}`,
+        `fontSize=${ER_FONT_SIZE}`,
+        "spacing=0",
+        "whiteSpace=wrap",
+        "overflow=hidden",
+        "editable=0",
+    ].join(";");
 
 export const getCardinalityStyleString = () =>
     [
