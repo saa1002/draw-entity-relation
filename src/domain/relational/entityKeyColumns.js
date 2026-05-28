@@ -1,3 +1,7 @@
+import {
+    getIsaGeneralizationEntityId,
+    getIsaSpecializationEntityIds,
+} from "../er/isa";
 import { projectAttributeTreeToColumns } from "./attributeProjection";
 
 const PRIMARY_KEY_CYCLE_HANDLING = Object.freeze({
@@ -12,6 +16,23 @@ const buildCycleError = (entity) =>
 
 const getEntityById = (graph, entityId) =>
     graph?.entities?.find((candidate) => candidate.idMx === entityId) ?? null;
+
+const getIsaGeneralizationForSpecialization = (graph, specializationId) => {
+    const isa = graph?.isas?.find((candidate) =>
+        getIsaSpecializationEntityIds(candidate).includes(specializationId),
+    );
+
+    if (!isa) {
+        return null;
+    }
+
+    return getEntityById(graph, getIsaGeneralizationEntityId(isa));
+};
+
+const buildIsaCycleError = (entity) =>
+    new Error(
+        `Cannot resolve primary key columns for ISA specialization "${entity.name}" because the ISA hierarchy contains a cycle.`,
+    );
 
 const projectStrongEntityPrimaryKeyColumns = (entity) =>
     projectAttributeTreeToColumns(entity.attributes ?? [])
@@ -56,13 +77,37 @@ export const getEntityPrimaryKeyColumnReferences = (
         return [];
     }
 
-    if (!entity.weak) {
-        return projectStrongEntityPrimaryKeyColumns(entity);
-    }
-
     const visitedEntityIds = options.visitedEntityIds ?? new Set();
     const cycleHandling =
         options.cycleHandling ?? PRIMARY_KEY_CYCLE_HANDLING.THROW;
+
+    if (!entity.weak) {
+        const isaGeneralization = getIsaGeneralizationForSpecialization(
+            graph,
+            entity.idMx,
+        );
+
+        if (!isaGeneralization) {
+            return projectStrongEntityPrimaryKeyColumns(entity);
+        }
+
+        if (visitedEntityIds.has(entity.idMx)) {
+            if (cycleHandling === PRIMARY_KEY_CYCLE_HANDLING.RETURN_EMPTY) {
+                return [];
+            }
+
+            throw buildIsaCycleError(entity);
+        }
+
+        const nextVisitedEntityIds = new Set(visitedEntityIds);
+        nextVisitedEntityIds.add(entity.idMx);
+
+        return getEntityPrimaryKeyColumnReferences(isaGeneralization, graph, {
+            ...options,
+            cycleHandling,
+            visitedEntityIds: nextVisitedEntityIds,
+        });
+    }
 
     if (visitedEntityIds.has(entity.idMx)) {
         if (cycleHandling === PRIMARY_KEY_CYCLE_HANDLING.RETURN_EMPTY) {

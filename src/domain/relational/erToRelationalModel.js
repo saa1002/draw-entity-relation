@@ -1,4 +1,9 @@
 import { isMultivaluedAttribute } from "../er/attributes";
+import { findEntityById } from "../er/entities";
+import {
+    getIsaGeneralizationEntityId,
+    getIsaSpecializationEntityIds,
+} from "../er/isa";
 import {
     findMandatoryOneToOneMergeRelationForEntity,
     getRelationSideCardinality,
@@ -642,6 +647,94 @@ function applyWeakEntitySemantics(tableMap, graph) {
     }
 }
 
+function ensureEntityTable(tableMap, entity) {
+    let table = tableMap.get(entity.name);
+
+    if (!table) {
+        table = buildEntityTable(entity);
+        tableMap.set(entity.name, table);
+    }
+
+    return table;
+}
+
+function buildIsaInheritedPrimaryKeyAttributes({
+    isa,
+    generalizationEntity,
+    specializationEntity,
+    graph,
+}) {
+    const generalizationKeyColumns = getEntityPrimaryKeyColumns(
+        generalizationEntity,
+        graph,
+    );
+
+    const foreignKeyGroup = `${isa.idMx}_${specializationEntity.idMx}_isa_generalization`;
+    const foreignKeyConstraint = `${specializationEntity.name}_${generalizationEntity.name}_isa`;
+
+    return generalizationKeyColumns.map((keyColumn) => ({
+        name: keyColumn.name,
+        key: true,
+        partialKey: false,
+        notnull: true,
+        unique: false,
+        foreign_key: generalizationEntity.name,
+        foreign_key_column: keyColumn.referencedColumn,
+        foreign_key_group: foreignKeyGroup,
+        foreign_key_constraint: foreignKeyConstraint,
+    }));
+}
+
+function applyIsaSemantics(tableMap, graph) {
+    for (const isa of graph.isas ?? []) {
+        const generalizationEntity = findEntityById(
+            graph,
+            getIsaGeneralizationEntityId(isa),
+        );
+
+        if (!generalizationEntity) continue;
+
+        ensureEntityTable(tableMap, generalizationEntity);
+
+        for (const specializationId of getIsaSpecializationEntityIds(isa)) {
+            const specializationEntity = findEntityById(
+                graph,
+                specializationId,
+            );
+
+            if (!specializationEntity) continue;
+
+            const specializationTable = ensureEntityTable(
+                tableMap,
+                specializationEntity,
+            );
+
+            const foreignKeyGroup = `${isa.idMx}_${specializationEntity.idMx}_isa_generalization`;
+
+            const inheritedKeyAttributes =
+                buildIsaInheritedPrimaryKeyAttributes({
+                    isa,
+                    generalizationEntity,
+                    specializationEntity,
+                    graph,
+                });
+
+            const existingAttributes = specializationTable.attributes
+                .filter((attr) => attr.foreign_key_group !== foreignKeyGroup)
+                .map((attr) => ({
+                    ...attr,
+                    key: false,
+                    partialKey: false,
+                }));
+
+            specializationTable.attributes = [
+                ...inheritedKeyAttributes,
+                ...existingAttributes,
+            ];
+        }
+    }
+}
+
 function mergeProcessedTable(tableMap, processedTable) {
     if (tableMap.has(processedTable.name)) {
         const existingTable = tableMap.get(processedTable.name);
@@ -689,6 +782,8 @@ function buildRelationalTables(graph) {
             mergeProcessedTable(tableMap, processedTable);
         }
     }
+
+    applyIsaSemantics(tableMap, graph);
 
     const multivaluedAttributeTables = graph.entities.flatMap((entity) =>
         buildMultivaluedAttributeTables(entity, graph, tableMap),
