@@ -21,6 +21,7 @@ import {
     flattenAttributeTree,
     getAttributeChildren,
     getLeafAttributes,
+    getDefaultAttributeSemantics,
     isCompositeAttribute,
     isLeafAttribute,
     removeAttributeFromOwnerTreeById,
@@ -753,6 +754,45 @@ describe("Hierarchical attribute helpers", () => {
         expect(hasRepeatedSiblingAttributeNamesInTree(attributes)).toBe(true);
     }); 
 })
+
+describe("Default attribute semantics", () => {
+    test("marks the first attribute of a regular entity as primary key", () => {
+        expect(
+            getDefaultAttributeSemantics({
+                ownerType: ATTRIBUTE_OWNER_TYPES.ENTITY,
+                isFirstAttribute: true,
+            }),
+        ).toEqual({
+            key: true,
+            partialKey: false,
+        });
+    });
+
+    test("does not mark the first own attribute of an ISA specialization as primary key", () => {
+        expect(
+            getDefaultAttributeSemantics({
+                ownerType: ATTRIBUTE_OWNER_TYPES.ENTITY,
+                isFirstAttribute: true,
+                isIsaSpecializationOwner: true,
+            }),
+        ).toEqual({
+            key: false,
+            partialKey: false,
+        });
+    });
+
+    test("keeps relation attributes without key semantics", () => {
+        expect(
+            getDefaultAttributeSemantics({
+                ownerType: ATTRIBUTE_OWNER_TYPES.RELATION,
+                isFirstAttribute: true,
+            }),
+        ).toEqual({
+            key: false,
+            partialKey: false,
+        });
+    });
+});
 
 describe("Tree attribute key semantic transitions", () => {
     test("toggleExclusivePrimaryKeyAttributeInTree marks the root attribute when selecting a child", () => {

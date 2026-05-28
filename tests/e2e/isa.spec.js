@@ -7,6 +7,8 @@ import {
     enableMxGraphDebug,
     expectSavedDiagramState,
     selectEntity,
+    addAttributeToSelectedEntity,
+    expectSavedEntityAttributeToMatch,
 } from '../helpers/canvas';
 
 import {
@@ -382,4 +384,26 @@ test('deleting an entity participating in an ISA clears the hierarchy configurat
             specializationCount: 0,
         },
     );
+});
+
+test('adding the first own attribute to an ISA specialization does not create a primary key', async ({
+    page,
+}) => {
+    const diagram = createValidIsaDiagram();
+    const profesor = diagram.entities.find(
+        (entity) => entity.idMx === 'entity-profesor',
+    );
+    profesor.attributes = [];
+
+    await seedSavedDiagram(page, diagram);
+    await page.goto('/');
+
+    await selectEntity(page, 'Profesor');
+    await addAttributeToSelectedEntity(page);
+
+    await expectSavedEntityAttributeToMatch(page, 'Profesor', 0, {
+        name: 'Atributo',
+        key: false,
+        partialKey: false,
+    });
 });

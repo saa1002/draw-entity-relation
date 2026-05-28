@@ -56,6 +56,7 @@ import {
     getWeakSideOfIdentifyingRelation,
     groupRootAttributesIntoCompositeAttribute,
     isBinaryRelation,
+    isEntityIsaSpecialization,
     isFirstAttributeForOwner,
     isIdentifyingRelation,
     isIsaConfigured,
@@ -575,6 +576,12 @@ export default function App(props) {
             ownerType,
             isFirstAttribute: isFirstAttributeForOwner(selectedDiag),
             isWeakEntityOwner: !isRelation && isWeakEntity(selectedDiag),
+            isIsaSpecializationOwner:
+                !isRelation &&
+                isEntityIsaSpecialization(
+                    diagramRef.current,
+                    selectedDiag.idMx,
+                ),
         });
 
         const source = selected;

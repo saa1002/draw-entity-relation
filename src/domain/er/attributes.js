@@ -114,12 +114,21 @@ export const getDefaultAttributeSemantics = ({
     ownerType,
     isFirstAttribute,
     isWeakEntityOwner = false,
+    isIsaSpecializationOwner = false,
 }) => {
     const belongsToEntity = ownerType === ATTRIBUTE_OWNER_TYPES.ENTITY;
 
     return {
-        key: belongsToEntity && !isWeakEntityOwner && isFirstAttribute,
-        partialKey: belongsToEntity && isWeakEntityOwner && isFirstAttribute,
+        key:
+            belongsToEntity &&
+            !isWeakEntityOwner &&
+            !isIsaSpecializationOwner &&
+            isFirstAttribute,
+        partialKey:
+            belongsToEntity &&
+            isWeakEntityOwner &&
+            !isIsaSpecializationOwner &&
+            isFirstAttribute,
     };
 };
 
