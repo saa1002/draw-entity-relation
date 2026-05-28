@@ -141,3 +141,12 @@ export async function exportCurrentSqlScript(page) {
         () => window.__E2E_SAVED_FILES__.at(-1).content,
     );
 }
+
+export async function setSavedDiagram(page, diagram) {
+    await page.evaluate((diagramToSave) => {
+        window.localStorage.setItem(
+            'diagramData',
+            JSON.stringify(diagramToSave),
+        );
+    }, diagram);
+}

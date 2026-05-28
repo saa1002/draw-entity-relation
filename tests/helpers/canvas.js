@@ -11,6 +11,7 @@ export async function getSavedDiagram(page) {
             ...savedDiagram,
             entities: savedDiagram.entities || [],
             relations: savedDiagram.relations || [],
+            isas: savedDiagram.isas || [],
         };
     });
 }
@@ -27,6 +28,12 @@ export async function getSavedRelation(page, relationName = 'Relación') {
     return diagram.relations.find((relation) => relation.name === relationName);
 }
 
+export async function getSavedIsa(page, isaIndex = 0) {
+    const diagram = await getSavedDiagram(page);
+
+    return diagram.isas?.[isaIndex] ?? null;
+}
+
 export async function expectSavedEntityToExist(page, entityName = 'Entidad') {
     await expect
         .poll(async () => Boolean(await getSavedEntity(page, entityName)))
@@ -39,6 +46,12 @@ export async function expectSavedRelationToExist(
 ) {
     await expect
         .poll(async () => Boolean(await getSavedRelation(page, relationName)))
+        .toBe(true);
+}
+
+export async function expectSavedIsaToExist(page, isaIndex = 0) {
+    await expect
+        .poll(async () => Boolean(await getSavedIsa(page, isaIndex)))
         .toBe(true);
 }
 
@@ -138,12 +151,28 @@ export async function addRelation(
     await deselectCanvas(page);
 }
 
+export async function addIsa(page, position = { x: 360, y: 300 }) {
+    const canvas = page.locator('svg');
+
+    await page.locator('img[src="images/triangle.png"]').dragTo(canvas, {
+        targetPosition: position,
+    });
+
+    await expectSavedIsaToExist(page);
+
+    await deselectCanvas(page);
+}
+
 export async function selectEntity(page, entityName) {
     await page.getByText(entityName, { exact: true }).click();
 }
 
 export async function selectRelation(page, relationName) {
     await page.getByText(relationName, { exact: true }).click();
+}
+
+export async function selectIsa(page, isaIndex = 0) {
+    await page.getByText('ISA', { exact: true }).nth(isaIndex).click();
 }
 
 export async function markEntityAsWeak(page, entityName = 'Entidad') {
@@ -250,6 +279,55 @@ export async function configureTernaryRelationSides(
 
     await acceptBtn.click();
     await expect(dialog).toBeHidden();
+}
+
+export async function openIsaConfigDialog(page, isaIndex = 0) {
+    await selectIsa(page, isaIndex);
+
+    await page.getByRole('button', { name: 'Configurar ISA' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(dialog.getByText('Configurar ISA')).toBeVisible();
+
+    return dialog;
+}
+
+export async function configureIsaHierarchy(
+    page,
+    generalizationName,
+    specializationNames,
+    isaIndex = 0,
+) {
+    const dialog = await openIsaConfigDialog(page, isaIndex);
+
+    await dialog.locator('#isa-generalization').click();
+    await page
+        .getByRole('option', { name: generalizationName, exact: true })
+        .click();
+
+    await dialog.locator('#isa-specializations').click();
+
+    for (const specializationName of specializationNames) {
+        await page
+            .getByRole('option', {
+                name: specializationName,
+                exact: true,
+            })
+            .click();
+    }
+
+    await page.keyboard.press('Escape');
+
+    const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
+    await expect(acceptBtn).toBeEnabled();
+
+    await acceptBtn.click();
+    await expect(dialog).toBeHidden();
+
+    await expect(
+        page.getByText('Jerarquía ISA configurada').last(),
+    ).toBeVisible();
 }
 
 export async function openRelationCardinalitiesDialog(
