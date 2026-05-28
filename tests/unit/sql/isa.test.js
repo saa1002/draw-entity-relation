@@ -293,4 +293,83 @@ describe('ISA SQL generation', () => {
             `,
         )
     })
+    
+    test('should generate an attribute-less specialization table with inherited key and relationship foreign key', () => {
+        const graph = createIsaGraph()
+
+        const profesor = graph.entities.find(
+            (entity) => entity.idMx === 'entity-profesor',
+        )
+        profesor.attributes = []
+
+        graph.entities.push({
+            idMx: 'entity-departamento',
+            name: 'Departamento',
+            weak: false,
+            attributes: [
+                {
+                    idMx: 'attr-id-departamento',
+                    name: 'id_departamento',
+                    key: true,
+                    partialKey: false,
+                },
+                {
+                    idMx: 'attr-nombre-departamento',
+                    name: 'nombre_departamento',
+                    key: false,
+                    partialKey: false,
+                },
+            ],
+        })
+
+        graph.relations.push({
+            idMx: 'relation-asignado',
+            name: 'Asignado',
+            isIdentifying: false,
+            canHoldAttributes: false,
+            attributes: [],
+            side1: {
+                idMx: 'side-profesor',
+                cardinality: '0:1',
+                entity: { idMx: 'entity-profesor' },
+            },
+            side2: {
+                idMx: 'side-departamento',
+                cardinality: '1:1',
+                entity: { idMx: 'entity-departamento' },
+            },
+        })
+
+        const sql = generateSQL(graph)
+
+        expectSQLToContain(
+            sql,
+            `
+            CREATE TABLE Profesor (
+              id_persona VARCHAR(40) PRIMARY KEY,
+              id_departamento_Asignado VARCHAR(40) UNIQUE NOT NULL
+            );
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Profesor
+            ADD CONSTRAINT FK_Profesor_Persona_isa
+            FOREIGN KEY (id_persona)
+            REFERENCES Persona(id_persona);
+            `,
+        )
+
+        expectSQLToContain(
+            sql,
+            `
+            ALTER TABLE Profesor
+            ADD CONSTRAINT FK_id_departamento_Asignado
+            FOREIGN KEY (id_departamento_Asignado)
+            REFERENCES Departamento(id_departamento);
+            `,
+        )
+    })
 })

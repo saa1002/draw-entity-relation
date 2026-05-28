@@ -64,10 +64,12 @@ export function entitiesWithMoreThanOnePK(graph) {
 export function entitiesWithoutAttributes(graph) {
     // Check entities
     for (const entity of graph.entities) {
+        if (isEntityIsaSpecialization(graph, entity.idMx)) continue;
+
         if (!entity.attributes || entity.attributes.length === 0) {
-            return true; // Found an entity without attributes
+            return true; // Found a non-ISA-specialization entity without attributes
         }
     }
 
-    return false; // No entities or N:M relations without attributes found
+    return false; // No non-ISA-specialization entities without attributes found
 }

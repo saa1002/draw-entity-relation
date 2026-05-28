@@ -5,6 +5,7 @@ import {
     brokenIsaEntityReferences,
     entitiesWithMoreThanOnePK,
     entitiesWithoutPK,
+    entitiesWithoutAttributes,
     isaHierarchiesUnconnected,
     isaHierarchiesWithGeneralizationAsSpecialization,
     isaHierarchiesWithRepeatedSpecializations,
@@ -155,5 +156,19 @@ describe("ISA hierarchy validation", () => {
         expect(isaSpecializationsWithPrimaryKey(graph)).toBe(true);
         expect(diagnostics.noIsaSpecializationsWithPrimaryKey).toBe(false);
         expect(diagnostics.isValid).toBe(false);
+    });
+
+    test("ISA specializations without own attributes should not be rejected as entities without attributes", () => {
+        graph.entities.at(1).attributes = [];
+
+        addValidIsa({ specializationIds: ["3"] });
+
+        const diagnostics = validateGraph(graph);
+
+        expect(entitiesWithoutAttributes(graph)).toBe(false);
+        expect(diagnostics.noEntitiesWithoutAttributes).toBe(true);
+        expect(diagnostics.noEntitiesWithoutPK).toBe(true);
+        expect(diagnostics.noIsaSpecializationsWithPrimaryKey).toBe(true);
+        expect(diagnostics.isValid).toBe(true);
     });
 });
