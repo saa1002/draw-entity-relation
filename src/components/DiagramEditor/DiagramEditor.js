@@ -948,6 +948,13 @@ export default function App(props) {
             return;
         }
 
+        if (isEntityIsaSpecialization(diagramRef.current, entity.idMx)) {
+            toast.error(
+                "Una especialización ISA hereda la clave de la generalización y no puede tener clave primaria propia.",
+            );
+            return;
+        }
+
         const result = toggleExclusivePrimaryKeyAttributeInTree(
             entity.attributes,
             selectedAttribute.idMx,
@@ -1370,6 +1377,10 @@ export default function App(props) {
         }
 
         if (isWeakEntity(entity)) {
+            return;
+        }
+
+        if (isEntityIsaSpecialization(diagramRef.current, entity.idMx)) {
             return;
         }
 

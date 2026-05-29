@@ -9,6 +9,7 @@ import {
     selectEntity,
     addAttributeToSelectedEntity,
     expectSavedEntityAttributeToMatch,
+    selectAttributeByName,
 } from '../helpers/canvas';
 
 import {
@@ -406,4 +407,24 @@ test('adding the first own attribute to an ISA specialization does not create a 
         key: false,
         partialKey: false,
     });
+});
+
+test('does not offer primary key conversion for ISA specialization attributes', async ({
+    page,
+}) => {
+    await seedSavedDiagram(page, createValidIsaDiagram());
+
+    await page.goto('/');
+
+    await selectAttributeByName(page, 'Persona', 'nombre');
+
+    await expect(
+        page.getByRole('button', { name: 'Convertir en clave' }),
+    ).toBeVisible();
+
+    await selectAttributeByName(page, 'Alumno', 'expediente');
+
+    await expect(
+        page.getByRole('button', { name: 'Convertir en clave' }),
+    ).toBeHidden();
 });
