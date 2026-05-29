@@ -437,6 +437,36 @@ export default function App(props) {
         saveToLocalStorage();
     };
 
+    const shouldIgnoreDeleteKeyboardShortcut = (event) => {
+        if (
+            document.querySelector(
+                '[role="dialog"], [role="listbox"], .MuiPopover-root, .MuiModal-root',
+            )
+        ) {
+            return true;
+        }
+
+        const target = event.target;
+
+        if (!(target instanceof Element)) {
+            return false;
+        }
+
+        if (target.closest(".mxCellEditor")) {
+            return true;
+        }
+
+        if (
+            target.closest(
+                'input, textarea, select, [contenteditable="true"], [role="textbox"]',
+            )
+        ) {
+            return true;
+        }
+
+        return false;
+    };
+
     React.useEffect(() => {
         if (!graph) {
             mxEvent.disableContextMenu(containerRef.current);
@@ -2557,61 +2587,6 @@ export default function App(props) {
             );
         }
     };
-
-    const DeleteEntityButton = () => {
-        const isEntity =
-            isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
-
-        function deleteEntity() {
-            // Find the entity in diagramRef.current.entities
-            const entityIndex = findEntityIndexById(
-                diagramRef.current,
-                selected.id,
-            );
-
-            if (entityIndex === -1) {
-                syncAndPersistDiagramData();
-                return;
-            }
-
-            const entity = diagramRef.current.entities[entityIndex];
-
-            diagramRef.current.entities.splice(entityIndex, 1);
-
-            removeEntityGraphCells({
-                graph,
-                entity,
-                accessCell,
-                getAttributesCells,
-                getWeakEntityDecoratorId,
-                isWeakEntity,
-            });
-
-            diagramRef.current.relations
-                .filter((relation) =>
-                    relationInvolvesEntity(relation, entity.idMx),
-                )
-                .forEach(removeRelationConfiguration);
-
-            (diagramRef.current.isas ?? [])
-                .filter((isa) => isaInvolvesEntity(isa, entity.idMx))
-                .forEach(removeIsaConfiguration);
-
-            syncAndPersistDiagramData();
-        }
-        if (isEntity) {
-            return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={deleteEntity}
-                >
-                    Borrar
-                </button>
-            );
-        }
-    };
-
     const canConvertSelectedSubattributeToSimpleAttribute = (attributeOwner) =>
         canConvertSelectedSubattributeToSimple(attributeOwner);
 
@@ -2657,6 +2632,215 @@ export default function App(props) {
         );
     };
 
+    const deleteSelectedEntity = () => {
+        const isEntity =
+            isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
+
+        if (!isEntity) {
+            return false;
+        }
+
+        const entityIndex = findEntityIndexById(
+            diagramRef.current,
+            selected.id,
+        );
+
+        if (entityIndex === -1) {
+            syncAndPersistDiagramData();
+            return false;
+        }
+
+        const entity = diagramRef.current.entities[entityIndex];
+
+        diagramRef.current.entities.splice(entityIndex, 1);
+
+        removeEntityGraphCells({
+            graph,
+            entity,
+            accessCell,
+            getAttributesCells,
+            getWeakEntityDecoratorId,
+            isWeakEntity,
+        });
+
+        diagramRef.current.relations
+            .filter((relation) => relationInvolvesEntity(relation, entity.idMx))
+            .forEach(removeRelationConfiguration);
+
+        (diagramRef.current.isas ?? [])
+            .filter((isa) => isaInvolvesEntity(isa, entity.idMx))
+            .forEach(removeIsaConfiguration);
+
+        syncAndPersistDiagramData();
+
+        return true;
+    };
+
+    const deleteSelectedAttribute = () => {
+        if (!isAttributeShapeCell(selected)) {
+            return false;
+        }
+
+        const attributeOwner = findAttributeTreeOwnerById(
+            diagramRef.current,
+            selected.id,
+        );
+
+        if (!attributeOwner) {
+            return false;
+        }
+
+        const isKey = isPrimaryKeyAttribute(attributeOwner?.attribute);
+        const isFromRelation = isRelationAttributeOwner(attributeOwner);
+        const canDeleteAttribute = isFromRelation || !isKey;
+
+        if (!canDeleteAttribute) {
+            return false;
+        }
+
+        const { owner } = attributeOwner;
+        const parentAttribute = attributeOwner.parent;
+
+        const {
+            removedAttribute,
+            removedCompositeAttribute,
+            promotedAttribute,
+        } = removeAttributeFromOwnerTreeByIdWithPromotion(owner, selected.id);
+
+        if (!removedAttribute) {
+            return false;
+        }
+
+        removeAttributesCells(
+            [removedAttribute, removedCompositeAttribute].filter(Boolean),
+        );
+
+        reparentAttributeCellToCurrentOwner({
+            attribute: promotedAttribute,
+            attributeOwner: promotedAttribute
+                ? findAttributeTreeOwnerById(
+                      diagramRef.current,
+                      promotedAttribute.idMx,
+                  )
+                : null,
+        });
+
+        if (!promotedAttribute && parentAttribute) {
+            syncAttributeVisualRepresentation(parentAttribute);
+        }
+
+        refreshGraph();
+        syncAndPersistDiagramData();
+
+        return true;
+    };
+
+    const deleteSelectedRelation = () => {
+        if (!isRelationShapeCell(selected)) {
+            return false;
+        }
+
+        const relationIndex = findRelationIndexById(
+            diagramRef.current,
+            selected.id,
+        );
+
+        if (relationIndex === -1) {
+            syncAndPersistDiagramData();
+            return false;
+        }
+
+        const relation = diagramRef.current.relations[relationIndex];
+
+        clearIdentifyingRelationSemantics(relation.idMx);
+
+        diagramRef.current.relations.splice(relationIndex, 1);
+
+        removeRelationGraphCells({
+            graph,
+            relation,
+            accessCell,
+            getAttributesCells,
+        });
+
+        syncAndPersistDiagramData();
+
+        return true;
+    };
+
+    const deleteSelectedIsa = () => {
+        if (!isIsaShapeCell(selected)) {
+            return false;
+        }
+
+        const isaIndex = findIsaIndexById(diagramRef.current, selected.id);
+
+        if (isaIndex === -1) {
+            syncAndPersistDiagramData();
+            return false;
+        }
+
+        const isa = diagramRef.current.isas[isaIndex];
+
+        diagramRef.current.isas.splice(isaIndex, 1);
+
+        removeIsaGraphCells({
+            graph,
+            isa,
+            accessCell,
+        });
+
+        syncAndPersistDiagramData();
+
+        return true;
+    };
+
+    const deleteSelectedDiagramElement = () => {
+        if (!selected) {
+            return false;
+        }
+
+        if (
+            isEntityShapeCell(selected) &&
+            !isWeakEntityDecoratorCell(selected)
+        ) {
+            return deleteSelectedEntity();
+        }
+
+        if (isRelationShapeCell(selected)) {
+            return deleteSelectedRelation();
+        }
+
+        if (isAttributeShapeCell(selected)) {
+            return deleteSelectedAttribute();
+        }
+
+        if (isIsaShapeCell(selected)) {
+            return deleteSelectedIsa();
+        }
+
+        return false;
+    };
+
+    const DeleteEntityButton = () => {
+        const isEntity =
+            isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
+
+        if (!isEntity) {
+            return;
+        }
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={deleteSelectedEntity}
+            >
+                Borrar
+            </button>
+        );
+    };
+
     const DeleteAttributeButton = () => {
         const isAttribute = isAttributeShapeCell(selected);
 
@@ -2675,62 +2859,17 @@ export default function App(props) {
 
         const isKey = isPrimaryKeyAttribute(selectedAttributeOwner?.attribute);
         const isFromRelation = isRelationAttributeOwner(selectedAttributeOwner);
-
         const canDeleteAttribute = isFromRelation || !isKey;
 
         if (!canDeleteAttribute) {
             return;
         }
 
-        function deleteAttribute() {
-            const attributeOwner = findAttributeTreeOwnerById(
-                diagramRef.current,
-                selected.id,
-            );
-
-            if (!attributeOwner) return;
-
-            const { owner } = attributeOwner;
-
-            const parentAttribute = attributeOwner.parent;
-
-            const {
-                removedAttribute,
-                removedCompositeAttribute,
-                promotedAttribute,
-            } = removeAttributeFromOwnerTreeByIdWithPromotion(
-                owner,
-                selected.id,
-            );
-
-            if (!removedAttribute) return;
-
-            removeAttributesCells(
-                [removedAttribute, removedCompositeAttribute].filter(Boolean),
-            );
-
-            reparentAttributeCellToCurrentOwner({
-                attribute: promotedAttribute,
-                attributeOwner: promotedAttribute
-                    ? findAttributeTreeOwnerById(
-                          diagramRef.current,
-                          promotedAttribute.idMx,
-                      )
-                    : null,
-            });
-
-            if (!promotedAttribute && parentAttribute) {
-                syncAttributeVisualRepresentation(parentAttribute);
-            }
-
-            refreshGraph();
-            syncAndPersistDiagramData();
-        }
         return (
             <button
                 type="button"
                 className="button-toolbar-action"
-                onClick={deleteAttribute}
+                onClick={deleteSelectedAttribute}
             >
                 Borrar
             </button>
@@ -2740,83 +2879,67 @@ export default function App(props) {
     const DeleteRelationButton = () => {
         const isRelation = isRelationShapeCell(selected);
 
-        function deleteRelation() {
-            // Find the relation in diagramRef.current.relations
-            const relationIndex = findRelationIndexById(
-                diagramRef.current,
-                selected.id,
-            );
-
-            if (relationIndex === -1) {
-                syncAndPersistDiagramData();
-                return;
-            }
-
-            const relation = diagramRef.current.relations[relationIndex];
-
-            clearIdentifyingRelationSemantics(relation.idMx);
-
-            diagramRef.current.relations.splice(relationIndex, 1);
-
-            removeRelationGraphCells({
-                graph,
-                relation,
-                accessCell,
-                getAttributesCells,
-            });
-
-            syncAndPersistDiagramData();
+        if (!isRelation) {
+            return;
         }
 
-        if (isRelation) {
-            return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={deleteRelation}
-                >
-                    Borrar
-                </button>
-            );
-        }
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={deleteSelectedRelation}
+            >
+                Borrar
+            </button>
+        );
     };
 
     const DeleteIsaButton = () => {
         const isIsa = isIsaShapeCell(selected);
 
-        function deleteIsa() {
-            const isaIndex = findIsaIndexById(diagramRef.current, selected.id);
+        if (!isIsa) {
+            return;
+        }
 
-            if (isaIndex === -1) {
-                syncAndPersistDiagramData();
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={deleteSelectedIsa}
+            >
+                Borrar
+            </button>
+        );
+    };
+
+    React.useEffect(() => {
+        if (!graph) {
+            return;
+        }
+
+        const handleKeyDown = (event) => {
+            if (event.key !== "Delete") {
                 return;
             }
 
-            const isa = diagramRef.current.isas[isaIndex];
+            if (shouldIgnoreDeleteKeyboardShortcut(event)) {
+                return;
+            }
 
-            diagramRef.current.isas.splice(isaIndex, 1);
+            const deleted = deleteSelectedDiagramElement();
 
-            removeIsaGraphCells({
-                graph,
-                isa,
-                accessCell,
-            });
+            if (deleted) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        };
 
-            syncAndPersistDiagramData();
-        }
+        window.addEventListener("keydown", handleKeyDown);
 
-        if (isIsa) {
-            return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={deleteIsa}
-                >
-                    Borrar ISA
-                </button>
-            );
-        }
-    };
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [graph, selected, selectionVersion]);
 
     const GenerateSQLButton = () => {
         const [open, setOpen] = React.useState(false);

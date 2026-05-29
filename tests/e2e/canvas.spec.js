@@ -1,6 +1,16 @@
 import { test, expect } from '@playwright/test';
 
-import { addEntity, renameElement } from '../helpers/canvas';
+import {
+    addAttributeToSelectedEntity,
+    addEntity,
+    addIsa,
+    addRelation,
+    expectSavedDiagramState,
+    renameElement,
+    selectEntity,
+    selectIsa,
+    selectRelation,
+} from '../helpers/canvas';
 
 test('mxGraph transaction level stays balanced (updateLevel === 0)', async ({ page }) => {
     await page.addInitScript(() => {
@@ -22,4 +32,80 @@ test('mxGraph transaction level stays balanced (updateLevel === 0)', async ({ pa
     await expect(page.getByText('Clientes', { exact: true })).toBeVisible();
 
     await expect.poll(getUpdateLevel).toBe(0);
+});
+
+test.describe('keyboard deletion', () => {
+    test('delete selected entity with Delete key', async ({ page }) => {
+        await page.goto('/');
+
+        await addEntity(page, 'Entidad');
+        await selectEntity(page, 'Entidad');
+
+        await page.keyboard.press('Delete');
+
+        await expectSavedDiagramState(
+            page,
+            (diagram) => diagram.entities.map((entity) => entity.name),
+            [],
+        );
+    });
+
+    test('delete selected relation with Delete key', async ({ page }) => {
+        await page.goto('/');
+
+        await addRelation(page, 'Relación');
+        await selectRelation(page, 'Relación');
+
+        await page.keyboard.press('Delete');
+
+        await expectSavedDiagramState(
+            page,
+            (diagram) => diagram.relations.map((relation) => relation.name),
+            [],
+        );
+    });
+
+    test('delete selected non-key attribute with Delete key', async ({
+        page,
+    }) => {
+        await page.goto('/');
+
+        await addEntity(page, 'Entidad');
+
+        await selectEntity(page, 'Entidad');
+        await addAttributeToSelectedEntity(page);
+        await renameElement(page, 'Atributo', 'id');
+
+        await selectEntity(page, 'Entidad');
+        await addAttributeToSelectedEntity(page);
+        await renameElement(page, 'Atributo', 'nombre');
+
+        await page.getByText('nombre', { exact: true }).click();
+
+        await page.keyboard.press('Delete');
+
+        await expectSavedDiagramState(
+            page,
+            (diagram) =>
+                diagram.entities[0].attributes.map(
+                    (attribute) => attribute.name,
+                ),
+            ['id'],
+        );
+    });
+
+    test('delete selected ISA with Delete key', async ({ page }) => {
+        await page.goto('/');
+
+        await addIsa(page);
+        await selectIsa(page);
+
+        await page.keyboard.press('Delete');
+
+        await expectSavedDiagramState(
+            page,
+            (diagram) => diagram.isas.length,
+            0,
+        );
+    });
 });
