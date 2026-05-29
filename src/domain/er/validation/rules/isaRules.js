@@ -67,6 +67,40 @@ export function isaHierarchiesWithGeneralizationAsSpecialization(graph) {
     return false;
 }
 
+export function isaSpecializationsInMultipleHierarchies(graph) {
+    const specializationIdsInConfiguredHierarchies = new Set();
+
+    for (const isa of getIsas(graph)) {
+        if (!isIsaConfigured(isa)) {
+            continue;
+        }
+
+        const generalizationId = getIsaGeneralizationEntityId(isa);
+
+        if (findEntityById(graph, generalizationId) === null) {
+            continue;
+        }
+
+        const specializationIds = new Set(getIsaSpecializationEntityIds(isa));
+
+        for (const specializationId of specializationIds) {
+            if (findEntityById(graph, specializationId) === null) {
+                continue;
+            }
+
+            if (
+                specializationIdsInConfiguredHierarchies.has(specializationId)
+            ) {
+                return true;
+            }
+
+            specializationIdsInConfiguredHierarchies.add(specializationId);
+        }
+    }
+
+    return false;
+}
+
 export function isaSpecializationsWithPrimaryKey(graph) {
     const specializationIds = new Set(
         getIsas(graph).flatMap(getIsaSpecializationEntityIds),

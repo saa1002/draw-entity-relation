@@ -9,6 +9,7 @@ import {
     isaHierarchiesUnconnected,
     isaHierarchiesWithGeneralizationAsSpecialization,
     isaHierarchiesWithRepeatedSpecializations,
+    isaSpecializationsInMultipleHierarchies,
     isaSpecializationsWithPrimaryKey,
     validateGraph,
 } from "../../../src/domain/er/validation";
@@ -61,11 +62,13 @@ describe("ISA hierarchy validation", () => {
         expect(isaHierarchiesWithGeneralizationAsSpecialization(graph)).toBe(
             false,
         );
+        expect(isaSpecializationsInMultipleHierarchies(graph)).toBe(false);
         expect(isaSpecializationsWithPrimaryKey(graph)).toBe(false);
         expect(entitiesWithoutPK(graph)).toBe(false);
         expect(entitiesWithMoreThanOnePK(graph)).toBe(false);
         expect(diagnostics.noUnconnectedIsas).toBe(true);
         expect(diagnostics.noBrokenIsaEntityReferences).toBe(true);
+        expect(diagnostics.noIsaSpecializationsInMultipleHierarchies).toBe(true);
         expect(diagnostics.noIsaSpecializationsWithPrimaryKey).toBe(true);
         expect(diagnostics.isValid).toBe(true);
     });
@@ -170,5 +173,44 @@ describe("ISA hierarchy validation", () => {
         expect(diagnostics.noEntitiesWithoutPK).toBe(true);
         expect(diagnostics.noIsaSpecializationsWithPrimaryKey).toBe(true);
         expect(diagnostics.isValid).toBe(true);
+    });
+
+    test("an ISA specialization cannot belong to more than one ISA hierarchy", () => {
+        removePrimaryKeys(graph.entities.at(1));
+
+        graph.isas = [
+            createIsaData({
+                idMx: "isa-1",
+                generalization: createEmptyIsaLink({
+                    entityId: "2",
+                    edgeId: "edge-generalization-1",
+                }),
+                specializations: [
+                    createEmptyIsaLink({
+                        entityId: "3",
+                        edgeId: "edge-specialization-1",
+                    }),
+                ],
+            }),
+            createIsaData({
+                idMx: "isa-2",
+                generalization: createEmptyIsaLink({
+                    entityId: "19",
+                    edgeId: "edge-generalization-2",
+                }),
+                specializations: [
+                    createEmptyIsaLink({
+                        entityId: "3",
+                        edgeId: "edge-specialization-2",
+                    }),
+                ],
+            }),
+        ];
+
+        const diagnostics = validateGraph(graph);
+
+        expect(isaSpecializationsInMultipleHierarchies(graph)).toBe(true);
+        expect(diagnostics.noIsaSpecializationsInMultipleHierarchies).toBe(false);
+        expect(diagnostics.isValid).toBe(false);
     });
 });

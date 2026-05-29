@@ -135,6 +135,11 @@ const VALIDATION_MESSAGE_DEFINITIONS = [
             "Hay jerarquías ISA en las que la generalización también aparece como especialización.",
     },
     {
+        key: "noIsaSpecializationsInMultipleHierarchies",
+        message:
+            "Hay entidades que aparecen como especialización en más de una jerarquía ISA; la herencia múltiple no está soportada.",
+    },
+    {
         key: "noIsaSpecializationsWithPrimaryKey",
         message:
             "Hay especializaciones ISA con clave primaria propia; deben heredar la clave de la generalización.",

@@ -13,6 +13,7 @@ import {
     isaHierarchiesUnconnected,
     isaHierarchiesWithGeneralizationAsSpecialization,
     isaHierarchiesWithRepeatedSpecializations,
+    isaSpecializationsInMultipleHierarchies,
     isaSpecializationsWithPrimaryKey,
     multipleIdentifyingRelationsPerWeakEntity,
     nestedCompositeAttributes,
@@ -107,6 +108,10 @@ export const VALIDATION_RULES = [
     {
         diagnostic: "noIsaHierarchiesWithGeneralizationAsSpecialization",
         fails: isaHierarchiesWithGeneralizationAsSpecialization,
+    },
+    {
+        diagnostic: "noIsaSpecializationsInMultipleHierarchies",
+        fails: isaSpecializationsInMultipleHierarchies,
     },
     {
         diagnostic: "noIsaSpecializationsWithPrimaryKey",

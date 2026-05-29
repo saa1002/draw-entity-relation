@@ -15,6 +15,7 @@ export const DEFAULT_DIAGNOSTICS = {
     noBrokenIsaEntityReferences: true,
     noIsaHierarchiesWithRepeatedSpecializations: true,
     noIsaHierarchiesWithGeneralizationAsSpecialization: true,
+    noIsaSpecializationsInMultipleHierarchies: true,
     noIsaSpecializationsWithPrimaryKey: true,
     noTernaryRelationsWithAmbiguousRepeatedParticipants: true,
     noIdentifyingTernaryRelations: true,
