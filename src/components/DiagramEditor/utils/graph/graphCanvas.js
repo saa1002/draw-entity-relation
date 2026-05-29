@@ -1,6 +1,6 @@
 import {
-    getRelationCardinalityDisplayValue,
     getRelationSideKeys,
+    getRelationSideLabelDisplayValue,
 } from "../../../../domain/er/relations";
 import { getIsaEdgeStyleString } from "../mxStyles/diagramStyles";
 
@@ -121,10 +121,12 @@ const connectRelationSideGraphCell = ({
 }) => {
     const cardinality =
         relation[sideKey].cardinality || DEFAULT_RELATION_CARDINALITY;
-    const cardinalityLabel = getRelationCardinalityDisplayValue(
-        relation,
-        cardinality,
-    );
+
+    relation[sideKey].cardinality = cardinality;
+
+    const sideLabel = getRelationSideLabelDisplayValue(relation, sideKey, {
+        fallbackCardinality: DEFAULT_RELATION_CARDINALITY,
+    });
 
     const edge = graph.insertEdge(
         relationCell,
@@ -137,7 +139,7 @@ const connectRelationSideGraphCell = ({
     const cardinalityCell = graph.insertVertex(
         edge,
         null,
-        cardinalityLabel,
+        sideLabel,
         0,
         0,
         1,
@@ -148,7 +150,6 @@ const connectRelationSideGraphCell = ({
 
     graph.updateCellSize(cardinalityCell);
 
-    relation[sideKey].cardinality = cardinality;
     relation[sideKey].idMx = cardinalityCell.id;
     relation[sideKey].edgeId = edge.id;
     relation[sideKey].cell = cardinalityCell.id;

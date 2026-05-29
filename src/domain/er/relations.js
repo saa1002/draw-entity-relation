@@ -119,6 +119,26 @@ export const getRelationCardinalityDisplayValue = (relation, cardinality) => {
     return cardinality;
 };
 
+export const getRelationSideLabelDisplayValue = (
+    relation,
+    sideKey,
+    { fallbackCardinality = "" } = {},
+) => {
+    const side = relation?.[sideKey] ?? {};
+    const role = getRelationSideRole(side);
+    const cardinality = side.cardinality || fallbackCardinality;
+    const cardinalityLabel = getRelationCardinalityDisplayValue(
+        relation,
+        cardinality,
+    );
+
+    if (role && cardinalityLabel) {
+        return `${role}\n${cardinalityLabel}`;
+    }
+
+    return role || cardinalityLabel;
+};
+
 export const isSelfRelation = (relation) => {
     const entityIds = getRelationEntityIds(relation);
 

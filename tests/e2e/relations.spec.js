@@ -8,6 +8,7 @@ import {
     configureRelationSides,
     configureTernaryRelationCardinalities,
     configureTernaryRelationSides,
+    enableMxGraphDebug,
     expectSavedDiagramState,
     expectSavedRelationAttributeToMatch,
     expectSavedRelationToMatch,
@@ -446,6 +447,69 @@ test('allow role-disambiguated repeated participants in a ternary relationship',
     ).toBeVisible();
 
     await expect(dialog.getByRole('button', { name: 'Aceptar' })).toBeEnabled();
+});
+
+test('display role labels on ternary relationship edges together with cardinalities', async ({
+    page,
+}) => {
+    await enableMxGraphDebug(page);
+
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 520, y: 180 });
+
+    await renameElement(page, 'Entidad', 'Tenista');
+    await renameElement(page, 'Entidad 1', 'Fecha');
+
+    await addRelation(page, 'Relación', { x: 360, y: 320 });
+
+    await configureTernaryRelationSides(
+        page,
+        'Relación',
+        'Tenista',
+        'Tenista',
+        'Fecha',
+        {
+            side1Role: 'tenista local',
+            side2Role: 'tenista visitante',
+        },
+    );
+
+    await configureTernaryRelationCardinalities(
+        page,
+        'Relación',
+        '0:N',
+        '0:N',
+        '0:N',
+    );
+
+    const relation = await getSavedRelation(page, 'Relación');
+
+    const sideLabelValues = await page.evaluate((relationData) => {
+        const graph = window.__DEBUG_GRAPH__;
+
+        return {
+            side1: graph
+                .getModel()
+                .getCell(relationData.side1.cell)
+                .value,
+            side2: graph
+                .getModel()
+                .getCell(relationData.side2.cell)
+                .value,
+            side3: graph
+                .getModel()
+                .getCell(relationData.side3.cell)
+                .value,
+        };
+    }, relation);
+
+    expect(sideLabelValues).toEqual({
+        side1: 'tenista local\nN',
+        side2: 'tenista visitante\nN',
+        side3: 'N',
+    });
 });
 
 test('do not offer identifying relationship action for ternary relationships', async ({ page }) => {

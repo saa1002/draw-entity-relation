@@ -1,7 +1,7 @@
 import {
     getAttributeChildren,
-    getRelationCardinalityDisplayValue,
     getRelationSideKeys,
+    getRelationSideLabelDisplayValue,
     isIdentifyingRelation,
     isIsaConfigured,
     isRelationConfigured,
@@ -177,10 +177,9 @@ export const reconstructDiagramGraph = ({
                     const cardinality = graph.insertVertex(
                         edge,
                         relationSide.cell,
-                        getRelationCardinalityDisplayValue(
-                            relation,
-                            cardinalityValue,
-                        ),
+                        getRelationSideLabelDisplayValue(relation, sideKey, {
+                            fallbackCardinality: cardinalityValue,
+                        }),
                         0,
                         0,
                         1,

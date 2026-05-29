@@ -52,6 +52,7 @@ import {
     getRelationCardinalityDisplayValue,
     getRelationSideDisplayName,
     getRelationSideKeys,
+    getRelationSideLabelDisplayValue,
     getWeakAndStrongSidesForRelation,
     getWeakSideOfIdentifyingRelation,
     groupRootAttributesIntoCompositeAttribute,
@@ -329,15 +330,11 @@ export default function App(props) {
 
         getRelationSideKeys(relationData).forEach((sideKey) => {
             const sideLabel = accessCell(relationData?.[sideKey]?.cell);
-            const cardinality = relationData[sideKey].cardinality;
 
             if (sideLabel) {
                 graph.model.setValue(
                     sideLabel,
-                    getRelationCardinalityDisplayValue(
-                        relationData,
-                        cardinality,
-                    ),
+                    getRelationSideLabelDisplayValue(relationData, sideKey),
                 );
                 graph.updateCellSize(sideLabel);
             }
@@ -2005,6 +2002,8 @@ export default function App(props) {
                 relation[sideKey].role = normalizeRole(roles[sideKey]);
             });
 
+            syncRelationCardinalityLabels(relation);
+            refreshGraph();
             syncAndPersistDiagramData();
 
             setOpen(false);
