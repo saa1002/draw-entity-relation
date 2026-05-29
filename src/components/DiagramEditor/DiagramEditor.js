@@ -1899,6 +1899,184 @@ export default function App(props) {
         }
     };
 
+    const RelationRolesButton = () => {
+        const isRelation = isRelationShapeCell(selected);
+        const selectedRelationDiag = getSelectedRelationData();
+
+        const [open, setOpen] = React.useState(false);
+        const [roles, setRoles] = React.useState({
+            side1: "",
+            side2: "",
+            side3: "",
+        });
+
+        const canEditRoles =
+            isRelation &&
+            selectedRelationDiag &&
+            isTernaryRelation(selectedRelationDiag) &&
+            isRelationConfigured(selectedRelationDiag);
+
+        const normalizeRole = (role) => String(role ?? "").trim();
+
+        const getSideKeys = (relation) =>
+            relation ? getRelationSideKeys(relation) : [];
+
+        const getSideEntityName = (relation, sideKey) => {
+            const entityId = relation?.[sideKey]?.entity?.idMx;
+            const entityCell = accessCell(entityId);
+            const entityData = findEntityById(diagramRef.current, entityId);
+
+            return entityCell?.value ?? entityData?.name ?? "";
+        };
+
+        const getSideLabel = (relation, sideKey) => {
+            const sideNumber = sideKey.replace("side", "");
+            const entityName = getSideEntityName(relation, sideKey);
+
+            return entityName
+                ? `Rol lado ${sideNumber} (${entityName})`
+                : `Rol lado ${sideNumber}`;
+        };
+
+        const getRepeatedParticipantSideGroups = (relation) => {
+            const groupsByEntityId = {};
+
+            getSideKeys(relation).forEach((sideKey) => {
+                const entityId = relation?.[sideKey]?.entity?.idMx;
+
+                if (!entityId) {
+                    return;
+                }
+
+                groupsByEntityId[entityId] = [
+                    ...(groupsByEntityId[entityId] ?? []),
+                    sideKey,
+                ];
+            });
+
+            return Object.values(groupsByEntityId).filter(
+                (sideGroup) => sideGroup.length > 1,
+            );
+        };
+
+        const repeatedParticipantRolesAreValid = (relation) =>
+            getRepeatedParticipantSideGroups(relation).every((sideGroup) => {
+                const groupRoles = sideGroup.map((sideKey) =>
+                    normalizeRole(roles[sideKey]),
+                );
+
+                return (
+                    groupRoles.every(Boolean) &&
+                    new Set(groupRoles).size === groupRoles.length
+                );
+            });
+
+        const handleClickOpen = () => {
+            const relation = getSelectedRelationData();
+
+            setRoles({
+                side1: relation?.side1?.role ?? "",
+                side2: relation?.side2?.role ?? "",
+                side3: relation?.side3?.role ?? "",
+            });
+
+            setOpen(true);
+        };
+
+        const handleClose = () => {
+            setOpen(false);
+        };
+
+        const handleChangeRole = (sideKey) => (event) => {
+            setRoles((previousRoles) => ({
+                ...previousRoles,
+                [sideKey]: event.target.value,
+            }));
+        };
+
+        const handleAccept = () => {
+            const relation = getSelectedRelationData();
+
+            if (!relation) {
+                return;
+            }
+
+            getSideKeys(relation).forEach((sideKey) => {
+                relation[sideKey].role = normalizeRole(roles[sideKey]);
+            });
+
+            syncAndPersistDiagramData();
+
+            setOpen(false);
+
+            toast.success("Roles de relación actualizados");
+        };
+
+        if (!canEditRoles) {
+            return;
+        }
+
+        const sideKeys = getSideKeys(selectedRelationDiag);
+        const acceptDisabled =
+            !repeatedParticipantRolesAreValid(selectedRelationDiag);
+
+        return (
+            <>
+                <button
+                    type="button"
+                    className="button-toolbar-action"
+                    onClick={handleClickOpen}
+                >
+                    Editar roles
+                </button>
+                <Dialog
+                    open={open}
+                    onClose={handleClose}
+                    aria-labelledby="relation-roles-dialog-title"
+                    aria-describedby="relation-roles-dialog-description"
+                >
+                    <DialogTitle id="relation-roles-dialog-title">
+                        {"Editar roles"}
+                    </DialogTitle>
+                    <DialogContent>
+                        <DialogContentText id="relation-roles-dialog-description">
+                            Editar los roles de los participantes de esta
+                            relación ternaria.
+                        </DialogContentText>
+                        <Box sx={{ minHeight: 10 }} />
+                        <Box sx={{ minWidth: 320 }}>
+                            {sideKeys.map((sideKey) => (
+                                <React.Fragment key={sideKey}>
+                                    <TextField
+                                        id={`relation-role-${sideKey}`}
+                                        label={getSideLabel(
+                                            selectedRelationDiag,
+                                            sideKey,
+                                        )}
+                                        value={roles[sideKey] ?? ""}
+                                        onChange={handleChangeRole(sideKey)}
+                                        fullWidth
+                                    />
+                                    <Box sx={{ minHeight: 10 }} />
+                                </React.Fragment>
+                            ))}
+                        </Box>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClose}>Cancelar</Button>
+                        <Button
+                            onClick={handleAccept}
+                            autoFocus
+                            disabled={acceptDisabled}
+                        >
+                            Aceptar
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </>
+        );
+    };
+
     const IsaConfigurationButton = () => {
         const isIsa = isIsaShapeCell(selected);
         const [open, setOpen] = React.useState(false);
@@ -2944,6 +3122,7 @@ export default function App(props) {
                 <div>{ToggleIdentifyingRelationButton()}</div>
 
                 <div>{RelationConfigurationButton()}</div>
+                <div>{RelationRolesButton()}</div>
                 <div>{IsaConfigurationButton()}</div>
                 <div>{RelationCardinalitiesButton()}</div>
 

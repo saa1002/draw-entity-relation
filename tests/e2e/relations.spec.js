@@ -11,6 +11,7 @@ import {
     expectSavedDiagramState,
     expectSavedRelationAttributeToMatch,
     expectSavedRelationToMatch,
+    getSavedRelation,
     openRelationCardinalitiesDialog,
     openRelationConfigDialog,
     renameElement,
@@ -518,4 +519,84 @@ test('block export when a ternary relationship repeats participating entities wi
     ).toBeVisible();
 
     await expect(dialog.getByRole('button', { name: 'Aceptar' })).toBeDisabled();
+});
+
+test('edit ternary relationship roles without recreating the relationship', async ({
+    page,
+}) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 520, y: 180 });
+
+    await renameElement(page, 'Entidad', 'Tenista');
+    await renameElement(page, 'Entidad 1', 'Fecha');
+
+    await addRelation(page, 'Relación', { x: 360, y: 320 });
+
+    await configureTernaryRelationSides(
+        page,
+        'Relación',
+        'Tenista',
+        'Tenista',
+        'Fecha',
+        {
+            side1Role: 'local',
+            side2Role: 'visitante',
+        },
+    );
+
+    await configureTernaryRelationCardinalities(
+        page,
+        'Relación',
+        '0:N',
+        '0:N',
+        '0:N',
+    );
+
+    const relationBefore = await getSavedRelation(page, 'Relación');
+
+    await selectRelation(page, 'Relación');
+
+    await page.getByRole('button', { name: 'Editar roles' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(dialog.getByText('Editar roles')).toBeVisible();
+
+    await dialog.locator('#relation-role-side1').fill('jugador local');
+    await dialog.locator('#relation-role-side2').fill('jugador visitante');
+
+    await dialog.getByRole('button', { name: 'Aceptar' }).click();
+
+    await expect(dialog).toBeHidden();
+
+    await expect(
+        page.getByText('Roles de relación actualizados'),
+    ).toBeVisible();
+
+    await expectSavedRelationToMatch(page, 'Relación', {
+        arity: 3,
+        side1: {
+            role: 'jugador local',
+            cardinality: '0:N',
+            entity: relationBefore.side1.entity,
+            cell: relationBefore.side1.cell,
+            edgeId: relationBefore.side1.edgeId,
+        },
+        side2: {
+            role: 'jugador visitante',
+            cardinality: '0:N',
+            entity: relationBefore.side2.entity,
+            cell: relationBefore.side2.cell,
+            edgeId: relationBefore.side2.edgeId,
+        },
+        side3: {
+            role: '',
+            cardinality: '0:N',
+            entity: relationBefore.side3.entity,
+            cell: relationBefore.side3.cell,
+            edgeId: relationBefore.side3.edgeId,
+        },
+    });
 });
