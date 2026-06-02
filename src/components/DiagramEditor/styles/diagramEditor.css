@@ -79,3 +79,8 @@ button {
   color: #444;
   pointer-events: none;
 }
+
+.button-toolbar-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

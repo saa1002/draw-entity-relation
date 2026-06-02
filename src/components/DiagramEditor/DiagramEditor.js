@@ -69,6 +69,7 @@ import {
     isTernaryRelation,
     isWeakEntity,
     isaInvolvesEntity,
+    normalizeDiagramData,
     relationHasBothEntitySides,
     relationInvolvesEntity,
     removeAllAttributesFromOwner,
@@ -138,6 +139,8 @@ import { getValidationDialogMessages } from "./utils/validation/validationMessag
 
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 
+const HISTORY_LIMIT = 100;
+
 export default function App(props) {
     const BUILD_LABEL = `Build: ${BUILD_DATE}`;
 
@@ -157,6 +160,14 @@ export default function App(props) {
         React.useState(null);
 
     const [refreshDiagram, setRefreshDiagram] = React.useState(false);
+
+    const undoStackRef = React.useRef([]);
+    const redoStackRef = React.useRef([]);
+    const lastHistorySnapshotRef = React.useRef(null);
+    const isApplyingHistorySnapshotRef = React.useRef(false);
+
+    const [canUndo, setCanUndo] = React.useState(false);
+    const [canRedo, setCanRedo] = React.useState(false);
 
     const onSelected = React.useCallback(
         (evt) => {
@@ -231,6 +242,111 @@ export default function App(props) {
 
     const saveToLocalStorage = () => {
         saveDiagramToLocalStorage(diagramRef.current);
+    };
+
+    const createDiagramSnapshot = (diagram = diagramRef.current) =>
+        JSON.stringify(normalizeDiagramData(diagram));
+
+    const readDiagramSnapshot = (snapshot) =>
+        normalizeDiagramData(JSON.parse(snapshot));
+
+    const updateHistoryAvailability = () => {
+        setCanUndo(undoStackRef.current.length > 1);
+        setCanRedo(redoStackRef.current.length > 0);
+    };
+
+    const resetDiagramHistory = () => {
+        const currentSnapshot = createDiagramSnapshot();
+
+        undoStackRef.current = [currentSnapshot];
+        redoStackRef.current = [];
+        lastHistorySnapshotRef.current = currentSnapshot;
+
+        updateHistoryAvailability();
+    };
+
+    const recordCurrentDiagramInHistory = () => {
+        if (isApplyingHistorySnapshotRef.current) {
+            return;
+        }
+
+        const currentSnapshot = createDiagramSnapshot();
+
+        if (currentSnapshot === lastHistorySnapshotRef.current) {
+            return;
+        }
+
+        if (!lastHistorySnapshotRef.current) {
+            undoStackRef.current = [currentSnapshot];
+        } else {
+            undoStackRef.current.push(currentSnapshot);
+        }
+
+        if (undoStackRef.current.length > HISTORY_LIMIT) {
+            undoStackRef.current.shift();
+        }
+
+        redoStackRef.current = [];
+        lastHistorySnapshotRef.current = currentSnapshot;
+
+        updateHistoryAvailability();
+    };
+
+    const applyDiagramSnapshot = (snapshot) => {
+        if (!graph || !snapshot) {
+            return;
+        }
+
+        isApplyingHistorySnapshotRef.current = true;
+
+        try {
+            const diagramData = readDiagramSnapshot(snapshot);
+
+            clearGraphCanvas(graph);
+            recreateGraphFromDiagram(diagramData);
+
+            if (typeof graph.clearSelection === "function") {
+                graph.clearSelection();
+            }
+
+            setSelected(null);
+            setSelectionVersion((prevVersion) => prevVersion + 1);
+
+            saveToLocalStorage();
+            lastHistorySnapshotRef.current = snapshot;
+        } finally {
+            isApplyingHistorySnapshotRef.current = false;
+        }
+    };
+
+    const undoDiagramChange = () => {
+        if (undoStackRef.current.length <= 1) {
+            return false;
+        }
+
+        const currentSnapshot = undoStackRef.current.pop();
+        redoStackRef.current.push(currentSnapshot);
+
+        const previousSnapshot = undoStackRef.current.at(-1);
+
+        applyDiagramSnapshot(previousSnapshot);
+        updateHistoryAvailability();
+
+        return true;
+    };
+
+    const redoDiagramChange = () => {
+        if (redoStackRef.current.length === 0) {
+            return false;
+        }
+
+        const nextSnapshot = redoStackRef.current.pop();
+
+        undoStackRef.current.push(nextSnapshot);
+        applyDiagramSnapshot(nextSnapshot);
+        updateHistoryAvailability();
+
+        return true;
     };
 
     const showSaveFileResultToast = (result) => {
@@ -426,7 +542,7 @@ export default function App(props) {
         recreateGraphFromDiagram(savedData);
     };
 
-    const syncAndPersistDiagramData = () => {
+    const syncAndPersistDiagramData = ({ recordHistory = true } = {}) => {
         syncDiagramDataFromGraph({
             diagram: diagramRef.current,
             graph,
@@ -435,9 +551,13 @@ export default function App(props) {
         });
 
         saveToLocalStorage();
+
+        if (recordHistory) {
+            recordCurrentDiagramInHistory();
+        }
     };
 
-    const shouldIgnoreDeleteKeyboardShortcut = (event) => {
+    const shouldIgnoreEditorKeyboardShortcut = (event) => {
         if (
             document.querySelector(
                 '[role="dialog"], [role="listbox"], .MuiPopover-root, .MuiModal-root',
@@ -466,6 +586,18 @@ export default function App(props) {
 
         return false;
     };
+
+    const isUndoKeyboardShortcut = (event) =>
+        (event.ctrlKey || event.metaKey) &&
+        !event.shiftKey &&
+        !event.altKey &&
+        event.key.toLowerCase() === "z";
+
+    const isRedoKeyboardShortcut = (event) =>
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        (event.key.toLowerCase() === "y" ||
+            (event.shiftKey && event.key.toLowerCase() === "z"));
 
     React.useEffect(() => {
         if (!graph) {
@@ -516,6 +648,7 @@ export default function App(props) {
                 });
 
             recreateGraphFromLocalStorage();
+            resetDiagramHistory();
 
             return () => {
                 graph
@@ -2918,11 +3051,27 @@ export default function App(props) {
         }
 
         const handleKeyDown = (event) => {
-            if (event.key !== "Delete") {
+            if (shouldIgnoreEditorKeyboardShortcut(event)) {
                 return;
             }
 
-            if (shouldIgnoreDeleteKeyboardShortcut(event)) {
+            if (isUndoKeyboardShortcut(event)) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                undoDiagramChange();
+                return;
+            }
+
+            if (isRedoKeyboardShortcut(event)) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                redoDiagramChange();
+                return;
+            }
+
+            if (event.key !== "Delete") {
                 return;
             }
 
@@ -2939,7 +3088,30 @@ export default function App(props) {
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [graph, selected, selectionVersion]);
+    }, [graph, selected, selectionVersion, canUndo, canRedo]);
+
+    const UndoRedoButtons = () => (
+        <>
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={undoDiagramChange}
+                disabled={!canUndo}
+                title="Ctrl+Z"
+            >
+                Deshacer
+            </button>
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={redoDiagramChange}
+                disabled={!canRedo}
+                title="Ctrl+Y / Ctrl+Shift+Z"
+            >
+                Rehacer
+            </button>
+        </>
+    );
 
     const GenerateSQLButton = () => {
         const [open, setOpen] = React.useState(false);
@@ -3107,9 +3279,11 @@ export default function App(props) {
                 );
 
                 if (diagnostics.isValid) {
-                    resetCanvas();
-                    saveDiagramToLocalStorage(importedDiagram);
+                    resetCanvas({ recordHistory: false });
                     recreateGraphFromDiagram(importedDiagram);
+                    saveToLocalStorage();
+                    recordCurrentDiagramInHistory();
+
                     setOpen(false);
                     toast.success("Diagrama importado con éxito.");
                 } else {
@@ -3165,12 +3339,27 @@ export default function App(props) {
         );
     };
 
-    const resetCanvas = () => {
-        diagramRef.current.entities = [];
-        diagramRef.current.relations = [];
-        diagramRef.current.isas = [];
+    const resetCanvas = ({ recordHistory = false } = {}) => {
+        diagramRef.current = {
+            entities: [],
+            relations: [],
+            isas: [],
+        };
+
         clearDiagramLocalStorage();
         clearGraphCanvas(graph);
+
+        if (typeof graph?.clearSelection === "function") {
+            graph.clearSelection();
+        }
+
+        setSelected(null);
+        setSelectionVersion((prevVersion) => prevVersion + 1);
+
+        if (recordHistory) {
+            saveToLocalStorage();
+            recordCurrentDiagramInHistory();
+        }
     };
 
     const ResetCanvasButton = () => {
@@ -3185,7 +3374,7 @@ export default function App(props) {
         };
 
         const handleAccept = () => {
-            resetCanvas();
+            resetCanvas({ recordHistory: true });
 
             setRefreshDiagram((prevState) => !prevState);
             setOpen(false);
@@ -3254,6 +3443,7 @@ export default function App(props) {
                 <div>{DeleteIsaButton()}</div>
 
                 <div>{MoveBackAndFrontButtons()}</div>
+                <div>{UndoRedoButtons()}</div>
 
                 <div>{GenerateSQLButton()}</div>
                 <div>{ExportJSONButton()}</div>

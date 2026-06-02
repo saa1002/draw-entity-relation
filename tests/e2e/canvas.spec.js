@@ -109,3 +109,73 @@ test.describe('keyboard deletion', () => {
         );
     });
 });
+
+test.describe('undo and redo', () => {
+    test('undoes and redoes entity creation using toolbar buttons', async ({
+        page,
+    }) => {
+        await page.goto('/');
+
+        await expect(
+            page.getByRole('button', { name: 'Deshacer' }),
+        ).toBeDisabled();
+        await expect(
+            page.getByRole('button', { name: 'Rehacer' }),
+        ).toBeDisabled();
+
+        await addEntity(page, 'Entidad');
+
+        await expect(
+            page.getByRole('button', { name: 'Deshacer' }),
+        ).toBeEnabled();
+
+        await page.getByRole('button', { name: 'Deshacer' }).click();
+
+        await expectSavedDiagramState(
+            page,
+            (diagram) => diagram.entities.map((entity) => entity.name),
+            [],
+        );
+
+        await expect(
+            page.getByRole('button', { name: 'Rehacer' }),
+        ).toBeEnabled();
+
+        await page.getByRole('button', { name: 'Rehacer' }).click();
+
+        await expectSavedDiagramState(
+            page,
+            (diagram) => diagram.entities.map((entity) => entity.name),
+            ['Entidad'],
+        );
+    });
+
+    test('supports Ctrl+Z and Ctrl+Y for diagram edits', async ({ page }) => {
+        await page.goto('/');
+
+        await addEntity(page, 'Entidad');
+        await renameElement(page, 'Entidad', 'Clientes');
+
+        await expectSavedDiagramState(
+            page,
+            (diagram) => diagram.entities.map((entity) => entity.name),
+            ['Clientes'],
+        );
+
+        await page.keyboard.press('Control+Z');
+
+        await expectSavedDiagramState(
+            page,
+            (diagram) => diagram.entities.map((entity) => entity.name),
+            ['Entidad'],
+        );
+
+        await page.keyboard.press('Control+Y');
+
+        await expectSavedDiagramState(
+            page,
+            (diagram) => diagram.entities.map((entity) => entity.name),
+            ['Clientes'],
+        );
+    });
+});
