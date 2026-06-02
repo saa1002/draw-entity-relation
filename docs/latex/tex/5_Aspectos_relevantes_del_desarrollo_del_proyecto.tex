@@ -1,6 +1,6 @@
 \capitulo{5}{Aspectos relevantes del desarrollo del proyecto}
 
-\section{Planteamiento general del desarrollo}
+\section{Planteamiento y organización del desarrollo}
 
 El desarrollo de este trabajo no comenzó desde una aplicación vacía, sino a partir de un editor de diagramas Entidad-Relación que ya existía y que tenía una parte funcional implementada. Antes de añadir nuevas funcionalidades, fue necesario entender cómo estaba construido el sistema, qué partes podían aprovecharse y qué aspectos convenía revisar para poder seguir ampliándolo con cierta seguridad.
 
@@ -10,9 +10,23 @@ Por esta razón, el desarrollo se planteó de forma incremental. Primero se anal
 
 En este capítulo se recogen los aspectos más relevantes de ese proceso. No se pretende hacer una descripción cronológica de todos los cambios realizados, sino explicar las decisiones técnicas más importantes y cómo estas permitieron evolucionar el editor desde su estado inicial hasta una versión más completa y ajustada a los objetivos del trabajo.
 
-\section{Análisis del sistema heredado}
+\subsection{Organización del trabajo}
+
+El desarrollo del proyecto se organizó de forma incremental, utilizando el control de versiones como apoyo principal para separar y documentar los cambios realizados. En lugar de introducir todas las modificaciones directamente sobre la rama principal, se trabajó mediante ramas específicas para cada bloque de trabajo, lo que permitió revisar los cambios con más seguridad antes de integrarlos.
+
+Las tareas se agruparon en milestones e issues de GitHub. Esta organización resultó útil para dividir el trabajo en objetivos más pequeños y manejables. Cada issue representaba una mejora, corrección o tarea de análisis concreta, y permitía mantener cierta trazabilidad entre el problema detectado, la solución aplicada y las pruebas realizadas posteriormente.
+
+El uso de commits separados también fue importante durante el desarrollo. Al tratarse de una aplicación heredada, muchas modificaciones afectaban a varias partes del sistema al mismo tiempo: la interfaz, el modelo interno, la validación, la persistencia o la generación de SQL. Por ello, se intentó que cada commit correspondiera a una unidad de trabajo concreta, facilitando así la revisión de los cambios y la detección de posibles regresiones.
+
+Además, algunas decisiones de alcance se fueron ajustando a partir de la revisión del tutor. Esto fue especialmente relevante en las fases finales, donde se decidió mantener un soporte inicial y controlado para las jerarquías ISA y aplazar funcionalidades más complejas, como las agregaciones o la herencia múltiple real. De esta forma, el desarrollo no se basó únicamente en añadir funcionalidades, sino también en decidir qué casos debían quedar dentro o fuera del alcance del trabajo.
+
+En conjunto, esta forma de organización permitió avanzar de manera progresiva, comprobando cada bloque antes de continuar con el siguiente. Esta metodología fue especialmente útil en un editor visual, donde un cambio aparentemente pequeño puede afectar al modelo interno, a la reconstrucción del diagrama o a la salida SQL generada.
+
+\section{Análisis y estabilización del sistema heredado}
 
 Antes de empezar con las ampliaciones del editor, se realizó una revisión del sistema heredado. La aplicación ya permitía trabajar con diagramas Entidad-Relación básicos y estaba desarrollada con React y mxGraph. Además, contaba con una estructura interna para guardar la información del diagrama, lo que resultaba fundamental para el resto de funcionalidades del proyecto.
+
+\subsection{Análisis del sistema heredado}
 
 Durante esta revisión se estudió la relación entre los elementos que aparecen en el lienzo y los datos que maneja internamente la aplicación. En particular, se analizó cómo se representaban las entidades, los atributos y las relaciones, cómo se actualizaba el modelo cuando el usuario modificaba el diagrama y cómo se reconstruía el contenido al cargar un diagrama previamente guardado.
 
@@ -22,7 +36,7 @@ Esta sincronización entre la parte visual y el modelo interno era uno de los pu
 
 La revisión del sistema heredado también permitió detectar algunos puntos delicados de la implementación inicial. Algunas partes dependían de convenciones internas o de relaciones implícitas entre los elementos gráficos y los datos del modelo. Aunque estas soluciones podían funcionar en casos sencillos, podían complicar la incorporación de nuevos elementos del modelo Entidad-Relación. Por ello, antes de seguir ampliando la herramienta, fue necesario dedicar parte del trabajo a estabilizar el núcleo del editor.
 
-\section{Estabilización del núcleo del editor}
+\subsection{Estabilización del núcleo del editor}
 
 Una vez comprendido el funcionamiento general del sistema heredado, el siguiente paso fue estabilizar algunas partes del núcleo del editor antes de incorporar nuevas funcionalidades. Esta fase fue importante porque el editor no solo debía permitir dibujar elementos en el lienzo, sino mantener una relación coherente entre esos elementos gráficos y la información almacenada internamente.
 
@@ -36,26 +50,41 @@ Otro aspecto relevante fue la estabilización de la configuración de relaciones
 
 Esta fase no consistió en rehacer por completo la aplicación, sino en preparar una base más segura sobre la que seguir trabajando. El objetivo era que las ampliaciones posteriores no se apoyaran en comportamientos frágiles del sistema, sino en una estructura más clara y fácil de mantener. Esto permitió continuar con la incorporación de nuevos elementos del modelo Entidad-Relación con menor riesgo de introducir inconsistencias entre la interfaz, el modelo interno y las operaciones de validación o transformación.
 
-\section{Evolución del modelo interno}
+
+\section{Evolución del modelo interno y persistencia}
 
 Una parte importante del desarrollo fue la evolución del modelo interno utilizado por la aplicación para representar el diagrama. En el editor, los elementos no existen únicamente como figuras dibujadas en el lienzo, sino que también deben quedar guardados en una estructura de datos que permita trabajar con ellos desde la lógica de la aplicación.
 
-Este modelo interno actúa como una representación del diagrama Entidad-Relación diseñado por el usuario. En él se almacenan las entidades, las relaciones y los atributos, junto con la información necesaria para reconstruir el diagrama, validarlo y transformarlo posteriormente al modelo relacional.
+Este modelo interno actúa como una representación del diagrama Entidad-Relación diseñado por el usuario. En él se almacenan las entidades, las relaciones, los atributos y el resto de elementos necesarios para reconstruir el diagrama, validarlo y transformarlo posteriormente al modelo relacional.
 
 \imagen{modelo_interno_editor}{Relación entre el lienzo del editor, el modelo interno y las operaciones principales de la aplicación.}{0.75}
 
 Por tanto, cualquier ampliación visual del editor debía ir acompañada de una ampliación coherente de esta estructura.
 
+\subsection{Evolución de la estructura interna}
+
 A medida que se añadieron nuevos elementos al editor, el modelo tuvo que incorporar más información. Por ejemplo, las entidades pasaron a poder almacenar si eran entidades débiles y, en ese caso, qué relación identificadora y qué entidad propietaria estaban asociadas a ellas. Del mismo modo, los atributos incorporaron información adicional para distinguir claves primarias, discriminantes, atributos multivaluados o atributos compuestos.
 
 En el caso de las relaciones, también fue necesario ampliar la información almacenada. Además del nombre y de los extremos participantes, el modelo debía conservar las cardinalidades, los roles cuando fueran necesarios y la posibilidad de que ciertas relaciones tuvieran atributos propios. Esta información era especialmente importante en relaciones más complejas, donde no basta con saber qué entidades participan, sino también cómo participa cada una de ellas.
 
+Durante la fase final del desarrollo también se incorporó información específica para representar jerarquías ISA. Para ello, el modelo interno pasó a almacenar una colección de elementos ISA, cada uno de ellos formado por una entidad general y una o varias entidades especializadas. Esta información debía mantenerse separada de las entidades y relaciones ordinarias, pero al mismo tiempo debía estar conectada con ellas para poder validar el diagrama y generar posteriormente el esquema relacional.
+
 Otro aspecto relevante fue la normalización de los datos del diagrama. Como el proyecto parte de una aplicación ya existente, era posible que algunos diagramas guardados previamente no tuvieran todos los campos que se fueron incorporando después. Para evitar errores al cargar estos datos, se añadió una fase de normalización que completa valores por defecto y adapta la información al formato esperado por la versión actual del editor.
 
-Esta evolución del modelo interno permitió que las nuevas funcionalidades no quedaran limitadas a la parte visual. Cada elemento añadido al lienzo debía tener una correspondencia en la estructura de datos, de forma que pudiera ser persistido, importado, exportado, validado y utilizado en la generación de SQL. Esta idea fue una de las bases del desarrollo, ya que ayudó a mantener la coherencia entre lo que el usuario diseña y lo que la aplicación procesa internamente.
+\subsection{Persistencia, importación y exportación}
 
-% TODO: revisar esta sección al cerrar las ampliaciones finales de ISA y agregaciones,
-% por si introducen nuevos campos o cambios en la estructura del modelo interno.
+Otro aspecto importante del editor es la posibilidad de conservar el trabajo realizado por el usuario. Para ello, la aplicación utiliza una representación en formato JSON del modelo interno del diagrama. Esta representación permite guardar el estado del diagrama, exportarlo a un archivo e importarlo posteriormente.
+
+La persistencia local permite que el usuario no pierda el contenido del editor al recargar la aplicación. Esta funcionalidad es especialmente útil durante el proceso de edición, ya que el diseño de un diagrama puede requerir varias iteraciones antes de considerarse terminado.
+
+La exportación en JSON permite guardar el diagrama fuera del navegador y recuperarlo más adelante. A su vez, la importación permite cargar un diagrama previamente exportado. Antes de aceptar un archivo importado, la aplicación comprueba que su contenido sea válido y que pueda adaptarse al modelo interno esperado.
+
+Esta parte fue especialmente relevante porque cada ampliación del modelo debía ser compatible con la persistencia. Si se añade un nuevo elemento al editor, como una relación ternaria o una jerarquía ISA, no basta con mostrarlo correctamente en pantalla: también debe poder guardarse, exportarse, importarse y reconstruirse de forma coherente.
+
+De esta manera, la persistencia actúa como un punto de unión entre varias partes del sistema. El modelo interno no solo sirve para validar y generar SQL, sino también para mantener la continuidad del trabajo del usuario y permitir que los diagramas puedan moverse entre sesiones o entre distintos entornos.
+
+En conjunto, esta evolución permitió que las nuevas funcionalidades pudieran conservarse entre sesiones y utilizarse después en la validación, la transformación relacional y la generación de SQL.
+
 
 \section{Ampliación de los elementos Entidad-Relación soportados}
 
@@ -63,43 +92,63 @@ Una vez estabilizada la base del editor, el desarrollo se centró en ampliar los
 
 El punto de partida del editor ya permitía trabajar con elementos básicos, como entidades, atributos y relaciones binarias. A partir de esa base se fueron incorporando elementos que permiten representar modelos más completos, manteniendo siempre la correspondencia entre la parte visual y la información almacenada internamente por la aplicación.
 
-Una de las ampliaciones realizadas fue el soporte para entidades débiles. Para ello, las entidades pasaron a poder marcarse como débiles y a asociarse con una relación identificadora y una entidad propietaria. También se incorporó el concepto de discriminante, representado mediante atributos parciales de la entidad débil. Esta ampliación afectó tanto a la forma de mostrar los elementos en el editor como a la validación del modelo y a la generación del esquema relacional correspondiente.
+\subsection{Entidades débiles y dependencias por identificación}
 
-También se amplió el tratamiento de los atributos. Además de los atributos simples y las claves primarias, el editor pasó a permitir atributos compuestos y atributos multivaluados. En el caso de los atributos compuestos, fue necesario representar una estructura jerárquica de atributos dentro del modelo interno. En el caso de los atributos multivaluados, su tratamiento también tuvo impacto en la transformación relacional, ya que no se pueden trasladar al modelo relacional de la misma forma que un atributo simple.
+Una de las primeras ampliaciones relevantes fue el soporte para entidades débiles. Para ello, las entidades pasaron a poder marcarse como débiles y a asociarse con una relación identificadora y una entidad propietaria. También se incorporó el concepto de discriminante, representado mediante atributos parciales de la entidad débil.
 
-Otro bloque importante fue la evolución de las relaciones. El editor ya trabajaba con relaciones binarias, pero durante el desarrollo se revisó su comportamiento y se amplió el soporte para casos más complejos. Entre ellos se encuentran las relaciones reflexivas, las relaciones con atributos propios cuando el tipo de relación lo permite y las relaciones ternarias. En estas últimas, el modelo interno debía conservar tres participantes, sus cardinalidades y, cuando fuera necesario, los roles asociados a cada participación.
+Esta ampliación afectó a varias partes del sistema. En la interfaz fue necesario diferenciar visualmente las entidades débiles y las relaciones identificadoras. En el modelo interno se añadieron los datos necesarios para recordar la dependencia entre la entidad débil y su propietaria. Además, la validación y la transformación relacional tuvieron que contemplar que la clave de una entidad débil se construye a partir de su discriminante y de la clave heredada de la entidad fuerte de la que depende.
 
-El soporte para roles fue especialmente útil en los casos en los que una misma entidad participa más de una vez en una relación. En esos casos, no basta con saber qué entidad interviene, sino que es necesario distinguir el papel que desempeña en cada lado de la relación. Esta información resulta importante tanto para que el diagrama sea comprensible como para evitar ambigüedades durante la transformación posterior.
+\subsection{Atributos compuestos y multivaluados}
 
-Estas ampliaciones se realizaron de forma progresiva, intentando que cada nuevo elemento quedara integrado en el flujo completo de la aplicación. Es decir, no se consideraba suficiente que el elemento pudiera dibujarse en pantalla, sino que también debía poder guardarse, reconstruirse, validarse y, cuando correspondiera, transformarse al modelo relacional y al script SQL final.
+También se amplió el tratamiento de los atributos. Además de los atributos simples y las claves primarias, el editor pasó a permitir atributos compuestos y atributos multivaluados.
 
-En algunos casos, el soporte incorporado tiene un alcance limitado. Por ejemplo, determinadas combinaciones se restringen para mantener la coherencia del modelo y evitar transformaciones ambiguas. Este criterio permite que el editor cubra más casos del modelo Entidad-Relación sin convertir la aplicación en una herramienta excesivamente compleja o difícil de mantener dentro del alcance de este trabajo.
+En el caso de los atributos compuestos, fue necesario representar una estructura jerárquica de atributos dentro del modelo interno. Esto permite que un atributo pueda actuar como padre de otros atributos más simples. Esta representación también debía poder reconstruirse visualmente al cargar un diagrama guardado.
 
-% TODO: completar o matizar esta sección cuando se cierren las ampliaciones finales
-% relacionadas con ISA y agregaciones.
+Los atributos multivaluados requirieron un tratamiento diferente, ya que no se pueden trasladar al modelo relacional como una simple columna dentro de la tabla de la entidad. Por ello, su incorporación tuvo impacto no solo en la representación visual, sino también en la transformación relacional y en la generación del SQL final.
 
-\section{Validación del modelo}
+\subsection{Relaciones ternarias y roles}
+
+Otro bloque importante fue la evolución de las relaciones. El editor ya trabajaba con relaciones binarias, pero durante el desarrollo se revisó su comportamiento y se amplió el soporte para casos más complejos. Entre ellos se encuentran las relaciones reflexivas, las relaciones con atributos propios cuando el tipo de relación lo permite y las relaciones ternarias.
+
+En las relaciones ternarias, el modelo interno debía conservar tres participantes, sus cardinalidades y, cuando fuera necesario, los roles asociados a cada participación. El soporte para roles fue especialmente útil en los casos en los que una misma entidad participa más de una vez en una relación. En esos casos, no basta con saber qué entidad interviene, sino que es necesario distinguir el papel que desempeña en cada lado de la relación.
+
+Esta información resulta importante tanto para que el diagrama sea comprensible como para evitar ambigüedades durante la transformación posterior. Por este motivo, los roles se integraron en el modelo interno y en la representación visual de las relaciones ternarias.
+
+\subsection{Soporte inicial de jerarquías ISA}
+
+Durante la fase final del desarrollo se incorporó también un soporte inicial para jerarquías ISA. Esta ampliación se planteó con un alcance controlado, ya que las jerarquías de especialización y generalización pueden tener muchas variantes y no todas ellas eran necesarias para los objetivos del proyecto.
+
+El editor permite crear un elemento ISA y configurarlo indicando una entidad general y una o varias entidades especializadas. Esta información se guarda en el modelo interno, se reconstruye al cargar el diagrama y se tiene en cuenta en la validación y en la generación del esquema relacional.
+
+Una decisión importante fue limitar la funcionalidad a jerarquías ISA sencillas. Cada ISA debe tener una única generalización y una o varias especializaciones. No se incorporaron restricciones de totalidad o parcialidad, ni especializaciones solapadas o exclusivas, ni discriminantes, ni herencia múltiple real. Estas variantes se dejaron fuera para mantener una implementación coherente con el alcance del trabajo.
+
+También se decidió que las especializaciones no tengan clave primaria propia, ya que heredan la clave de la generalización. Sin embargo, sí se permite que una especialización no tenga atributos propios, porque puede seguir siendo útil dentro del modelo si participa en relaciones con otras entidades.
+
+Estas ampliaciones se realizaron de forma progresiva, procurando que cada nuevo elemento quedara integrado en el funcionamiento general del editor y no solo en su representación visual.
+
+\section{Validación, transformación relacional y generación de SQL}
+
+Una vez que el usuario construye un diagrama en el editor, la aplicación debe comprobar que ese modelo es coherente antes de generar cualquier salida. Por ello, el flujo principal no termina en la representación visual del diagrama, sino que continúa con tres pasos relacionados entre sí: la validación del modelo, su transformación a una representación relacional y la generación final del script SQL.
+
+\subsection{Validación del modelo}
 
 La validación del modelo fue una parte importante del desarrollo, porque el editor no debía limitarse a permitir dibujar diagramas, sino que también debía comprobar que esos diagramas tuvieran una estructura coherente antes de realizar operaciones como la transformación relacional o la generación de SQL.
 
 En una herramienta de este tipo, el usuario puede construir el diagrama de forma progresiva y dejar temporalmente elementos incompletos. Esto es normal durante la edición, pero no todos esos estados son válidos para generar un esquema relacional. Por este motivo, la aplicación necesita diferenciar entre un diagrama en construcción y un diagrama suficientemente completo para poder procesarse.
 
-La validación se apoya en el modelo interno del diagrama. En lugar de revisar únicamente la parte visual, se comprueba la información almacenada sobre entidades, atributos y relaciones. De esta forma, las reglas de validación se aplican sobre la misma estructura que después se utiliza para la transformación relacional y la generación de SQL.
+La validación se apoya en el modelo interno del diagrama. En lugar de revisar únicamente la parte visual, se comprueba la información almacenada sobre entidades, atributos, relaciones y jerarquías ISA. De esta forma, las reglas de validación se aplican sobre la misma estructura que después se utiliza para la transformación relacional y la generación de SQL.
 
 Entre las comprobaciones realizadas se encuentran reglas generales, como evitar elementos sin nombre o nombres repetidos cuando pueden producir ambigüedad, y reglas más específicas del modelo Entidad-Relación. Por ejemplo, se revisa que las entidades tengan una definición suficiente, que los atributos clave estén correctamente indicados y que las relaciones tengan sus participantes y cardinalidades configurados de forma válida.
 
 A medida que se ampliaron los elementos soportados por el editor, también fue necesario ampliar las validaciones. Las entidades débiles, los discriminantes, los atributos compuestos o multivaluados y las relaciones más complejas introducen restricciones adicionales que no aparecían en el modelo inicial. Por ello, la validación fue evolucionando junto con el resto del sistema.
 
+En el caso de las jerarquías ISA, la validación comprueba que cada jerarquía tenga una única generalización y al menos una especialización. También se controla que una entidad no actúe como especialización en más de una ISA, ya que ese caso supondría herencia múltiple y se decidió dejarlo fuera del alcance implementado. Además, se evita que las especializaciones tengan claves primarias propias, puesto que heredan la clave de la entidad general.
+
 El objetivo de estas comprobaciones no es sustituir a un sistema gestor de bases de datos ni cubrir cualquier posible restricción semántica, sino evitar que la aplicación genere una salida incoherente a partir de un diagrama mal definido. En este sentido, la validación actúa como una barrera previa antes de pasar a fases posteriores del flujo.
 
 También se procuró que los errores detectados pudieran comunicarse al usuario de forma comprensible. Esto es importante porque, si un diagrama no puede transformarse o generar SQL, el usuario necesita saber qué parte debe revisar. Por tanto, la validación no solo tiene una función interna, sino que también ayuda a guiar el uso correcto de la herramienta.
 
-En conjunto, esta fase permitió reforzar la coherencia del editor. Cada nuevo elemento añadido al modelo debía ir acompañado de las comprobaciones necesarias para evitar estados incompletos o ambiguos, especialmente en aquellos casos en los que una mala configuración podía afectar directamente a la transformación relacional.
-
-% TODO: revisar esta sección al cerrar ISA y agregaciones, por si se añaden nuevas
-% reglas de validación o restricciones específicas para esos elementos.
-
-\section{Transformación al modelo relacional}
+\subsection{Transformación al modelo relacional}
 
 Después de validar el diagrama, el siguiente paso del flujo de la aplicación es transformarlo a una representación relacional. Esta fase es importante porque el modelo Entidad-Relación y el modelo relacional no representan la información de la misma manera. Por ello, antes de generar el script SQL final, la aplicación necesita convertir las entidades, atributos y relaciones del diagrama en tablas, columnas, claves primarias y claves foráneas.
 
@@ -113,14 +162,9 @@ Algunos elementos requieren un tratamiento específico. Por ejemplo, los atribut
 
 En el caso de relaciones más complejas, como las ternarias, la transformación debe conservar la información de los participantes y sus roles cuando son necesarios. Esto evita ambigüedades, especialmente cuando una misma entidad aparece más de una vez en una relación o cuando la relación necesita generar una estructura propia dentro del modelo relacional.
 
-El objetivo de esta fase no es únicamente obtener tablas, sino mantener una correspondencia razonable entre el diagrama diseñado por el usuario y el esquema relacional resultante. De esta forma, la transformación está muy ligada a las validaciones previas: cuanto más claro y completo sea el modelo validado, menos ambiguo será el resultado relacional generado.
+Para las jerarquías ISA se adoptó una estrategia sencilla y explícita. La entidad general se transforma como una tabla ordinaria. Cada especialización genera también su propia tabla, pero incorporando la clave de la generalización como clave primaria y, al mismo tiempo, como clave foránea hacia la tabla general. De esta forma, la relación entre la generalización y cada especialización queda representada en el modelo relacional mediante una relación uno a uno.
 
-Esta separación entre transformación relacional y generación de SQL también facilita el mantenimiento del proyecto. La aplicación primero construye una representación relacional intermedia y, a partir de ella, genera posteriormente el texto SQL. De esta forma, la lógica de conversión del modelo no queda mezclada directamente con la forma concreta en la que se escriben las sentencias SQL.
-
-% TODO: revisar esta sección al cerrar ISA y agregaciones, ya que pueden requerir
-% matices específicos en la transformación al modelo relacional.
-
-\section{Generación de SQL}
+\subsection{Generación de SQL}
 
 La generación de SQL es la última fase del flujo principal de la aplicación. Una vez que el diagrama ha sido validado y transformado a una representación relacional, el sistema utiliza esa información para construir un script SQL que pueda servir como punto de partida para crear las tablas correspondientes en una base de datos.
 
@@ -132,12 +176,12 @@ Las claves foráneas se generan de forma separada respecto a la creación princi
 
 También se realiza una normalización de los identificadores utilizados en el SQL. Esta normalización ayuda a evitar problemas con nombres que puedan contener espacios, acentos u otros caracteres poco adecuados para identificadores de base de datos. Además, cuando se detectan posibles repeticiones de nombres dentro de una misma tabla, se ajustan para evitar conflictos en el esquema resultante.
 
+En el caso de las jerarquías ISA, el SQL generado refleja la estrategia relacional adoptada. La tabla correspondiente a la generalización se crea como una tabla ordinaria. Las tablas de especialización incluyen la clave heredada de la generalización, que se declara como clave primaria y también como clave foránea hacia la tabla general. Con ello se mantiene la relación entre la entidad general y sus especializaciones dentro del esquema SQL.
+
 El generador de SQL no pretende cubrir todos los detalles posibles de un sistema gestor de bases de datos, sino producir una salida coherente con el modelo relacional obtenido por la aplicación. Por ejemplo, los atributos se traducen con un tipo de dato general, suficiente para representar la estructura del esquema, pero sin entrar en una edición detallada de tipos específicos por atributo.
 
 En conjunto, esta fase completa el recorrido desde el diagrama visual hasta una salida textual utilizable. El resultado no debe entenderse como un diseño de base de datos final para cualquier contexto real, sino como una traducción razonable del modelo creado en el editor, adecuada para el objetivo académico y práctico del proyecto.
 
-% TODO: revisar esta sección si las ampliaciones finales de ISA y agregaciones
-% modifican la estructura relacional o la forma de generar el SQL.
 
 \section{Pruebas y revisión manual}
 
@@ -151,26 +195,45 @@ Aun así, no todo el comportamiento del editor puede comprobarse de forma sencil
 
 Por eso, la revisión manual también tuvo un papel importante. Se comprobaron distintos casos de uso creando diagramas en el editor y revisando que los elementos se representaran correctamente, que pudieran guardarse y recuperarse, que las validaciones detectaran configuraciones incorrectas y que la salida relacional o SQL fuera coherente con el diagrama diseñado.
 
+En las fases finales se prestó especial atención a los casos relacionados con las jerarquías ISA y con las mejoras de usabilidad del editor. Se revisó que las especializaciones heredasen correctamente la clave de la generalización, que se rechazasen configuraciones no soportadas y que el SQL generado mantuviera la relación entre las tablas de generalización y especialización. También se comprobaron acciones de edición frecuentes, como modificar roles de relaciones ternarias, borrar elementos mediante teclado y utilizar deshacer y rehacer.
+
 Esta combinación de pruebas automáticas y revisión manual permitió avanzar con más seguridad durante la ampliación del editor. Las pruebas ayudaron a controlar casos concretos y evitar regresiones, mientras que la revisión manual permitió comprobar el comportamiento global de la herramienta desde el punto de vista del usuario.
 
 En cualquier caso, las pruebas no deben entenderse como una garantía absoluta de ausencia de errores. Su función dentro del proyecto fue apoyar el desarrollo y aportar confianza sobre los comportamientos principales, especialmente en las partes más sensibles del sistema. Las funcionalidades más complejas, como las relacionadas con la transformación del modelo y la generación de SQL, requieren tanto pruebas concretas como una revisión del resultado obtenido en distintos escenarios.
 
-% TODO: actualizar esta sección al final del desarrollo con el estado real de las pruebas
-% y la revisión manual realizada tras implementar ISA y agregaciones.
+\section{Refinamientos finales de usabilidad}
 
-\section{Ampliaciones finales del modelo}
+Además de ampliar los elementos del modelo soportados por el editor, durante la fase final del trabajo se incorporaron varias mejoras orientadas a facilitar el uso de la herramienta. Estas mejoras no cambian la teoría del modelo Entidad-Relación soportado, pero sí hacen que la interacción con el editor sea más cómoda y menos propensa a errores.
 
-Además de las ampliaciones ya descritas, durante la fase final del trabajo se reserva una parte del desarrollo para incorporar algunos elementos adicionales del modelo Entidad-Relación. En concreto, se plantea añadir un soporte limitado para jerarquías ISA y agregaciones, teniendo en cuenta el alcance del proyecto y la complejidad que estos elementos pueden introducir en el editor.
+\subsection{Mejoras en relaciones ternarias}
 
-Estas ampliaciones no se plantean como el núcleo principal del trabajo, sino como una extensión final sobre una base ya estabilizada. El objetivo es integrarlas de forma coherente con el resto de la aplicación, manteniendo la misma idea seguida durante el desarrollo: que los elementos representados en el lienzo tengan correspondencia en el modelo interno y puedan participar, cuando corresponda, en las validaciones y en el proceso de transformación.
+Una de las mejoras realizadas afectó a las relaciones ternarias. En los casos en los que una entidad participa más de una vez en una misma relación, el nombre del rol ayuda a entender qué papel desempeña cada participación. Por ello, los roles se muestran en el arco correspondiente junto con la cardinalidad.
 
-En el caso de las jerarquías ISA, será necesario decidir qué nivel de soporte se incorpora al editor y cómo se representa su relación con las entidades participantes. En el caso de las agregaciones, el principal cuidado estará en evitar que su incorporación complique en exceso el modelo interno o introduzca ambigüedades en la transformación posterior.
+También se añadió la posibilidad de editar los roles de una relación ternaria ya configurada. Antes, modificar esta información podía obligar a eliminar o reconstruir parte de la relación, lo que resultaba poco cómodo. Con esta mejora, el usuario puede cambiar los roles sin perder la relación, sus participantes, sus cardinalidades ni sus atributos asociados.
 
-Por ello, estas funcionalidades se tratan como ampliaciones de alcance controlado. Su implementación deberá revisarse al final del desarrollo para concretar exactamente qué casos quedan soportados, qué limitaciones se mantienen y cómo deben explicarse en la memoria.
+\subsection{Borrado mediante teclado}
 
-% TODO: completar esta sección cuando esté implementado el soporte limitado para ISA.
-% TODO: completar esta sección cuando esté implementado el soporte limitado para agregaciones.
-% TODO: revisar si estas ampliaciones afectan a validación, transformación relacional y generación SQL.
+Otra mejora incorporada fue el borrado mediante la tecla Supr o Delete. Esta acción reutiliza la misma lógica de borrado que ya existía en los botones contextuales, de manera que se mantiene un comportamiento coherente.
+
+El borrado con teclado se aplica a los elementos principales del editor, como entidades, relaciones, atributos que pueden eliminarse y jerarquías ISA. Además, se evita que el atajo actúe cuando el usuario está escribiendo en campos de texto, diálogos o editores, para no interferir con la edición normal de nombres o valores.
+
+\subsection{Controles de deshacer y rehacer}
+
+Finalmente, se añadieron controles de deshacer y rehacer. El editor incorpora botones en la barra lateral y atajos de teclado habituales, como Ctrl+Z para deshacer y Ctrl+Y o Ctrl+Shift+Z para rehacer.
+
+Esta funcionalidad se implementó guardando estados sucesivos del modelo interno del diagrama. De esta forma, al deshacer o rehacer se restauran de forma coordinada el modelo, el lienzo y la información persistida. Esta decisión permite que la funcionalidad no dependa solo de la parte visual, sino del estado real del diagrama que utiliza la aplicación.
+
+Estas mejoras responden a una idea común: el editor no solo debe ser correcto desde el punto de vista del modelo, sino también cómodo de utilizar. En una herramienta visual, pequeñas acciones como borrar con el teclado, corregir un rol o volver atrás después de un cambio ayudan a que el proceso de construcción del diagrama sea más natural para el usuario.
+
+\section{Dificultades y decisiones técnicas relevantes}
+
+Durante el desarrollo aparecieron varias dificultades que influyeron en la forma de ampliar el editor. Una de las más importantes fue mantener sincronizada la parte visual del diagrama con el modelo interno de la aplicación. mxGraph permite representar y mover elementos en el lienzo, pero la lógica del proyecto necesita una estructura propia para validar el diagrama, guardarlo, reconstruirlo y generar SQL.
+
+También fue necesario tomar decisiones de alcance. El modelo Entidad-Relación permite representar casos avanzados, pero algunos de ellos podían aumentar demasiado la complejidad del proyecto. Esto ocurrió especialmente con las jerarquías ISA, donde se optó por implementar un soporte inicial y dejar fuera variantes como totalidad o parcialidad, solapamiento o exclusividad, discriminantes y herencia múltiple real.
+
+Una decisión similar se tomó con las agregaciones, que se mantienen como una posible línea de trabajo futura. Su incorporación requeriría nuevas decisiones sobre representación visual, modelo interno, validación y transformación relacional.
+
+Finalmente, en las mejoras de usabilidad también fue necesario equilibrar utilidad y complejidad. Funcionalidades como deshacer y rehacer podían implementarse de forma controlada mediante estados del modelo interno. En cambio, copiar y pegar fragmentos arbitrarios del diagrama implicaría duplicar elementos y reconstruir dependencias entre ellos, por lo que se consideró una funcionalidad más adecuada para una fase posterior.
 
 \section{Consideraciones finales del desarrollo}
 
@@ -180,6 +243,6 @@ Uno de los aspectos más importantes del trabajo ha sido mantener la conexión e
 
 También fue importante asumir que el editor tiene un alcance concreto. El modelo Entidad-Relación puede llegar a incluir muchos casos y variantes, pero no todos ellos pueden abordarse con el mismo nivel de detalle dentro de este trabajo. Por ello, algunas decisiones se tomaron buscando un equilibrio entre ampliar la funcionalidad del editor y mantener una implementación comprensible y mantenible.
 
-En conjunto, el desarrollo permitió evolucionar una aplicación ya funcional hacia una herramienta más completa, con un soporte más amplio para distintos elementos del modelo Entidad-Relación y con una relación más clara entre el diseño visual del usuario y el resultado relacional generado por la aplicación.
+En el tramo final, este criterio se aplicó especialmente al soporte de jerarquías ISA y a las agregaciones. En ambos casos se priorizó mantener un alcance controlado, incorporando únicamente aquello que podía integrarse de forma coherente en el editor y dejando las variantes más complejas como posibles líneas de trabajo futuras.
 
-% TODO: revisar este cierre cuando se terminen las ampliaciones finales de ISA y agregaciones.
+En conjunto, el desarrollo permitió evolucionar una aplicación ya funcional hacia una herramienta más completa, con un soporte más amplio para distintos elementos del modelo Entidad-Relación y con una relación más clara entre el diseño visual del usuario y el resultado relacional generado por la aplicación.
