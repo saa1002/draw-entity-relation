@@ -34,6 +34,21 @@ test('mxGraph transaction level stays balanced (updateLevel === 0)', async ({ pa
     await expect.poll(getUpdateLevel).toBe(0);
 });
 
+test('shows onboarding message only while the canvas is empty', async ({ page }) => {
+    await page.goto('/');
+
+    const onboardingMessage = page.getByText(
+        'Añade una entidad para comenzar',
+        { exact: true },
+    );
+
+    await expect(onboardingMessage).toBeVisible();
+
+    await addEntity(page);
+
+    await expect(onboardingMessage).toBeHidden();
+});
+
 test.describe('keyboard deletion', () => {
     test('delete selected entity with Delete key', async ({ page }) => {
         await page.goto('/');

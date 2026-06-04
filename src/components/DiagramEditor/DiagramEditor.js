@@ -160,6 +160,18 @@ export default function App(props) {
         React.useState(null);
 
     const [refreshDiagram, setRefreshDiagram] = React.useState(false);
+    const [isDiagramEmpty, setIsDiagramEmpty] = React.useState(true);
+
+    const updateEmptyCanvasState = React.useCallback(
+        (diagram = diagramRef.current) => {
+            setIsDiagramEmpty(
+                (diagram.entities?.length ?? 0) === 0 &&
+                    (diagram.relations?.length ?? 0) === 0 &&
+                    (diagram.isas?.length ?? 0) === 0,
+            );
+        },
+        [],
+    );
 
     const undoStackRef = React.useRef([]);
     const redoStackRef = React.useRef([]);
@@ -521,6 +533,7 @@ export default function App(props) {
         if (!diagramData) return;
 
         diagramRef.current = diagramData;
+        updateEmptyCanvasState(diagramRef.current);
 
         reconstructDiagramGraph({
             graph,
@@ -551,6 +564,7 @@ export default function App(props) {
         });
 
         saveToLocalStorage();
+        updateEmptyCanvasState();
 
         if (recordHistory) {
             recordCurrentDiagramInHistory();
@@ -3348,6 +3362,7 @@ export default function App(props) {
 
         clearDiagramLocalStorage();
         clearGraphCanvas(graph);
+        updateEmptyCanvasState();
 
         if (typeof graph?.clearSelection === "function") {
             graph.clearSelection();
@@ -3450,6 +3465,22 @@ export default function App(props) {
                 <div>{ImportJSONButton()}</div>
                 <div>{ResetCanvasButton()}</div>
             </div>
+            {isDiagramEmpty && (
+                <div
+                    className="empty-canvas-onboarding-layer"
+                    aria-live="polite"
+                >
+                    <div className="empty-canvas-onboarding">
+                        <p className="empty-canvas-onboarding-title">
+                            Añade una entidad para comenzar
+                        </p>
+                        <p className="empty-canvas-onboarding-text">
+                            También puedes importar un diagrama JSON existente.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <div ref={containerRef} className="mxgraph-drawing-container" />
             <Toaster position="bottom-left" />
         </div>
