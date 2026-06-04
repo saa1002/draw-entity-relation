@@ -102,6 +102,14 @@ test('groups sidebar actions into visual sections', async ({ page }) => {
     await expect(page.getByText('Entidad seleccionada')).toBeVisible();
 });
 
+test('marks reset action as destructive in the sidebar', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.getByRole('button', { name: 'Reiniciar' })).toHaveClass(
+        /button-toolbar-action-danger/,
+    );
+});
+
 test.describe('keyboard deletion', () => {
     test('delete selected entity with Delete key', async ({ page }) => {
         await page.goto('/');

@@ -3031,7 +3031,7 @@ export default function App(props) {
         return (
             <button
                 type="button"
-                className="button-toolbar-action"
+                className="button-toolbar-action button-toolbar-action-danger"
                 onClick={deleteSelectedEntity}
             >
                 Borrar
@@ -3066,7 +3066,7 @@ export default function App(props) {
         return (
             <button
                 type="button"
-                className="button-toolbar-action"
+                className="button-toolbar-action button-toolbar-action-danger"
                 onClick={deleteSelectedAttribute}
             >
                 Borrar
@@ -3084,7 +3084,7 @@ export default function App(props) {
         return (
             <button
                 type="button"
-                className="button-toolbar-action"
+                className="button-toolbar-action button-toolbar-action-danger"
                 onClick={deleteSelectedRelation}
             >
                 Borrar
@@ -3102,7 +3102,7 @@ export default function App(props) {
         return (
             <button
                 type="button"
-                className="button-toolbar-action"
+                className="button-toolbar-action button-toolbar-action-danger"
                 onClick={deleteSelectedIsa}
             >
                 Borrar
@@ -3450,7 +3450,7 @@ export default function App(props) {
             <>
                 <button
                     type="button"
-                    className="button-toolbar-action"
+                    className="button-toolbar-action button-toolbar-action-danger"
                     onClick={handleClickOpen}
                 >
                     Reiniciar
