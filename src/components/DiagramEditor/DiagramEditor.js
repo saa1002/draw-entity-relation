@@ -141,6 +141,29 @@ const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 
 const HISTORY_LIMIT = 100;
 
+const SidebarSection = ({ title, children }) => {
+    const visibleChildren = React.Children.toArray(children).filter(Boolean);
+
+    if (visibleChildren.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="sidebar-section">
+            <p className="sidebar-section-title">{title}</p>
+            <div className="sidebar-section-content">{visibleChildren}</div>
+        </div>
+    );
+};
+
+const renderSidebarAction = (action) => {
+    if (!action) {
+        return null;
+    }
+
+    return <div>{action}</div>;
+};
+
 export default function App(props) {
     const BUILD_LABEL = `Compilacion: ${BUILD_DATE}`;
 
@@ -1386,26 +1409,21 @@ export default function App(props) {
             isEntityShapeCell(selected) &&
             !isWeakEntityDecoratorCell(selected)
         ) {
-            selectedType = "entidad";
+            selectedType = "Entidad seleccionada";
         } else if (
             isRelationShapeCell(selected) &&
             !isIdentifyingRelationDecoratorCell(selected)
         ) {
-            selectedType = "relación";
+            selectedType = "Relación seleccionada";
         } else if (isIsaShapeCell(selected)) {
-            selectedType = "ISA";
+            selectedType = "ISA seleccionada";
         } else if (isAttributeShapeCell(selected)) {
-            selectedType = "atributo";
+            selectedType = "Atributo seleccionado";
         } else {
             return null;
         }
 
-        return (
-            <div className="sidebar-selected-section">
-                <p className="sidebar-section-title">Selección</p>
-                <p className="selected-element-kind">Tipo: {selectedType}</p>
-            </div>
-        );
+        return <p className="selected-element-kind">{selectedType}</p>;
     };
 
     const AddAttributeButton = () => {
@@ -3466,39 +3484,56 @@ export default function App(props) {
         <div className="mxgraph-container">
             <div className="build-info-badge">{BUILD_LABEL}</div>
             <div className="mxgraph-toolbar-container">
-                <div className="mxgraph-toolbar-container" ref={toolbarRef} />
+                <div className="sidebar-section">
+                    <p className="sidebar-section-title">Elementos E/R</p>
+                    <div className="sidebar-section-content">
+                        <div
+                            className="mxgraph-palette-container"
+                            ref={toolbarRef}
+                        />
+                    </div>
+                </div>
 
-                <SelectedElementHeader />
+                <SidebarSection title="Selección">
+                    <SelectedElementHeader />
 
-                <div>{AddAttributeButton()}</div>
-                <div>{RelationAddAttributeButton()}</div>
-                <div>{GroupSelectedAttributesButton()}</div>
-                <div>{AddChildAttributeButton()}</div>
-                <div>{ConvertSubattributeToSimpleButton()}</div>
-                <div>{ToggleAttributesButton()}</div>
-                <div>{ToggleAttrKeyButton()}</div>
-                <div>{TogglePartialKeyButton()}</div>
-                <div>{ToggleMultivaluedAttributeButton()}</div>
-                <div>{ToggleWeakEntityButton()}</div>
-                <div>{ToggleIdentifyingRelationButton()}</div>
+                    {renderSidebarAction(AddAttributeButton())}
+                    {renderSidebarAction(RelationAddAttributeButton())}
+                    {renderSidebarAction(GroupSelectedAttributesButton())}
+                    {renderSidebarAction(AddChildAttributeButton())}
+                    {renderSidebarAction(ConvertSubattributeToSimpleButton())}
+                    {renderSidebarAction(ToggleAttributesButton())}
+                    {renderSidebarAction(ToggleAttrKeyButton())}
+                    {renderSidebarAction(TogglePartialKeyButton())}
+                    {renderSidebarAction(ToggleMultivaluedAttributeButton())}
+                    {renderSidebarAction(ToggleWeakEntityButton())}
+                    {renderSidebarAction(ToggleIdentifyingRelationButton())}
 
-                <div>{RelationConfigurationButton()}</div>
-                <div>{RelationRolesButton()}</div>
-                <div>{IsaConfigurationButton()}</div>
-                <div>{RelationCardinalitiesButton()}</div>
+                    {renderSidebarAction(RelationConfigurationButton())}
+                    {renderSidebarAction(RelationRolesButton())}
+                    {renderSidebarAction(IsaConfigurationButton())}
+                    {renderSidebarAction(RelationCardinalitiesButton())}
 
-                <div>{DeleteEntityButton()}</div>
-                <div>{DeleteRelationButton()}</div>
-                <div>{DeleteAttributeButton()}</div>
-                <div>{DeleteIsaButton()}</div>
+                    {renderSidebarAction(DeleteEntityButton())}
+                    {renderSidebarAction(DeleteRelationButton())}
+                    {renderSidebarAction(DeleteAttributeButton())}
+                    {renderSidebarAction(DeleteIsaButton())}
+                </SidebarSection>
 
-                <div>{MoveBackAndFrontButtons()}</div>
-                <div>{UndoRedoButtons()}</div>
+                <SidebarSection title="Orden">
+                    {renderSidebarAction(MoveBackAndFrontButtons())}
+                </SidebarSection>
 
-                <div>{GenerateSQLButton()}</div>
-                <div>{ExportJSONButton()}</div>
-                <div>{ImportJSONButton()}</div>
-                <div>{ResetCanvasButton()}</div>
+                <SidebarSection title="Historial">
+                    {renderSidebarAction(UndoRedoButtons())}
+                </SidebarSection>
+
+                <SidebarSection title="Diagrama">
+                    {renderSidebarAction(GenerateSQLButton())}
+                    {renderSidebarAction(ExportJSONButton())}
+                    {renderSidebarAction(ImportJSONButton())}
+                    {renderSidebarAction(ResetCanvasButton())}
+                </SidebarSection>
             </div>
             {isDiagramEmpty && (
                 <div

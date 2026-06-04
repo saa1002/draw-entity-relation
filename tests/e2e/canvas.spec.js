@@ -75,7 +75,31 @@ test('shows contextual header for selected elements', async ({ page }) => {
     await selectEntity(page, 'Entidad');
 
     await expect(page.getByText('Selección')).toBeVisible();
-    await expect(page.getByText('Tipo: entidad')).toBeVisible();
+    await expect(page.getByText('Entidad seleccionada')).toBeVisible();
+});
+
+test('groups sidebar actions into visual sections', async ({ page }) => {
+    await page.goto('/');
+
+    const sectionTitles = page.locator('.sidebar-section-title');
+
+    await expect(
+        sectionTitles.filter({ hasText: /^Elementos E\/R$/ }),
+    ).toBeVisible();
+    await expect(
+        sectionTitles.filter({ hasText: /^Historial$/ }),
+    ).toBeVisible();
+    await expect(
+        sectionTitles.filter({ hasText: /^Diagrama$/ }),
+    ).toBeVisible();
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+
+    await expect(
+        sectionTitles.filter({ hasText: /^Selección$/ }),
+    ).toBeVisible();
+    await expect(page.getByText('Entidad seleccionada')).toBeVisible();
 });
 
 test.describe('keyboard deletion', () => {
