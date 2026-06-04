@@ -49,6 +49,25 @@ test('shows onboarding message only while the canvas is empty', async ({ page })
     await expect(onboardingMessage).toBeHidden();
 });
 
+test('shows tooltips for draggable ER elements', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.locator('img[src="images/rectangle.png"]')).toHaveAttribute(
+        'title',
+        'Arrastra para añadir una entidad al diagrama',
+    );
+
+    await expect(page.locator('img[src="images/rhombus.png"]')).toHaveAttribute(
+        'title',
+        'Arrastra para añadir una relación al diagrama',
+    );
+
+    await expect(page.locator('img[src="images/triangle.png"]')).toHaveAttribute(
+        'title',
+        'Arrastra para añadir una ISA al diagrama',
+    );
+});
+
 test.describe('keyboard deletion', () => {
     test('delete selected entity with Delete key', async ({ page }) => {
         await page.goto('/');

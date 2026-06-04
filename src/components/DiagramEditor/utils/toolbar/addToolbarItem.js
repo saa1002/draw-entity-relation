@@ -18,6 +18,7 @@ export default function addToolbarItem(
     addEntityToDiagram,
     addRelationToDiagram,
     addIsaToDiagram = false,
+    tooltip = "",
 ) {
     // Function that is executed when the image is dropped on
     // the graph. The cell argument points to the cell under
@@ -137,6 +138,12 @@ export default function addToolbarItem(
         const pt = this.graph.getPointForEvent(evt);
         funct(graph, evt, cell, pt.x, pt.y);
     });
+
+    if (tooltip) {
+        img.setAttribute("title", tooltip);
+        img.setAttribute("alt", tooltip);
+        img.setAttribute("aria-label", tooltip);
+    }
 
     // Disables dragging if element is disabled. This is a workaround
     // for wrong event order in IE. Following is a dummy listener that

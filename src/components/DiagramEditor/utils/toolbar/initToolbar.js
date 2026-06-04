@@ -45,6 +45,7 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
         addEntityToDiagram = null,
         addRelationToDiagram = null,
         addIsaToDiagram = false,
+        tooltip = "",
     ) => {
         const vertex = new mxCell(null, new mxGeometry(0, 0, w, h), style);
         if (value) {
@@ -61,6 +62,7 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
             addEntityToDiagram,
             addRelationToDiagram,
             addIsaToDiagram,
+            tooltip,
         );
         img.enabled = true;
 
@@ -83,6 +85,8 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
         "Entidad",
         true, //addEntityToDiagram
         false, //addRelationToDiagram
+        false,
+        "Arrastra para añadir una entidad al diagrama", //tooltip
     );
     addVertex(
         "images/rhombus.png",
@@ -92,6 +96,8 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
         "Relación",
         false, //addEntityToDiagram
         true, //addRelationToDiagram
+        false,
+        "Arrastra para añadir una relación al diagrama", //tooltip
     );
     addVertex(
         "images/triangle.png",
@@ -102,5 +108,6 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
         false,
         false,
         true,
+        "Arrastra para añadir una ISA al diagrama", //tooltip
     );
 }
