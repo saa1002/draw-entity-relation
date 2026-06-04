@@ -142,7 +142,7 @@ const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 const HISTORY_LIMIT = 100;
 
 export default function App(props) {
-    const BUILD_LABEL = `Build: ${BUILD_DATE}`;
+    const BUILD_LABEL = `Compilacion: ${BUILD_DATE}`;
 
     const containerRef = React.useRef(null);
     const toolbarRef = React.useRef(null);
@@ -1363,14 +1363,14 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={pushCellsBack(true)}
                 >
-                    Move back
+                    Enviar al fondo
                 </button>
                 <button
                     type="button"
                     className="button-toolbar-action"
                     onClick={pushCellsBack(false)}
                 >
-                    Move front
+                    Traer al frente
                 </button>
             </React.Fragment>
         );
