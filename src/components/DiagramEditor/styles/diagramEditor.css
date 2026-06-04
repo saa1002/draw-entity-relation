@@ -120,3 +120,32 @@ button {
   margin: 0;
   font-size: 13px;
 }
+
+.sidebar-selected-section {
+  width: 86px;
+  margin: 8px auto 8px;
+  padding-top: 6px;
+  border-top: 1px solid #b8b8b8;
+  text-align: center;
+}
+
+.sidebar-section-title {
+  margin: 0 0 4px;
+  font-size: 8px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.selected-element-kind {
+  margin: 0;
+  padding: 4px 5px;
+  font-size: 9px;
+  font-weight: 600;
+  color: #333;
+  background-color: #eeeeee;
+  border: 1px solid #c8c8c8;
+  border-radius: 3px;
+  line-height: 1.15;
+}

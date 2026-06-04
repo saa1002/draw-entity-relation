@@ -1375,6 +1375,39 @@ export default function App(props) {
             </React.Fragment>
         );
 
+    const SelectedElementHeader = () => {
+        if (!selected) {
+            return null;
+        }
+
+        let selectedType = "";
+
+        if (
+            isEntityShapeCell(selected) &&
+            !isWeakEntityDecoratorCell(selected)
+        ) {
+            selectedType = "entidad";
+        } else if (
+            isRelationShapeCell(selected) &&
+            !isIdentifyingRelationDecoratorCell(selected)
+        ) {
+            selectedType = "relación";
+        } else if (isIsaShapeCell(selected)) {
+            selectedType = "ISA";
+        } else if (isAttributeShapeCell(selected)) {
+            selectedType = "atributo";
+        } else {
+            return null;
+        }
+
+        return (
+            <div className="sidebar-selected-section">
+                <p className="sidebar-section-title">Selección</p>
+                <p className="selected-element-kind">Tipo: {selectedType}</p>
+            </div>
+        );
+    };
+
     const AddAttributeButton = () => {
         if (
             isEntityShapeCell(selected) &&
@@ -3434,6 +3467,8 @@ export default function App(props) {
             <div className="build-info-badge">{BUILD_LABEL}</div>
             <div className="mxgraph-toolbar-container">
                 <div className="mxgraph-toolbar-container" ref={toolbarRef} />
+
+                <SelectedElementHeader />
 
                 <div>{AddAttributeButton()}</div>
                 <div>{RelationAddAttributeButton()}</div>

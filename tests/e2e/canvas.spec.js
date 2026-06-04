@@ -68,6 +68,16 @@ test('shows tooltips for draggable ER elements', async ({ page }) => {
     );
 });
 
+test('shows contextual header for selected elements', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await selectEntity(page, 'Entidad');
+
+    await expect(page.getByText('Selección')).toBeVisible();
+    await expect(page.getByText('Tipo: entidad')).toBeVisible();
+});
+
 test.describe('keyboard deletion', () => {
     test('delete selected entity with Delete key', async ({ page }) => {
         await page.goto('/');
