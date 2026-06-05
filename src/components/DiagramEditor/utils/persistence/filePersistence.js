@@ -7,6 +7,22 @@ export const SAVE_FILE_RESULT = {
     ERROR: "error",
 };
 
+const padDatePart = (value) => String(value).padStart(2, "0");
+
+const getExportTimestamp = () => {
+    const now = new Date();
+
+    return [
+        `${now.getFullYear()}-${padDatePart(now.getMonth() + 1)}-${padDatePart(
+            now.getDate(),
+        )}`,
+        `${padDatePart(now.getHours())}-${padDatePart(now.getMinutes())}`,
+    ].join("_");
+};
+
+const buildExportFileName = (baseName, extension) =>
+    `${baseName}-${getExportTimestamp()}.${extension}`;
+
 export const saveFileWithPicker = async ({
     content,
     fileName,
@@ -43,7 +59,7 @@ export const saveFileWithPicker = async ({
 export const exportSqlScriptToFile = (sqlScript) =>
     saveFileWithPicker({
         content: sqlScript,
-        fileName: "tables.sql",
+        fileName: buildExportFileName("script-sql-er", "sql"),
         mimeType: "text/plain;charset=utf-8",
         pickerTypes: [
             {
@@ -60,7 +76,7 @@ export const exportDiagramToJsonFile = (diagram) => {
 
     return saveFileWithPicker({
         content: jsonString,
-        fileName: "diagram.json",
+        fileName: buildExportFileName("diagrama-er", "json"),
         mimeType: "application/json;charset=utf-8",
         pickerTypes: [
             {
