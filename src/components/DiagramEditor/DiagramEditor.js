@@ -3225,7 +3225,7 @@ export default function App(props) {
                     aria-describedby="alert-dialog-description"
                 >
                     <DialogTitle id="alert-dialog-title">
-                        {"Generación script SQL"}
+                        {"Generar script SQL"}
                     </DialogTitle>
                     <DialogContent>
                         {validationMessages.map((message) => (
@@ -3241,7 +3241,7 @@ export default function App(props) {
                             autoFocus
                             disabled={acceptDisabled}
                         >
-                            Aceptar
+                            Generar SQL
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -3293,7 +3293,7 @@ export default function App(props) {
                     aria-describedby="alert-dialog-description"
                 >
                     <DialogTitle id="alert-dialog-title">
-                        {"Exportación diagrama en JSON"}
+                        {"Exportar diagrama en JSON"}
                     </DialogTitle>
                     <DialogContent>
                         {validationMessages.map((message) => (
@@ -3309,7 +3309,7 @@ export default function App(props) {
                             autoFocus
                             disabled={acceptDisabled}
                         >
-                            Aceptar
+                            Exportar JSON
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -3382,9 +3382,14 @@ export default function App(props) {
                     aria-describedby="alert-dialog-description"
                 >
                     <DialogTitle id="alert-dialog-title">
-                        {"Importación de diagrama desde JSON"}
+                        {"Importar diagrama desde JSON"}
                     </DialogTitle>
                     <DialogContent>
+                        <DialogContentText>
+                            Selecciona un archivo JSON exportado previamente. Si
+                            el archivo es válido, reemplazará el diagrama
+                            actual.
+                        </DialogContentText>
                         {validationMessages.map((message) => (
                             <DialogContentText key={message}>
                                 {message}
@@ -3397,7 +3402,7 @@ export default function App(props) {
                         />
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleClose}>Cancelar</Button>
+                        <Button onClick={handleClose}>Cerrar</Button>
                     </DialogActions>
                 </Dialog>
             </>
@@ -3466,13 +3471,15 @@ export default function App(props) {
                     </DialogTitle>
                     <DialogContent>
                         <DialogContentText id="alert-dialog-description">
-                            ¿Estás seguro de que deseas reiniciar el diagrama?
+                            Esta acción eliminará todos los elementos del
+                            diagrama actual y no se puede deshacer. ¿Deseas
+                            reiniciarlo?
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleClose}>Cancelar</Button>
                         <Button onClick={handleAccept} autoFocus>
-                            Aceptar
+                            Reiniciar
                         </Button>
                     </DialogActions>
                 </Dialog>

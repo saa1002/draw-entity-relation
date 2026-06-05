@@ -57,10 +57,10 @@ export async function exportCurrentDiagram(page) {
 
     const dialog = page.getByRole('dialog');
     await expect(
-        dialog.getByText('Exportación diagrama en JSON'),
+        dialog.getByText('Exportar diagrama en JSON'),
     ).toBeVisible();
 
-    await dialog.getByRole('button', { name: 'Aceptar' }).click();
+    await dialog.getByRole('button', { name: 'Exportar JSON' }).click();
 
     await page.waitForFunction(
         (count) => window.__E2E_SAVED_FILES__.length > count,
@@ -80,7 +80,7 @@ export async function resetDiagram(page) {
     const dialog = page.getByRole('dialog');
     await expect(dialog.getByText('Reiniciar diagrama')).toBeVisible();
 
-    await dialog.getByRole('button', { name: 'Aceptar' }).click();
+    await dialog.getByRole('button', { name: 'Reiniciar' }).click();
 }
 
 export async function importDiagram(page, diagram) {
@@ -88,7 +88,7 @@ export async function importDiagram(page, diagram) {
 
     const dialog = page.getByRole('dialog');
     await expect(
-        dialog.getByText('Importación de diagrama desde JSON'),
+        dialog.getByText('Importar diagrama desde JSON'),
     ).toBeVisible();
 
     const input = dialog.locator('input[type="file"]');
@@ -124,9 +124,9 @@ export async function exportCurrentSqlScript(page) {
 
     const dialog = page.getByRole('dialog');
 
-    await expect(dialog.getByText('Generación script SQL')).toBeVisible();
+    await expect(dialog.getByText('Generar script SQL')).toBeVisible();
 
-    const acceptButton = dialog.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = dialog.getByRole('button', { name: 'Generar SQL' });
 
     await expect(acceptButton).toBeEnabled();
 

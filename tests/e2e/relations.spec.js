@@ -443,10 +443,10 @@ test('allow role-disambiguated repeated participants in a ternary relationship',
     const dialog = page.getByRole('dialog');
 
     await expect(
-        dialog.getByText('Exportación diagrama en JSON'),
+        dialog.getByText('Exportar diagrama en JSON'),
     ).toBeVisible();
 
-    await expect(dialog.getByRole('button', { name: 'Aceptar' })).toBeEnabled();
+    await expect(dialog.getByRole('button', { name: 'Exportar JSON' })).toBeEnabled();
 });
 
 test('display role labels on ternary relationship edges together with cardinalities', async ({
@@ -573,7 +573,7 @@ test('block export when a ternary relationship repeats participating entities wi
     const dialog = page.getByRole('dialog');
 
     await expect(
-        dialog.getByText('Exportación diagrama en JSON'),
+        dialog.getByText('Exportar diagrama en JSON'),
     ).toBeVisible();
 
     await expect(
@@ -582,7 +582,7 @@ test('block export when a ternary relationship repeats participating entities wi
         ),
     ).toBeVisible();
 
-    await expect(dialog.getByRole('button', { name: 'Aceptar' })).toBeDisabled();
+    await expect(dialog.getByRole('button', { name: 'Exportar JSON' })).toBeDisabled();
 });
 
 test('edit ternary relationship roles without recreating the relationship', async ({

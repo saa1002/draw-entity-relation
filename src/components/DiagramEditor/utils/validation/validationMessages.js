@@ -7,8 +7,9 @@ const CONTEXT_HEADERS = {
 };
 
 const CONTEXT_SUCCESS_MESSAGES = {
-    sql: "¿Deseas pasar a tablas el diagrama E-R?",
-    exportJson: "¿Deseas exportar el diagrama en formato JSON?",
+    sql: "El diagrama es válido. Se generará un archivo SQL con las tablas y restricciones derivadas del modelo E/R.",
+    exportJson:
+        "El diagrama es válido. Se exportará el diagrama actual en formato JSON para poder importarlo más adelante.",
 };
 
 const VALIDATION_MESSAGE_DEFINITIONS = [
