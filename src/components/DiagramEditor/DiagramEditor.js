@@ -3472,8 +3472,7 @@ export default function App(props) {
                     <DialogContent>
                         <DialogContentText id="alert-dialog-description">
                             Esta acción eliminará todos los elementos del
-                            diagrama actual y no se puede deshacer. ¿Deseas
-                            reiniciarlo?
+                            diagrama actual. ¿Deseas reiniciarlo?
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
