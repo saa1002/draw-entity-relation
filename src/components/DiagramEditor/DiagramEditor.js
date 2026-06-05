@@ -11,6 +11,7 @@ import {
     FormControl,
     InputLabel,
     MenuItem,
+    Paper,
     Select,
     TextField,
 } from "@mui/material";
@@ -189,6 +190,92 @@ const renderValidationDialogMessage = (message, index) => {
         </DialogContentText>
     );
 };
+
+const DRAGGABLE_DIALOG_TITLE_CLASS = "draggable-dialog-title";
+
+const DraggableDialogPaper = React.forwardRef(
+    function DraggableDialogPaper(props, ref) {
+        const { onMouseDown, style, ...paperProps } = props;
+        const [position, setPosition] = React.useState({ x: 0, y: 0 });
+        const positionRef = React.useRef(position);
+        const dragStateRef = React.useRef(null);
+
+        React.useEffect(() => {
+            positionRef.current = position;
+        }, [position]);
+
+        const handleMouseMove = React.useCallback((event) => {
+            const dragState = dragStateRef.current;
+
+            if (!dragState) {
+                return;
+            }
+
+            const nextPosition = {
+                x: dragState.initialX + event.clientX - dragState.startX,
+                y: dragState.initialY + event.clientY - dragState.startY,
+            };
+
+            positionRef.current = nextPosition;
+            setPosition(nextPosition);
+        }, []);
+
+        const handleMouseUp = React.useCallback(() => {
+            dragStateRef.current = null;
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+        }, [handleMouseMove]);
+
+        React.useEffect(
+            () => () => {
+                document.removeEventListener("mousemove", handleMouseMove);
+                document.removeEventListener("mouseup", handleMouseUp);
+            },
+            [handleMouseMove, handleMouseUp],
+        );
+
+        const handleMouseDown = (event) => {
+            onMouseDown?.(event);
+
+            const target = event.target;
+
+            if (
+                !(target instanceof Element) ||
+                !target.closest(`.${DRAGGABLE_DIALOG_TITLE_CLASS}`)
+            ) {
+                return;
+            }
+
+            if (event.button !== 0) {
+                return;
+            }
+
+            event.preventDefault();
+
+            dragStateRef.current = {
+                startX: event.clientX,
+                startY: event.clientY,
+                initialX: positionRef.current.x,
+                initialY: positionRef.current.y,
+            };
+
+            document.addEventListener("mousemove", handleMouseMove);
+            document.addEventListener("mouseup", handleMouseUp);
+        };
+
+        return (
+            <Paper
+                ref={ref}
+                {...paperProps}
+                onMouseDown={handleMouseDown}
+                style={{
+                    ...style,
+                    transform: `translate(${position.x}px, ${position.y}px)`,
+                }}
+            />
+        );
+    },
+);
 
 export default function App(props) {
     const BUILD_LABEL = `Compilacion: ${BUILD_DATE}`;
@@ -1981,8 +2068,13 @@ export default function App(props) {
                         onClose={handleClose}
                         aria-labelledby="alert-dialog-title"
                         aria-describedby="alert-dialog-description"
+                        PaperComponent={DraggableDialogPaper}
                     >
-                        <DialogTitle id="alert-dialog-title">
+                        <DialogTitle
+                            id="alert-dialog-title"
+                            className={DRAGGABLE_DIALOG_TITLE_CLASS}
+                            sx={{ cursor: "move", userSelect: "none" }}
+                        >
                             {"Configurar relación"}
                         </DialogTitle>
                         <DialogContent>
@@ -2299,8 +2391,13 @@ export default function App(props) {
                     onClose={handleClose}
                     aria-labelledby="relation-roles-dialog-title"
                     aria-describedby="relation-roles-dialog-description"
+                    PaperComponent={DraggableDialogPaper}
                 >
-                    <DialogTitle id="relation-roles-dialog-title">
+                    <DialogTitle
+                        id="relation-roles-dialog-title"
+                        className={DRAGGABLE_DIALOG_TITLE_CLASS}
+                        sx={{ cursor: "move", userSelect: "none" }}
+                    >
                         {"Editar roles"}
                     </DialogTitle>
                     <DialogContent>
@@ -2458,8 +2555,17 @@ export default function App(props) {
                 >
                     Configurar ISA
                 </button>
-                <Dialog open={open} onClose={handleClose}>
-                    <DialogTitle>{"Configurar ISA"}</DialogTitle>
+                <Dialog
+                    open={open}
+                    onClose={handleClose}
+                    PaperComponent={DraggableDialogPaper}
+                >
+                    <DialogTitle
+                        className={DRAGGABLE_DIALOG_TITLE_CLASS}
+                        sx={{ cursor: "move", userSelect: "none" }}
+                    >
+                        {"Configurar ISA"}
+                    </DialogTitle>
                     <DialogContent>
                         <DialogContentText>
                             Selecciona una única generalización y una o varias
@@ -2735,8 +2841,13 @@ export default function App(props) {
                         onClose={handleClose}
                         aria-labelledby="alert-dialog-title"
                         aria-describedby="alert-dialog-description"
+                        PaperComponent={DraggableDialogPaper}
                     >
-                        <DialogTitle id="alert-dialog-title">
+                        <DialogTitle
+                            id="alert-dialog-title"
+                            className={DRAGGABLE_DIALOG_TITLE_CLASS}
+                            sx={{ cursor: "move", userSelect: "none" }}
+                        >
                             {"Configurar cardinalidades"}
                         </DialogTitle>
                         {!isConfigured && (
