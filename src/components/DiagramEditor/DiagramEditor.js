@@ -164,6 +164,32 @@ const renderSidebarAction = (action) => {
     return <div>{action}</div>;
 };
 
+const VALIDATION_DIALOG_SECTION_TITLES = new Set([
+    "General",
+    "Entidades y atributos",
+    "Relaciones",
+    "ISA",
+    "SQL",
+]);
+
+const renderValidationDialogMessage = (message, index) => {
+    const isSectionTitle = VALIDATION_DIALOG_SECTION_TITLES.has(message);
+    const isDetailMessage = message.startsWith("- ");
+
+    return (
+        <DialogContentText
+            key={`${message}-${index}`}
+            sx={{
+                fontWeight: isSectionTitle ? 700 : "inherit",
+                mt: isSectionTitle && index > 0 ? 1 : 0,
+                pl: isDetailMessage ? 2 : 0,
+            }}
+        >
+            {message}
+        </DialogContentText>
+    );
+};
+
 export default function App(props) {
     const BUILD_LABEL = `Compilacion: ${BUILD_DATE}`;
 
@@ -3206,7 +3232,11 @@ export default function App(props) {
 
             setAcceptDisabled(!diagnostics.isValid);
             setValidationMessages(
-                getValidationDialogMessages(diagnostics, "sql"),
+                getValidationDialogMessages(
+                    diagnostics,
+                    "sql",
+                    diagramRef.current,
+                ),
             );
             setOpen(true);
         };
@@ -3244,11 +3274,7 @@ export default function App(props) {
                         {"Generar script SQL"}
                     </DialogTitle>
                     <DialogContent>
-                        {validationMessages.map((message) => (
-                            <DialogContentText key={message}>
-                                {message}
-                            </DialogContentText>
-                        ))}
+                        {validationMessages.map(renderValidationDialogMessage)}
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleClose}>
@@ -3278,7 +3304,11 @@ export default function App(props) {
 
             setAcceptDisabled(!diagnostics.isValid);
             setValidationMessages(
-                getValidationDialogMessages(diagnostics, "exportJson"),
+                getValidationDialogMessages(
+                    diagnostics,
+                    "exportJson",
+                    diagramRef.current,
+                ),
             );
             setOpen(true);
         };
@@ -3314,11 +3344,7 @@ export default function App(props) {
                         {"Exportar diagrama en JSON"}
                     </DialogTitle>
                     <DialogContent>
-                        {validationMessages.map((message) => (
-                            <DialogContentText key={message}>
-                                {message}
-                            </DialogContentText>
-                        ))}
+                        {validationMessages.map(renderValidationDialogMessage)}
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleClose}>
@@ -3360,7 +3386,11 @@ export default function App(props) {
                 const diagnostics = validateGraph(importedDiagram);
 
                 setValidationMessages(
-                    getValidationDialogMessages(diagnostics, "importJson"),
+                    getValidationDialogMessages(
+                        diagnostics,
+                        "importJson",
+                        importedDiagram,
+                    ),
                 );
 
                 if (diagnostics.isValid) {
@@ -3410,11 +3440,7 @@ export default function App(props) {
                             el archivo es válido, reemplazará el diagrama
                             actual.
                         </DialogContentText>
-                        {validationMessages.map((message) => (
-                            <DialogContentText key={message}>
-                                {message}
-                            </DialogContentText>
-                        ))}
+                        {validationMessages.map(renderValidationDialogMessage)}
                         <input
                             type="file"
                             accept="application/json"

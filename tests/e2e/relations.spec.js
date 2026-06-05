@@ -576,10 +576,10 @@ test('block export when a ternary relationship repeats participating entities wi
         dialog.getByText('Exportar diagrama en JSON'),
     ).toBeVisible();
 
+    await expect(dialog.getByText('Relaciones', { exact: true })).toBeVisible();
+
     await expect(
-        dialog.getByText(
-            'Hay relaciones ternarias con entidades participantes repetidas sin roles distintos.',
-        ),
+        dialog.getByText('"Relación": repite la entidad "Entidad" sin roles distintos.'),
     ).toBeVisible();
 
     await expect(dialog.getByRole('button', { name: 'Exportar JSON' })).toBeDisabled();
