@@ -1961,8 +1961,20 @@ export default function App(props) {
                         </DialogTitle>
                         <DialogContent>
                             <DialogContentText id="alert-dialog-description">
-                                Escoger los lados de esta relación
+                                Selecciona el tipo de relación y las entidades
+                                que participan en cada lado.
                             </DialogContentText>
+                            {selectedArityIsTernary && (
+                                <>
+                                    <Box sx={{ minHeight: 10 }} />
+                                    <DialogContentText>
+                                        En una relación ternaria participan tres
+                                        lados. Si una misma entidad aparece en
+                                        más de un lado, asigna roles diferentes
+                                        para distinguir cada participación.
+                                    </DialogContentText>
+                                </>
+                            )}
                             <Box sx={{ minHeight: 10 }} />
                             <Box sx={{ minWidth: 120 }}>
                                 <FormControl fullWidth>
@@ -2267,8 +2279,10 @@ export default function App(props) {
                     </DialogTitle>
                     <DialogContent>
                         <DialogContentText id="relation-roles-dialog-description">
-                            Editar los roles de los participantes de esta
-                            relación ternaria.
+                            Los roles sirven para distinguir varias
+                            participaciones de una misma entidad dentro de una
+                            relación ternaria. Usa nombres breves y distintos,
+                            por ejemplo origen y destino.
                         </DialogContentText>
                         <Box sx={{ minHeight: 10 }} />
                         <Box sx={{ minWidth: 320 }}>
@@ -2422,8 +2436,10 @@ export default function App(props) {
                     <DialogTitle>{"Configurar ISA"}</DialogTitle>
                     <DialogContent>
                         <DialogContentText>
-                            Escoge una generalización y una o varias
-                            especializaciones.
+                            Selecciona una única generalización y una o varias
+                            especializaciones. Las especializaciones heredan la
+                            clave de la generalización y no deben tener clave
+                            propia.
                         </DialogContentText>
                         <Box sx={{ minHeight: 10 }} />
                         <Box sx={{ minWidth: 260 }}>
