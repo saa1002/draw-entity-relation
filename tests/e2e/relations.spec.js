@@ -583,6 +583,7 @@ test('block export when a ternary relationship repeats participating entities wi
     ).toBeVisible();
 
     await expect(dialog.getByRole('button', { name: 'Exportar JSON' })).toBeDisabled();
+    await expect(dialog.getByRole('button', { name: 'Cerrar' })).toBeVisible();
 });
 
 test('edit ternary relationship roles without recreating the relationship', async ({

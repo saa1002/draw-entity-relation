@@ -3251,7 +3251,9 @@ export default function App(props) {
                         ))}
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleClose}>Cancelar</Button>
+                        <Button onClick={handleClose}>
+                            {acceptDisabled ? "Cerrar" : "Cancelar"}
+                        </Button>
                         <Button
                             onClick={handleAccept}
                             autoFocus
@@ -3319,7 +3321,9 @@ export default function App(props) {
                         ))}
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleClose}>Cancelar</Button>
+                        <Button onClick={handleClose}>
+                            {acceptDisabled ? "Cerrar" : "Cancelar"}
+                        </Button>
                         <Button
                             onClick={handleAccept}
                             autoFocus
