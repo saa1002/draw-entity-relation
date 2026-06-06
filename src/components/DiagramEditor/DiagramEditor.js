@@ -20,6 +20,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
 import {
     ATTRIBUTE_OWNER_TYPES,
+    GENERATE_STRUCTURE_TEMPLATES,
     IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY,
     IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES,
     POSSIBLE_CARDINALITIES,
@@ -49,6 +50,7 @@ import {
     generateUniqueAttributeName,
     getCascadedWeakConversionCandidate,
     getDefaultAttributeSemantics,
+    getGenerateStructureTemplateById,
     getLastAttribute,
     getRelationArity,
     getRelationCardinalityDisplayValue,
@@ -3646,6 +3648,12 @@ export default function App(props) {
 
     const GenerateStructureButton = () => {
         const [open, setOpen] = React.useState(false);
+        const [selectedTemplateId, setSelectedTemplateId] = React.useState(
+            GENERATE_STRUCTURE_TEMPLATES[0].id,
+        );
+
+        const selectedTemplate =
+            getGenerateStructureTemplateById(selectedTemplateId);
 
         const handleClickOpen = () => {
             setOpen(true);
@@ -3655,8 +3663,12 @@ export default function App(props) {
             setOpen(false);
         };
 
+        const handleTemplateChange = (event) => {
+            setSelectedTemplateId(event.target.value);
+        };
+
         const handleAccept = () => {
-            const exampleDiagram = createExampleDiagramStructure();
+            const exampleDiagram = selectedTemplate.createDiagram();
 
             resetCanvas({ recordHistory: false });
             recreateGraphFromDiagram(exampleDiagram);
@@ -3666,7 +3678,7 @@ export default function App(props) {
             setRefreshDiagram((prevState) => !prevState);
             setOpen(false);
 
-            toast.success("Estructura básica generada.");
+            toast.success(`Estructura generada: ${selectedTemplate.name}.`);
         };
 
         return (
@@ -3689,11 +3701,42 @@ export default function App(props) {
                     </DialogTitle>
                     <DialogContent>
                         <DialogContentText id="generate-structure-dialog-description">
-                            Esta acción reemplazará el diagrama actual por una
-                            estructura E/R básica generada con los nombres por
-                            defecto de la aplicación: dos entidades, claves
-                            primarias, una relación N:M y un atributo propio de
-                            la relación. ¿Deseas continuar?
+                            Selecciona una estructura E/R básica para generarla
+                            con los nombres por defecto de la aplicación. La
+                            estructura reemplazará el diagrama actual y podrá
+                            editarse después manualmente.
+                        </DialogContentText>
+
+                        <FormControl fullWidth margin="normal" size="small">
+                            <InputLabel id="generate-structure-template-label">
+                                Estructura
+                            </InputLabel>
+                            <Select
+                                labelId="generate-structure-template-label"
+                                id="generate-structure-template"
+                                value={selectedTemplateId}
+                                label="Estructura"
+                                onChange={handleTemplateChange}
+                            >
+                                {GENERATE_STRUCTURE_TEMPLATES.map(
+                                    (template) => (
+                                        <MenuItem
+                                            key={template.id}
+                                            value={template.id}
+                                        >
+                                            {template.name}
+                                        </MenuItem>
+                                    ),
+                                )}
+                            </Select>
+                        </FormControl>
+
+                        <DialogContentText>
+                            {selectedTemplate.description}
+                        </DialogContentText>
+
+                        <DialogContentText sx={{ mt: 2 }}>
+                            ¿Deseas continuar?
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>

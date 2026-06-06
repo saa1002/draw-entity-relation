@@ -256,7 +256,7 @@ test.describe('undo and redo', () => {
     });
 });
 
-test('generates a valid basic default diagram structure', async ({ page }) => {
+test('generates the default N:M diagram structure', async ({ page }) => {
     await page.goto('/');
 
     await page.getByRole('button', { name: 'Generar estructura' }).click();
@@ -267,10 +267,21 @@ test('generates a valid basic default diagram structure', async ({ page }) => {
         dialog.getByText('Generar estructura básica', { exact: true }),
     ).toBeVisible();
 
+    await expect(
+        dialog.getByRole('combobox', { name: 'Estructura' }),
+    ).toBeVisible();
+
+    await expect(
+        dialog.getByText(
+            'Crea dos entidades con atributos, una relación N:M entre ellas y un atributo propio de la relación.',
+            { exact: true },
+        ),
+    ).toBeVisible();
+
     await dialog.getByRole('button', { name: 'Generar estructura' }).click();
 
     await expect(
-        page.getByText('Estructura básica generada.').last(),
+        page.getByText('Estructura generada: Relación N:M básica.').last(),
     ).toBeVisible();
 
     await expectSavedDiagramState(
@@ -343,4 +354,157 @@ test('generates a valid basic default diagram structure', async ({ page }) => {
     await expect(
         sqlDialog.getByRole('button', { name: 'Generar SQL' }),
     ).toBeEnabled();
+});
+
+test('allows choosing each basic generated structure template', async ({
+    page,
+}) => {
+    const templates = [
+        {
+            option: 'Relación N:M básica',
+            expected: {
+                entityCount: 2,
+                relationCount: 1,
+                isaCount: 0,
+                relationArity: undefined,
+                relationCardinalities: ['0:N', '0:N'],
+                relationCanHoldAttributes: true,
+                relationAttributeCount: 1,
+                weakEntityCount: 0,
+                identifyingRelationCount: 0,
+            },
+        },
+        {
+            option: 'Relación 1:N básica',
+            expected: {
+                entityCount: 2,
+                relationCount: 1,
+                isaCount: 0,
+                relationArity: undefined,
+                relationCardinalities: ['1:1', '0:N'],
+                relationCanHoldAttributes: false,
+                relationAttributeCount: 0,
+                weakEntityCount: 0,
+                identifyingRelationCount: 0,
+            },
+        },
+        {
+            option: 'Relación 1:1 básica',
+            expected: {
+                entityCount: 2,
+                relationCount: 1,
+                isaCount: 0,
+                relationArity: undefined,
+                relationCardinalities: ['0:1', '0:1'],
+                relationCanHoldAttributes: false,
+                relationAttributeCount: 0,
+                weakEntityCount: 0,
+                identifyingRelationCount: 0,
+            },
+        },
+        {
+            option: 'Relación ternaria básica',
+            expected: {
+                entityCount: 3,
+                relationCount: 1,
+                isaCount: 0,
+                relationArity: 3,
+                relationCardinalities: ['0:N', '0:N', '0:N'],
+                relationCanHoldAttributes: true,
+                relationAttributeCount: 1,
+                weakEntityCount: 0,
+                identifyingRelationCount: 0,
+            },
+        },
+        {
+            option: 'Entidad débil básica',
+            expected: {
+                entityCount: 2,
+                relationCount: 1,
+                isaCount: 0,
+                relationArity: undefined,
+                relationCardinalities: ['1:1', '0:N'],
+                relationCanHoldAttributes: false,
+                relationAttributeCount: 0,
+                weakEntityCount: 1,
+                identifyingRelationCount: 1,
+            },
+        },
+        {
+            option: 'ISA básica',
+            expected: {
+                entityCount: 3,
+                relationCount: 0,
+                isaCount: 1,
+                relationArity: undefined,
+                relationCardinalities: [],
+                relationCanHoldAttributes: undefined,
+                relationAttributeCount: 0,
+                weakEntityCount: 0,
+                identifyingRelationCount: 0,
+                isaSpecializationCount: 2,
+            },
+        },
+    ];
+
+    for (const template of templates) {
+        await page.goto('/');
+
+        await page.getByRole('button', { name: 'Generar estructura' }).click();
+
+        const dialog = page.getByRole('dialog');
+
+        await dialog.getByRole('combobox', { name: 'Estructura' }).click();
+        await page.getByRole('option', { name: template.option }).click();
+
+        await expect(dialog.getByText(template.option)).toBeVisible();
+
+        await dialog
+            .getByRole('button', { name: 'Generar estructura' })
+            .click();
+
+        await expect(
+            page.getByText(`Estructura generada: ${template.option}.`).last(),
+        ).toBeVisible();
+
+        await expectSavedDiagramState(
+            page,
+            (diagram) => {
+                const relation = diagram.relations[0];
+                const relationCardinalities = relation
+                    ? [
+                          relation.side1?.cardinality,
+                          relation.side2?.cardinality,
+                          relation.side3?.cardinality,
+                      ].filter(Boolean)
+                    : [];
+
+                const weakEntityCount = diagram.entities.filter(
+                    (entity) => entity.weak,
+                ).length;
+
+                const identifyingRelationCount = diagram.relations.filter(
+                    (currentRelation) => currentRelation.isIdentifying,
+                ).length;
+
+                const isa = diagram.isas[0];
+
+                return {
+                    entityCount: diagram.entities.length,
+                    relationCount: diagram.relations.length,
+                    isaCount: diagram.isas.length,
+                    relationArity: relation?.arity,
+                    relationCardinalities,
+                    relationCanHoldAttributes: relation?.canHoldAttributes,
+                    relationAttributeCount: relation?.attributes.length ?? 0,
+                    weakEntityCount,
+                    identifyingRelationCount,
+                    ...(isa
+                        ? { isaSpecializationCount: isa.specializations.length }
+                        : {}),
+                };
+            },
+            template.expected,
+        );
+    }
 });
