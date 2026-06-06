@@ -38,6 +38,7 @@ import {
     createAttribute,
     createEmptyIsaLink,
     createEmptyRelationSide,
+    createExampleDiagramStructure,
     findAttributeTreeOwnerById,
     findEntityById,
     findEntityIndexById,
@@ -3643,6 +3644,69 @@ export default function App(props) {
         );
     };
 
+    const GenerateStructureButton = () => {
+        const [open, setOpen] = React.useState(false);
+
+        const handleClickOpen = () => {
+            setOpen(true);
+        };
+
+        const handleClose = () => {
+            setOpen(false);
+        };
+
+        const handleAccept = () => {
+            const exampleDiagram = createExampleDiagramStructure();
+
+            resetCanvas({ recordHistory: false });
+            recreateGraphFromDiagram(exampleDiagram);
+            saveToLocalStorage();
+            recordCurrentDiagramInHistory();
+
+            setRefreshDiagram((prevState) => !prevState);
+            setOpen(false);
+
+            toast.success("Estructura básica generada.");
+        };
+
+        return (
+            <>
+                <button
+                    type="button"
+                    className="button-toolbar-action"
+                    onClick={handleClickOpen}
+                >
+                    Generar estructura
+                </button>
+                <Dialog
+                    open={open}
+                    onClose={handleClose}
+                    aria-labelledby="generate-structure-dialog-title"
+                    aria-describedby="generate-structure-dialog-description"
+                >
+                    <DialogTitle id="generate-structure-dialog-title">
+                        {"Generar estructura básica"}
+                    </DialogTitle>
+                    <DialogContent>
+                        <DialogContentText id="generate-structure-dialog-description">
+                            Esta acción reemplazará el diagrama actual por una
+                            estructura E/R básica generada con los nombres por
+                            defecto de la aplicación: dos entidades, claves
+                            primarias, una relación N:M y un atributo propio de
+                            la relación. ¿Deseas continuar?
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClose}>Cancelar</Button>
+                        <Button onClick={handleAccept} autoFocus>
+                            Generar estructura
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </>
+        );
+    };
+
     return (
         <div className="mxgraph-container">
             <div className="build-info-badge">{BUILD_LABEL}</div>
@@ -3692,6 +3756,7 @@ export default function App(props) {
                 </SidebarSection>
 
                 <SidebarSection title="Diagrama">
+                    {renderSidebarAction(GenerateStructureButton())}
                     {renderSidebarAction(GenerateSQLButton())}
                     {renderSidebarAction(ExportJSONButton())}
                     {renderSidebarAction(ImportJSONButton())}

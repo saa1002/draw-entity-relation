@@ -255,3 +255,92 @@ test.describe('undo and redo', () => {
         );
     });
 });
+
+test('generates a valid basic default diagram structure', async ({ page }) => {
+    await page.goto('/');
+
+    await page.getByRole('button', { name: 'Generar estructura' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(
+        dialog.getByText('Generar estructura básica', { exact: true }),
+    ).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'Generar estructura' }).click();
+
+    await expect(
+        page.getByText('Estructura básica generada.').last(),
+    ).toBeVisible();
+
+    await expectSavedDiagramState(
+        page,
+        (diagram) => {
+            const firstEntity = diagram.entities.find(
+                (entity) => entity.name === 'Entidad',
+            );
+            const secondEntity = diagram.entities.find(
+                (entity) => entity.name === 'Entidad 1',
+            );
+            const relation = diagram.relations.find(
+                (currentRelation) => currentRelation.name === 'Relación',
+            );
+
+            return {
+                entityNames: diagram.entities.map((entity) => entity.name),
+                relationNames: diagram.relations.map(
+                    (currentRelation) => currentRelation.name,
+                ),
+                isaCount: diagram.isas.length,
+                firstEntityAttributes: firstEntity?.attributes.map(
+                    (attribute) => ({
+                        name: attribute.name,
+                        key: attribute.key,
+                    }),
+                ),
+                secondEntityAttributes: secondEntity?.attributes.map(
+                    (attribute) => ({
+                        name: attribute.name,
+                        key: attribute.key,
+                    }),
+                ),
+                relationAttributes: relation?.attributes.map(
+                    (attribute) => attribute.name,
+                ),
+                relationCanHoldAttributes: relation?.canHoldAttributes,
+                relationCardinalities: [
+                    relation?.side1.cardinality,
+                    relation?.side2.cardinality,
+                ],
+            };
+        },
+        {
+            entityNames: ['Entidad', 'Entidad 1'],
+            relationNames: ['Relación'],
+            isaCount: 0,
+            firstEntityAttributes: [
+                { name: 'Atributo', key: true },
+                { name: 'Atributo 1', key: false },
+            ],
+            secondEntityAttributes: [
+                { name: 'Atributo', key: true },
+                { name: 'Atributo 1', key: false },
+            ],
+            relationAttributes: ['Atributo'],
+            relationCanHoldAttributes: true,
+            relationCardinalities: ['0:N', '0:N'],
+        },
+    );
+
+    await page.getByRole('button', { name: 'Generar SQL' }).click();
+
+    const sqlDialog = page.getByRole('dialog');
+
+    await expect(
+        sqlDialog.getByText('Generar script SQL', { exact: true }),
+    ).toBeVisible();
+
+    await expect(
+        sqlDialog.getByRole('button', { name: 'Generar SQL' }),
+    ).toBeEnabled();
+});
