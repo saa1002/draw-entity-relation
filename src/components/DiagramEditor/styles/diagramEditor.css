@@ -222,3 +222,25 @@ button {
   border-radius: 3px;
   line-height: 1.15;
 }
+
+.language-selector-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.language-selector-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #555;
+}
+
+.language-selector-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 10px;
+}

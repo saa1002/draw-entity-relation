@@ -84,6 +84,8 @@ import {
     updateAttributePosition,
     validateGraph,
 } from "../../domain/er";
+import { useLanguage } from "../../i18n/LanguageContext";
+import { SUPPORTED_LANGUAGES } from "../../i18n/translations";
 import { generateSQL } from "../../services/sql";
 import {
     clearGraphCanvas,
@@ -281,7 +283,11 @@ const DraggableDialogPaper = React.forwardRef(
 );
 
 export default function App(props) {
-    const BUILD_LABEL = `Compilacion: ${BUILD_DATE}`;
+    const { language, setLanguage, t } = useLanguage();
+
+    const BUILD_LABEL = t("app.buildLabel", {
+        date: BUILD_DATE,
+    });
 
     const containerRef = React.useRef(null);
     const toolbarRef = React.useRef(null);
@@ -3750,10 +3756,46 @@ export default function App(props) {
         );
     };
 
+    const LanguageSelector = () => {
+        const handleChangeLanguage = (event) => {
+            setLanguage(event.target.value);
+        };
+
+        return (
+            <div className="language-selector-field">
+                <label
+                    className="language-selector-label"
+                    htmlFor="language-selector"
+                >
+                    {t("language.label")}
+                </label>
+                <select
+                    id="language-selector"
+                    className="language-selector-select"
+                    value={language}
+                    onChange={handleChangeLanguage}
+                    aria-label={t("language.label")}
+                >
+                    {SUPPORTED_LANGUAGES.map((supportedLanguage) => (
+                        <option
+                            key={supportedLanguage.code}
+                            value={supportedLanguage.code}
+                        >
+                            {t(supportedLanguage.labelKey)}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        );
+    };
+
     return (
         <div className="mxgraph-container">
             <div className="build-info-badge">{BUILD_LABEL}</div>
             <div className="mxgraph-toolbar-container">
+                <SidebarSection title={t("language.sectionTitle")}>
+                    {renderSidebarAction(LanguageSelector())}
+                </SidebarSection>
                 <div className="sidebar-section">
                     <p className="sidebar-section-title">Elementos E/R</p>
                     <div className="sidebar-section-content">
