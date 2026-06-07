@@ -372,7 +372,7 @@ export default function App(props) {
         );
 
         const compositeName = window.prompt(
-            "Nombre del atributo compuesto:",
+            t("feedback.compositeAttributePrompt"),
             defaultName,
         );
 
@@ -508,23 +508,21 @@ export default function App(props) {
 
     const showSaveFileResultToast = (result) => {
         if (result === SAVE_FILE_RESULT.SAVED) {
-            toast.success("Archivo guardado correctamente.");
+            toast.success(t("feedback.fileSaved"));
             return;
         }
 
         if (result === SAVE_FILE_RESULT.CANCELLED) {
-            toast("Guardado cancelado.");
+            toast(t("feedback.fileSaveCancelled"));
             return;
         }
 
         if (result === SAVE_FILE_RESULT.UNSUPPORTED) {
-            toast.error(
-                "Tu navegador no permite elegir dónde guardar el archivo.",
-            );
+            toast.error(t("feedback.fileSaveUnsupported"));
             return;
         }
 
-        toast.error("No se pudo guardar el archivo.");
+        toast.error(t("feedback.fileSaveFailed"));
     };
 
     const {
@@ -953,7 +951,7 @@ export default function App(props) {
         );
 
         syncAndPersistDiagramData();
-        toast.success("Atributo insertado");
+        toast.success(t("feedback.attributeInserted"));
     };
 
     const getSelectedCompositeAttributeTarget = (attributeOwner) =>
@@ -1006,9 +1004,7 @@ export default function App(props) {
         const selectionData = getSelectedSimpleEntityAttributesForGrouping();
 
         if (!selectionData) {
-            toast.error(
-                "Selecciona al menos dos atributos simples de la misma entidad.",
-            );
+            toast.error(t("feedback.selectSimpleAttributesSameEntity"));
             return;
         }
 
@@ -1022,7 +1018,7 @@ export default function App(props) {
         const compositeName = getCompositeAttributeNameFromUser(owner);
 
         if (!compositeName) {
-            toast.error("El atributo compuesto necesita un nombre.");
+            toast.error(t("feedback.compositeAttributeNeedsName"));
             return;
         }
 
@@ -1033,7 +1029,7 @@ export default function App(props) {
                 ignoredAttributeIds: childAttributeIds,
             })
         ) {
-            toast.error("Ya existe un atributo con ese nombre en la entidad.");
+            toast.error(t("feedback.attributeNameAlreadyExists"));
             return;
         }
 
@@ -1046,9 +1042,7 @@ export default function App(props) {
             .filter((cell) => cell?.geometry);
 
         if (childAttributeCells.length !== childAttributes.length) {
-            toast.error(
-                "No se pudieron localizar los atributos seleccionados.",
-            );
+            toast.error(t("feedback.selectedAttributesNotFound"));
             return;
         }
 
@@ -1106,7 +1100,7 @@ export default function App(props) {
 
         if (!groupingResult.compositeAttribute) {
             removeAttributesCells([compositeAttribute]);
-            toast.error("No se pudieron agrupar los atributos seleccionados.");
+            toast.error(t("feedback.attributesCouldNotBeGrouped"));
             return;
         }
 
@@ -1127,7 +1121,7 @@ export default function App(props) {
         syncAndPersistDiagramData();
         setRefreshDiagram((prevState) => !prevState);
 
-        toast.success("Atributos agrupados en un atributo compuesto");
+        toast.success(t("feedback.attributesGrouped"));
     };
 
     const addChildAttribute = () => {
@@ -1141,9 +1135,7 @@ export default function App(props) {
         if (!attributeOwner) return;
 
         if (!canAddChildAttributeToSelectedAttribute(attributeOwner)) {
-            toast.error(
-                "No se puede convertir directamente un atributo multivaluado simple en compuesto.",
-            );
+            toast.error(t("feedback.cannotConvertMultivaluedToComposite"));
             return;
         }
 
@@ -1220,7 +1212,7 @@ export default function App(props) {
         syncAttributeVisualRepresentation(compositeAttribute);
 
         syncAndPersistDiagramData();
-        toast.success("Subatributo hermano insertado");
+        toast.success(t("feedback.siblingSubattributeInserted"));
     };
 
     const setAttributesVisibility = (isRelationNM, visible) => {
@@ -1256,21 +1248,17 @@ export default function App(props) {
             selectedEntityAttribute;
 
         if (isMultivaluedAttribute(attribute)) {
-            toast.error("Una clave no puede ser multivaluada.");
+            toast.error(t("feedback.keyCannotBeMultivalued"));
             return;
         }
 
         if (isWeakEntity(entity)) {
-            toast.error(
-                "Una entidad débil no puede tener clave primaria. Usa un atributo discriminante.",
-            );
+            toast.error(t("feedback.weakEntityCannotHavePrimaryKey"));
             return;
         }
 
         if (isEntityIsaSpecialization(diagramRef.current, entity.idMx)) {
-            toast.error(
-                "Una especialización ISA hereda la clave de la generalización y no puede tener clave primaria propia.",
-            );
+            toast.error(t("feedback.isaSpecializationCannotHavePrimaryKey"));
             return;
         }
 
@@ -1289,8 +1277,8 @@ export default function App(props) {
 
         toast.success(
             result.enabled
-                ? "Atributo marcado como clave"
-                : "Clave eliminada del atributo",
+                ? t("feedback.attributeMarkedAsKey")
+                : t("feedback.attributeKeyRemoved"),
         );
     };
 
@@ -1309,12 +1297,12 @@ export default function App(props) {
         if (shouldBecomeWeak) {
             convertEntityPrimaryKeyToPartialKey(entity);
             ensureWeakEntityDecorator(selected, entity);
-            toast.success("Entidad marcada como débil");
+            toast.success(t("feedback.entityMarkedWeak"));
         } else {
             clearIdentifyingRelationSemantics(entity.identifyingRelationId);
             convertEntityPartialKeyToPrimaryKey(entity);
             removeWeakEntityDecorator(entity.idMx);
-            toast.success("Entidad marcada como fuerte");
+            toast.success(t("feedback.entityMarkedStrong"));
         }
 
         refreshGraph();
@@ -1333,14 +1321,12 @@ export default function App(props) {
             selectedEntityAttribute;
 
         if (!isWeakEntity(entity)) {
-            toast.error(
-                "Solo las entidades débiles pueden tener atributo discriminante.",
-            );
+            toast.error(t("feedback.onlyWeakEntitiesCanHaveDiscriminant"));
             return;
         }
 
         if (isMultivaluedAttribute(attribute)) {
-            toast.error("Un discriminante no puede ser multivaluado.");
+            toast.error(t("feedback.discriminantCannotBeMultivalued"));
             return;
         }
 
@@ -1359,8 +1345,8 @@ export default function App(props) {
 
         toast.success(
             result.enabled
-                ? "Atributo marcado como discriminante"
-                : "Discriminante eliminado",
+                ? t("feedback.attributeMarkedAsDiscriminant")
+                : t("feedback.discriminantRemoved"),
         );
     };
 
@@ -1377,7 +1363,7 @@ export default function App(props) {
 
         if (!isIdentifyingRelation(relation)) {
             if (!relationHasBothEntitySides(relation)) {
-                toast.error("Configura primero los dos lados de la relación.");
+                toast.error(t("feedback.configureBothRelationSidesFirst"));
                 return;
             }
 
@@ -1389,7 +1375,7 @@ export default function App(props) {
 
                 if (!conversionCandidate) {
                     toast.error(
-                        "Una relación de dependencia por identificación debe conectar una entidad débil dependiente con una entidad propietaria distinta. Si ambas entidades son fuertes, solo se puede inferir una cascada cuando una de ellas ya actúa como propietaria de otra entidad débil.",
+                        t("feedback.identifyingRelationRequiresWeakAndOwner"),
                     );
                     return;
                 }
@@ -1429,9 +1415,7 @@ export default function App(props) {
                 weakEntity.identifyingRelationId = null;
                 weakEntity.ownerEntityId = null;
 
-                toast.error(
-                    "No se pudieron aplicar las cardinalidades de la relación de dependencia por identificación.",
-                );
+                toast.error(t("feedback.identifyingCardinalitiesFailed"));
                 return;
             }
 
@@ -1441,12 +1425,10 @@ export default function App(props) {
             ensureIdentifyingRelationDecorator(selected, relation);
             ensureIdentifyingRelationEdgeDecorator(selected, relation);
 
-            toast.success(
-                "Relación marcada como dependencia por identificación",
-            );
+            toast.success(t("feedback.relationMarkedIdentifying"));
         } else {
             clearIdentifyingRelationSemantics(relation.idMx);
-            toast.success("Dependencia por identificación desmarcada");
+            toast.success(t("feedback.identifyingRelationUnmarked"));
         }
 
         const relationCell = accessCell(relation.idMx);
@@ -1470,12 +1452,12 @@ export default function App(props) {
         const { attribute } = selectedEntityAttribute;
 
         if (attribute.key) {
-            toast.error("Una clave no puede ser multivaluada.");
+            toast.error(t("feedback.keyCannotBeMultivalued"));
             return;
         }
 
         if (attribute.partialKey) {
-            toast.error("Un discriminante no puede ser multivaluado.");
+            toast.error(t("feedback.discriminantCannotBeMultivalued"));
             return;
         }
 
@@ -1495,8 +1477,8 @@ export default function App(props) {
 
         toast.success(
             shouldBecomeMultivalued
-                ? "Atributo marcado como multivaluado"
-                : "Multivaluado eliminado del atributo",
+                ? t("feedback.attributeMarkedMultivalued")
+                : t("feedback.attributeMultivaluedRemoved"),
         );
     };
 
@@ -2387,7 +2369,7 @@ export default function App(props) {
 
             setOpen(false);
 
-            toast.success("Roles de relación actualizados");
+            toast.success(t("feedback.relationRolesUpdated"));
         };
 
         if (!canEditRoles) {
@@ -2514,7 +2496,7 @@ export default function App(props) {
 
             if (specializationIds.includes(generalizationId)) {
                 toast.error(
-                    "La generalización no puede aparecer también como especialización.",
+                    t("feedback.isaGeneralizationCannotAlsoBeSpecialization"),
                 );
                 return;
             }
@@ -2548,13 +2530,13 @@ export default function App(props) {
             });
 
             if (!connectedEdges) {
-                toast.error("No se pudo configurar la jerarquía ISA.");
+                toast.error(t("feedback.isaHierarchyConfigurationFailed"));
                 return;
             }
 
             syncAndPersistDiagramData();
             setOpen(false);
-            toast.success("Jerarquía ISA configurada");
+            toast.success(t("feedback.isaHierarchyConfigured"));
         };
 
         const acceptDisabled =
@@ -2710,9 +2692,7 @@ export default function App(props) {
                 !side1IsWeak &&
                 !side2IsWeak
             ) {
-                toast.error(
-                    "No se pudieron resolver los lados de la relación de dependencia por identificación.",
-                );
+                toast.error(t("feedback.identifyingRelationSidesNotResolved"));
                 return;
             }
 
@@ -3003,8 +2983,8 @@ export default function App(props) {
 
         toast.success(
             convertedAttributes.length > 1
-                ? "Subatributos convertidos en atributos simples"
-                : "Subatributo convertido en atributo simple",
+                ? t("feedback.subattributesConvertedToSimple")
+                : t("feedback.subattributeConvertedToSimple"),
         );
     };
 
@@ -3540,17 +3520,13 @@ export default function App(props) {
                     recordCurrentDiagramInHistory();
 
                     setOpen(false);
-                    toast.success("Diagrama importado con éxito.");
+                    toast.success(t("feedback.diagramImported"));
                 } else {
-                    toast.error(
-                        "El diagrama no se ha podido importar porque no es válido.",
-                    );
+                    toast.error(t("feedback.diagramImportInvalid"));
                 }
             } catch (error) {
-                setValidationMessages([
-                    "No se ha podido importar el diagrama porque el archivo JSON no es válido.",
-                ]);
-                toast.error("El diagrama no se ha podido importar.");
+                setValidationMessages([t("feedback.diagramImportInvalidJson")]);
+                toast.error(t("feedback.diagramImportFailed"));
             } finally {
                 event.target.value = "";
             }
@@ -3795,12 +3771,6 @@ export default function App(props) {
 
         return (
             <div className="language-selector-field">
-                <label
-                    className="language-selector-label"
-                    htmlFor="language-selector"
-                >
-                    {t("language.label")}
-                </label>
                 <select
                     id="language-selector"
                     className="language-selector-select"

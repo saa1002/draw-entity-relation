@@ -142,6 +142,85 @@ export const TRANSLATIONS = {
             "Selecciona la cardinalidad de cada lado de la relación.",
         "cardinalities.identifyingHelp":
             "En una relación de dependencia por identificación, el lado de la entidad propietaria mantiene cardinalidad 1:1.",
+
+        "feedback.fileSaved": "Archivo guardado correctamente.",
+        "feedback.fileSaveCancelled": "Guardado cancelado.",
+        "feedback.fileSaveUnsupported":
+            "Tu navegador no permite elegir dónde guardar el archivo.",
+        "feedback.fileSaveFailed": "No se pudo guardar el archivo.",
+
+        "feedback.attributeInserted": "Atributo insertado",
+        "feedback.compositeAttributePrompt": "Nombre del atributo compuesto:",
+        "feedback.selectSimpleAttributesSameEntity":
+            "Selecciona al menos dos atributos simples de la misma entidad.",
+        "feedback.compositeAttributeNeedsName":
+            "El atributo compuesto necesita un nombre.",
+        "feedback.attributeNameAlreadyExists":
+            "Ya existe un atributo con ese nombre en la entidad.",
+        "feedback.selectedAttributesNotFound":
+            "No se pudieron localizar los atributos seleccionados.",
+        "feedback.attributesCouldNotBeGrouped":
+            "No se pudieron agrupar los atributos seleccionados.",
+        "feedback.attributesGrouped":
+            "Atributos agrupados en un atributo compuesto",
+        "feedback.cannotConvertMultivaluedToComposite":
+            "No se puede convertir directamente un atributo multivaluado simple en compuesto.",
+        "feedback.siblingSubattributeInserted": "Subatributo hermano insertado",
+
+        "feedback.keyCannotBeMultivalued":
+            "Una clave no puede ser multivaluada.",
+        "feedback.weakEntityCannotHavePrimaryKey":
+            "Una entidad débil no puede tener clave primaria. Usa un atributo discriminante.",
+        "feedback.isaSpecializationCannotHavePrimaryKey":
+            "Una especialización ISA hereda la clave de la generalización y no puede tener clave primaria propia.",
+        "feedback.attributeMarkedAsKey": "Atributo marcado como clave",
+        "feedback.attributeKeyRemoved": "Clave eliminada del atributo",
+
+        "feedback.entityMarkedWeak": "Entidad marcada como débil",
+        "feedback.entityMarkedStrong": "Entidad marcada como fuerte",
+        "feedback.onlyWeakEntitiesCanHaveDiscriminant":
+            "Solo las entidades débiles pueden tener atributo discriminante.",
+        "feedback.discriminantCannotBeMultivalued":
+            "Un discriminante no puede ser multivaluado.",
+        "feedback.attributeMarkedAsDiscriminant":
+            "Atributo marcado como discriminante",
+        "feedback.discriminantRemoved": "Discriminante eliminado",
+
+        "feedback.configureBothRelationSidesFirst":
+            "Configura primero los dos lados de la relación.",
+        "feedback.identifyingRelationRequiresWeakAndOwner":
+            "Una relación de dependencia por identificación debe conectar una entidad débil dependiente con una entidad propietaria distinta. Si ambas entidades son fuertes, solo se puede inferir una cascada cuando una de ellas ya actúa como propietaria de otra entidad débil.",
+        "feedback.identifyingCardinalitiesFailed":
+            "No se pudieron aplicar las cardinalidades de la relación de dependencia por identificación.",
+        "feedback.relationMarkedIdentifying":
+            "Relación marcada como dependencia por identificación",
+        "feedback.identifyingRelationUnmarked":
+            "Dependencia por identificación desmarcada",
+        "feedback.identifyingRelationSidesNotResolved":
+            "No se pudieron resolver los lados de la relación de dependencia por identificación.",
+
+        "feedback.attributeMarkedMultivalued":
+            "Atributo marcado como multivaluado",
+        "feedback.attributeMultivaluedRemoved":
+            "Multivaluado eliminado del atributo",
+
+        "feedback.relationRolesUpdated": "Roles de relación actualizados",
+
+        "feedback.isaGeneralizationCannotAlsoBeSpecialization":
+            "La generalización no puede aparecer también como especialización.",
+        "feedback.isaHierarchyConfigurationFailed":
+            "No se pudo configurar la jerarquía ISA.",
+        "feedback.isaHierarchyConfigured": "Jerarquía ISA configurada",
+        "feedback.subattributesConvertedToSimple":
+            "Subatributos convertidos en atributos simples",
+        "feedback.subattributeConvertedToSimple":
+            "Subatributo convertido en atributo simple",
+        "feedback.diagramImported": "Diagrama importado con éxito.",
+        "feedback.diagramImportInvalid":
+            "El diagrama no se ha podido importar porque no es válido.",
+        "feedback.diagramImportInvalidJson":
+            "No se ha podido importar el diagrama porque el archivo JSON no es válido.",
+        "feedback.diagramImportFailed": "El diagrama no se ha podido importar.",
     },
     en: {
         "app.buildLabel": "Build: {{date}}",
@@ -271,6 +350,84 @@ export const TRANSLATIONS = {
             "Select the cardinality for each side of the relationship.",
         "cardinalities.identifyingHelp":
             "In an identifying dependency relationship, the owner entity side keeps cardinality 1:1.",
+
+        "feedback.fileSaved": "File saved successfully.",
+        "feedback.fileSaveCancelled": "Save cancelled.",
+        "feedback.fileSaveUnsupported":
+            "Your browser does not allow choosing where to save the file.",
+        "feedback.fileSaveFailed": "The file could not be saved.",
+
+        "feedback.attributeInserted": "Attribute inserted",
+        "feedback.compositeAttributePrompt": "Composite attribute name:",
+        "feedback.selectSimpleAttributesSameEntity":
+            "Select at least two simple attributes from the same entity.",
+        "feedback.compositeAttributeNeedsName":
+            "The composite attribute needs a name.",
+        "feedback.attributeNameAlreadyExists":
+            "An attribute with that name already exists in the entity.",
+        "feedback.selectedAttributesNotFound":
+            "The selected attributes could not be located.",
+        "feedback.attributesCouldNotBeGrouped":
+            "The selected attributes could not be grouped.",
+        "feedback.attributesGrouped":
+            "Attributes grouped into a composite attribute",
+        "feedback.cannotConvertMultivaluedToComposite":
+            "A simple multivalued attribute cannot be converted directly into a composite attribute.",
+        "feedback.siblingSubattributeInserted": "Sibling subattribute inserted",
+
+        "feedback.keyCannotBeMultivalued": "A key cannot be multivalued.",
+        "feedback.weakEntityCannotHavePrimaryKey":
+            "A weak entity cannot have a primary key. Use a discriminant attribute.",
+        "feedback.isaSpecializationCannotHavePrimaryKey":
+            "An ISA specialization inherits the key from the generalization and cannot have its own primary key.",
+        "feedback.attributeMarkedAsKey": "Attribute marked as key",
+        "feedback.attributeKeyRemoved": "Key removed from attribute",
+
+        "feedback.entityMarkedWeak": "Entity marked as weak",
+        "feedback.entityMarkedStrong": "Entity marked as strong",
+        "feedback.onlyWeakEntitiesCanHaveDiscriminant":
+            "Only weak entities can have a discriminant attribute.",
+        "feedback.discriminantCannotBeMultivalued":
+            "A discriminant cannot be multivalued.",
+        "feedback.attributeMarkedAsDiscriminant":
+            "Attribute marked as discriminant",
+        "feedback.discriminantRemoved": "Discriminant removed",
+
+        "feedback.configureBothRelationSidesFirst":
+            "Configure both sides of the relationship first.",
+        "feedback.identifyingRelationRequiresWeakAndOwner":
+            "An identifying dependency relationship must connect a dependent weak entity with a different owner entity. If both entities are strong, a cascade can only be inferred when one of them already acts as the owner of another weak entity.",
+        "feedback.identifyingCardinalitiesFailed":
+            "The cardinalities of the identifying dependency relationship could not be applied.",
+        "feedback.relationMarkedIdentifying":
+            "Relationship marked as identifying dependency",
+        "feedback.identifyingRelationUnmarked":
+            "Identifying dependency unmarked",
+        "feedback.identifyingRelationSidesNotResolved":
+            "The sides of the identifying dependency relationship could not be resolved.",
+
+        "feedback.attributeMarkedMultivalued":
+            "Attribute marked as multivalued",
+        "feedback.attributeMultivaluedRemoved":
+            "Multivalued removed from attribute",
+
+        "feedback.relationRolesUpdated": "Relationship roles updated",
+
+        "feedback.isaGeneralizationCannotAlsoBeSpecialization":
+            "The generalization cannot also appear as a specialization.",
+        "feedback.isaHierarchyConfigurationFailed":
+            "The ISA hierarchy could not be configured.",
+        "feedback.isaHierarchyConfigured": "ISA hierarchy configured",
+        "feedback.subattributesConvertedToSimple":
+            "Subattributes converted into simple attributes",
+        "feedback.subattributeConvertedToSimple":
+            "Subattribute converted into simple attribute",
+        "feedback.diagramImported": "Diagram imported successfully.",
+        "feedback.diagramImportInvalid":
+            "The diagram could not be imported because it is not valid.",
+        "feedback.diagramImportInvalidJson":
+            "The diagram could not be imported because the JSON file is not valid.",
+        "feedback.diagramImportFailed": "The diagram could not be imported.",
     },
 };
 

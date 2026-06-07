@@ -509,3 +509,25 @@ test('allows choosing each basic generated structure template', async ({
         );
     }
 });
+
+test("allows switching the interface language to English", async ({ page }) => {
+    await page.goto("/");
+
+    await expect(
+        page.locator(".sidebar-section-title", { hasText: /^Idioma$/ }),
+    ).toBeVisible();
+
+    await expect(
+        page.getByText("Añade una entidad para comenzar", { exact: true }),
+    ).toBeVisible();
+
+    await page.getByLabel("Idioma").selectOption("en");
+
+    await expect(
+        page.locator(".sidebar-section-title", { hasText: /^Language$/ }),
+    ).toBeVisible();
+
+    await expect(
+        page.getByText("Add an entity to get started", { exact: true }),
+    ).toBeVisible();
+});
