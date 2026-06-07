@@ -1,176 +1,69 @@
-const CONTEXT_HEADERS = {
-    sql: "No se ha podido generar el script SQL por los siguientes errores:",
-    exportJson:
-        "No se ha podido exportar el diagrama en formato JSON por los siguientes errores:",
-    importJson:
-        "No se ha podido importar el diagrama por los siguientes errores:",
+import { DEFAULT_LANGUAGE, translate } from "../../../../i18n/translations";
+
+const translateInDefaultLanguage = (key, values = {}) =>
+    translate(DEFAULT_LANGUAGE, key, values);
+
+const CONTEXT_HEADER_KEYS = {
+    sql: "validation.context.sql.errorHeader",
+    exportJson: "validation.context.exportJson.errorHeader",
+    importJson: "validation.context.importJson.errorHeader",
 };
 
-const CONTEXT_SUCCESS_MESSAGES = {
-    sql: "El diagrama es válido. Se generará un archivo SQL con las tablas y restricciones derivadas del modelo E/R.",
-    exportJson:
-        "El diagrama es válido. Se exportará el diagrama actual en formato JSON para poder importarlo más adelante.",
+const CONTEXT_SUCCESS_MESSAGE_KEYS = {
+    sql: "validation.context.sql.success",
+    exportJson: "validation.context.exportJson.success",
+};
+
+export const VALIDATION_SECTION_TITLE_KEYS = {
+    general: "validation.section.general",
+    entities: "validation.section.entities",
+    relations: "validation.section.relations",
+    isa: "validation.section.isa",
+    sql: "validation.section.sql",
 };
 
 const VALIDATION_MESSAGE_DEFINITIONS = [
-    {
-        key: "notEmpty",
-        message: "El diagrama está vacío.",
-    },
+    { key: "notEmpty" },
     {
         key: "noRepeatedNames",
-        messagesByContext: {
-            sql: "Hay entidades o relaciones con nombres repetidos.",
-            exportJson: "Hay entidades con nombres repetidos.",
-            importJson: "Hay entidades con nombres repetidos.",
+        messageKeysByContext: {
+            sql: "validation.message.noRepeatedNames.sql",
+            exportJson: "validation.message.noRepeatedNames.exportJson",
+            importJson: "validation.message.noRepeatedNames.importJson",
         },
     },
-    {
-        key: "noRepeatedAttrNames",
-        message: "Hay atributos repetidos en una entidad.",
-    },
-    {
-        key: "noEmptyCompositeAttributes",
-        message: "Hay atributos compuestos sin subatributos.",
-    },
-    {
-        key: "noNestedCompositeAttributes",
-        message: "Hay atributos compuestos con subatributos anidados.",
-    },
-    {
-        key: "noUnsupportedMultivaluedAttributes",
-        message:
-            "Solo se soportan atributos multivaluados top-level de entidad, simples o compuestos, sin clave ni discriminante.",
-    },
-    {
-        key: "noEntitiesWithoutAttributes",
-        message: "Hay entidades sin atributos.",
-    },
-    {
-        key: "noEntitiesWithoutPK",
-        message: "Hay entidades sin clave primaria.",
-    },
-    {
-        key: "noEntitiesWithMoreThanOnePK",
-        message: "Hay entidades con más de una clave primaria.",
-    },
-    {
-        key: "noNMRelationsWithPK",
-        message: "Hay relaciones N-M con clave primaria.",
-    },
-    {
-        key: "noWeakEntitiesWithPrimaryKey",
-        message: "Hay entidades débiles con clave primaria normal.",
-    },
-    {
-        key: "noWeakEntitiesWithoutPartialKey",
-        message: "Hay entidades débiles sin atributo discriminante.",
-    },
-    {
-        key: "noWeakEntitiesWithMoreThanOnePartialKey",
-        message: "Hay entidades débiles con más de un atributo discriminante.",
-    },
-    {
-        key: "noStrongEntitiesWithPartialKey",
-        message: "Hay entidades fuertes con atributo discriminante.",
-    },
-    {
-        key: "noWeakEntitiesWithoutIdentifyingRelation",
-        message:
-            "Hay entidades débiles sin relación de dependencia por identificación.",
-    },
-    {
-        key: "noInvalidIdentifyingRelations",
-        message:
-            "Hay relaciones de dependencia por identificación que no conectan una entidad débil dependiente con una entidad propietaria distinta.",
-    },
-    {
-        key: "noInvalidIdentifyingCardinalities",
-        message:
-            "Hay relaciones de dependencia por identificación con cardinalidades no válidas.",
-    },
-    {
-        key: "noInconsistentWeakEntityOwnership",
-        message:
-            "Hay entidades débiles cuya entidad propietaria es inconsistente.",
-    },
-    {
-        key: "noMultipleIdentifyingRelationsPerWeakEntity",
-        message:
-            "Hay entidades débiles con más de una relación de dependencia por identificación como entidad dependiente.",
-    },
-    {
-        key: "noAttributesInNonNMRelations",
-        message:
-            "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
-    },
-    {
-        key: "noUnconnectedRelations",
-        message: "Hay relaciones desconectadas.",
-    },
-    {
-        key: "noSQLIdentifierCollisions",
-        message:
-            "Hay nombres que colisionan al normalizar identificadores SQL.",
-    },
-    {
-        key: "noBrokenRelationEntityReferences",
-        message: "Hay relaciones que apuntan a entidades inexistentes.",
-    },
-    {
-        key: "noUnconnectedIsas",
-        message:
-            "Hay jerarquías ISA que no tienen una generalización y al menos una especialización conectadas.",
-    },
-    {
-        key: "noBrokenIsaEntityReferences",
-        message: "Hay jerarquías ISA que apuntan a entidades inexistentes.",
-    },
-    {
-        key: "noIsaHierarchiesWithRepeatedSpecializations",
-        message: "Hay jerarquías ISA con especializaciones repetidas.",
-    },
-    {
-        key: "noIsaHierarchiesWithGeneralizationAsSpecialization",
-        message:
-            "Hay jerarquías ISA en las que la generalización también aparece como especialización.",
-    },
-    {
-        key: "noIsaSpecializationsInMultipleHierarchies",
-        message:
-            "Hay entidades que aparecen como especialización en más de una jerarquía ISA; la herencia múltiple no está soportada.",
-    },
-    {
-        key: "noIsaSpecializationsWithPrimaryKey",
-        message:
-            "Hay especializaciones ISA con clave primaria propia; deben heredar la clave de la generalización.",
-    },
-    {
-        key: "noTernaryRelationsWithAmbiguousRepeatedParticipants",
-        message:
-            "Hay relaciones ternarias con entidades participantes repetidas sin roles distintos.",
-    },
-    {
-        key: "noIdentifyingTernaryRelations",
-        message:
-            "Las relaciones ternarias no pueden ser relaciones de dependencia por identificación.",
-    },
-    {
-        key: "noTernaryRelationsWithMandatoryCardinalities",
-        message: "Hay relaciones ternarias con cardinalidades obligatorias.",
-    },
-    {
-        key: "noNotValidCardinalities",
-        message: "Hay cardinalidades no válidas en las relaciones.",
-    },
+    { key: "noRepeatedAttrNames" },
+    { key: "noEmptyCompositeAttributes" },
+    { key: "noNestedCompositeAttributes" },
+    { key: "noUnsupportedMultivaluedAttributes" },
+    { key: "noEntitiesWithoutAttributes" },
+    { key: "noEntitiesWithoutPK" },
+    { key: "noEntitiesWithMoreThanOnePK" },
+    { key: "noNMRelationsWithPK" },
+    { key: "noWeakEntitiesWithPrimaryKey" },
+    { key: "noWeakEntitiesWithoutPartialKey" },
+    { key: "noWeakEntitiesWithMoreThanOnePartialKey" },
+    { key: "noStrongEntitiesWithPartialKey" },
+    { key: "noWeakEntitiesWithoutIdentifyingRelation" },
+    { key: "noInvalidIdentifyingRelations" },
+    { key: "noInvalidIdentifyingCardinalities" },
+    { key: "noInconsistentWeakEntityOwnership" },
+    { key: "noMultipleIdentifyingRelationsPerWeakEntity" },
+    { key: "noAttributesInNonNMRelations" },
+    { key: "noUnconnectedRelations" },
+    { key: "noSQLIdentifierCollisions" },
+    { key: "noBrokenRelationEntityReferences" },
+    { key: "noUnconnectedIsas" },
+    { key: "noBrokenIsaEntityReferences" },
+    { key: "noIsaHierarchiesWithRepeatedSpecializations" },
+    { key: "noIsaHierarchiesWithGeneralizationAsSpecialization" },
+    { key: "noIsaSpecializationsInMultipleHierarchies" },
+    { key: "noIsaSpecializationsWithPrimaryKey" },
+    { key: "noTernaryRelationsWithAmbiguousRepeatedParticipants" },
+    { key: "noIdentifyingTernaryRelations" },
+    { key: "noTernaryRelationsWithMandatoryCardinalities" },
+    { key: "noNotValidCardinalities" },
 ];
-const SECTION_TITLES = {
-    general: "General",
-    entities: "Entidades y atributos",
-    relations: "Relaciones",
-    isa: "ISA",
-    sql: "SQL",
-};
 
 const DIAGNOSTIC_SECTIONS = {
     notEmpty: "general",
@@ -224,17 +117,25 @@ const getName = (element, fallback) =>
 
 const quote = (value) => `"${value}"`;
 
-const getEntityLabel = (entity) => quote(getName(entity, "Entidad sin nombre"));
+const formatQuotedList = (values) => values.map(quote).join(", ");
 
-const getRelationLabel = (relation) =>
-    quote(getName(relation, "Relación sin nombre"));
+const getEntityLabel = (entity, t = translateInDefaultLanguage) =>
+    quote(getName(entity, t("validation.fallback.entityUnnamed")));
+
+const getRelationLabel = (relation, t = translateInDefaultLanguage) =>
+    quote(getName(relation, t("validation.fallback.relationUnnamed")));
 
 const getIsaLabel = (index) => `ISA ${index + 1}`;
 
 const getAttributeChildren = (attribute) =>
     Array.isArray(attribute?.children) ? attribute.children : [];
 
-const visitAttributes = (attributes, callback, path = []) => {
+const visitAttributes = (
+    attributes,
+    callback,
+    path = [],
+    t = translateInDefaultLanguage,
+) => {
     if (!Array.isArray(attributes)) {
         return;
     }
@@ -242,12 +143,17 @@ const visitAttributes = (attributes, callback, path = []) => {
     attributes.forEach((attribute) => {
         const currentPath = [
             ...path,
-            getName(attribute, "Atributo sin nombre"),
+            getName(attribute, t("validation.fallback.attributeUnnamed")),
         ];
 
         callback(attribute, currentPath);
 
-        visitAttributes(getAttributeChildren(attribute), callback, currentPath);
+        visitAttributes(
+            getAttributeChildren(attribute),
+            callback,
+            currentPath,
+            t,
+        );
     });
 };
 
@@ -263,14 +169,22 @@ const hasPrimaryKeyAttribute = (attributes) => {
     return found;
 };
 
-const getPrimaryKeyAttributes = (attributes) => {
+const getPrimaryKeyAttributes = (
+    attributes,
+    t = translateInDefaultLanguage,
+) => {
     const keys = [];
 
-    visitAttributes(attributes, (attribute, path) => {
-        if (attribute?.key === true) {
-            keys.push(path.join("."));
-        }
-    });
+    visitAttributes(
+        attributes,
+        (attribute, path) => {
+            if (attribute?.key === true) {
+                keys.push(path.join("."));
+            }
+        },
+        [],
+        t,
+    );
 
     return keys;
 };
@@ -287,14 +201,22 @@ const hasPartialKeyAttribute = (attributes) => {
     return found;
 };
 
-const getPartialKeyAttributes = (attributes) => {
+const getPartialKeyAttributes = (
+    attributes,
+    t = translateInDefaultLanguage,
+) => {
     const keys = [];
 
-    visitAttributes(attributes, (attribute, path) => {
-        if (attribute?.partialKey === true) {
-            keys.push(path.join("."));
-        }
-    });
+    visitAttributes(
+        attributes,
+        (attribute, path) => {
+            if (attribute?.partialKey === true) {
+                keys.push(path.join("."));
+            }
+        },
+        [],
+        t,
+    );
 
     return keys;
 };
@@ -329,22 +251,33 @@ const getRepeatedAttributeNames = (attributes) => {
     return [...repeatedNames];
 };
 
-const getCompositeAttributesWithoutChildren = (attributes) => {
+const getCompositeAttributesWithoutChildren = (
+    attributes,
+    t = translateInDefaultLanguage,
+) => {
     const result = [];
 
-    visitAttributes(attributes, (attribute, path) => {
-        if (
-            Array.isArray(attribute?.children) &&
-            attribute.children.length === 0
-        ) {
-            result.push(path.join("."));
-        }
-    });
+    visitAttributes(
+        attributes,
+        (attribute, path) => {
+            if (
+                Array.isArray(attribute?.children) &&
+                attribute.children.length === 0
+            ) {
+                result.push(path.join("."));
+            }
+        },
+        [],
+        t,
+    );
 
     return result;
 };
 
-const getNestedCompositeAttributes = (attributes) => {
+const getNestedCompositeAttributes = (
+    attributes,
+    t = translateInDefaultLanguage,
+) => {
     const result = [];
 
     const inspect = (currentAttributes, depth = 0, path = []) => {
@@ -355,7 +288,7 @@ const getNestedCompositeAttributes = (attributes) => {
         currentAttributes.forEach((attribute) => {
             const currentPath = [
                 ...path,
-                getName(attribute, "Atributo sin nombre"),
+                getName(attribute, t("validation.fallback.attributeUnnamed")),
             ];
             const children = getAttributeChildren(attribute);
 
@@ -372,14 +305,19 @@ const getNestedCompositeAttributes = (attributes) => {
     return result;
 };
 
-const getAttributeOwnerDetails = (diagram, predicate) => {
+const getAttributeOwnerDetails = (diagram, predicate, t) => {
     const details = [];
 
     getEntities(diagram).forEach((entity) => {
         const result = predicate(entity.attributes ?? []);
 
         if (result.length > 0) {
-            details.push(`${getEntityLabel(entity)}: ${result.join(", ")}.`);
+            details.push(
+                t("validation.detail.attributeOwnerList", {
+                    owner: getEntityLabel(entity, t),
+                    details: result.join(", "),
+                }),
+            );
         }
     });
 
@@ -388,7 +326,10 @@ const getAttributeOwnerDetails = (diagram, predicate) => {
 
         if (result.length > 0) {
             details.push(
-                `${getRelationLabel(relation)}: ${result.join(", ")}.`,
+                t("validation.detail.attributeOwnerList", {
+                    owner: getRelationLabel(relation, t),
+                    details: result.join(", "),
+                }),
             );
         }
     });
@@ -406,8 +347,11 @@ const getIsaGeneralizationId = (isa) => isa?.generalization?.entity?.idMx ?? "";
 const getEntityById = (diagram, entityId) =>
     getEntities(diagram).find((entity) => entity.idMx === entityId) ?? null;
 
-const getEntityNameById = (diagram, entityId) =>
-    getName(getEntityById(diagram, entityId), "Entidad inexistente");
+const getEntityNameById = (diagram, entityId, t = translateInDefaultLanguage) =>
+    getName(
+        getEntityById(diagram, entityId),
+        t("validation.fallback.entityMissing"),
+    );
 
 const isEntityIsaSpecialization = (diagram, entityId) =>
     getIsas(diagram).some((isa) =>
@@ -464,7 +408,7 @@ const getRepeatedDiagramNames = (diagram) => {
     return [...repeatedNames];
 };
 
-const getTernaryRepeatedParticipantDetails = (diagram) =>
+const getTernaryRepeatedParticipantDetails = (diagram, t) =>
     getRelations(diagram)
         .filter(isTernaryRelation)
         .filter(isRelationConfigured)
@@ -499,17 +443,24 @@ const getTernaryRepeatedParticipantDetails = (diagram) =>
                         new Set(roles).size !== roles.length
                     );
                 })
-                .map(
-                    ([entityId]) =>
-                        `${getRelationLabel(
-                            relation,
-                        )}: repite la entidad ${quote(
-                            getEntityNameById(diagram, entityId),
-                        )} sin roles distintos.`,
+                .map(([entityId]) =>
+                    t(
+                        "validation.detail.ternaryRepeatedParticipantWithoutDistinctRoles",
+                        {
+                            relation: getRelationLabel(relation, t),
+                            entity: quote(
+                                getEntityNameById(diagram, entityId, t),
+                            ),
+                        },
+                    ),
                 );
         });
 
-const getValidationDetailMessages = (diagnosticKey, diagram) => {
+const getValidationDetailMessages = (
+    diagnosticKey,
+    diagram,
+    t = translateInDefaultLanguage,
+) => {
     if (!diagram) {
         return [];
     }
@@ -518,41 +469,64 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
         case "noRepeatedNames": {
             const names = getRepeatedDiagramNames(diagram);
             return names.length > 0
-                ? [`Nombres repetidos: ${names.map(quote).join(", ")}.`]
+                ? [
+                      t("validation.detail.repeatedNames", {
+                          names: formatQuotedList(names),
+                      }),
+                  ]
                 : [];
         }
 
         case "noRepeatedAttrNames":
-            return getAttributeOwnerDetails(diagram, (attributes) => {
-                const names = getRepeatedAttributeNames(attributes);
-                return names.length > 0
-                    ? [`atributos repetidos ${names.map(quote).join(", ")}`]
-                    : [];
-            });
+            return getAttributeOwnerDetails(
+                diagram,
+                (attributes) => {
+                    const names = getRepeatedAttributeNames(attributes);
+                    return names.length > 0
+                        ? [
+                              t("validation.detail.repeatedAttributes", {
+                                  attributes: formatQuotedList(names),
+                              }),
+                          ]
+                        : [];
+                },
+                t,
+            );
 
         case "noEmptyCompositeAttributes":
-            return getAttributeOwnerDetails(diagram, (attributes) => {
-                const names = getCompositeAttributesWithoutChildren(attributes);
-                return names.length > 0
-                    ? [
-                          `atributos compuestos sin subatributos ${names
-                              .map(quote)
-                              .join(", ")}`,
-                      ]
-                    : [];
-            });
+            return getAttributeOwnerDetails(
+                diagram,
+                (attributes) => {
+                    const names = getCompositeAttributesWithoutChildren(
+                        attributes,
+                        t,
+                    );
+                    return names.length > 0
+                        ? [
+                              t("validation.detail.emptyCompositeAttributes", {
+                                  attributes: formatQuotedList(names),
+                              }),
+                          ]
+                        : [];
+                },
+                t,
+            );
 
         case "noNestedCompositeAttributes":
-            return getAttributeOwnerDetails(diagram, (attributes) => {
-                const names = getNestedCompositeAttributes(attributes);
-                return names.length > 0
-                    ? [
-                          `atributos compuestos anidados ${names
-                              .map(quote)
-                              .join(", ")}`,
-                      ]
-                    : [];
-            });
+            return getAttributeOwnerDetails(
+                diagram,
+                (attributes) => {
+                    const names = getNestedCompositeAttributes(attributes, t);
+                    return names.length > 0
+                        ? [
+                              t("validation.detail.nestedCompositeAttributes", {
+                                  attributes: formatQuotedList(names),
+                              }),
+                          ]
+                        : [];
+                },
+                t,
+            );
 
         case "noEntitiesWithoutAttributes":
             return getEntities(diagram)
@@ -561,9 +535,10 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                         !isEntityIsaSpecialization(diagram, entity.idMx) &&
                         (!entity.attributes || entity.attributes.length === 0),
                 )
-                .map(
-                    (entity) =>
-                        `${getEntityLabel(entity)}: no tiene atributos.`,
+                .map((entity) =>
+                    t("validation.detail.entityWithoutAttributes", {
+                        entity: getEntityLabel(entity, t),
+                    }),
                 );
 
         case "noEntitiesWithoutPK":
@@ -574,9 +549,10 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                         !isEntityIsaSpecialization(diagram, entity.idMx),
                 )
                 .filter((entity) => !hasPrimaryKeyAttribute(entity.attributes))
-                .map(
-                    (entity) =>
-                        `${getEntityLabel(entity)}: no tiene clave primaria.`,
+                .map((entity) =>
+                    t("validation.detail.entityWithoutPrimaryKey", {
+                        entity: getEntityLabel(entity, t),
+                    }),
                 );
 
         case "noEntitiesWithMoreThanOnePK":
@@ -587,38 +563,34 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                 )
                 .map((entity) => ({
                     entity,
-                    keys: getPrimaryKeyAttributes(entity.attributes),
+                    keys: getPrimaryKeyAttributes(entity.attributes, t),
                 }))
                 .filter(({ keys }) => keys.length > 1)
-                .map(
-                    ({ entity, keys }) =>
-                        `${getEntityLabel(
-                            entity,
-                        )}: tiene varias claves primarias (${keys
-                            .map(quote)
-                            .join(", ")}).`,
+                .map(({ entity, keys }) =>
+                    t("validation.detail.entityWithMultiplePrimaryKeys", {
+                        entity: getEntityLabel(entity, t),
+                        keys: formatQuotedList(keys),
+                    }),
                 );
 
         case "noWeakEntitiesWithPrimaryKey":
             return getEntities(diagram)
                 .filter((entity) => entity.weak)
                 .filter((entity) => hasPrimaryKeyAttribute(entity.attributes))
-                .map(
-                    (entity) =>
-                        `${getEntityLabel(
-                            entity,
-                        )}: es débil y tiene clave primaria normal.`,
+                .map((entity) =>
+                    t("validation.detail.weakEntityWithPrimaryKey", {
+                        entity: getEntityLabel(entity, t),
+                    }),
                 );
 
         case "noWeakEntitiesWithoutPartialKey":
             return getEntities(diagram)
                 .filter((entity) => entity.weak)
                 .filter((entity) => !hasPartialKeyAttribute(entity.attributes))
-                .map(
-                    (entity) =>
-                        `${getEntityLabel(
-                            entity,
-                        )}: es débil y no tiene discriminante.`,
+                .map((entity) =>
+                    t("validation.detail.weakEntityWithoutPartialKey", {
+                        entity: getEntityLabel(entity, t),
+                    }),
                 );
 
         case "noWeakEntitiesWithMoreThanOnePartialKey":
@@ -626,59 +598,56 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                 .filter((entity) => entity.weak)
                 .map((entity) => ({
                     entity,
-                    keys: getPartialKeyAttributes(entity.attributes),
+                    keys: getPartialKeyAttributes(entity.attributes, t),
                 }))
                 .filter(({ keys }) => keys.length > 1)
-                .map(
-                    ({ entity, keys }) =>
-                        `${getEntityLabel(
-                            entity,
-                        )}: tiene varios discriminantes (${keys
-                            .map(quote)
-                            .join(", ")}).`,
+                .map(({ entity, keys }) =>
+                    t("validation.detail.weakEntityWithMultiplePartialKeys", {
+                        entity: getEntityLabel(entity, t),
+                        keys: formatQuotedList(keys),
+                    }),
                 );
 
         case "noStrongEntitiesWithPartialKey":
             return getEntities(diagram)
                 .filter((entity) => !entity.weak)
                 .filter((entity) => hasPartialKeyAttribute(entity.attributes))
-                .map(
-                    (entity) =>
-                        `${getEntityLabel(
-                            entity,
-                        )}: es fuerte y tiene atributo discriminante.`,
+                .map((entity) =>
+                    t("validation.detail.strongEntityWithPartialKey", {
+                        entity: getEntityLabel(entity, t),
+                    }),
                 );
 
         case "noWeakEntitiesWithoutIdentifyingRelation":
             return getEntities(diagram)
                 .filter((entity) => entity.weak)
                 .filter((entity) => !entity.identifyingRelationId)
-                .map(
-                    (entity) =>
-                        `${getEntityLabel(
-                            entity,
-                        )}: no tiene relación identificadora asociada.`,
+                .map((entity) =>
+                    t(
+                        "validation.detail.weakEntityWithoutIdentifyingRelation",
+                        {
+                            entity: getEntityLabel(entity, t),
+                        },
+                    ),
                 );
 
         case "noUnconnectedRelations":
             return getRelations(diagram)
                 .filter((relation) => !isRelationConfigured(relation))
-                .map(
-                    (relation) =>
-                        `${getRelationLabel(
-                            relation,
-                        )}: no tiene todos sus lados conectados.`,
+                .map((relation) =>
+                    t("validation.detail.unconnectedRelation", {
+                        relation: getRelationLabel(relation, t),
+                    }),
                 );
 
         case "noAttributesInNonNMRelations":
             return getRelations(diagram)
                 .filter((relation) => !canRelationHoldAttributes(relation))
                 .filter((relation) => (relation.attributes ?? []).length > 0)
-                .map(
-                    (relation) =>
-                        `${getRelationLabel(
-                            relation,
-                        )}: tiene atributos propios aunque su tipo no los soporta.`,
+                .map((relation) =>
+                    t("validation.detail.nonNmRelationWithAttributes", {
+                        relation: getRelationLabel(relation, t),
+                    }),
                 );
 
         case "noNMRelationsWithPK":
@@ -687,11 +656,10 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                 .filter((relation) =>
                     hasPrimaryKeyAttribute(relation.attributes),
                 )
-                .map(
-                    (relation) =>
-                        `${getRelationLabel(
-                            relation,
-                        )}: tiene atributos marcados como clave primaria.`,
+                .map((relation) =>
+                    t("validation.detail.nmRelationWithPrimaryKey", {
+                        relation: getRelationLabel(relation, t),
+                    }),
                 );
 
         case "noBrokenRelationEntityReferences":
@@ -703,15 +671,14 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                         return entityId && !getEntityById(diagram, entityId);
                     }),
                 )
-                .map(
-                    (relation) =>
-                        `${getRelationLabel(
-                            relation,
-                        )}: apunta a una entidad que ya no existe.`,
+                .map((relation) =>
+                    t("validation.detail.brokenRelationEntityReference", {
+                        relation: getRelationLabel(relation, t),
+                    }),
                 );
 
         case "noTernaryRelationsWithAmbiguousRepeatedParticipants":
-            return getTernaryRepeatedParticipantDetails(diagram);
+            return getTernaryRepeatedParticipantDetails(diagram, t);
 
         case "noIdentifyingTernaryRelations":
             return getRelations(diagram)
@@ -720,11 +687,10 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                         isTernaryRelation(relation) &&
                         relation.isIdentifying === true,
                 )
-                .map(
-                    (relation) =>
-                        `${getRelationLabel(
-                            relation,
-                        )}: es ternaria y está marcada como identificadora.`,
+                .map((relation) =>
+                    t("validation.detail.identifyingTernaryRelation", {
+                        relation: getRelationLabel(relation, t),
+                    }),
                 );
 
         case "noTernaryRelationsWithMandatoryCardinalities":
@@ -738,11 +704,13 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                             "1",
                     ),
                 )
-                .map(
-                    (relation) =>
-                        `${getRelationLabel(
-                            relation,
-                        )}: tiene alguna cardinalidad mínima obligatoria.`,
+                .map((relation) =>
+                    t(
+                        "validation.detail.ternaryRelationWithMandatoryCardinality",
+                        {
+                            relation: getRelationLabel(relation, t),
+                        },
+                    ),
                 );
 
         case "noNotValidCardinalities":
@@ -755,11 +723,10 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                             ),
                     ),
                 )
-                .map(
-                    (relation) =>
-                        `${getRelationLabel(
-                            relation,
-                        )}: contiene cardinalidades no válidas.`,
+                .map((relation) =>
+                    t("validation.detail.relationWithInvalidCardinalities", {
+                        relation: getRelationLabel(relation, t),
+                    }),
                 );
 
         case "noUnconnectedIsas":
@@ -776,11 +743,10 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                                 !!specialization?.edgeId,
                         ),
                 )
-                .map(
-                    ({ index }) =>
-                        `${getIsaLabel(
-                            index,
-                        )}: debe tener una generalización y al menos una especialización conectadas.`,
+                .map(({ index }) =>
+                    t("validation.detail.unconnectedIsa", {
+                        isa: getIsaLabel(index),
+                    }),
                 );
 
         case "noBrokenIsaEntityReferences":
@@ -794,11 +760,10 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                         .filter(Boolean)
                         .some((entityId) => !getEntityById(diagram, entityId)),
                 )
-                .map(
-                    ({ index }) =>
-                        `${getIsaLabel(
-                            index,
-                        )}: apunta a una entidad que ya no existe.`,
+                .map(({ index }) =>
+                    t("validation.detail.brokenIsaEntityReference", {
+                        isa: getIsaLabel(index),
+                    }),
                 );
 
         case "noIsaHierarchiesWithRepeatedSpecializations":
@@ -813,11 +778,10 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                         new Set(specializationIds).size !==
                         specializationIds.length,
                 )
-                .map(
-                    ({ index }) =>
-                        `${getIsaLabel(
-                            index,
-                        )}: contiene especializaciones repetidas.`,
+                .map(({ index }) =>
+                    t("validation.detail.isaWithRepeatedSpecializations", {
+                        isa: getIsaLabel(index),
+                    }),
                 );
 
         case "noIsaHierarchiesWithGeneralizationAsSpecialization":
@@ -828,14 +792,17 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                         getIsaGeneralizationId(isa),
                     ),
                 )
-                .map(
-                    ({ isa, index }) =>
-                        `${getIsaLabel(index)}: ${quote(
+                .map(({ isa, index }) =>
+                    t("validation.detail.isaGeneralizationAsSpecialization", {
+                        isa: getIsaLabel(index),
+                        entity: quote(
                             getEntityNameById(
                                 diagram,
                                 getIsaGeneralizationId(isa),
+                                t,
                             ),
-                        )} aparece como generalización y especialización.`,
+                        ),
+                    }),
                 );
 
         case "noIsaSpecializationsInMultipleHierarchies": {
@@ -850,11 +817,10 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
 
             return Object.entries(specializationCountById)
                 .filter(([, count]) => count > 1)
-                .map(
-                    ([entityId]) =>
-                        `${quote(
-                            getEntityNameById(diagram, entityId),
-                        )}: aparece como especialización en más de una ISA.`,
+                .map(([entityId]) =>
+                    t("validation.detail.specializationInMultipleIsas", {
+                        entity: quote(getEntityNameById(diagram, entityId, t)),
+                    }),
                 );
         }
 
@@ -867,18 +833,15 @@ const getValidationDetailMessages = (diagnosticKey, diagram) => {
                 .map((entityId) => getEntityById(diagram, entityId))
                 .filter(Boolean)
                 .filter((entity) => hasPrimaryKeyAttribute(entity.attributes))
-                .map(
-                    (entity) =>
-                        `${getEntityLabel(
-                            entity,
-                        )}: es especialización ISA y tiene clave primaria propia.`,
+                .map((entity) =>
+                    t("validation.detail.isaSpecializationWithPrimaryKey", {
+                        entity: getEntityLabel(entity, t),
+                    }),
                 );
         }
 
         case "noSQLIdentifierCollisions":
-            return [
-                "Revisa nombres que solo se diferencien por mayúsculas, acentos, espacios o caracteres especiales.",
-            ];
+            return [t("validation.detail.sqlIdentifierCollisionHint")];
 
         default:
             return [];
@@ -889,11 +852,12 @@ export const getValidationDialogMessages = (
     diagnostics,
     context,
     diagram = null,
+    t = translateInDefaultLanguage,
 ) => {
     if (diagnostics.isValid) {
-        return CONTEXT_SUCCESS_MESSAGES[context]
-            ? [CONTEXT_SUCCESS_MESSAGES[context]]
-            : [];
+        const successMessageKey = CONTEXT_SUCCESS_MESSAGE_KEYS[context];
+
+        return successMessageKey ? [t(successMessageKey)] : [];
     }
 
     const groupedMessages = {
@@ -904,31 +868,31 @@ export const getValidationDialogMessages = (
         sql: [],
     };
 
-    VALIDATION_MESSAGE_DEFINITIONS.forEach(
-        ({ key, message, messagesByContext }) => {
-            if (diagnostics[key] !== false) {
-                return;
-            }
+    VALIDATION_MESSAGE_DEFINITIONS.forEach(({ key, messageKeysByContext }) => {
+        if (diagnostics[key] !== false) {
+            return;
+        }
 
-            const section = DIAGNOSTIC_SECTIONS[key] ?? "general";
-            const baseMessage = messagesByContext?.[context] ?? message;
-            const detailMessages = getValidationDetailMessages(key, diagram);
+        const section = DIAGNOSTIC_SECTIONS[key] ?? "general";
+        const baseMessageKey =
+            messageKeysByContext?.[context] ?? `validation.message.${key}`;
+        const detailMessages = getValidationDetailMessages(key, diagram, t);
 
-            groupedMessages[section].push(baseMessage);
-            groupedMessages[section].push(
-                ...detailMessages.map((detailMessage) => `- ${detailMessage}`),
-            );
-        },
-    );
+        groupedMessages[section].push(t(baseMessageKey));
+        groupedMessages[section].push(
+            ...detailMessages.map((detailMessage) => `- ${detailMessage}`),
+        );
+    });
 
-    const messages = [CONTEXT_HEADERS[context]];
+    const headerKey = CONTEXT_HEADER_KEYS[context];
+    const messages = headerKey ? [t(headerKey)] : [];
 
     Object.entries(groupedMessages).forEach(([section, sectionMessages]) => {
         if (sectionMessages.length === 0) {
             return;
         }
 
-        messages.push(SECTION_TITLES[section]);
+        messages.push(t(VALIDATION_SECTION_TITLE_KEYS[section]));
         messages.push(...sectionMessages);
     });
 

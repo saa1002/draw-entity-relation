@@ -229,12 +229,6 @@ button {
   gap: 4px;
 }
 
-.language-selector-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: #555;
-}
-
 .language-selector-select {
   width: 100%;
   box-sizing: border-box;

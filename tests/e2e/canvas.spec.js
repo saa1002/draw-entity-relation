@@ -530,4 +530,19 @@ test("allows switching the interface language to English", async ({ page }) => {
     await expect(
         page.getByText("Add an entity to get started", { exact: true }),
     ).toBeVisible();
+
+    await page.getByRole("button", { name: "Generate SQL" }).click();
+
+    await expect(
+        page.getByText(
+            "The SQL script could not be generated because of the following errors:",
+            { exact: true },
+        ),
+    ).toBeVisible();
+
+    await expect(
+        page.getByText("The diagram is empty.", { exact: true }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Close" }).click();
 });

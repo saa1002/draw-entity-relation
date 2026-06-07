@@ -141,7 +141,10 @@ import {
 } from "./utils/selection/attributeSelection";
 import { syncDiagramDataFromGraph } from "./utils/sync/diagramGraphSync";
 import { reconstructDiagramGraph } from "./utils/sync/diagramReconstruction";
-import { getValidationDialogMessages } from "./utils/validation/validationMessages";
+import {
+    VALIDATION_SECTION_TITLE_KEYS,
+    getValidationDialogMessages,
+} from "./utils/validation/validationMessages";
 
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 
@@ -170,16 +173,8 @@ const renderSidebarAction = (action) => {
     return <div>{action}</div>;
 };
 
-const VALIDATION_DIALOG_SECTION_TITLES = new Set([
-    "General",
-    "Entidades y atributos",
-    "Relaciones",
-    "ISA",
-    "SQL",
-]);
-
-const renderValidationDialogMessage = (message, index) => {
-    const isSectionTitle = VALIDATION_DIALOG_SECTION_TITLES.has(message);
+const renderValidationDialogMessage = (message, index, sectionTitles) => {
+    const isSectionTitle = sectionTitles.has(message);
     const isDetailMessage = message.startsWith("- ");
 
     return (
@@ -288,6 +283,26 @@ export default function App(props) {
     const BUILD_LABEL = t("app.buildLabel", {
         date: BUILD_DATE,
     });
+
+    const validationDialogSectionTitles = React.useMemo(
+        () =>
+            new Set(
+                Object.values(VALIDATION_SECTION_TITLE_KEYS).map((key) =>
+                    t(key),
+                ),
+            ),
+        [t],
+    );
+
+    const renderLocalizedValidationDialogMessage = React.useCallback(
+        (message, index) =>
+            renderValidationDialogMessage(
+                message,
+                index,
+                validationDialogSectionTitles,
+            ),
+        [validationDialogSectionTitles],
+    );
 
     const containerRef = React.useRef(null);
     const toolbarRef = React.useRef(null);
@@ -3352,6 +3367,7 @@ export default function App(props) {
                     diagnostics,
                     "sql",
                     diagramRef.current,
+                    t,
                 ),
             );
             setOpen(true);
@@ -3390,7 +3406,9 @@ export default function App(props) {
                         {t("diagram.generateSqlTitle")}
                     </DialogTitle>
                     <DialogContent>
-                        {validationMessages.map(renderValidationDialogMessage)}
+                        {validationMessages.map(
+                            renderLocalizedValidationDialogMessage,
+                        )}
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleClose}>
@@ -3426,6 +3444,7 @@ export default function App(props) {
                     diagnostics,
                     "exportJson",
                     diagramRef.current,
+                    t,
                 ),
             );
             setOpen(true);
@@ -3462,7 +3481,9 @@ export default function App(props) {
                         {t("diagram.exportJsonTitle")}
                     </DialogTitle>
                     <DialogContent>
-                        {validationMessages.map(renderValidationDialogMessage)}
+                        {validationMessages.map(
+                            renderLocalizedValidationDialogMessage,
+                        )}
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleClose}>
@@ -3510,6 +3531,7 @@ export default function App(props) {
                         diagnostics,
                         "importJson",
                         importedDiagram,
+                        t,
                     ),
                 );
 
@@ -3554,7 +3576,9 @@ export default function App(props) {
                         <DialogContentText>
                             {t("diagram.importJsonHelp")}
                         </DialogContentText>
-                        {validationMessages.map(renderValidationDialogMessage)}
+                        {validationMessages.map(
+                            renderLocalizedValidationDialogMessage,
+                        )}
                         <input
                             type="file"
                             accept="application/json"

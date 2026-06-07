@@ -221,6 +221,153 @@ export const TRANSLATIONS = {
         "feedback.diagramImportInvalidJson":
             "No se ha podido importar el diagrama porque el archivo JSON no es válido.",
         "feedback.diagramImportFailed": "El diagrama no se ha podido importar.",
+
+        "validation.context.sql.errorHeader":
+            "No se ha podido generar el script SQL por los siguientes errores:",
+        "validation.context.exportJson.errorHeader":
+            "No se ha podido exportar el diagrama en formato JSON por los siguientes errores:",
+        "validation.context.importJson.errorHeader":
+            "No se ha podido importar el diagrama por los siguientes errores:",
+        "validation.context.sql.success":
+            "El diagrama es válido. Se generará un archivo SQL con las tablas y restricciones derivadas del modelo E/R.",
+        "validation.context.exportJson.success":
+            "El diagrama es válido. Se exportará el diagrama actual en formato JSON para poder importarlo más adelante.",
+
+        "validation.section.general": "General",
+        "validation.section.entities": "Entidades y atributos",
+        "validation.section.relations": "Relaciones",
+        "validation.section.isa": "ISA",
+        "validation.section.sql": "SQL",
+
+        "validation.fallback.entityUnnamed": "Entidad sin nombre",
+        "validation.fallback.relationUnnamed": "Relación sin nombre",
+        "validation.fallback.attributeUnnamed": "Atributo sin nombre",
+        "validation.fallback.entityMissing": "Entidad inexistente",
+
+        "validation.message.notEmpty": "El diagrama está vacío.",
+        "validation.message.noRepeatedNames.sql":
+            "Hay entidades o relaciones con nombres repetidos.",
+        "validation.message.noRepeatedNames.exportJson":
+            "Hay entidades con nombres repetidos.",
+        "validation.message.noRepeatedNames.importJson":
+            "Hay entidades con nombres repetidos.",
+        "validation.message.noRepeatedAttrNames":
+            "Hay atributos repetidos en una entidad.",
+        "validation.message.noEmptyCompositeAttributes":
+            "Hay atributos compuestos sin subatributos.",
+        "validation.message.noNestedCompositeAttributes":
+            "Hay atributos compuestos con subatributos anidados.",
+        "validation.message.noUnsupportedMultivaluedAttributes":
+            "Solo se soportan atributos multivaluados top-level de entidad, simples o compuestos, sin clave ni discriminante.",
+        "validation.message.noEntitiesWithoutAttributes":
+            "Hay entidades sin atributos.",
+        "validation.message.noEntitiesWithoutPK":
+            "Hay entidades sin clave primaria.",
+        "validation.message.noEntitiesWithMoreThanOnePK":
+            "Hay entidades con más de una clave primaria.",
+        "validation.message.noNMRelationsWithPK":
+            "Hay relaciones N-M con clave primaria.",
+        "validation.message.noWeakEntitiesWithPrimaryKey":
+            "Hay entidades débiles con clave primaria normal.",
+        "validation.message.noWeakEntitiesWithoutPartialKey":
+            "Hay entidades débiles sin atributo discriminante.",
+        "validation.message.noWeakEntitiesWithMoreThanOnePartialKey":
+            "Hay entidades débiles con más de un atributo discriminante.",
+        "validation.message.noStrongEntitiesWithPartialKey":
+            "Hay entidades fuertes con atributo discriminante.",
+        "validation.message.noWeakEntitiesWithoutIdentifyingRelation":
+            "Hay entidades débiles sin relación de dependencia por identificación.",
+        "validation.message.noInvalidIdentifyingRelations":
+            "Hay relaciones de dependencia por identificación que no conectan una entidad débil dependiente con una entidad propietaria distinta.",
+        "validation.message.noInvalidIdentifyingCardinalities":
+            "Hay relaciones de dependencia por identificación con cardinalidades no válidas.",
+        "validation.message.noInconsistentWeakEntityOwnership":
+            "Hay entidades débiles cuya entidad propietaria es inconsistente.",
+        "validation.message.noMultipleIdentifyingRelationsPerWeakEntity":
+            "Hay entidades débiles con más de una relación de dependencia por identificación como entidad dependiente.",
+        "validation.message.noAttributesInNonNMRelations":
+            "Hay relaciones 1:1 o 1:N con atributos, lo cual no está soportado.",
+        "validation.message.noUnconnectedRelations":
+            "Hay relaciones desconectadas.",
+        "validation.message.noSQLIdentifierCollisions":
+            "Hay nombres que colisionan al normalizar identificadores SQL.",
+        "validation.message.noBrokenRelationEntityReferences":
+            "Hay relaciones que apuntan a entidades inexistentes.",
+        "validation.message.noUnconnectedIsas":
+            "Hay jerarquías ISA que no tienen una generalización y al menos una especialización conectadas.",
+        "validation.message.noBrokenIsaEntityReferences":
+            "Hay jerarquías ISA que apuntan a entidades inexistentes.",
+        "validation.message.noIsaHierarchiesWithRepeatedSpecializations":
+            "Hay jerarquías ISA con especializaciones repetidas.",
+        "validation.message.noIsaHierarchiesWithGeneralizationAsSpecialization":
+            "Hay jerarquías ISA en las que la generalización también aparece como especialización.",
+        "validation.message.noIsaSpecializationsInMultipleHierarchies":
+            "Hay entidades que aparecen como especialización en más de una jerarquía ISA; la herencia múltiple no está soportada.",
+        "validation.message.noIsaSpecializationsWithPrimaryKey":
+            "Hay especializaciones ISA con clave primaria propia; deben heredar la clave de la generalización.",
+        "validation.message.noTernaryRelationsWithAmbiguousRepeatedParticipants":
+            "Hay relaciones ternarias con entidades participantes repetidas sin roles distintos.",
+        "validation.message.noIdentifyingTernaryRelations":
+            "Las relaciones ternarias no pueden ser relaciones de dependencia por identificación.",
+        "validation.message.noTernaryRelationsWithMandatoryCardinalities":
+            "Hay relaciones ternarias con cardinalidades obligatorias.",
+        "validation.message.noNotValidCardinalities":
+            "Hay cardinalidades no válidas en las relaciones.",
+
+        "validation.detail.attributeOwnerList": "{{owner}}: {{details}}.",
+        "validation.detail.repeatedNames": "Nombres repetidos: {{names}}.",
+        "validation.detail.repeatedAttributes":
+            "atributos repetidos {{attributes}}",
+        "validation.detail.emptyCompositeAttributes":
+            "atributos compuestos sin subatributos {{attributes}}",
+        "validation.detail.nestedCompositeAttributes":
+            "atributos compuestos anidados {{attributes}}",
+        "validation.detail.entityWithoutAttributes":
+            "{{entity}}: no tiene atributos.",
+        "validation.detail.entityWithoutPrimaryKey":
+            "{{entity}}: no tiene clave primaria.",
+        "validation.detail.entityWithMultiplePrimaryKeys":
+            "{{entity}}: tiene varias claves primarias ({{keys}}).",
+        "validation.detail.weakEntityWithPrimaryKey":
+            "{{entity}}: es débil y tiene clave primaria normal.",
+        "validation.detail.weakEntityWithoutPartialKey":
+            "{{entity}}: es débil y no tiene discriminante.",
+        "validation.detail.weakEntityWithMultiplePartialKeys":
+            "{{entity}}: tiene varios discriminantes ({{keys}}).",
+        "validation.detail.strongEntityWithPartialKey":
+            "{{entity}}: es fuerte y tiene atributo discriminante.",
+        "validation.detail.weakEntityWithoutIdentifyingRelation":
+            "{{entity}}: no tiene relación identificadora asociada.",
+        "validation.detail.unconnectedRelation":
+            "{{relation}}: no tiene todos sus lados conectados.",
+        "validation.detail.nonNmRelationWithAttributes":
+            "{{relation}}: tiene atributos propios aunque su tipo no los soporta.",
+        "validation.detail.nmRelationWithPrimaryKey":
+            "{{relation}}: tiene atributos marcados como clave primaria.",
+        "validation.detail.brokenRelationEntityReference":
+            "{{relation}}: apunta a una entidad que ya no existe.",
+        "validation.detail.ternaryRepeatedParticipantWithoutDistinctRoles":
+            "{{relation}}: repite la entidad {{entity}} sin roles distintos.",
+        "validation.detail.identifyingTernaryRelation":
+            "{{relation}}: es ternaria y está marcada como identificadora.",
+        "validation.detail.ternaryRelationWithMandatoryCardinality":
+            "{{relation}}: tiene alguna cardinalidad mínima obligatoria.",
+        "validation.detail.relationWithInvalidCardinalities":
+            "{{relation}}: contiene cardinalidades no válidas.",
+        "validation.detail.unconnectedIsa":
+            "{{isa}}: debe tener una generalización y al menos una especialización conectadas.",
+        "validation.detail.brokenIsaEntityReference":
+            "{{isa}}: apunta a una entidad que ya no existe.",
+        "validation.detail.isaWithRepeatedSpecializations":
+            "{{isa}}: contiene especializaciones repetidas.",
+        "validation.detail.isaGeneralizationAsSpecialization":
+            "{{isa}}: {{entity}} aparece como generalización y especialización.",
+        "validation.detail.specializationInMultipleIsas":
+            "{{entity}}: aparece como especialización en más de una ISA.",
+        "validation.detail.isaSpecializationWithPrimaryKey":
+            "{{entity}}: es especialización ISA y tiene clave primaria propia.",
+        "validation.detail.sqlIdentifierCollisionHint":
+            "Revisa nombres que solo se diferencien por mayúsculas, acentos, espacios o caracteres especiales.",
     },
     en: {
         "app.buildLabel": "Build: {{date}}",
@@ -428,6 +575,153 @@ export const TRANSLATIONS = {
         "feedback.diagramImportInvalidJson":
             "The diagram could not be imported because the JSON file is not valid.",
         "feedback.diagramImportFailed": "The diagram could not be imported.",
+
+        "validation.context.sql.errorHeader":
+            "The SQL script could not be generated because of the following errors:",
+        "validation.context.exportJson.errorHeader":
+            "The diagram could not be exported as JSON because of the following errors:",
+        "validation.context.importJson.errorHeader":
+            "The diagram could not be imported because of the following errors:",
+        "validation.context.sql.success":
+            "The diagram is valid. An SQL file will be generated with the tables and constraints derived from the E/R model.",
+        "validation.context.exportJson.success":
+            "The diagram is valid. The current diagram will be exported as a JSON file so it can be imported later.",
+
+        "validation.section.general": "General",
+        "validation.section.entities": "Entities and attributes",
+        "validation.section.relations": "Relationships",
+        "validation.section.isa": "ISA",
+        "validation.section.sql": "SQL",
+
+        "validation.fallback.entityUnnamed": "Unnamed entity",
+        "validation.fallback.relationUnnamed": "Unnamed relationship",
+        "validation.fallback.attributeUnnamed": "Unnamed attribute",
+        "validation.fallback.entityMissing": "Missing entity",
+
+        "validation.message.notEmpty": "The diagram is empty.",
+        "validation.message.noRepeatedNames.sql":
+            "There are entities or relationships with repeated names.",
+        "validation.message.noRepeatedNames.exportJson":
+            "There are entities with repeated names.",
+        "validation.message.noRepeatedNames.importJson":
+            "There are entities with repeated names.",
+        "validation.message.noRepeatedAttrNames":
+            "There are repeated attributes in an entity.",
+        "validation.message.noEmptyCompositeAttributes":
+            "There are composite attributes without subattributes.",
+        "validation.message.noNestedCompositeAttributes":
+            "There are composite attributes with nested subattributes.",
+        "validation.message.noUnsupportedMultivaluedAttributes":
+            "Only top-level entity multivalued attributes are supported, either simple or composite, without key or discriminant.",
+        "validation.message.noEntitiesWithoutAttributes":
+            "There are entities without attributes.",
+        "validation.message.noEntitiesWithoutPK":
+            "There are entities without a primary key.",
+        "validation.message.noEntitiesWithMoreThanOnePK":
+            "There are entities with more than one primary key.",
+        "validation.message.noNMRelationsWithPK":
+            "There are N-M relationships with a primary key.",
+        "validation.message.noWeakEntitiesWithPrimaryKey":
+            "There are weak entities with a normal primary key.",
+        "validation.message.noWeakEntitiesWithoutPartialKey":
+            "There are weak entities without a discriminant attribute.",
+        "validation.message.noWeakEntitiesWithMoreThanOnePartialKey":
+            "There are weak entities with more than one discriminant attribute.",
+        "validation.message.noStrongEntitiesWithPartialKey":
+            "There are strong entities with a discriminant attribute.",
+        "validation.message.noWeakEntitiesWithoutIdentifyingRelation":
+            "There are weak entities without an identifying dependency relationship.",
+        "validation.message.noInvalidIdentifyingRelations":
+            "There are identifying dependency relationships that do not connect a dependent weak entity with a different owner entity.",
+        "validation.message.noInvalidIdentifyingCardinalities":
+            "There are identifying dependency relationships with invalid cardinalities.",
+        "validation.message.noInconsistentWeakEntityOwnership":
+            "There are weak entities with inconsistent owner entities.",
+        "validation.message.noMultipleIdentifyingRelationsPerWeakEntity":
+            "There are weak entities with more than one identifying dependency relationship as dependent entity.",
+        "validation.message.noAttributesInNonNMRelations":
+            "There are 1:1 or 1:N relationships with attributes, which is not supported.",
+        "validation.message.noUnconnectedRelations":
+            "There are disconnected relationships.",
+        "validation.message.noSQLIdentifierCollisions":
+            "There are names that collide when SQL identifiers are normalized.",
+        "validation.message.noBrokenRelationEntityReferences":
+            "There are relationships pointing to missing entities.",
+        "validation.message.noUnconnectedIsas":
+            "There are ISA hierarchies without a connected generalization and at least one connected specialization.",
+        "validation.message.noBrokenIsaEntityReferences":
+            "There are ISA hierarchies pointing to missing entities.",
+        "validation.message.noIsaHierarchiesWithRepeatedSpecializations":
+            "There are ISA hierarchies with repeated specializations.",
+        "validation.message.noIsaHierarchiesWithGeneralizationAsSpecialization":
+            "There are ISA hierarchies where the generalization also appears as a specialization.",
+        "validation.message.noIsaSpecializationsInMultipleHierarchies":
+            "There are entities that appear as a specialization in more than one ISA hierarchy; multiple inheritance is not supported.",
+        "validation.message.noIsaSpecializationsWithPrimaryKey":
+            "There are ISA specializations with their own primary key; they must inherit the key from the generalization.",
+        "validation.message.noTernaryRelationsWithAmbiguousRepeatedParticipants":
+            "There are ternary relationships with repeated participant entities without distinct roles.",
+        "validation.message.noIdentifyingTernaryRelations":
+            "Ternary relationships cannot be identifying dependency relationships.",
+        "validation.message.noTernaryRelationsWithMandatoryCardinalities":
+            "There are ternary relationships with mandatory cardinalities.",
+        "validation.message.noNotValidCardinalities":
+            "There are invalid cardinalities in the relationships.",
+
+        "validation.detail.attributeOwnerList": "{{owner}}: {{details}}.",
+        "validation.detail.repeatedNames": "Repeated names: {{names}}.",
+        "validation.detail.repeatedAttributes":
+            "repeated attributes {{attributes}}",
+        "validation.detail.emptyCompositeAttributes":
+            "composite attributes without subattributes {{attributes}}",
+        "validation.detail.nestedCompositeAttributes":
+            "nested composite attributes {{attributes}}",
+        "validation.detail.entityWithoutAttributes":
+            "{{entity}}: has no attributes.",
+        "validation.detail.entityWithoutPrimaryKey":
+            "{{entity}}: has no primary key.",
+        "validation.detail.entityWithMultiplePrimaryKeys":
+            "{{entity}}: has several primary keys ({{keys}}).",
+        "validation.detail.weakEntityWithPrimaryKey":
+            "{{entity}}: is weak and has a normal primary key.",
+        "validation.detail.weakEntityWithoutPartialKey":
+            "{{entity}}: is weak and has no discriminant.",
+        "validation.detail.weakEntityWithMultiplePartialKeys":
+            "{{entity}}: has several discriminants ({{keys}}).",
+        "validation.detail.strongEntityWithPartialKey":
+            "{{entity}}: is strong and has a discriminant attribute.",
+        "validation.detail.weakEntityWithoutIdentifyingRelation":
+            "{{entity}}: has no associated identifying relationship.",
+        "validation.detail.unconnectedRelation":
+            "{{relation}}: does not have all its sides connected.",
+        "validation.detail.nonNmRelationWithAttributes":
+            "{{relation}}: has own attributes even though its type does not support them.",
+        "validation.detail.nmRelationWithPrimaryKey":
+            "{{relation}}: has attributes marked as primary key.",
+        "validation.detail.brokenRelationEntityReference":
+            "{{relation}}: points to an entity that no longer exists.",
+        "validation.detail.ternaryRepeatedParticipantWithoutDistinctRoles":
+            "{{relation}}: repeats entity {{entity}} without distinct roles.",
+        "validation.detail.identifyingTernaryRelation":
+            "{{relation}}: is ternary and is marked as identifying.",
+        "validation.detail.ternaryRelationWithMandatoryCardinality":
+            "{{relation}}: has at least one mandatory minimum cardinality.",
+        "validation.detail.relationWithInvalidCardinalities":
+            "{{relation}}: contains invalid cardinalities.",
+        "validation.detail.unconnectedIsa":
+            "{{isa}}: must have one generalization and at least one connected specialization.",
+        "validation.detail.brokenIsaEntityReference":
+            "{{isa}}: points to an entity that no longer exists.",
+        "validation.detail.isaWithRepeatedSpecializations":
+            "{{isa}}: contains repeated specializations.",
+        "validation.detail.isaGeneralizationAsSpecialization":
+            "{{isa}}: {{entity}} appears as both generalization and specialization.",
+        "validation.detail.specializationInMultipleIsas":
+            "{{entity}}: appears as a specialization in more than one ISA.",
+        "validation.detail.isaSpecializationWithPrimaryKey":
+            "{{entity}}: is an ISA specialization and has its own primary key.",
+        "validation.detail.sqlIdentifierCollisionHint":
+            "Check names that only differ by uppercase/lowercase letters, accents, spaces or special characters.",
     },
 };
 
