@@ -1508,14 +1508,14 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={pushCellsBack(true)}
                 >
-                    Enviar al fondo
+                    {t("action.sendToBack")}
                 </button>
                 <button
                     type="button"
                     className="button-toolbar-action"
                     onClick={pushCellsBack(false)}
                 >
-                    Traer al frente
+                    {t("action.bringToFront")}
                 </button>
             </React.Fragment>
         );
@@ -1531,16 +1531,16 @@ export default function App(props) {
             isEntityShapeCell(selected) &&
             !isWeakEntityDecoratorCell(selected)
         ) {
-            selectedType = "Entidad seleccionada";
+            selectedType = t("selection.selectedEntity");
         } else if (
             isRelationShapeCell(selected) &&
             !isIdentifyingRelationDecoratorCell(selected)
         ) {
-            selectedType = "Relación seleccionada";
+            selectedType = t("selection.selectedRelation");
         } else if (isIsaShapeCell(selected)) {
-            selectedType = "ISA seleccionada";
+            selectedType = t("selection.selectedIsa");
         } else if (isAttributeShapeCell(selected)) {
-            selectedType = "Atributo seleccionado";
+            selectedType = t("selection.selectedAttribute");
         } else {
             return null;
         }
@@ -1559,7 +1559,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={addAttribute}
                 >
-                    Añadir atributo
+                    {t("action.addAttribute")}
                 </button>
             );
         }
@@ -1577,7 +1577,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={addAttribute}
                 >
-                    Añadir atributo
+                    {t("action.addAttribute")}
                 </button>
             );
         }
@@ -1596,7 +1596,7 @@ export default function App(props) {
                 className="button-toolbar-action"
                 onClick={groupSelectedSimpleAttributesIntoComposite}
             >
-                Agrupar en atributo compuesto
+                {t("action.groupCompositeAttribute")}
             </button>
         );
     };
@@ -1625,7 +1625,7 @@ export default function App(props) {
                 className="button-toolbar-action"
                 onClick={addChildAttribute}
             >
-                Añadir subatributo hermano
+                {t("action.addSiblingSubattribute")}
             </button>
         );
     };
@@ -1654,7 +1654,7 @@ export default function App(props) {
                 className="button-toolbar-action"
                 onClick={convertSelectedSubattributeToSimpleAttribute}
             >
-                Convertir en atributo simple
+                {t("action.convertToSimpleAttribute")}
             </button>
         );
     };
@@ -1688,7 +1688,7 @@ export default function App(props) {
                         className="button-toolbar-action"
                         onClick={() => hideAttributes(isRelationNM)}
                     >
-                        Ocultar atributos
+                        {t("action.hideAttributes")}
                     </button>
                 );
             }
@@ -1698,7 +1698,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={() => showAttributes(isRelationNM)}
                 >
-                    Mostrar atributos
+                    {t("action.showAttributes")}
                 </button>
             );
         }
@@ -1737,7 +1737,9 @@ export default function App(props) {
                 className="button-toolbar-action"
                 onClick={toggleAttrKey}
             >
-                {attribute.key ? "Quitar clave" : "Convertir en clave"}
+                {attribute.key
+                    ? t("action.removeKey")
+                    : t("action.convertToKey")}
             </button>
         );
     };
@@ -1771,8 +1773,8 @@ export default function App(props) {
                 onClick={togglePartialKey}
             >
                 {attribute.partialKey
-                    ? "Quitar discriminante"
-                    : "Convertir en discriminante"}
+                    ? t("action.removeDiscriminant")
+                    : t("action.convertToDiscriminant")}
             </button>
         );
     };
@@ -1795,11 +1797,11 @@ export default function App(props) {
 
         const label = isCompositeMultivaluedTarget
             ? isMultivaluedAttribute(attribute)
-                ? "Quitar multivaluado del compuesto"
-                : "Marcar compuesto como multivaluado"
+                ? t("action.removeCompositeMultivalued")
+                : t("action.markCompositeMultivalued")
             : isMultivaluedAttribute(attribute)
-              ? "Quitar multivaluado"
-              : "Marcar multivaluado";
+              ? t("action.removeMultivalued")
+              : t("action.markMultivalued");
 
         return (
             <button
@@ -1826,8 +1828,8 @@ export default function App(props) {
                     onClick={toggleWeakEntity}
                 >
                     {isWeakEntity(selectedEntityDiag)
-                        ? "Quitar entidad débil"
-                        : "Marcar como entidad débil"}
+                        ? t("action.removeWeakEntity")
+                        : t("action.markWeakEntity")}
                 </button>
             );
         }
@@ -1849,8 +1851,8 @@ export default function App(props) {
                     onClick={toggleIdentifyingRelation}
                 >
                     {isIdentifyingRelation(selectedRelationDiag)
-                        ? "Desmarcar como dependencia por identificación"
-                        : "Marcar como dependencia por identificación"}
+                        ? t("action.unmarkIdentifyingRelation")
+                        : t("action.markIdentifyingRelation")}
                 </button>
             );
         }
@@ -2070,7 +2072,7 @@ export default function App(props) {
                         className="button-toolbar-action"
                         onClick={handleClickOpen}
                     >
-                        Configurar relación
+                        {t("action.configureRelation")}
                     </button>
                     <Dialog
                         open={open}
@@ -2084,21 +2086,17 @@ export default function App(props) {
                             className={DRAGGABLE_DIALOG_TITLE_CLASS}
                             sx={{ cursor: "move", userSelect: "none" }}
                         >
-                            {"Configurar relación"}
+                            {t("relation.dialogTitle")}
                         </DialogTitle>
                         <DialogContent>
                             <DialogContentText id="alert-dialog-description">
-                                Selecciona el tipo de relación y las entidades
-                                que participan en cada lado.
+                                {t("relation.dialogHelp")}
                             </DialogContentText>
                             {selectedArityIsTernary && (
                                 <>
                                     <Box sx={{ minHeight: 10 }} />
                                     <DialogContentText>
-                                        En una relación ternaria participan tres
-                                        lados. Si una misma entidad aparece en
-                                        más de un lado, asigna roles diferentes
-                                        para distinguir cada participación.
+                                        {t("relation.ternaryHelp")}
                                     </DialogContentText>
                                 </>
                             )}
@@ -2106,35 +2104,35 @@ export default function App(props) {
                             <Box sx={{ minWidth: 120 }}>
                                 <FormControl fullWidth>
                                     <InputLabel id="relation-arity-label">
-                                        Tipo de relación
+                                        {t("relation.arityLabel")}
                                     </InputLabel>
                                     <Select
                                         id="relation-arity"
                                         value={relationArity}
-                                        label="Tipo de relación"
+                                        label={t("relation.arityLabel")}
                                         onChange={handleChangeRelationArity}
                                     >
                                         <MenuItem
                                             value={RELATION_ARITIES.BINARY}
                                         >
-                                            Binaria
+                                            {t("relation.binary")}
                                         </MenuItem>
                                         <MenuItem
                                             value={RELATION_ARITIES.TERNARY}
                                         >
-                                            Ternaria
+                                            {t("relation.ternary")}
                                         </MenuItem>
                                     </Select>
                                 </FormControl>
                                 <Box sx={{ minHeight: 10 }} />
                                 <FormControl fullWidth>
                                     <InputLabel id="side1-label">
-                                        Lado 1
+                                        {t("relation.side1")}
                                     </InputLabel>
                                     <Select
                                         id="side1"
                                         value={side1}
-                                        label="Lado 1"
+                                        label={t("relation.side1")}
                                         onChange={handleChangeSide1}
                                     >
                                         {diagramRef.current.entities.map(
@@ -2156,7 +2154,9 @@ export default function App(props) {
                                         <Box sx={{ minHeight: 10 }} />
                                         <TextField
                                             id="side1-role"
-                                            label="Rol lado 1"
+                                            label={t("relation.sideRole", {
+                                                side: 1,
+                                            })}
                                             value={side1Role}
                                             onChange={handleChangeSide1Role}
                                             fullWidth
@@ -2166,12 +2166,12 @@ export default function App(props) {
                                 <Box sx={{ minHeight: 10 }} />
                                 <FormControl fullWidth>
                                     <InputLabel id="side2-label">
-                                        Lado 2
+                                        {t("relation.side2")}
                                     </InputLabel>
                                     <Select
                                         id="side2"
                                         value={side2}
-                                        label="Lado 2"
+                                        label={t("relation.side2")}
                                         onChange={handleChangeSide2}
                                     >
                                         {diagramRef.current.entities.map(
@@ -2193,7 +2193,9 @@ export default function App(props) {
                                         <Box sx={{ minHeight: 10 }} />
                                         <TextField
                                             id="side2-role"
-                                            label="Rol lado 2"
+                                            label={t("relation.sideRole", {
+                                                side: 2,
+                                            })}
                                             value={side2Role}
                                             onChange={handleChangeSide2Role}
                                             fullWidth
@@ -2205,12 +2207,12 @@ export default function App(props) {
                                         <Box sx={{ minHeight: 10 }} />
                                         <FormControl fullWidth>
                                             <InputLabel id="side3-label">
-                                                Lado 3
+                                                {t("relation.side3")}
                                             </InputLabel>
                                             <Select
                                                 id="side3"
                                                 value={side3}
-                                                label="Lado 3"
+                                                label={t("relation.side3")}
                                                 onChange={handleChangeSide3}
                                             >
                                                 {diagramRef.current.entities.map(
@@ -2234,7 +2236,10 @@ export default function App(props) {
                                                 <Box sx={{ minHeight: 10 }} />
                                                 <TextField
                                                     id="side3-role"
-                                                    label="Rol lado 3"
+                                                    label={t(
+                                                        "relation.sideRole",
+                                                        { side: 3 },
+                                                    )}
                                                     value={side3Role}
                                                     onChange={
                                                         handleChangeSide3Role
@@ -2248,13 +2253,15 @@ export default function App(props) {
                             </Box>
                         </DialogContent>
                         <DialogActions>
-                            <Button onClick={handleClose}>Cancelar</Button>
+                            <Button onClick={handleClose}>
+                                {t("common.cancel")}
+                            </Button>
                             <Button
                                 onClick={handleAccept}
                                 autoFocus
                                 disabled={acceptDisabled}
                             >
-                                Aceptar
+                                {t("common.accept")}
                             </Button>
                         </DialogActions>
                     </Dialog>
@@ -2298,8 +2305,13 @@ export default function App(props) {
             const entityName = getSideEntityName(relation, sideKey);
 
             return entityName
-                ? `Rol lado ${sideNumber} (${entityName})`
-                : `Rol lado ${sideNumber}`;
+                ? t("roles.sideLabelWithEntity", {
+                      side: sideNumber,
+                      entity: entityName,
+                  })
+                : t("roles.sideLabel", {
+                      side: sideNumber,
+                  });
         };
 
         const getRepeatedParticipantSideGroups = (relation) => {
@@ -2393,7 +2405,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={handleClickOpen}
                 >
-                    Editar roles
+                    {t("action.editRoles")}
                 </button>
                 <Dialog
                     open={open}
@@ -2407,14 +2419,11 @@ export default function App(props) {
                         className={DRAGGABLE_DIALOG_TITLE_CLASS}
                         sx={{ cursor: "move", userSelect: "none" }}
                     >
-                        {"Editar roles"}
+                        {t("roles.dialogTitle")}
                     </DialogTitle>
                     <DialogContent>
                         <DialogContentText id="relation-roles-dialog-description">
-                            Los roles sirven para distinguir varias
-                            participaciones de una misma entidad dentro de una
-                            relación ternaria. Usa nombres breves y distintos,
-                            por ejemplo origen y destino.
+                            {t("roles.dialogHelp")}
                         </DialogContentText>
                         <Box sx={{ minHeight: 10 }} />
                         <Box sx={{ minWidth: 320 }}>
@@ -2436,13 +2445,15 @@ export default function App(props) {
                         </Box>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleClose}>Cancelar</Button>
+                        <Button onClick={handleClose}>
+                            {t("common.cancel")}
+                        </Button>
                         <Button
                             onClick={handleAccept}
                             autoFocus
                             disabled={acceptDisabled}
                         >
-                            Aceptar
+                            {t("common.accept")}
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -2562,7 +2573,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={handleClickOpen}
                 >
-                    Configurar ISA
+                    {t("action.configureIsa")}
                 </button>
                 <Dialog
                     open={open}
@@ -2573,25 +2584,22 @@ export default function App(props) {
                         className={DRAGGABLE_DIALOG_TITLE_CLASS}
                         sx={{ cursor: "move", userSelect: "none" }}
                     >
-                        {"Configurar ISA"}
+                        {t("isa.dialogTitle")}
                     </DialogTitle>
                     <DialogContent>
                         <DialogContentText>
-                            Selecciona una única generalización y una o varias
-                            especializaciones. Las especializaciones heredan la
-                            clave de la generalización y no deben tener clave
-                            propia.
+                            {t("isa.dialogHelp")}
                         </DialogContentText>
                         <Box sx={{ minHeight: 10 }} />
                         <Box sx={{ minWidth: 260 }}>
                             <FormControl fullWidth>
                                 <InputLabel id="isa-generalization-label">
-                                    Generalización
+                                    {t("isa.generalization")}
                                 </InputLabel>
                                 <Select
                                     id="isa-generalization"
                                     value={generalizationId}
-                                    label="Generalización"
+                                    label={t("isa.generalization")}
                                     onChange={handleChangeGeneralization}
                                 >
                                     {diagramRef.current.entities.map(
@@ -2611,13 +2619,13 @@ export default function App(props) {
 
                             <FormControl fullWidth>
                                 <InputLabel id="isa-specializations-label">
-                                    Especializaciones
+                                    {t("isa.specializations")}
                                 </InputLabel>
                                 <Select
                                     id="isa-specializations"
                                     multiple
                                     value={specializationIds}
-                                    label="Especializaciones"
+                                    label={t("isa.specializations")}
                                     onChange={handleChangeSpecializations}
                                     renderValue={(selectedIds) =>
                                         selectedIds
@@ -2644,13 +2652,15 @@ export default function App(props) {
                         </Box>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleClose}>Cancelar</Button>
+                        <Button onClick={handleClose}>
+                            {t("common.cancel")}
+                        </Button>
                         <Button
                             onClick={handleAccept}
                             autoFocus
                             disabled={acceptDisabled}
                         >
-                            Aceptar
+                            {t("common.accept")}
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -2843,7 +2853,7 @@ export default function App(props) {
                         className="button-toolbar-action"
                         onClick={handleClickOpen}
                     >
-                        Configurar cardinalidades
+                        {t("action.configureCardinalities")}
                     </button>
                     <Dialog
                         open={open}
@@ -2857,19 +2867,23 @@ export default function App(props) {
                             className={DRAGGABLE_DIALOG_TITLE_CLASS}
                             sx={{ cursor: "move", userSelect: "none" }}
                         >
-                            {"Configurar cardinalidades"}
+                            {t("cardinalities.dialogTitle")}
                         </DialogTitle>
                         {!isConfigured && (
                             <DialogContent>
                                 <DialogContentText id="alert-dialog-description">
-                                    Esta relación todavía no está configurada
+                                    {isIdentifyingRelation(selectedDiag)
+                                        ? t("cardinalities.identifyingHelp")
+                                        : t("cardinalities.dialogHelp")}
                                 </DialogContentText>
                             </DialogContent>
                         )}
                         {isConfigured && (
                             <DialogContent>
                                 <DialogContentText id="alert-dialog-description">
-                                    Escoger las cardinalidades de esta relación
+                                    {isIdentifyingRelation(selectedDiag)
+                                        ? t("cardinalities.identifyingHelp")
+                                        : t("cardinalities.dialogHelp")}
                                 </DialogContentText>
                                 <Box sx={{ minHeight: 10 }} />
                                 <Box sx={{ minWidth: 120 }}>
@@ -2933,13 +2947,15 @@ export default function App(props) {
                             </DialogContent>
                         )}
                         <DialogActions>
-                            <Button onClick={handleClose}>Cancelar</Button>
+                            <Button onClick={handleClose}>
+                                {t("common.cancel")}
+                            </Button>
                             <Button
                                 onClick={handleAccept}
                                 autoFocus
                                 disabled={acceptDisabled}
                             >
-                                Aceptar
+                                {t("common.accept")}
                             </Button>
                         </DialogActions>
                     </Dialog>
@@ -3196,7 +3212,7 @@ export default function App(props) {
                 className="button-toolbar-action button-toolbar-action-danger"
                 onClick={deleteSelectedEntity}
             >
-                Borrar
+                {t("action.delete")}
             </button>
         );
     };
@@ -3231,7 +3247,7 @@ export default function App(props) {
                 className="button-toolbar-action button-toolbar-action-danger"
                 onClick={deleteSelectedAttribute}
             >
-                Borrar
+                {t("action.delete")}
             </button>
         );
     };
@@ -3249,7 +3265,7 @@ export default function App(props) {
                 className="button-toolbar-action button-toolbar-action-danger"
                 onClick={deleteSelectedRelation}
             >
-                Borrar
+                {t("action.delete")}
             </button>
         );
     };
@@ -3267,7 +3283,7 @@ export default function App(props) {
                 className="button-toolbar-action button-toolbar-action-danger"
                 onClick={deleteSelectedIsa}
             >
-                Borrar
+                {t("action.delete")}
             </button>
         );
     };
@@ -3326,7 +3342,7 @@ export default function App(props) {
                 disabled={!canUndo}
                 title="Ctrl+Z"
             >
-                Deshacer
+                {t("action.undo")}
             </button>
             <button
                 type="button"
@@ -3335,7 +3351,7 @@ export default function App(props) {
                 disabled={!canRedo}
                 title="Ctrl+Y / Ctrl+Shift+Z"
             >
-                Rehacer
+                {t("action.redo")}
             </button>
         </>
     );
@@ -3382,7 +3398,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={handleClickOpen}
                 >
-                    Generar SQL
+                    {t("diagram.generateSql")}
                 </button>
                 <Dialog
                     open={open}
@@ -3391,21 +3407,23 @@ export default function App(props) {
                     aria-describedby="alert-dialog-description"
                 >
                     <DialogTitle id="alert-dialog-title">
-                        {"Generar script SQL"}
+                        {t("diagram.generateSqlTitle")}
                     </DialogTitle>
                     <DialogContent>
                         {validationMessages.map(renderValidationDialogMessage)}
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleClose}>
-                            {acceptDisabled ? "Cerrar" : "Cancelar"}
+                            {acceptDisabled
+                                ? t("common.close")
+                                : t("common.cancel")}
                         </Button>
                         <Button
                             onClick={handleAccept}
                             autoFocus
                             disabled={acceptDisabled}
                         >
-                            Generar SQL
+                            {t("diagram.generateSql")}
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -3452,7 +3470,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={handleClickOpen}
                 >
-                    Exportar JSON
+                    {t("diagram.exportJson")}
                 </button>
                 <Dialog
                     open={open}
@@ -3461,21 +3479,23 @@ export default function App(props) {
                     aria-describedby="alert-dialog-description"
                 >
                     <DialogTitle id="alert-dialog-title">
-                        {"Exportar diagrama en JSON"}
+                        {t("diagram.exportJsonTitle")}
                     </DialogTitle>
                     <DialogContent>
                         {validationMessages.map(renderValidationDialogMessage)}
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleClose}>
-                            {acceptDisabled ? "Cerrar" : "Cancelar"}
+                            {acceptDisabled
+                                ? t("common.close")
+                                : t("common.cancel")}
                         </Button>
                         <Button
                             onClick={handleAccept}
                             autoFocus
                             disabled={acceptDisabled}
                         >
-                            Exportar JSON
+                            {t("diagram.exportJson")}
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -3543,7 +3563,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={handleClickOpen}
                 >
-                    Importar JSON
+                    {t("diagram.importJson")}
                 </button>
                 <Dialog
                     open={open}
@@ -3552,13 +3572,11 @@ export default function App(props) {
                     aria-describedby="alert-dialog-description"
                 >
                     <DialogTitle id="alert-dialog-title">
-                        {"Importar diagrama desde JSON"}
+                        {t("diagram.importJsonTitle")}
                     </DialogTitle>
                     <DialogContent>
                         <DialogContentText>
-                            Selecciona un archivo JSON exportado previamente. Si
-                            el archivo es válido, reemplazará el diagrama
-                            actual.
+                            {t("diagram.importJsonHelp")}
                         </DialogContentText>
                         {validationMessages.map(renderValidationDialogMessage)}
                         <input
@@ -3568,7 +3586,9 @@ export default function App(props) {
                         />
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleClose}>Cerrar</Button>
+                        <Button onClick={handleClose}>
+                            {t("common.close")}
+                        </Button>
                     </DialogActions>
                 </Dialog>
             </>
@@ -3624,7 +3644,7 @@ export default function App(props) {
                     className="button-toolbar-action button-toolbar-action-danger"
                     onClick={handleClickOpen}
                 >
-                    Reiniciar
+                    {t("diagram.reset")}
                 </button>
                 <Dialog
                     open={open}
@@ -3633,18 +3653,19 @@ export default function App(props) {
                     aria-describedby="alert-dialog-description"
                 >
                     <DialogTitle id="alert-dialog-title">
-                        {"Reiniciar diagrama"}
+                        {t("diagram.resetTitle")}
                     </DialogTitle>
                     <DialogContent>
                         <DialogContentText id="alert-dialog-description">
-                            Esta acción eliminará todos los elementos del
-                            diagrama actual. ¿Deseas reiniciarlo?
+                            {t("diagram.resetHelp")}
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleClose}>Cancelar</Button>
+                        <Button onClick={handleClose}>
+                            {t("common.cancel")}
+                        </Button>
                         <Button onClick={handleAccept} autoFocus>
-                            Reiniciar
+                            {t("diagram.reset")}
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -3660,6 +3681,14 @@ export default function App(props) {
 
         const selectedTemplate =
             getGenerateStructureTemplateById(selectedTemplateId);
+
+        const getTemplateName = (template) =>
+            t(`generateStructure.templates.${template.id}.name`);
+
+        const getTemplateDescription = (template) =>
+            t(`generateStructure.templates.${template.id}.description`);
+
+        const selectedTemplateName = getTemplateName(selectedTemplate);
 
         const handleClickOpen = () => {
             setOpen(true);
@@ -3684,7 +3713,11 @@ export default function App(props) {
             setRefreshDiagram((prevState) => !prevState);
             setOpen(false);
 
-            toast.success(`Estructura generada: ${selectedTemplate.name}.`);
+            toast.success(
+                t("generateStructure.success", {
+                    name: selectedTemplateName,
+                }),
+            );
         };
 
         return (
@@ -3694,7 +3727,7 @@ export default function App(props) {
                     className="button-toolbar-action"
                     onClick={handleClickOpen}
                 >
-                    Generar estructura
+                    {t("generateStructure.button")}
                 </button>
                 <Dialog
                     open={open}
@@ -3703,25 +3736,22 @@ export default function App(props) {
                     aria-describedby="generate-structure-dialog-description"
                 >
                     <DialogTitle id="generate-structure-dialog-title">
-                        {"Generar estructura básica"}
+                        {t("generateStructure.title")}
                     </DialogTitle>
                     <DialogContent>
                         <DialogContentText id="generate-structure-dialog-description">
-                            Selecciona una estructura E/R básica para generarla
-                            con los nombres por defecto de la aplicación. La
-                            estructura reemplazará el diagrama actual y podrá
-                            editarse después manualmente.
+                            {t("generateStructure.help")}
                         </DialogContentText>
 
                         <FormControl fullWidth margin="normal" size="small">
                             <InputLabel id="generate-structure-template-label">
-                                Estructura
+                                {t("generateStructure.selectorLabel")}
                             </InputLabel>
                             <Select
                                 labelId="generate-structure-template-label"
                                 id="generate-structure-template"
                                 value={selectedTemplateId}
-                                label="Estructura"
+                                label={t("generateStructure.selectorLabel")}
                                 onChange={handleTemplateChange}
                             >
                                 {GENERATE_STRUCTURE_TEMPLATES.map(
@@ -3730,7 +3760,7 @@ export default function App(props) {
                                             key={template.id}
                                             value={template.id}
                                         >
-                                            {template.name}
+                                            {getTemplateName(template)}
                                         </MenuItem>
                                     ),
                                 )}
@@ -3738,17 +3768,19 @@ export default function App(props) {
                         </FormControl>
 
                         <DialogContentText>
-                            {selectedTemplate.description}
+                            {getTemplateDescription(selectedTemplate)}
                         </DialogContentText>
 
                         <DialogContentText sx={{ mt: 2 }}>
-                            ¿Deseas continuar?
+                            {t("generateStructure.continueQuestion")}
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleClose}>Cancelar</Button>
+                        <Button onClick={handleClose}>
+                            {t("common.cancel")}
+                        </Button>
                         <Button onClick={handleAccept} autoFocus>
-                            Generar estructura
+                            {t("generateStructure.button")}
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -3794,19 +3826,17 @@ export default function App(props) {
             <div className="build-info-badge">{BUILD_LABEL}</div>
             <div className="mxgraph-toolbar-container">
                 <SidebarSection title={t("language.sectionTitle")}>
-                    {renderSidebarAction(LanguageSelector())}
+                    {renderSidebarAction(<LanguageSelector />)}
                 </SidebarSection>
-                <div className="sidebar-section">
-                    <p className="sidebar-section-title">Elementos E/R</p>
-                    <div className="sidebar-section-content">
-                        <div
-                            className="mxgraph-palette-container"
-                            ref={toolbarRef}
-                        />
-                    </div>
-                </div>
 
-                <SidebarSection title="Selección">
+                <SidebarSection title={t("sidebar.erElements")}>
+                    <div
+                        className="mxgraph-palette-container"
+                        ref={toolbarRef}
+                    />
+                </SidebarSection>
+
+                <SidebarSection title={t("sidebar.selection")}>
                     <SelectedElementHeader />
 
                     {renderSidebarAction(AddAttributeButton())}
@@ -3832,15 +3862,15 @@ export default function App(props) {
                     {renderSidebarAction(DeleteIsaButton())}
                 </SidebarSection>
 
-                <SidebarSection title="Orden">
+                <SidebarSection title={t("sidebar.order")}>
                     {renderSidebarAction(MoveBackAndFrontButtons())}
                 </SidebarSection>
 
-                <SidebarSection title="Historial">
+                <SidebarSection title={t("sidebar.history")}>
                     {renderSidebarAction(UndoRedoButtons())}
                 </SidebarSection>
 
-                <SidebarSection title="Diagrama">
+                <SidebarSection title={t("sidebar.diagram")}>
                     {renderSidebarAction(GenerateStructureButton())}
                     {renderSidebarAction(GenerateSQLButton())}
                     {renderSidebarAction(ExportJSONButton())}
@@ -3855,10 +3885,10 @@ export default function App(props) {
                 >
                     <div className="empty-canvas-onboarding">
                         <p className="empty-canvas-onboarding-title">
-                            Añade una entidad para comenzar
+                            {t("emptyCanvas.title")}
                         </p>
                         <p className="empty-canvas-onboarding-text">
-                            También puedes importar un diagrama JSON existente.
+                            {t("emptyCanvas.text")}
                         </p>
                     </div>
                 </div>

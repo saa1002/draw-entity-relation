@@ -454,10 +454,11 @@ test('allows choosing each basic generated structure template', async ({
 
         const dialog = page.getByRole('dialog');
 
-        await dialog.getByRole('combobox', { name: 'Estructura' }).click();
-        await page.getByRole('option', { name: template.option }).click();
+        await dialog.getByLabel('Estructura').click();
 
-        await expect(dialog.getByText(template.option)).toBeVisible();
+        const optionsList = page.getByRole('listbox');
+        await optionsList.getByRole('option', { name: template.option }).click();
+        await expect(optionsList).toBeHidden();
 
         await dialog
             .getByRole('button', { name: 'Generar estructura' })
