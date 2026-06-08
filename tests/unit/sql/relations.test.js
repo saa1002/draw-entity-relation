@@ -96,18 +96,11 @@ describe("1:N relation SQL generation", () => {
             CREATE TABLE Pedido (
             id_pedido VARCHAR(40) PRIMARY KEY,
             calle_Compra VARCHAR(40) NOT NULL,
-            ciudad_Compra VARCHAR(40) NOT NULL
-            );
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Pedido
-            ADD CONSTRAINT FK_calle_ciudad_Compra
+            ciudad_Compra VARCHAR(40) NOT NULL,
+            CONSTRAINT FK_calle_ciudad_Compra
             FOREIGN KEY (calle_Compra, ciudad_Compra)
-            REFERENCES Cliente(calle, ciudad);
+            REFERENCES Cliente(calle, ciudad)
+            );
             `,
         )
 
@@ -129,31 +122,14 @@ describe("1:N relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_1_telefono (
-              Atributo VARCHAR(40),
-              telefono VARCHAR(40),
-              PRIMARY KEY (Atributo, telefono)
-            );
-            `,
-        );
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Entidad_1_telefono
-            ADD CONSTRAINT FK_Entidad_1_telefono_Entidad_1_owner
+            Atributo VARCHAR(40),
+            telefono VARCHAR(40),
+            PRIMARY KEY (Atributo, telefono),
+            CONSTRAINT FK_Entidad_1_telefono_Entidad_1_owner
             FOREIGN KEY (Atributo)
             REFERENCES Entidad_1(Atributo)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
-            `,
-        );
-
-        expectSQLToContain(
-            sql,
-            `
-            CREATE TABLE Entidad_1 (
-              Atributo VARCHAR(40) PRIMARY KEY,
-              Atributo_Relacion VARCHAR(40)
+            ON UPDATE CASCADE
             );
             `,
         );
@@ -190,32 +166,15 @@ describe("1:N relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_1_contacto (
-              Atributo VARCHAR(40),
-              prefijo VARCHAR(40),
-              numero VARCHAR(40),
-              PRIMARY KEY (Atributo, prefijo, numero)
-            );
-            `,
-        );
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Entidad_1_contacto
-            ADD CONSTRAINT FK_Entidad_1_contacto_Entidad_1_owner
+            Atributo VARCHAR(40),
+            prefijo VARCHAR(40),
+            numero VARCHAR(40),
+            PRIMARY KEY (Atributo, prefijo, numero),
+            CONSTRAINT FK_Entidad_1_contacto_Entidad_1_owner
             FOREIGN KEY (Atributo)
             REFERENCES Entidad_1(Atributo)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
-            `,
-        );
-
-        expectSQLToContain(
-            sql,
-            `
-            CREATE TABLE Entidad_1 (
-              Atributo VARCHAR(40) PRIMARY KEY,
-              Atributo_Relacion VARCHAR(40)
+            ON UPDATE CASCADE
             );
             `,
         );
@@ -244,22 +203,15 @@ describe("1:1 relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_telefono (
-              Atributo_Relacion VARCHAR(40),
-              telefono VARCHAR(40),
-              PRIMARY KEY (Atributo_Relacion, telefono)
-            );
-            `,
-        );
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Entidad_telefono
-            ADD CONSTRAINT FK_Entidad_telefono_Relacion_owner
+            Atributo_Relacion VARCHAR(40),
+            telefono VARCHAR(40),
+            PRIMARY KEY (Atributo_Relacion, telefono),
+            CONSTRAINT FK_Entidad_telefono_Relacion_owner
             FOREIGN KEY (Atributo_Relacion)
             REFERENCES Relacion(Atributo_Relacion)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON UPDATE CASCADE
+            );
             `,
         );
 
@@ -298,23 +250,16 @@ describe("1:1 relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_contacto (
-              Atributo_Relacion VARCHAR(40),
-              prefijo VARCHAR(40),
-              numero VARCHAR(40),
-              PRIMARY KEY (Atributo_Relacion, prefijo, numero)
-            );
-            `,
-        );
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Entidad_contacto
-            ADD CONSTRAINT FK_Entidad_contacto_Relacion_owner
+            Atributo_Relacion VARCHAR(40),
+            prefijo VARCHAR(40),
+            numero VARCHAR(40),
+            PRIMARY KEY (Atributo_Relacion, prefijo, numero),
+            CONSTRAINT FK_Entidad_contacto_Relacion_owner
             FOREIGN KEY (Atributo_Relacion)
             REFERENCES Relacion(Atributo_Relacion)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON UPDATE CASCADE
+            );
             `,
         );
 

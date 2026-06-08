@@ -136,46 +136,25 @@ describe('Ternary relationship SQL generation', () => {
             sql,
             `
             CREATE TABLE Imparte (
-              id_asignatura_Imparte_1 VARCHAR(40),
-              id_profesor_Imparte_2 VARCHAR(40),
-              id_grupo_Imparte_3 VARCHAR(40),
-              horas VARCHAR(40),
-              PRIMARY KEY (
+            id_asignatura_Imparte_1 VARCHAR(40),
+            id_profesor_Imparte_2 VARCHAR(40),
+            id_grupo_Imparte_3 VARCHAR(40),
+            horas VARCHAR(40),
+            PRIMARY KEY (
                 id_asignatura_Imparte_1,
                 id_profesor_Imparte_2,
                 id_grupo_Imparte_3
-              )
-            );
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Imparte
-            ADD CONSTRAINT FK_id_asignatura_Imparte_1
+            ),
+            CONSTRAINT FK_id_asignatura_Imparte_1
             FOREIGN KEY (id_asignatura_Imparte_1)
-            REFERENCES Asignatura(id_asignatura);
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Imparte
-            ADD CONSTRAINT FK_id_profesor_Imparte_2
+            REFERENCES Asignatura(id_asignatura),
+            CONSTRAINT FK_id_profesor_Imparte_2
             FOREIGN KEY (id_profesor_Imparte_2)
-            REFERENCES Profesor(id_profesor);
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Imparte
-            ADD CONSTRAINT FK_id_grupo_Imparte_3
+            REFERENCES Profesor(id_profesor),
+            CONSTRAINT FK_id_grupo_Imparte_3
             FOREIGN KEY (id_grupo_Imparte_3)
-            REFERENCES Grupo(id_grupo);
+            REFERENCES Grupo(id_grupo)
+            );
             `,
         )
     })
@@ -193,27 +172,26 @@ describe('Ternary relationship SQL generation', () => {
             sql,
             `
             CREATE TABLE Imparte (
-              id_asignatura_Imparte_1 VARCHAR(40) NOT NULL,
-              id_profesor_Imparte_2 VARCHAR(40),
-              id_grupo_Imparte_3 VARCHAR(40),
-              horas VARCHAR(40),
-              PRIMARY KEY (
+            id_asignatura_Imparte_1 VARCHAR(40) NOT NULL,
+            id_profesor_Imparte_2 VARCHAR(40),
+            id_grupo_Imparte_3 VARCHAR(40),
+            horas VARCHAR(40),
+            PRIMARY KEY (
                 id_profesor_Imparte_2,
                 id_grupo_Imparte_3
-              )
+            ),
+            CONSTRAINT FK_id_asignatura_Imparte_1
+            FOREIGN KEY (id_asignatura_Imparte_1)
+            REFERENCES Asignatura(id_asignatura),
+            CONSTRAINT FK_id_profesor_Imparte_2
+            FOREIGN KEY (id_profesor_Imparte_2)
+            REFERENCES Profesor(id_profesor),
+            CONSTRAINT FK_id_grupo_Imparte_3
+            FOREIGN KEY (id_grupo_Imparte_3)
+            REFERENCES Grupo(id_grupo)
             );
             `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Imparte
-            ADD CONSTRAINT FK_id_asignatura_Imparte_1
-            FOREIGN KEY (id_asignatura_Imparte_1)
-            REFERENCES Asignatura(id_asignatura);
-            `,
-        )
+        )        
     })
 
     test('should render additional candidate keys as table unique constraints for 1:1:N cardinalities', () => {
@@ -229,19 +207,28 @@ describe('Ternary relationship SQL generation', () => {
             sql,
             `
             CREATE TABLE Imparte (
-              id_asignatura_Imparte_1 VARCHAR(40) NOT NULL,
-              id_profesor_Imparte_2 VARCHAR(40),
-              id_grupo_Imparte_3 VARCHAR(40),
-              horas VARCHAR(40),
-              PRIMARY KEY (
+            id_asignatura_Imparte_1 VARCHAR(40) NOT NULL,
+            id_profesor_Imparte_2 VARCHAR(40),
+            id_grupo_Imparte_3 VARCHAR(40),
+            horas VARCHAR(40),
+            PRIMARY KEY (
                 id_profesor_Imparte_2,
                 id_grupo_Imparte_3
-              ),
-              CONSTRAINT UQ_Imparte_candidate_2
-              UNIQUE (
+            ),
+            CONSTRAINT UQ_Imparte_candidate_2
+            UNIQUE (
                 id_asignatura_Imparte_1,
                 id_grupo_Imparte_3
-              )
+            ),
+            CONSTRAINT FK_id_asignatura_Imparte_1
+            FOREIGN KEY (id_asignatura_Imparte_1)
+            REFERENCES Asignatura(id_asignatura),
+            CONSTRAINT FK_id_profesor_Imparte_2
+            FOREIGN KEY (id_profesor_Imparte_2)
+            REFERENCES Profesor(id_profesor),
+            CONSTRAINT FK_id_grupo_Imparte_3
+            FOREIGN KEY (id_grupo_Imparte_3)
+            REFERENCES Grupo(id_grupo)
             );
             `,
         )
@@ -256,45 +243,24 @@ describe('Ternary relationship SQL generation', () => {
             sql,
             `
             CREATE TABLE Juega (
-              id_tenista_Juega_tenista_local VARCHAR(40),
-              id_tenista_Juega_tenista_visitante VARCHAR(40),
-              fecha_Juega_fecha VARCHAR(40),
-              PRIMARY KEY (
+            id_tenista_Juega_tenista_local VARCHAR(40),
+            id_tenista_Juega_tenista_visitante VARCHAR(40),
+            fecha_Juega_fecha VARCHAR(40),
+            PRIMARY KEY (
                 id_tenista_Juega_tenista_local,
                 id_tenista_Juega_tenista_visitante,
                 fecha_Juega_fecha
-              )
-            );
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Juega
-            ADD CONSTRAINT FK_id_tenista_Juega_tenista_local
+            ),
+            CONSTRAINT FK_id_tenista_Juega_tenista_local
             FOREIGN KEY (id_tenista_Juega_tenista_local)
-            REFERENCES Tenista(id_tenista);
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Juega
-            ADD CONSTRAINT FK_id_tenista_Juega_tenista_visitante
+            REFERENCES Tenista(id_tenista),
+            CONSTRAINT FK_id_tenista_Juega_tenista_visitante
             FOREIGN KEY (id_tenista_Juega_tenista_visitante)
-            REFERENCES Tenista(id_tenista);
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Juega
-            ADD CONSTRAINT FK_fecha_Juega_fecha
+            REFERENCES Tenista(id_tenista),
+            CONSTRAINT FK_fecha_Juega_fecha
             FOREIGN KEY (fecha_Juega_fecha)
-            REFERENCES Fecha(fecha);
+            REFERENCES Fecha(fecha)
+            );
             `,
         )
     })

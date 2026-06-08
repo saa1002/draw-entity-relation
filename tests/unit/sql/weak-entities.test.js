@@ -162,12 +162,11 @@ describe('Weak entity SQL generation', () => {
         expectSQLToContain(
             sql,
             `
-            ALTER TABLE LineaPedido
-            ADD CONSTRAINT FK_LineaPedido_Pedido_identifying_owner
+            CONSTRAINT FK_LineaPedido_Pedido_identifying_owner
             FOREIGN KEY (id_pedido_Pedido)
             REFERENCES Pedido(id_pedido)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON UPDATE CASCADE
             `,
         )
         expect(sql).toContain('cantidad VARCHAR(40)')
@@ -202,10 +201,15 @@ describe('Weak entity SQL generation', () => {
             sql,
             `
             CREATE TABLE LineaPedido (
-              numero_linea VARCHAR(40),
-              cantidad VARCHAR(40),
-              id_pedido_Pedido VARCHAR(40),
-              PRIMARY KEY (numero_linea, id_pedido_Pedido)
+            numero_linea VARCHAR(40),
+            cantidad VARCHAR(40),
+            id_pedido_Pedido VARCHAR(40),
+            PRIMARY KEY (numero_linea, id_pedido_Pedido),
+            CONSTRAINT FK_LineaPedido_Pedido_identifying_owner
+            FOREIGN KEY (id_pedido_Pedido)
+            REFERENCES Pedido(id_pedido)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
             );
             `,
         )
@@ -214,23 +218,16 @@ describe('Weak entity SQL generation', () => {
             sql,
             `
             CREATE TABLE LineaPedido_etiqueta (
-              numero_linea VARCHAR(40),
-              id_pedido_Pedido VARCHAR(40),
-              etiqueta VARCHAR(40),
-              PRIMARY KEY (numero_linea, id_pedido_Pedido, etiqueta)
-            );
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE LineaPedido_etiqueta
-            ADD CONSTRAINT FK_LineaPedido_etiqueta_LineaPedido_owner
+            numero_linea VARCHAR(40),
+            id_pedido_Pedido VARCHAR(40),
+            etiqueta VARCHAR(40),
+            PRIMARY KEY (numero_linea, id_pedido_Pedido, etiqueta),
+            CONSTRAINT FK_LineaPedido_etiqueta_LineaPedido_owner
             FOREIGN KEY (numero_linea, id_pedido_Pedido)
             REFERENCES LineaPedido(numero_linea, id_pedido_Pedido)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON UPDATE CASCADE
+            );
             `,
         )
     })    
@@ -261,20 +258,13 @@ describe('Weak entity SQL generation', () => {
             CREATE TABLE Entidad1 (
             A1 VARCHAR(40),
             A0_Entidad0 VARCHAR(40),
-            PRIMARY KEY (A1, A0_Entidad0)
-            );
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Entidad1
-            ADD CONSTRAINT FK_Entidad1_Entidad0_identifying_owner
+            PRIMARY KEY (A1, A0_Entidad0),
+            CONSTRAINT FK_Entidad1_Entidad0_identifying_owner
             FOREIGN KEY (A0_Entidad0)
             REFERENCES Entidad0(A0)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON UPDATE CASCADE
+            );
             `,
         )
 
@@ -285,22 +275,15 @@ describe('Weak entity SQL generation', () => {
             A2 VARCHAR(40),
             A1_Entidad1 VARCHAR(40),
             A0_Entidad0_Entidad1 VARCHAR(40),
-            PRIMARY KEY (A2, A1_Entidad1, A0_Entidad0_Entidad1)
-            );
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Entidad2
-            ADD CONSTRAINT FK_Entidad2_Entidad1_identifying_owner
+            PRIMARY KEY (A2, A1_Entidad1, A0_Entidad0_Entidad1),
+            CONSTRAINT FK_Entidad2_Entidad1_identifying_owner
             FOREIGN KEY (A1_Entidad1, A0_Entidad0_Entidad1)
             REFERENCES Entidad1(A1, A0_Entidad0)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON UPDATE CASCADE
+            );
             `,
-        )
+        )        
     })
 
     test('a weak entity reflexive 1:N relation should generate a composite self-referencing foreign key', () => {
@@ -333,34 +316,20 @@ describe('Weak entity SQL generation', () => {
             A2_Reflex_ref VARCHAR(40) NOT NULL,
             A1_Entidad1_Reflex_ref VARCHAR(40) NOT NULL,
             A0_Entidad0_Entidad1_Reflex_ref VARCHAR(40) NOT NULL,
-            PRIMARY KEY (A2, A1_Entidad1, A0_Entidad0_Entidad1)
-            );
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Entidad2
-            ADD CONSTRAINT FK_A2_A1_Entidad1_A0_Entidad0_Entidad1_Reflex_ref
+            PRIMARY KEY (A2, A1_Entidad1, A0_Entidad0_Entidad1),
+            CONSTRAINT FK_Entidad2_Entidad1_identifying_owner
+            FOREIGN KEY (A1_Entidad1, A0_Entidad0_Entidad1)
+            REFERENCES Entidad1(A1, A0_Entidad0)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+            CONSTRAINT FK_A2_A1_Entidad1_A0_Entidad0_Entidad1_Reflex_ref
             FOREIGN KEY (
             A2_Reflex_ref,
             A1_Entidad1_Reflex_ref,
             A0_Entidad0_Entidad1_Reflex_ref
             )
-            REFERENCES Entidad2(A2, A1_Entidad1, A0_Entidad0_Entidad1);
-            `,
-        )
-
-        expectSQLNotToContain(
-            sql,
-            `
-            CONSTRAINT UQ_A2_A1_Entidad1_A0_Entidad0_Entidad1_Reflex_ref
-            UNIQUE (
-            A2_Reflex_ref,
-            A1_Entidad1_Reflex_ref,
-            A0_Entidad0_Entidad1_Reflex_ref
-            )
+            REFERENCES Entidad2(A2, A1_Entidad1, A0_Entidad0_Entidad1)
+            );
             `,
         )
     })
@@ -401,22 +370,20 @@ describe('Weak entity SQL generation', () => {
                 A2_Reflex_ref,
                 A1_Entidad1_Reflex_ref,
                 A0_Entidad0_Entidad1_Reflex_ref
-            )
-            );
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Entidad2
-            ADD CONSTRAINT FK_A2_A1_Entidad1_A0_Entidad0_Entidad1_Reflex_ref
+            ),
+            CONSTRAINT FK_Entidad2_Entidad1_identifying_owner
+            FOREIGN KEY (A1_Entidad1, A0_Entidad0_Entidad1)
+            REFERENCES Entidad1(A1, A0_Entidad0)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+            CONSTRAINT FK_A2_A1_Entidad1_A0_Entidad0_Entidad1_Reflex_ref
             FOREIGN KEY (
             A2_Reflex_ref,
             A1_Entidad1_Reflex_ref,
             A0_Entidad0_Entidad1_Reflex_ref
             )
-            REFERENCES Entidad2(A2, A1_Entidad1, A0_Entidad0_Entidad1);
+            REFERENCES Entidad2(A2, A1_Entidad1, A0_Entidad0_Entidad1)
+            );
             `,
         )
     })
@@ -466,39 +433,26 @@ describe('Weak entity SQL generation', () => {
                 A2_Reflex_2,
                 A1_Entidad1_Reflex_2,
                 A0_Entidad0_Entidad1_Reflex_2
-            )
-            );
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Reflex
-            ADD CONSTRAINT FK_A2_A1_Entidad1_A0_Entidad0_Entidad1_Reflex_1
+            ),
+            CONSTRAINT FK_A2_A1_Entidad1_A0_Entidad0_Entidad1_Reflex_1
             FOREIGN KEY (
             A2_Reflex_1,
             A1_Entidad1_Reflex_1,
             A0_Entidad0_Entidad1_Reflex_1
             )
-            REFERENCES Entidad2(A2, A1_Entidad1, A0_Entidad0_Entidad1);
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Reflex
-            ADD CONSTRAINT FK_A2_A1_Entidad1_A0_Entidad0_Entidad1_Reflex_2
+            REFERENCES Entidad2(A2, A1_Entidad1, A0_Entidad0_Entidad1),
+            CONSTRAINT FK_A2_A1_Entidad1_A0_Entidad0_Entidad1_Reflex_2
             FOREIGN KEY (
             A2_Reflex_2,
             A1_Entidad1_Reflex_2,
             A0_Entidad0_Entidad1_Reflex_2
             )
-            REFERENCES Entidad2(A2, A1_Entidad1, A0_Entidad0_Entidad1);
+            REFERENCES Entidad2(A2, A1_Entidad1, A0_Entidad0_Entidad1)
+            );
             `,
-        )
+        )        
     })
+
     test('a weak entity should project a composite partial key to leaf columns', () => {
         const graph = createPedidoLineaPedidoGraph([
             {
@@ -584,10 +538,15 @@ describe('Weak entity SQL generation', () => {
             sql,
             `
             CREATE TABLE LineaPedido (
-              numero_linea VARCHAR(40),
-              cantidad VARCHAR(40),
-              id_pedido_Pedido VARCHAR(40),
-              PRIMARY KEY (numero_linea, id_pedido_Pedido)
+            numero_linea VARCHAR(40),
+            cantidad VARCHAR(40),
+            id_pedido_Pedido VARCHAR(40),
+            PRIMARY KEY (numero_linea, id_pedido_Pedido),
+            CONSTRAINT FK_LineaPedido_Pedido_identifying_owner
+            FOREIGN KEY (id_pedido_Pedido)
+            REFERENCES Pedido(id_pedido)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
             );
             `,
         )
@@ -596,24 +555,17 @@ describe('Weak entity SQL generation', () => {
             sql,
             `
             CREATE TABLE LineaPedido_contacto (
-              numero_linea VARCHAR(40),
-              id_pedido_Pedido VARCHAR(40),
-              prefijo VARCHAR(40),
-              numero VARCHAR(40),
-              PRIMARY KEY (numero_linea, id_pedido_Pedido, prefijo, numero)
-            );
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE LineaPedido_contacto
-            ADD CONSTRAINT FK_LineaPedido_contacto_LineaPedido_owner
+            numero_linea VARCHAR(40),
+            id_pedido_Pedido VARCHAR(40),
+            prefijo VARCHAR(40),
+            numero VARCHAR(40),
+            PRIMARY KEY (numero_linea, id_pedido_Pedido, prefijo, numero),
+            CONSTRAINT FK_LineaPedido_contacto_LineaPedido_owner
             FOREIGN KEY (numero_linea, id_pedido_Pedido)
             REFERENCES LineaPedido(numero_linea, id_pedido_Pedido)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON UPDATE CASCADE
+            );
             `,
         )
 

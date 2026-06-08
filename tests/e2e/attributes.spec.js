@@ -837,20 +837,13 @@ test.describe('SQL export from attribute editor flows', () => {
             telefonos VARCHAR(40),
             prefijo VARCHAR(40),
             numero VARCHAR(40),
-            PRIMARY KEY (id, telefonos, prefijo, numero)
-            );
-            `,
-        );
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Entidad_telefonos
-            ADD CONSTRAINT FK_Entidad_telefonos_Entidad_owner
+            PRIMARY KEY (id, telefonos, prefijo, numero),
+            CONSTRAINT FK_Entidad_telefonos_Entidad_owner
             FOREIGN KEY (id)
             REFERENCES Entidad(id)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON UPDATE CASCADE
+            );
             `,
         );
 

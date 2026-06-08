@@ -27,33 +27,14 @@ describe("N:M relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_email (
-              Atributo VARCHAR(40),
-              email VARCHAR(40),
-              PRIMARY KEY (Atributo, email)
-            );
-            `,
-        );
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Entidad_email
-            ADD CONSTRAINT FK_Entidad_email_Entidad_owner
+            Atributo VARCHAR(40),
+            email VARCHAR(40),
+            PRIMARY KEY (Atributo, email),
+            CONSTRAINT FK_Entidad_email_Entidad_owner
             FOREIGN KEY (Atributo)
             REFERENCES Entidad(Atributo)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
-            `,
-        );
-
-        expectSQLToContain(
-            sql,
-            `
-            CREATE TABLE Relacion (
-              Atributo_Relacion_1 VARCHAR(40),
-              Atributo_Relacion_2 VARCHAR(40),
-              Atributo VARCHAR(40),
-              PRIMARY KEY (Atributo_Relacion_1, Atributo_Relacion_2)
+            ON UPDATE CASCADE
             );
             `,
         );

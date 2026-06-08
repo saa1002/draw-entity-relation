@@ -160,19 +160,12 @@ describe('ISA SQL generation', () => {
             sql,
             `
             CREATE TABLE Alumno (
-              id_persona VARCHAR(40) PRIMARY KEY,
-              expediente VARCHAR(40)
-            );
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Alumno
-            ADD CONSTRAINT FK_Alumno_Persona_isa
+            id_persona VARCHAR(40) PRIMARY KEY,
+            expediente VARCHAR(40),
+            CONSTRAINT FK_Alumno_Persona_isa
             FOREIGN KEY (id_persona)
-            REFERENCES Persona(id_persona);
+            REFERENCES Persona(id_persona)
+            );
             `,
         )
 
@@ -180,21 +173,16 @@ describe('ISA SQL generation', () => {
             sql,
             `
             CREATE TABLE Profesor (
-              id_persona VARCHAR(40) PRIMARY KEY,
-              categoria VARCHAR(40)
+            id_persona VARCHAR(40) PRIMARY KEY,
+            categoria VARCHAR(40),
+            CONSTRAINT FK_Profesor_Persona_isa
+            FOREIGN KEY (id_persona)
+            REFERENCES Persona(id_persona)
             );
             `,
         )
 
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Profesor
-            ADD CONSTRAINT FK_Profesor_Persona_isa
-            FOREIGN KEY (id_persona)
-            REFERENCES Persona(id_persona);
-            `,
-        )
+        expectSQLNotToContain(sql, 'ALTER TABLE')
     })
 
     test('should inherit composite primary keys in specialization tables', () => {
@@ -216,25 +204,19 @@ describe('ISA SQL generation', () => {
             sql,
             `
             CREATE TABLE Libro (
-              serie VARCHAR(40),
-              numero VARCHAR(40),
-              isbn VARCHAR(40),
-              PRIMARY KEY (serie, numero)
+            serie VARCHAR(40),
+            numero VARCHAR(40),
+            isbn VARCHAR(40),
+            PRIMARY KEY (serie, numero),
+            CONSTRAINT FK_Libro_Documento_isa
+            FOREIGN KEY (serie, numero)
+            REFERENCES Documento(serie, numero)
             );
             `,
         )
 
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Libro
-            ADD CONSTRAINT FK_Libro_Documento_isa
-            FOREIGN KEY (serie, numero)
-            REFERENCES Documento(serie, numero);
-            `,
-        )
-
         expectSQLNotToContain(sql, 'codigo VARCHAR(40)')
+        expectSQLNotToContain(sql, 'ALTER TABLE')
     })
 
     test('should use the inherited specialization key when another relation references the specialization', () => {
@@ -277,21 +259,16 @@ describe('ISA SQL generation', () => {
             sql,
             `
             CREATE TABLE Matricula (
-              id_matricula VARCHAR(40) PRIMARY KEY,
-              id_persona_Realiza VARCHAR(40) NOT NULL
+            id_matricula VARCHAR(40) PRIMARY KEY,
+            id_persona_Realiza VARCHAR(40) NOT NULL,
+            CONSTRAINT FK_id_persona_Realiza
+            FOREIGN KEY (id_persona_Realiza)
+            REFERENCES Alumno(id_persona)
             );
             `,
         )
 
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Matricula
-            ADD CONSTRAINT FK_id_persona_Realiza
-            FOREIGN KEY (id_persona_Realiza)
-            REFERENCES Alumno(id_persona);
-            `,
-        )
+        expectSQLNotToContain(sql, 'ALTER TABLE')
     })
     
     test('should generate an attribute-less specialization table with inherited key and relationship foreign key', () => {
@@ -346,30 +323,18 @@ describe('ISA SQL generation', () => {
             sql,
             `
             CREATE TABLE Profesor (
-              id_persona VARCHAR(40) PRIMARY KEY,
-              id_departamento_Asignado VARCHAR(40) UNIQUE NOT NULL
+            id_persona VARCHAR(40) PRIMARY KEY,
+            id_departamento_Asignado VARCHAR(40) UNIQUE NOT NULL,
+            CONSTRAINT FK_Profesor_Persona_isa
+            FOREIGN KEY (id_persona)
+            REFERENCES Persona(id_persona),
+            CONSTRAINT FK_id_departamento_Asignado
+            FOREIGN KEY (id_departamento_Asignado)
+            REFERENCES Departamento(id_departamento)
             );
             `,
         )
 
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Profesor
-            ADD CONSTRAINT FK_Profesor_Persona_isa
-            FOREIGN KEY (id_persona)
-            REFERENCES Persona(id_persona);
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Profesor
-            ADD CONSTRAINT FK_id_departamento_Asignado
-            FOREIGN KEY (id_departamento_Asignado)
-            REFERENCES Departamento(id_departamento);
-            `,
-        )
+        expectSQLNotToContain(sql, 'ALTER TABLE')
     })
 })

@@ -3,7 +3,11 @@ import { loadGraphFixture } from '../../helpers/graphLoader'
 import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { generateSQL } from '../../../src/services/sql'
 
-const { expectSQLToMatch } = buildSQLAssertions(expect)
+
+const { expectSQLToMatch, expectSQLToContain } = buildSQLAssertions(expect)
+
+const countOccurrences = (text, fragment) =>
+    text.split(fragment).length - 1
 
 let oneNGraph
 let oneOneGraph
@@ -30,10 +34,9 @@ CREATE TABLE Entidad (
 
 CREATE TABLE Entidad_1 (
   Atributo VARCHAR(40) PRIMARY KEY,
-  Atributo_Relacion VARCHAR(40)
+  Atributo_Relacion VARCHAR(40),
+  CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad(Atributo)
 );
-
-ALTER TABLE Entidad_1 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad(Atributo);
 `;
         expectSQLToMatch(sql, expectedSQL)
     });
@@ -50,10 +53,9 @@ CREATE TABLE Entidad_1 (
 
 CREATE TABLE Entidad (
   Atributo VARCHAR(40) PRIMARY KEY,
-  Atributo_Relacion VARCHAR(40) UNIQUE NOT NULL
+  Atributo_Relacion VARCHAR(40) UNIQUE NOT NULL,
+  CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad_1(Atributo)
 );
-
-ALTER TABLE Entidad ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad_1(Atributo);
 `;
         expectSQLToMatch(sql, expectedSQL)
     });
@@ -75,11 +77,10 @@ CREATE TABLE Relacion (
   Atributo_Relacion_1 VARCHAR(40),
   Atributo_Relacion_2 VARCHAR(40),
   Atributo VARCHAR(40),
-  PRIMARY KEY (Atributo_Relacion_1, Atributo_Relacion_2)
+  PRIMARY KEY (Atributo_Relacion_1, Atributo_Relacion_2),
+  CONSTRAINT FK_Atributo_Relacion_1 FOREIGN KEY (Atributo_Relacion_1) REFERENCES Entidad(Atributo),
+  CONSTRAINT FK_Atributo_Relacion_2 FOREIGN KEY (Atributo_Relacion_2) REFERENCES Entidad_1(Atributo)
 );
-
-ALTER TABLE Relacion ADD CONSTRAINT FK_Atributo_Relacion_1 FOREIGN KEY (Atributo_Relacion_1) REFERENCES Entidad(Atributo);
-ALTER TABLE Relacion ADD CONSTRAINT FK_Atributo_Relacion_2 FOREIGN KEY (Atributo_Relacion_2) REFERENCES Entidad_1(Atributo);
 `;
 
         expectSQLToMatch(sql, expectedSQL)
@@ -97,14 +98,13 @@ CREATE TABLE Entidad_1 (
 
 CREATE TABLE Entidad_2 (
   Atributo VARCHAR(40) PRIMARY KEY,
-  Atributo_Relacion VARCHAR(40) NOT NULL
+  Atributo_Relacion VARCHAR(40) NOT NULL,
+  CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad_1(Atributo)
 );
 
 CREATE TABLE Entidad (
   Atributo VARCHAR(40) PRIMARY KEY
 );
-
-ALTER TABLE Entidad_2 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad_1(Atributo);
 `;
 
         expectSQLToMatch(sql, expectedSQL)
@@ -158,4 +158,154 @@ ALTER TABLE Entidad_2 ADD CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_
         expect(sql).toContain("fin VARCHAR(40)");
         expect(sql).not.toContain("periodo VARCHAR(40)");
     });
+
+    test("should keep ALTER TABLE fallback when foreign keys form a cycle", () => {
+        const graph = {
+            entities: [
+                {
+                    idMx: '67',
+                    name: 'A',
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: '81',
+                            name: 'a1',
+                            key: true,
+                            partialKey: false,
+                        },
+                        {
+                            idMx: '89',
+                            name: 'a2',
+                            key: false,
+                            partialKey: false,
+                        },
+                    ],
+                },
+                {
+                    idMx: '69',
+                    name: 'B',
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: '83',
+                            name: 'b1',
+                            key: true,
+                            partialKey: false,
+                        },
+                    ],
+                },
+                {
+                    idMx: '70',
+                    name: 'C',
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: '85',
+                            name: 'c1',
+                            key: true,
+                            partialKey: false,
+                        },
+                    ],
+                },
+                {
+                    idMx: '72',
+                    name: 'D',
+                    weak: false,
+                    attributes: [
+                        {
+                            idMx: '87',
+                            name: 'd1',
+                            key: true,
+                            partialKey: false,
+                        },
+                    ],
+                },
+            ],
+            relations: [
+                {
+                    idMx: '91',
+                    name: 'R1',
+                    side1: {
+                        cardinality: '0:N',
+                        entity: {
+                            idMx: '67',
+                        },
+                    },
+                    side2: {
+                        cardinality: '0:1',
+                        entity: {
+                            idMx: '69',
+                        },
+                    },
+                    canHoldAttributes: false,
+                    isIdentifying: false,
+                    attributes: [],
+                },
+                {
+                    idMx: '96',
+                    name: 'R2',
+                    side1: {
+                        cardinality: '0:N',
+                        entity: {
+                            idMx: '69',
+                        },
+                    },
+                    side2: {
+                        cardinality: '0:1',
+                        entity: {
+                            idMx: '70',
+                        },
+                    },
+                    canHoldAttributes: false,
+                    isIdentifying: false,
+                    attributes: [],
+                },
+                {
+                    idMx: '101',
+                    name: 'R3',
+                    side1: {
+                        cardinality: '0:1',
+                        entity: {
+                            idMx: '70',
+                        },
+                    },
+                    side2: {
+                        cardinality: '1:1',
+                        entity: {
+                            idMx: '72',
+                        },
+                    },
+                    canHoldAttributes: false,
+                    isIdentifying: false,
+                    attributes: [],
+                },
+                {
+                    idMx: '106',
+                    name: 'R4',
+                    side1: {
+                        cardinality: '1:1',
+                        entity: {
+                            idMx: '67',
+                        },
+                    },
+                    side2: {
+                        cardinality: '0:N',
+                        entity: {
+                            idMx: '72',
+                        },
+                    },
+                    canHoldAttributes: false,
+                    isIdentifying: false,
+                    attributes: [],
+                },
+            ],
+            isas: [],
+        }
+
+        const sql = generateSQL(graph)
+
+        expect(sql).toContain('ALTER TABLE')
+        expect(countOccurrences(sql, 'ALTER TABLE')).toBe(1)
+        expect(sql).toContain('FOREIGN KEY')
+    })
 });

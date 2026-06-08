@@ -220,7 +220,7 @@ describe('Standalone entity SQL generation', () => {
         expect(sql).toContain('PRIMARY KEY (id_cliente, telefono)')
 
         expect(sql).toContain(
-            'ALTER TABLE Cliente_telefono ADD CONSTRAINT FK_Cliente_telefono_Cliente_owner FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente) ON DELETE CASCADE ON UPDATE CASCADE;',
+            'CONSTRAINT FK_Cliente_telefono_Cliente_owner FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente) ON DELETE CASCADE ON UPDATE CASCADE',
         )
 
         expect(sql).not.toContain('telefono VARCHAR(40),\n  PRIMARY KEY')
@@ -284,23 +284,21 @@ describe('Standalone entity SQL generation', () => {
             sql,
             `
             CREATE TABLE Documento_etiqueta (
-              serie VARCHAR(40),
-              numero VARCHAR(40),
-              etiqueta VARCHAR(40),
-              PRIMARY KEY (serie, numero, etiqueta)
-            );
+                serie VARCHAR(40),
+                numero VARCHAR(40),
+                etiqueta VARCHAR(40), 
+                PRIMARY KEY (serie, numero, etiqueta)
             `,
         )
 
         expectSQLToContain(
             sql,
             `
-            ALTER TABLE Documento_etiqueta
-            ADD CONSTRAINT FK_Documento_etiqueta_Documento_owner
+            CONSTRAINT FK_Documento_etiqueta_Documento_owner
             FOREIGN KEY (serie, numero)
             REFERENCES Documento(serie, numero)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON UPDATE CASCADE
             `,
         )
 
@@ -364,23 +362,21 @@ describe('Standalone entity SQL generation', () => {
             sql,
             `
             CREATE TABLE Cliente_telefonos (
-              id_cliente VARCHAR(40),
-              prefijo VARCHAR(40),
-              numero VARCHAR(40),
-              PRIMARY KEY (id_cliente, prefijo, numero)
-            );
+            id_cliente VARCHAR(40),
+            prefijo VARCHAR(40),
+            numero VARCHAR(40),
+            PRIMARY KEY (id_cliente, prefijo, numero)
             `,
         )
 
         expectSQLToContain(
             sql,
             `
-            ALTER TABLE Cliente_telefonos
-            ADD CONSTRAINT FK_Cliente_telefonos_Cliente_owner
+            CONSTRAINT FK_Cliente_telefonos_Cliente_owner
             FOREIGN KEY (id_cliente)
             REFERENCES Cliente(id_cliente)
             ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON UPDATE CASCADE
             `,
         )
 
