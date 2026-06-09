@@ -14,6 +14,8 @@ Aunque existen distintas herramientas para crear diagramas, muchas de ellas est�
 
 La motivación de este trabajo surge de continuar una aplicación web ya existente para el modelado de diagramas Entidad-Relación. En lugar de comenzar desde cero, el proyecto permite trabajar sobre una base previa, analizar sus limitaciones y evolucionarla poco a poco, manteniendo una herramienta accesible desde el navegador y orientada principalmente a un uso académico.
 
+Además, el proyecto permite relacionar dos aspectos importantes del diseño de bases de datos: la representación conceptual mediante diagramas y su posterior transformación hacia un esquema relacional. Por ello, el trabajo no se centra únicamente en la edición gráfica, sino también en la coherencia entre el diagrama construido, las validaciones aplicadas y la salida SQL generada.
+
 \section{Punto de partida}
 
 El proyecto parte de una aplicación web previa orientada al modelado de diagramas Entidad-Relación, desarrollada con React y la librería mxGraph. Esta aplicación ya contaba con una base funcional para trabajar con entidades, atributos y relaciones, además de incluir mecanismos de validación y generación de SQL.
@@ -30,20 +32,22 @@ Por este motivo, cualquier ampliación del editor debe tener en cuenta varios as
 
 El alcance de este Trabajo Fin de Grado se centra en la evolución de un editor web de diagramas Entidad-Relación ya existente. El trabajo incluye el análisis del sistema heredado, la revisión de su funcionamiento interno, la ampliación progresiva de sus capacidades y la documentación del proceso seguido.
 
-Dentro de este alcance se consideran tanto los cambios realizados en el editor como la revisión de las reglas de validación, la transformación hacia el modelo relacional y la generación de SQL cuando corresponde. No se pretende construir una herramienta profesional completa de diseño de bases de datos ni cubrir todas las variantes posibles del modelo Entidad-Relación, sino avanzar sobre una base previa y dejar el proyecto en un estado más completo, coherente y documentado.
+Dentro de este alcance se consideran tanto los cambios realizados en el editor como la revisión de las reglas de validación, la transformación hacia el modelo relacional y la generación de SQL cuando corresponde. Se incorporan nuevos elementos del modelo Entidad-Relación, como entidades débiles, atributos compuestos y multivaluados, relaciones ternarias y un soporte inicial para jerarquías ISA. También se incluyen mejoras de usabilidad, soporte básico de idioma, generación de estructuras de ejemplo y ajustes en la generación de SQL.
+
+No se pretende construir una herramienta profesional completa de diseño de bases de datos ni cubrir todas las variantes posibles del modelo Entidad-Relación. Algunas funcionalidades avanzadas, como las agregaciones, las variantes completas de jerarquías ISA, la herencia múltiple real o la persistencia remota con usuarios, quedan fuera del alcance implementado y se consideran posibles líneas de trabajo futuro.
 
 \section{Estructura de la memoria}
 
 La memoria se organiza en varios capítulos que presentan de forma progresiva el contexto del proyecto, los objetivos perseguidos, la base teórica necesaria y el trabajo realizado durante la evolución del editor. La estructura seguida es la siguiente:
 
 \begin{itemize}
-    \item \textbf{Introducción}: presenta el contexto general del trabajo, la motivación, el punto de partida, el problema abordado y el alcance del proyecto.
-    \item \textbf{Objetivos del proyecto}: recoge los objetivos principales del TFG y delimita las metas perseguidas durante su desarrollo.
-    \item \textbf{Conceptos teóricos}: introduce los conceptos del modelo Entidad-Relación y del modelo relacional necesarios para comprender el resto del documento.
-    \item \textbf{Técnicas y herramientas}: describe las principales tecnologías y herramientas utilizadas durante el desarrollo del proyecto.
-    \item \textbf{Aspectos relevantes del desarrollo}: explica las decisiones, cambios y problemas más importantes abordados durante la evolución del editor.
-    \item \textbf{Trabajos relacionados}: presenta otras herramientas o enfoques relacionados con la creación de diagramas y el modelado de bases de datos.
-    \item \textbf{Conclusiones y líneas de trabajo futuras}: resume los resultados obtenidos y plantea posibles mejoras o ampliaciones posteriores.
+\item \textbf{Introducción}: presenta el contexto general del trabajo, la motivación, el punto de partida, el problema abordado y el alcance del proyecto.
+\item \textbf{Objetivos del proyecto}: recoge los objetivos principales del TFG y delimita las metas perseguidas durante su desarrollo.
+\item \textbf{Conceptos teóricos}: introduce los conceptos del modelo Entidad-Relación y del modelo relacional necesarios para comprender el resto del documento.
+\item \textbf{Técnicas y herramientas}: describe las principales tecnologías y herramientas utilizadas durante el desarrollo del proyecto.
+\item \textbf{Aspectos relevantes del desarrollo}: explica las decisiones, cambios y problemas más importantes abordados durante la evolución del editor.
+\item \textbf{Trabajos relacionados}: presenta otras herramientas o enfoques relacionados con la creación de diagramas y el modelado de bases de datos.
+\item \textbf{Conclusiones y líneas de trabajo futuras}: resume los resultados obtenidos y plantea posibles mejoras o ampliaciones posteriores.
 \end{itemize}
 
 \section{Estructura de los anexos}
@@ -51,10 +55,10 @@ La memoria se organiza en varios capítulos que presentan de forma progresiva el
 Los anexos complementan la memoria principal con información más detallada sobre la planificación, los requisitos, el diseño y el uso del sistema. Su estructura es la siguiente:
 
 \begin{itemize}
-    \item \textbf{Plan de proyecto software}: recoge la planificación del trabajo, la evolución seguida y los aspectos de viabilidad asociados al proyecto.
-    \item \textbf{Especificación de requisitos}: describe los requisitos funcionales y no funcionales considerados durante el desarrollo.
-    \item \textbf{Especificación de diseño}: presenta la organización interna del sistema, el modelo de datos y las principales decisiones de diseño.
-    \item \textbf{Documentación técnica de programación}: incluye información sobre la estructura del proyecto, instalación, ejecución y pruebas.
-    \item \textbf{Documentación de usuario}: explica el uso de la aplicación desde el punto de vista del usuario final.
-    \item \textbf{Anexo de sostenibilización curricular}: recoge una reflexión sobre la relación del trabajo con aspectos de sostenibilidad.
+\item \textbf{Plan de proyecto software}: recoge la planificación del trabajo, la evolución seguida y los aspectos de viabilidad asociados al proyecto.
+\item \textbf{Especificación de requisitos}: describe los requisitos funcionales y no funcionales considerados durante el desarrollo.
+\item \textbf{Especificación de diseño}: presenta la organización interna del sistema, el modelo de datos y las principales decisiones de diseño.
+\item \textbf{Documentación técnica de programación}: incluye información sobre la estructura del proyecto, instalación, ejecución y pruebas.
+\item \textbf{Documentación de usuario}: explica el uso de la aplicación desde el punto de vista del usuario final.
+\item \textbf{Anexo de sostenibilización curricular}: recoge una reflexión sobre la relación del trabajo con aspectos de sostenibilidad.
 \end{itemize}

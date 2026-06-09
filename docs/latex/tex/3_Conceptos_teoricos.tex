@@ -58,6 +58,15 @@ En este tipo de jerarquías, las especializaciones heredan la identificación de
 
 En este trabajo se considera un soporte inicial de ISA. La idea principal es permitir representar una generalización con una o varias especializaciones y trasladar esa estructura al modelo relacional de forma controlada.
 
+\subsection{Agregaciones}
+
+Las agregaciones permiten tratar una interrelación como un elemento de nivel superior dentro del modelo Entidad-Relación. Esto resulta útil cuando una relación entre entidades debe participar, a su vez, en otra relación con nuevos elementos del dominio.
+
+Este tipo de construcción añade complejidad al modelo, porque no solo es necesario representar entidades e interrelaciones simples, sino también una estructura formada por varios elementos que actúa como una unidad dentro del diagrama. Por ello, su incorporación a una herramienta visual requiere decisiones específicas sobre representación gráfica, validación, persistencia y transformación al modelo relacional.
+
+En este trabajo las agregaciones se consideran como parte del contexto teórico del modelo Entidad-Relación, pero no se incorporan al editor desarrollado. Su implementación se deja como una posible línea de trabajo futura.
+
+
 \section{Transformación al modelo relacional}
 
 El modelo Entidad-Relación permite describir un dominio desde un punto de vista conceptual, pero para poder implementarlo en una base de datos relacional es necesario transformarlo a una estructura formada por tablas, columnas y relaciones entre ellas. Esta transformación sirve como paso intermedio entre el diseño conceptual y la generación final de sentencias SQL.
@@ -86,4 +95,7 @@ El SQL generado debe entenderse como una traducción razonable del modelo diseñ
 
 El modelo Entidad-Relación incluye más posibilidades de las que se han incorporado en la herramienta. Por ello, el editor se centra en aquellos elementos que resultan más relevantes para el contexto del proyecto: entidades, atributos, relaciones binarias y ternarias, entidades débiles, atributos compuestos y multivaluados, y un soporte inicial para jerarquías ISA.
 
-Otros elementos más avanzados, como las agregaciones o las variantes completas de ISA, se mantienen como posibles líneas de trabajo futuro. Esta delimitación permite ajustar el desarrollo al objetivo principal del trabajo: evolucionar el editor heredado manteniendo la coherencia entre el diagrama visual, el modelo interno y la generación de SQL.
+En el caso de las jerarquías ISA, el alcance aplicado se limita a una generalización con una o varias especializaciones, junto con la herencia de clave hacia las tablas especializadas. No se incluyen variantes más avanzadas como totalidad o parcialidad, especializaciones solapadas o exclusivas, discriminantes ni herencia múltiple real.
+
+Las agregaciones se han tenido en cuenta como concepto teórico, pero no forman parte del alcance implementado. Esta delimitación permite ajustar el desarrollo al objetivo principal del trabajo: evolucionar el editor heredado manteniendo la coherencia entre el diagrama visual, el modelo interno, la validación y la generación de SQL.
+

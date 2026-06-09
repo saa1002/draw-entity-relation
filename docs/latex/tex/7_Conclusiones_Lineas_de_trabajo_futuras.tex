@@ -1,4 +1,49 @@
-\capitulo{7}{Conclusiones y Líneas de trabajo futuras}
+\capitulo{7}{Conclusiones y líneas de trabajo futuras}
 
-Todo proyecto debe incluir las conclusiones que se derivan de su desarrollo. Éstas pueden ser de diferente índole, dependiendo de la tipología del proyecto, pero normalmente van a estar presentes un conjunto de conclusiones relacionadas con los resultados del proyecto y un conjunto de conclusiones técnicas. 
-Además, resulta muy útil realizar un informe crítico indicando cómo se puede mejorar el proyecto, o cómo se puede continuar trabajando en la línea del proyecto realizado. 
+En este capítulo se recogen las principales conclusiones obtenidas tras el desarrollo del proyecto y se señalan algunas posibles líneas de continuación. El objetivo no es repetir todo el trabajo realizado, sino valorar el resultado alcanzado, las decisiones tomadas durante el desarrollo y los aspectos que podrían ampliarse en el futuro.
+
+\section{Conclusiones}
+
+El desarrollo de este trabajo ha permitido evolucionar una aplicación web ya existente para el diseño de diagramas Entidad-Relación, ampliando sus capacidades y mejorando su coherencia interna. El proyecto no partía de cero, por lo que una parte importante del trabajo consistió en comprender el funcionamiento del sistema heredado, estabilizar algunos puntos delicados y adaptar su estructura para poder incorporar nuevas funcionalidades de forma controlada.
+
+Una de las conclusiones principales es que, en una herramienta visual de modelado, no basta con representar correctamente los elementos en pantalla. Cada elemento del diagrama debe estar reflejado también en el modelo interno de la aplicación, ya que esa información se utiliza después para guardar el diagrama, reconstruirlo, validarlo, transformarlo al modelo relacional y generar el script SQL. Esta relación entre interfaz, modelo interno y generación de resultados ha sido uno de los aspectos más importantes del desarrollo.
+
+A lo largo del proyecto se ha ampliado el soporte del modelo Entidad-Relación incorporando elementos que permiten representar diagramas más completos. Entre ellos se encuentran entidades débiles, atributos compuestos y multivaluados, relaciones ternarias con roles y un soporte inicial para jerarquías ISA. Estas ampliaciones no se limitaron a la parte visual, sino que también afectaron a la persistencia, la validación y la transformación relacional.
+
+El soporte de jerarquías ISA se planteó de forma limitada y controlada. La aplicación permite representar una generalización con una o varias especializaciones, y transforma esta estructura generando una tabla para la entidad general y una tabla para cada especialización, donde la clave heredada actúa como clave primaria y clave foránea. Sin embargo, no se incorporaron variantes más avanzadas como totalidad o parcialidad, especializaciones solapadas o exclusivas, discriminantes o herencia múltiple real. Esta decisión permitió implementar una primera base funcional sin aumentar el alcance de forma excesiva.
+
+También se mejoró la generación de SQL. En particular, se revisó el tratamiento de las claves foráneas para reducir el uso de sentencias \texttt{ALTER TABLE} cuando las dependencias entre tablas pueden resolverse mediante un orden adecuado de creación. Al mismo tiempo, se mantuvo \texttt{ALTER TABLE} como mecanismo de respaldo para los casos en los que existen ciclos reales de dependencias. Con ello, el SQL generado resulta más claro en los casos simples, pero conserva una solución para situaciones más complejas.
+
+Otro resultado relevante del proyecto es la mejora de la usabilidad del editor. Se reorganizó la interfaz, se añadieron mensajes de ayuda, se revisaron los diálogos de confirmación, se mejoró la presentación de errores de validación y se incorporó un soporte básico de idioma en español e inglés. Estas mejoras no cambian la notación académica del modelo Entidad-Relación, pero hacen que la herramienta sea más cómoda y comprensible para el usuario.
+
+La funcionalidad de generación de estructuras de ejemplo también contribuye a facilitar el uso de la aplicación. Permite crear rápidamente modelos básicos, como relaciones binarias, relaciones ternarias, entidades débiles o jerarquías ISA sencillas. Esta funcionalidad se planteó como una ayuda para probar y explorar el editor, no como un sistema avanzado de plantillas o fusión de diagramas.
+
+Durante el desarrollo también se ha comprobado la importancia de trabajar de forma incremental. Al tratarse de una aplicación heredada y visual, muchos cambios podían afectar a varias partes del sistema al mismo tiempo. Por ello, dividir el trabajo en issues, realizar cambios acotados y combinar pruebas automáticas con revisión manual permitió avanzar con más seguridad y reducir el riesgo de introducir regresiones.
+
+En conjunto, el resultado final es una herramienta más completa que la aplicación inicial, con mayor soporte para elementos del modelo Entidad-Relación, una salida SQL más cuidada y una interfaz más clara. Aunque no cubre todos los casos posibles del modelo E/R, sí proporciona una base más sólida y coherente para continuar ampliando el proyecto en el futuro.
+
+\section{Líneas de trabajo futuras}
+
+A pesar de las mejoras realizadas, el proyecto sigue ofreciendo varias posibilidades de ampliación. Algunas de ellas quedaron fuera del alcance de este trabajo por decisión de diseño, mientras que otras surgieron durante el desarrollo como mejoras posibles para versiones posteriores. Entre las líneas de trabajo futuras más relevantes se encuentran las siguientes:
+
+\begin{itemize}
+\item \textbf{Ampliar el soporte de jerarquías ISA.} La implementación actual cubre una versión inicial centrada en la herencia de clave desde la generalización hacia las especializaciones. Como trabajo futuro se podrían incorporar restricciones de totalidad o parcialidad, especializaciones solapadas o exclusivas y discriminantes. También podría estudiarse con más detalle si tendría sentido incorporar herencia múltiple real. Estas ampliaciones requerirían revisar la representación visual, el modelo interno, las validaciones y la transformación relacional.
+
+\item \textbf{Incorporar agregaciones.} Las agregaciones forman parte del modelo Entidad-Relación avanzado, pero no se implementaron en este trabajo. Su incorporación supondría representar relaciones tratadas como entidades de nivel superior, lo que afectaría al lienzo, a la persistencia, a la validación y a la generación del modelo relacional.
+
+\item \textbf{Revisar el flujo de creación de atributos compuestos.} Actualmente existen formas de construir atributos compuestos que pueden no resultar completamente intuitivas para el usuario. Una posible mejora sería hacer este proceso más explícito, de forma que la creación del atributo compuesto y de sus subatributos quede más clara desde la interfaz.
+
+\item \textbf{Estudiar la importación combinada de diagramas.} En la versión actual, la importación de JSON se plantea principalmente como una sustitución del diagrama existente. En el futuro podría valorarse la posibilidad de añadir un diagrama importado al contenido actual, siempre que se controlen adecuadamente los conflictos de nombres, identificadores internos, referencias entre elementos y solapamientos visuales.
+
+\item \textbf{Valorar la creación automática de claves por defecto.} Otra mejora posible sería crear automáticamente un atributo clave al añadir una nueva entidad. Esto podría reducir algunos errores habituales de validación y agilizar la construcción de diagramas sencillos. Sin embargo, debería diseñarse con cuidado para no imponer decisiones de modelado al usuario y para respetar casos especiales como entidades débiles o especializaciones ISA.
+
+\item \textbf{Permitir una configuración más detallada del SQL generado.} Actualmente la herramienta genera una estructura SQL suficiente para representar el esquema obtenido, pero no permite editar en detalle los tipos de datos, tamaños, restricciones adicionales o decisiones específicas de un sistema gestor concreto. Esta sería una posible ampliación si se quisiera acercar más la herramienta a un uso práctico avanzado.
+
+\item \textbf{Añadir funcionalidades avanzadas de edición.} En el futuro podrían incorporarse acciones como copiar y pegar fragmentos del diagrama, organizar automáticamente los elementos o trabajar con varias vistas del mismo modelo. Estas mejoras aumentarían la comodidad de uso, aunque también introducirían nuevos retos relacionados con la sincronización entre el modelo interno y la representación visual.
+
+\item \textbf{Explorar persistencia remota y usuarios.} La aplicación se centra actualmente en el uso local, con persistencia en el navegador e importación y exportación mediante archivos JSON. Una posible evolución sería añadir un backend para guardar diagramas asociados a usuarios o compartir modelos, aunque esto supondría ampliar de forma importante el alcance técnico del proyecto.
+
+\end{itemize}
+
+En definitiva, el proyecto deja una base funcional sobre la que pueden construirse nuevas ampliaciones. Estas mejoras deberían abordarse de forma gradual, manteniendo el mismo criterio seguido durante este trabajo: introducir cambios acotados, comprobar su impacto en el modelo interno y asegurar que cada nueva funcionalidad se integre de forma coherente con la validación, la persistencia y la generación de SQL.
+

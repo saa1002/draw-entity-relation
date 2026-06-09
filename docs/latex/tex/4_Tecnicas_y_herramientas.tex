@@ -4,7 +4,9 @@
 
 El proyecto se desarrolla como una aplicación web ejecutada en el navegador. Este enfoque permite que el editor pueda utilizarse sin instalar una aplicación de escritorio específica, manteniendo gran parte de la lógica dentro del propio cliente web.
 
-El entorno de desarrollo se apoya en Node.js y npm para la gestión de dependencias y la ejecución de los scripts del proyecto. A través de estos scripts se realizan tareas habituales como arrancar la aplicación en modo desarrollo, generar la versión de producción o ejecutar las pruebas definidas.
+La aplicación está desarrollada principalmente en JavaScript y se apoya en Node.js y npm para la gestión de dependencias y la ejecución de los scripts del proyecto. A través de estos scripts se realizan tareas habituales como arrancar la aplicación en modo desarrollo, generar la versión de producción o ejecutar las pruebas definidas.
+
+Durante el desarrollo se utilizó Visual Studio Code como editor principal. Esta herramienta permitió trabajar de forma cómoda con el código fuente, revisar la estructura del proyecto, utilizar integración con Git y modificar tanto los ficheros de implementación como los documentos asociados al trabajo.
 
 Este planteamiento encaja con el tipo de herramienta desarrollada, ya que el usuario interactúa directamente con una interfaz gráfica y con un área de edición visual. Por ello, gran parte del trabajo se centra en coordinar la interfaz, la representación gráfica del diagrama y el modelo interno que mantiene la aplicación.
 
@@ -32,6 +34,14 @@ Junto a las pruebas, se utiliza Biome como herramienta de formateo y análisis e
 
 Para el control de versiones se utiliza Git, lo que permite registrar los cambios realizados en el proyecto y trabajar de forma más ordenada durante el desarrollo \cite{git}. El uso de commits y ramas facilita separar las distintas tareas y mantener un historial del trabajo realizado.
 
-El proyecto se gestiona mediante GitHub, que se utiliza como repositorio remoto y como apoyo para la organización del desarrollo \cite{github}. A través de sus herramientas se pueden documentar tareas, revisar cambios y mantener una trazabilidad básica de la evolución del editor.
+El proyecto se gestiona mediante GitHub, que se utiliza como repositorio remoto y como apoyo para la organización del desarrollo \cite{github}. A través de sus herramientas se pueden documentar tareas, agrupar el trabajo en issues y milestones, revisar cambios y mantener una trazabilidad básica de la evolución del editor.
 
-Además de las herramientas propias del código, durante la redacción de la memoria se utiliza Overleaf como entorno de trabajo para el proyecto LaTeX. Esto permite editar la documentación de forma progresiva y comprobar que la memoria y los anexos compilan correctamente mientras se van completando los distintos capítulos.
+También se utilizaron mecanismos de comprobación asociados al repositorio, como la ejecución de pruebas y revisiones automáticas cuando correspondía. Este tipo de apoyo resulta útil en un proyecto incremental, ya que permite detectar problemas antes de integrar cambios y ayuda a mantener cierta estabilidad durante la evolución de la aplicación.
+
+\section{Documentación y redacción de la memoria}
+
+Además de las herramientas relacionadas directamente con el código, durante el proyecto se ha trabajado con documentación en LaTeX. La memoria y los anexos se redactan siguiendo la estructura de la plantilla del Trabajo Fin de Grado, separando la memoria principal de la documentación complementaria.
+
+Para la redacción se utiliza Overleaf como entorno de trabajo del proyecto LaTeX. Esta herramienta permite editar la documentación de forma progresiva y comprobar que la memoria y los anexos compilan correctamente mientras se van completando los distintos capítulos.
+
+Esta parte documental es importante porque el proyecto no consiste únicamente en modificar una aplicación, sino también en dejar reflejado el proceso seguido, las decisiones tomadas, el alcance real de la implementación y las posibles líneas de continuación.
