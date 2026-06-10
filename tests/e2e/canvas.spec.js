@@ -78,6 +78,42 @@ test('shows contextual header for selected elements', async ({ page }) => {
     await expect(page.getByText('Entidad seleccionada')).toBeVisible();
 });
 
+test('validates current diagram and shows success feedback when it is valid', async ({
+    page,
+}) => {
+    await page.goto('/');
+
+    await addEntity(page);
+
+    await page.getByRole('button', { name: 'Comprobar diagrama' }).click();
+
+    await expect(page.getByText('El diagrama es válido.')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+test('validates current diagram and shows grouped errors when it is invalid', async ({
+    page,
+}) => {
+    await page.goto('/');
+
+    await page.getByRole('button', { name: 'Comprobar diagrama' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(dialog.getByText('Comprobar diagrama')).toBeVisible();
+    await expect(
+        dialog.getByText(
+            'El diagrama no se ha podido comprobar por los siguientes errores:',
+        ),
+    ).toBeVisible();
+    await expect(dialog.getByText('General')).toBeVisible();
+    await expect(dialog.getByText('El diagrama está vacío.')).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'Cerrar' }).click();
+
+    await expect(dialog).toBeHidden();
+});
+
 test('groups sidebar actions into visual sections', async ({ page }) => {
     await page.goto('/');
 

@@ -68,6 +68,8 @@ export const TRANSLATIONS = {
         "common.accept": "Aceptar",
         "common.close": "Cerrar",
 
+        "diagram.validate": "Comprobar diagrama",
+        "diagram.validateTitle": "Comprobar diagrama",
         "diagram.generateSql": "Generar SQL",
         "diagram.generateSqlTitle": "Generar script SQL",
         "diagram.exportJson": "Exportar JSON",
@@ -231,12 +233,15 @@ export const TRANSLATIONS = {
             "No se ha podido importar el diagrama porque el archivo JSON no es válido.",
         "feedback.diagramImportFailed": "El diagrama no se ha podido importar.",
 
+        "validation.context.diagram.errorHeader":
+            "El diagrama no se ha podido comprobar por los siguientes errores:",
         "validation.context.sql.errorHeader":
             "No se ha podido generar el script SQL por los siguientes errores:",
         "validation.context.exportJson.errorHeader":
             "No se ha podido exportar el diagrama en formato JSON por los siguientes errores:",
         "validation.context.importJson.errorHeader":
             "No se ha podido importar el diagrama por los siguientes errores:",
+        "validation.context.diagram.success": "El diagrama es válido.",
         "validation.context.sql.success":
             "El diagrama es válido. Se generará un archivo SQL con las tablas y restricciones derivadas del modelo E/R.",
         "validation.context.exportJson.success":
@@ -430,6 +435,8 @@ export const TRANSLATIONS = {
         "common.accept": "Accept",
         "common.close": "Close",
 
+        "diagram.validate": "Validate diagram",
+        "diagram.validateTitle": "Validate diagram",
         "diagram.generateSql": "Generate SQL",
         "diagram.generateSqlTitle": "Generate SQL script",
         "diagram.exportJson": "Export JSON",
@@ -594,12 +601,15 @@ export const TRANSLATIONS = {
             "The diagram could not be imported because the JSON file is not valid.",
         "feedback.diagramImportFailed": "The diagram could not be imported.",
 
+        "validation.context.diagram.errorHeader":
+            "The diagram could not be validated because of the following errors:",
         "validation.context.sql.errorHeader":
             "The SQL script could not be generated because of the following errors:",
         "validation.context.exportJson.errorHeader":
             "The diagram could not be exported as JSON because of the following errors:",
         "validation.context.importJson.errorHeader":
             "The diagram could not be imported because of the following errors:",
+        "validation.context.diagram.success": "The diagram is valid.",
         "validation.context.sql.success":
             "The diagram is valid. An SQL file will be generated with the tables and constraints derived from the E/R model.",
         "validation.context.exportJson.success":

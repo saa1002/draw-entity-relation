@@ -3366,6 +3366,69 @@ export default function App(props) {
         </>
     );
 
+    const ValidateDiagramButton = () => {
+        const [open, setOpen] = React.useState(false);
+        const [validationMessages, setValidationMessages] = React.useState([]);
+
+        const handleClickOpen = () => {
+            setRefreshDiagram((prevState) => !prevState);
+
+            const diagnostics = validateGraph(diagramRef.current);
+
+            if (diagnostics.isValid) {
+                setValidationMessages([]);
+                setOpen(false);
+                toast.success(t("validation.context.diagram.success"));
+                return;
+            }
+
+            setValidationMessages(
+                getValidationDialogMessages(
+                    diagnostics,
+                    "diagram",
+                    diagramRef.current,
+                    t,
+                ),
+            );
+            setOpen(true);
+        };
+
+        const handleClose = () => {
+            setOpen(false);
+        };
+
+        return (
+            <>
+                <button
+                    type="button"
+                    className="button-toolbar-action"
+                    onClick={handleClickOpen}
+                >
+                    {t("diagram.validate")}
+                </button>
+                <Dialog
+                    open={open}
+                    onClose={handleClose}
+                    aria-labelledby="validate-diagram-dialog-title"
+                >
+                    <DialogTitle id="validate-diagram-dialog-title">
+                        {t("diagram.validateTitle")}
+                    </DialogTitle>
+                    <DialogContent>
+                        {validationMessages.map(
+                            renderLocalizedValidationDialogMessage,
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClose}>
+                            {t("common.close")}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </>
+        );
+    };
+
     const GenerateSQLButton = () => {
         const [open, setOpen] = React.useState(false);
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
@@ -3983,6 +4046,7 @@ export default function App(props) {
 
                 <SidebarSection title={t("sidebar.diagram")}>
                     {renderSidebarAction(GenerateStructureButton())}
+                    {renderSidebarAction(ValidateDiagramButton())}
                     {renderSidebarAction(GenerateSQLButton())}
                     {renderSidebarAction(ExportJSONButton())}
                     {renderSidebarAction(ExportImageButton())}

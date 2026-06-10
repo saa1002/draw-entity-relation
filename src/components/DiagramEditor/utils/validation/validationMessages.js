@@ -4,12 +4,14 @@ const translateInDefaultLanguage = (key, values = {}) =>
     translate(DEFAULT_LANGUAGE, key, values);
 
 const CONTEXT_HEADER_KEYS = {
+    diagram: "validation.context.diagram.errorHeader",
     sql: "validation.context.sql.errorHeader",
     exportJson: "validation.context.exportJson.errorHeader",
     importJson: "validation.context.importJson.errorHeader",
 };
 
 const CONTEXT_SUCCESS_MESSAGE_KEYS = {
+    diagram: "validation.context.diagram.success",
     sql: "validation.context.sql.success",
     exportJson: "validation.context.exportJson.success",
 };
