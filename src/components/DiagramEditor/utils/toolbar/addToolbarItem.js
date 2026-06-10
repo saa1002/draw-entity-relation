@@ -49,7 +49,9 @@ const createDefaultPrimaryKeyAttributeForEntity = (graph, entityCell) => {
 
     const edge = graph.insertEdge(entityCell, null, null, entityCell, target);
 
-    graph.orderCells(false);
+    graph.orderCells(true, [edge]);
+    graph.orderCells(false, [entityCell, target]);
+    graph.refresh(edge);
 
     return createAttribute({
         idMx: target.id,
