@@ -163,6 +163,17 @@ button {
   letter-spacing: 0.3px;
 }
 
+.empty-selection-guidance {
+  margin: 0;
+  padding: 5px 6px;
+  font-size: 9px;
+  color: #555;
+  background-color: #f7f7f7;
+  border: 1px dashed #c8c8c8;
+  border-radius: 3px;
+  line-height: 1.25;
+}
+
 .selected-element-kind {
   margin: 0;
   padding: 4px 5px;

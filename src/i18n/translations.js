@@ -32,6 +32,8 @@ export const TRANSLATIONS = {
         "selection.selectedRelation": "Relación seleccionada",
         "selection.selectedIsa": "ISA seleccionada",
         "selection.selectedAttribute": "Atributo seleccionado",
+        "selection.emptyGuidance":
+            "Selecciona una entidad, relación, atributo o ISA para ver sus acciones disponibles.",
 
         "action.addAttribute": "Añadir atributo",
         "action.groupCompositeAttribute": "Agrupar en atributo compuesto",
@@ -401,6 +403,8 @@ export const TRANSLATIONS = {
         "selection.selectedRelation": "Selected relation",
         "selection.selectedIsa": "Selected ISA",
         "selection.selectedAttribute": "Selected attribute",
+        "selection.emptyGuidance":
+            "Select an entity, relationship, attribute or ISA element to see available actions.",
 
         "action.addAttribute": "Add attribute",
         "action.groupCompositeAttribute": "Group as composite attribute",

@@ -78,6 +78,24 @@ test('shows contextual header for selected elements', async ({ page }) => {
     await expect(page.getByText('Entidad seleccionada')).toBeVisible();
 });
 
+test('shows guidance when no diagram element is selected', async ({ page }) => {
+    await page.goto('/');
+
+    const guidance = page.getByText(
+        'Selecciona una entidad, relación, atributo o ISA para ver sus acciones disponibles.',
+    );
+
+    await expect(guidance).toBeVisible();
+
+    await addEntity(page);
+    await expect(guidance).toBeVisible();
+
+    await selectEntity(page, 'Entidad');
+
+    await expect(guidance).toBeHidden();
+    await expect(page.getByText('Entidad seleccionada')).toBeVisible();
+});
+
 test('validates current diagram and shows success feedback when it is valid', async ({
     page,
 }) => {

@@ -1548,6 +1548,18 @@ export default function App(props) {
         return <p className="selected-element-kind">{selectedType}</p>;
     };
 
+    const EmptySelectionGuidance = () => {
+        if (selected) {
+            return null;
+        }
+
+        return (
+            <p className="empty-selection-guidance">
+                {t("selection.emptyGuidance")}
+            </p>
+        );
+    };
+
     const AddAttributeButton = () => {
         if (
             isEntityShapeCell(selected) &&
@@ -4012,6 +4024,7 @@ export default function App(props) {
 
                 <SidebarSection title={t("sidebar.selection")}>
                     <SelectedElementHeader />
+                    {renderSidebarAction(EmptySelectionGuidance())}
 
                     {renderSidebarAction(AddAttributeButton())}
                     {renderSidebarAction(RelationAddAttributeButton())}
