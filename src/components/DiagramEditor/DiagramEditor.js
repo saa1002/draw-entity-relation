@@ -92,6 +92,7 @@ import {
     clearGraphCanvas,
     connectIsaGraphLinks,
     connectRelationGraphSides,
+    fitGraphToDiagram,
     getConfiguredIsaGraphCells,
     getConfiguredRelationGraphCells,
     installCellGeometrySyncHandlers,
@@ -3441,6 +3442,40 @@ export default function App(props) {
         );
     };
 
+    const FitToDiagramButton = () => {
+        const hasDiagramElements =
+            (diagramRef.current.entities?.length ?? 0) > 0 ||
+            (diagramRef.current.relations?.length ?? 0) > 0 ||
+            (diagramRef.current.isas?.length ?? 0) > 0;
+
+        const handleClick = () => {
+            if (!hasDiagramElements) {
+                toast(t("feedback.diagramFitViewEmpty"));
+                return;
+            }
+
+            const fitted = fitGraphToDiagram(graph);
+
+            if (!fitted) {
+                toast.error(t("feedback.diagramFitViewFailed"));
+                return;
+            }
+
+            toast.success(t("feedback.diagramViewFitted"));
+        };
+
+        return (
+            <button
+                type="button"
+                className="button-toolbar-action"
+                onClick={handleClick}
+                title={t("diagram.fitViewTitle")}
+            >
+                {t("diagram.fitView")}
+            </button>
+        );
+    };
+
     const GenerateSQLButton = () => {
         const [open, setOpen] = React.useState(false);
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
@@ -4060,6 +4095,7 @@ export default function App(props) {
                 <SidebarSection title={t("sidebar.diagram")}>
                     {renderSidebarAction(GenerateStructureButton())}
                     {renderSidebarAction(ValidateDiagramButton())}
+                    {renderSidebarAction(FitToDiagramButton())}
                     {renderSidebarAction(GenerateSQLButton())}
                     {renderSidebarAction(ExportJSONButton())}
                     {renderSidebarAction(ExportImageButton())}

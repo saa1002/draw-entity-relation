@@ -6,11 +6,12 @@ import {
     addIsa,
     addRelation,
     expectSavedDiagramState,
+    getSavedDiagram,
     renameElement,
     selectEntity,
     selectIsa,
     selectRelation,
-} from '../helpers/canvas';
+} from '../helpers/canvas';;
 
 test('mxGraph transaction level stays balanced (updateLevel === 0)', async ({ page }) => {
     await page.addInitScript(() => {
@@ -161,6 +162,76 @@ test('marks reset action as destructive in the sidebar', async ({ page }) => {
 
     await expect(page.getByRole('button', { name: 'Reiniciar' })).toHaveClass(
         /button-toolbar-action-danger/,
+    );
+});
+
+test('shows feedback when fitting an empty diagram view', async ({ page }) => {
+    await page.goto('/');
+
+    await page.getByRole('button', { name: 'Ajustar vista' }).click();
+
+    await expect(
+        page.getByText('No hay elementos en el diagrama para ajustar la vista.'),
+    ).toBeVisible();
+
+    await expectSavedDiagramState(
+        page,
+        (diagram) => ({
+            entities: diagram.entities.length,
+            relations: diagram.relations.length,
+            isas: diagram.isas.length,
+        }),
+        {
+            entities: 0,
+            relations: 0,
+            isas: 0,
+        },
+    );
+});
+
+test('fits current diagram view without changing the saved diagram', async ({
+    page,
+}) => {
+    await page.addInitScript(() => {
+        window.__PW__ = true;
+    });
+
+    await page.goto('/');
+
+    await addEntity(page);
+
+    await expect
+        .poll(() => page.evaluate(() => Boolean(window.__DEBUG_GRAPH__)))
+        .toBe(true);
+
+    const savedDiagramBefore = await getSavedDiagram(page);
+
+    await page.evaluate(() => {
+        const graph = window.__DEBUG_GRAPH__;
+        const view = graph.getView();
+
+        if (typeof view.setScaleAndTranslate === 'function') {
+            view.setScaleAndTranslate(0.25, -1000, -1000);
+        } else {
+            view.setScale(0.25);
+            view.setTranslate(-1000, -1000);
+        }
+
+        graph.refresh();
+    });
+
+    await page.getByRole('button', { name: 'Ajustar vista' }).click();
+
+    await expect(page.getByText('Vista ajustada al diagrama.')).toBeVisible();
+
+    await expect
+        .poll(() => page.evaluate(() => window.__DEBUG_GRAPH__.getView().scale))
+        .toBeGreaterThan(0.25);
+
+    await expectSavedDiagramState(
+        page,
+        (diagram) => diagram,
+        savedDiagramBefore,
     );
 });
 

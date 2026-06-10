@@ -29,6 +29,82 @@ export const clearGraphCanvas = (graph) => {
     removeExistingGraphCells(graph, cellsToRemove);
 };
 
+const FIT_TO_DIAGRAM_PADDING = 40;
+const FIT_TO_DIAGRAM_MAX_SCALE = 1;
+const FIT_TO_DIAGRAM_MIN_SCALE = 0.1;
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const isPositiveFiniteNumber = (value) => Number.isFinite(value) && value > 0;
+
+export const fitGraphToDiagram = (graph) => {
+    const bounds = graph?.getGraphBounds?.();
+    const view = graph?.getView?.();
+    const container = graph?.container;
+
+    if (
+        !bounds ||
+        !view ||
+        !container ||
+        !isPositiveFiniteNumber(bounds.width) ||
+        !isPositiveFiniteNumber(bounds.height) ||
+        !isPositiveFiniteNumber(container.clientWidth) ||
+        !isPositiveFiniteNumber(container.clientHeight)
+    ) {
+        return false;
+    }
+
+    const currentScale = view.scale || 1;
+
+    const modelBounds = {
+        x: bounds.x / currentScale - view.translate.x,
+        y: bounds.y / currentScale - view.translate.y,
+        width: bounds.width / currentScale,
+        height: bounds.height / currentScale,
+    };
+
+    const availableWidth = Math.max(
+        container.clientWidth - FIT_TO_DIAGRAM_PADDING * 2,
+        1,
+    );
+    const availableHeight = Math.max(
+        container.clientHeight - FIT_TO_DIAGRAM_PADDING * 2,
+        1,
+    );
+
+    const nextScale = clamp(
+        Math.min(
+            availableWidth / modelBounds.width,
+            availableHeight / modelBounds.height,
+        ),
+        FIT_TO_DIAGRAM_MIN_SCALE,
+        FIT_TO_DIAGRAM_MAX_SCALE,
+    );
+
+    const horizontalMargin = Math.max(
+        (container.clientWidth - modelBounds.width * nextScale) / 2,
+        FIT_TO_DIAGRAM_PADDING,
+    );
+    const verticalMargin = Math.max(
+        (container.clientHeight - modelBounds.height * nextScale) / 2,
+        FIT_TO_DIAGRAM_PADDING,
+    );
+
+    const nextTranslateX = horizontalMargin / nextScale - modelBounds.x;
+    const nextTranslateY = verticalMargin / nextScale - modelBounds.y;
+
+    if (typeof view.setScaleAndTranslate === "function") {
+        view.setScaleAndTranslate(nextScale, nextTranslateX, nextTranslateY);
+    } else {
+        view.setScale(nextScale);
+        view.setTranslate(nextTranslateX, nextTranslateY);
+    }
+
+    graph.refresh();
+
+    return true;
+};
+
 export const getConfiguredRelationGraphCells = ({ relation, accessCell }) => {
     if (!relation || typeof accessCell !== "function") return [];
 

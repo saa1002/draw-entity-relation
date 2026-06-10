@@ -72,6 +72,8 @@ export const TRANSLATIONS = {
 
         "diagram.validate": "Comprobar diagrama",
         "diagram.validateTitle": "Comprobar diagrama",
+        "diagram.fitView": "Ajustar vista",
+        "diagram.fitViewTitle": "Ajustar la vista al contenido del diagrama",
         "diagram.generateSql": "Generar SQL",
         "diagram.generateSqlTitle": "Generar script SQL",
         "diagram.exportJson": "Exportar JSON",
@@ -228,6 +230,11 @@ export const TRANSLATIONS = {
             "Subatributos convertidos en atributos simples",
         "feedback.subattributeConvertedToSimple":
             "Subatributo convertido en atributo simple",
+        "feedback.diagramFitViewEmpty":
+            "No hay elementos en el diagrama para ajustar la vista.",
+        "feedback.diagramFitViewFailed":
+            "No se pudo ajustar la vista del diagrama.",
+        "feedback.diagramViewFitted": "Vista ajustada al diagrama.",
         "feedback.diagramImported": "Diagrama importado con éxito.",
         "feedback.diagramImportInvalid":
             "El diagrama no se ha podido importar porque no es válido.",
@@ -441,6 +448,8 @@ export const TRANSLATIONS = {
 
         "diagram.validate": "Validate diagram",
         "diagram.validateTitle": "Validate diagram",
+        "diagram.fitView": "Fit to diagram",
+        "diagram.fitViewTitle": "Fit the view to the diagram content",
         "diagram.generateSql": "Generate SQL",
         "diagram.generateSqlTitle": "Generate SQL script",
         "diagram.exportJson": "Export JSON",
@@ -598,6 +607,11 @@ export const TRANSLATIONS = {
             "Subattributes converted into simple attributes",
         "feedback.subattributeConvertedToSimple":
             "Subattribute converted into simple attribute",
+        "feedback.diagramFitViewEmpty":
+            "There are no diagram elements to fit the view.",
+        "feedback.diagramFitViewFailed":
+            "The diagram view could not be fitted.",
+        "feedback.diagramViewFitted": "View fitted to diagram.",
         "feedback.diagramImported": "Diagram imported successfully.",
         "feedback.diagramImportInvalid":
             "The diagram could not be imported because it is not valid.",
