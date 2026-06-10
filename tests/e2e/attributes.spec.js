@@ -24,6 +24,9 @@ test.beforeEach(async ({ page }) => {
     await enableMxGraphDebug(page);
 });
 
+const findRootAttributeByName = (entity, attributeName) =>
+    entity?.attributes?.find((attribute) => attribute.name === attributeName);
+
 test.describe('basic entity attributes', () => {
     test('add attributes to an entity', async ({ page }) => {
         await page.goto('/');
@@ -34,19 +37,21 @@ test.describe('basic entity attributes', () => {
         await addAttributeToSelectedEntity(page);
 
         await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
-            name: 'Atributo',
+            name: 'id',
+            key: true,
+            partialKey: false,
         });
 
         await renameElement(page, 'Atributo', 'Clave');
 
-        await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+        await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
             name: 'Clave',
         });
 
         await selectEntity(page, 'Entidad');
         await addAttributeToSelectedEntity(page);
 
-        await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
+        await expectSavedEntityAttributeToMatch(page, 'Entidad', 2, {
             name: 'Atributo',
         });
     });
@@ -78,10 +83,37 @@ test.describe('basic entity attributes', () => {
         await page.goto('/');
 
         await addEntity(page);
+
+        await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+            name: 'id',
+            key: true,
+            partialKey: false,
+        });
+
         await selectEntity(page, 'Entidad');
         await addAttributeToSelectedEntity(page);
 
+        await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
+            name: 'Atributo',
+            key: false,
+            partialKey: false,
+        });
+
+        await page.getByText('Atributo', { exact: true }).click();
+
+        await page.getByRole('button', { name: 'Convertir en clave' }).click();
+
+        await expect(
+            page.getByText('Atributo marcado como clave').last(),
+        ).toBeVisible();
+
         await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+            name: 'id',
+            key: false,
+            partialKey: false,
+        });
+
+        await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
             name: 'Atributo',
             key: true,
             partialKey: false,
@@ -95,21 +127,9 @@ test.describe('basic entity attributes', () => {
             page.getByText('Clave eliminada del atributo').last(),
         ).toBeVisible();
 
-        await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+        await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
             name: 'Atributo',
             key: false,
-            partialKey: false,
-        });
-
-        await page.getByRole('button', { name: 'Convertir en clave' }).click();
-
-        await expect(
-            page.getByText('Atributo marcado como clave').last(),
-        ).toBeVisible();
-
-        await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
-            name: 'Atributo',
-            key: true,
             partialKey: false,
         });
     });
@@ -118,17 +138,13 @@ test.describe('basic entity attributes', () => {
         await page.goto('/');
 
         await addEntity(page);
-        await selectEntity(page, 'Entidad');
-        await addAttributeToSelectedEntity(page);
 
         await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
-            name: 'Atributo',
+            name: 'id',
             key: true,
             partialKey: false,
         });
 
-        // Convert the entity into a weak entity.
-        // The previous primary key should become the discriminator.
         await selectEntity(page, 'Entidad');
 
         await page
@@ -140,12 +156,12 @@ test.describe('basic entity attributes', () => {
         ).toBeVisible();
 
         await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
-            name: 'Atributo',
+            name: 'id',
             key: false,
             partialKey: true,
         });
 
-        await page.getByText('Atributo', { exact: true }).click();
+        await page.getByText('id', { exact: true }).click();
 
         await page
             .getByRole('button', { name: 'Quitar discriminante' })
@@ -156,7 +172,7 @@ test.describe('basic entity attributes', () => {
         ).toBeVisible();
 
         await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
-            name: 'Atributo',
+            name: 'id',
             key: false,
             partialKey: false,
         });
@@ -170,7 +186,7 @@ test.describe('basic entity attributes', () => {
         ).toBeVisible();
 
         await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
-            name: 'Atributo',
+            name: 'id',
             key: false,
             partialKey: true,
         });
@@ -277,7 +293,7 @@ test.describe('composite attributes', () => {
             .poll(async () => {
                 const entity = await getSavedEntity(page, 'Entidad');
 
-                return entity?.attributes?.[0]?.children?.map(
+                return findRootAttributeByName(entity, 'codigo')?.children?.map(
                     (attribute) => attribute.name,
                 );
             })
@@ -307,11 +323,11 @@ test.describe('composite attributes', () => {
             .poll(async () => {
                 const entity = await getSavedEntity(page, 'Entidad');
 
-                return entity?.attributes?.[0];
+                return findRootAttributeByName(entity, 'codigo');
             })
             .toMatchObject({
                 name: 'codigo',
-                key: true,
+                key: false,
                 children: [
                     {
                         name: 'codigo',
@@ -364,7 +380,7 @@ test.describe('composite attributes', () => {
             .poll(async () => {
                 const entity = await getSavedEntity(page, 'Entidad');
 
-                return entity?.attributes?.[0];
+                return findRootAttributeByName(entity, 'codigo');
             })
             .toEqual(
                 expect.not.objectContaining({
@@ -380,11 +396,9 @@ test.describe('multivalued attributes', () => {
         await page.goto('/');
 
         await addEntity(page);
-        await selectEntity(page, 'Entidad');
 
-        await addAttributeToSelectedEntity(page);
+        await page.getByText('id', { exact: true }).click();
 
-        await page.getByText('Atributo', { exact: true }).click();
         await expect(
             page.getByRole('button', { name: 'Marcar multivaluado' }),
         ).toHaveCount(0);
@@ -393,12 +407,12 @@ test.describe('multivalued attributes', () => {
         await addAttributeToSelectedEntity(page);
 
         await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
-            name: 'Atributo 1',
+            name: 'Atributo',
             key: false,
             partialKey: false,
         });
 
-        await page.getByText('Atributo 1', { exact: true }).click();
+        await page.getByText('Atributo', { exact: true }).click();
 
         await page.getByRole('button', { name: 'Marcar multivaluado' }).click();
 
@@ -407,7 +421,7 @@ test.describe('multivalued attributes', () => {
         ).toBeVisible();
 
         await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
-            name: 'Atributo 1',
+            name: 'Atributo',
             key: false,
             partialKey: false,
             multivalued: true,
@@ -423,16 +437,16 @@ test.describe('multivalued attributes', () => {
 
         await page.reload();
 
-        await expect(page.getByText('Atributo 1', { exact: true })).toBeVisible();
+        await expect(page.getByText('Atributo', { exact: true })).toBeVisible();
 
-        await page.getByText('Atributo 1', { exact: true }).click();
+        await page.getByText('Atributo', { exact: true }).click();
 
         await expect(
             page.getByRole('button', { name: 'Quitar multivaluado' }),
         ).toBeVisible();
 
         await expectSavedEntityAttributeToMatch(page, 'Entidad', 1, {
-            name: 'Atributo 1',
+            name: 'Atributo',
             key: false,
             partialKey: false,
             multivalued: true,
@@ -447,7 +461,7 @@ test.describe('multivalued attributes', () => {
         await expect
             .poll(async () => {
                 const entity = await getSavedEntity(page, 'Entidad');
-                const attribute = entity?.attributes?.[1];
+                const attribute = findRootAttributeByName(entity, 'Atributo');
 
                 return {
                     multivalued: attribute?.multivalued,
@@ -467,10 +481,6 @@ test.describe('multivalued attributes', () => {
         await page.goto('/');
 
         await addEntity(page);
-        await selectEntity(page, 'Entidad');
-
-        await addAttributeToSelectedEntity(page);
-        await renameElement(page, 'Atributo', 'id');
 
         await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
             name: 'id',
@@ -624,10 +634,6 @@ test.describe('multivalued attributes', () => {
         await page.goto('/');
 
         await addEntity(page);
-        await selectEntity(page, 'Entidad');
-
-        await addAttributeToSelectedEntity(page);
-        await renameElement(page, 'Atributo', 'id');
 
         await selectEntity(page, 'Entidad');
         await addAttributeToSelectedEntity(page);
@@ -679,11 +685,7 @@ test.describe('composite key semantics', () => {
     test('toggle composite attribute key from any child attribute', async ({ page }) => {
         await page.goto('/');
 
-        await addEntity(page);
-        await selectEntity(page, 'Entidad');
-
-        await addAttributeToSelectedEntity(page);
-        await renameElement(page, 'Atributo', 'id');
+        await addEntity(page);        
 
         await selectEntity(page, 'Entidad');
         await addAttributeToSelectedEntity(page);
@@ -783,10 +785,6 @@ test.describe('SQL export from attribute editor flows', () => {
         await page.goto('/');
 
         await addEntity(page);
-        await selectEntity(page, 'Entidad');
-
-        await addAttributeToSelectedEntity(page);
-        await renameElement(page, 'Atributo', 'id');
 
         await selectEntity(page, 'Entidad');
         await addAttributeToSelectedEntity(page);
@@ -952,7 +950,7 @@ test.describe('composite attribute interactions', () => {
         await expect
             .poll(async () => {
                 const entity = await getSavedEntity(page, 'Entidad');
-                const compositeAttribute = entity?.attributes?.[0];
+                const compositeAttribute = findRootAttributeByName(entity, 'codigo');
 
                 return {
                     childNames: compositeAttribute?.children?.map(
@@ -994,7 +992,7 @@ test.describe('composite attribute interactions', () => {
 
         const initialPositions = await getSavedEntity(page, 'Entidad').then(
             (entity) => {
-                const compositeAttribute = entity.attributes[0];
+                const compositeAttribute = findRootAttributeByName(entity, 'direccion');
 
                 return {
                     root: compositeAttribute.position,
@@ -1011,7 +1009,7 @@ test.describe('composite attribute interactions', () => {
         await expect
             .poll(async () => {
                 const entity = await getSavedEntity(page, 'Entidad');
-                const compositeAttribute = entity?.attributes?.[0];
+                const compositeAttribute = findRootAttributeByName(entity, 'direccion');
 
                 return {
                     rootMovedRight:
@@ -1084,17 +1082,41 @@ test.describe('composite attribute interactions', () => {
 
         await addEntity(page);
 
-        await selectEntity(page, 'Entidad');
-        await addAttributeToSelectedEntity(page);
-        await renameElement(page, 'Atributo', 'id');
+        await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+            name: 'id',
+            key: true,
+            partialKey: false,
+        });
 
         await selectEntity(page, 'Entidad');
         await addAttributeToSelectedEntity(page);
         await renameElement(page, 'Atributo', 'calle');
 
+        await expect
+            .poll(async () => {
+                const entity = await getSavedEntity(page, 'Entidad');
+
+                return entity?.attributes?.some(
+                    (attribute) =>
+                        attribute.name === 'calle' && Boolean(attribute.idMx),
+                );
+            })
+            .toBe(true);
+
         await selectEntity(page, 'Entidad');
         await addAttributeToSelectedEntity(page);
         await renameElement(page, 'Atributo', 'numero');
+
+        await expect
+            .poll(async () => {
+                const entity = await getSavedEntity(page, 'Entidad');
+
+                return entity?.attributes?.some(
+                    (attribute) =>
+                        attribute.name === 'numero' && Boolean(attribute.idMx),
+                );
+            })
+            .toBe(true);
 
         await selectAttributesByName(page, 'Entidad', ['calle', 'numero']);
 

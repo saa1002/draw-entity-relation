@@ -745,6 +745,27 @@ export const toggleExclusivePrimaryKeyAttributeInTree = (
         semantic: ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY,
     });
 
+export const clearPrimaryKeyAttributesInTree = (attributes) => {
+    const changedRootAttributes = [];
+
+    getAttributes(attributes).forEach((rootAttribute) => {
+        walkAttributeTree([rootAttribute], (attribute) => {
+            const previousKey = attribute.key;
+
+            attribute.key = false;
+
+            if (previousKey !== attribute.key) {
+                rememberChangedRootAttribute(
+                    changedRootAttributes,
+                    rootAttribute,
+                );
+            }
+        });
+    });
+
+    return changedRootAttributes;
+};
+
 export const toggleExclusivePartialKeyAttributeInTree = (
     attributes,
     attributeId,

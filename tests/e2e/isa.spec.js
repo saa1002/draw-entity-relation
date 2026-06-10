@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { buildSQLAssertions } from '../helpers/sqlAssertions';
 
 import {
+    addEntity,
     addIsa,
     configureIsaHierarchy,
     enableMxGraphDebug,
@@ -126,6 +127,35 @@ const createIsaBaseDiagram = () => ({
 
 test.beforeEach(async ({ page }) => {
     await enableMxGraphDebug(page);
+});
+
+test('configure an ISA hierarchy clears default primary keys from specializations', async ({
+    page,
+}) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 260, y: 120 });
+    await addEntity(page, 'Entidad 1', { x: 160, y: 360 });
+    await addEntity(page, 'Entidad 2', { x: 460, y: 360 });
+    await addIsa(page, { x: 330, y: 250 });
+
+    await configureIsaHierarchy(page, 'Entidad', ['Entidad 1', 'Entidad 2']);
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+        name: 'id',
+        key: true,
+        partialKey: false,
+    });
+    await expectSavedEntityAttributeToMatch(page, 'Entidad 1', 0, {
+        name: 'id',
+        key: false,
+        partialKey: false,
+    });
+    await expectSavedEntityAttributeToMatch(page, 'Entidad 2', 0, {
+        name: 'id',
+        key: false,
+        partialKey: false,
+    });
 });
 
 test('configure an ISA hierarchy from the editor and persist it after reload', async ({

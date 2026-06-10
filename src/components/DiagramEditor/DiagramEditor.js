@@ -32,6 +32,7 @@ import {
     canRelationHoldAttributes,
     canRelationTypeHoldAttributes,
     clearIdentifyingRelationDomainSemantics,
+    clearPrimaryKeyAttributesInTree,
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
     convertSimpleAttributeToCompositeAttribute,
@@ -2535,6 +2536,18 @@ export default function App(props) {
                     entityId,
                 }),
             );
+
+            specializationIds.forEach((entityId) => {
+                const specializationEntity = findEntityById(
+                    diagramRef.current,
+                    entityId,
+                );
+                const changedAttributes = clearPrimaryKeyAttributesInTree(
+                    specializationEntity?.attributes,
+                );
+
+                changedAttributes.forEach(syncAttributeVisualRepresentation);
+            });
 
             const connectedEdges = connectIsaGraphLinks({
                 graph,

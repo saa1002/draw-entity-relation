@@ -1,13 +1,70 @@
 import { default as MxGraph } from "mxgraph";
+import { createAttribute } from "../../../../domain/er/attributes";
 import { createIsaData } from "../../../../domain/er/isa";
 import { createRelationData } from "../../../../domain/er/relations";
 import {
+    getAttributeDimensions,
     getEntityDimensions,
     getIsaDimensions,
     getRelationDimensions,
 } from "../mxStyles/diagramStyles";
+import { getAttributeStyleString } from "../rendering/attributeRendering";
 
 const { mxEvent, mxUtils } = MxGraph();
+
+const DEFAULT_PRIMARY_KEY_ATTRIBUTE_NAME = "id";
+const DEFAULT_PRIMARY_KEY_ATTRIBUTE_OFFSET_X = 120;
+const DEFAULT_PRIMARY_KEY_ATTRIBUTE_OFFSET_Y = -40;
+
+const createDefaultPrimaryKeyAttributeForEntity = (graph, entityCell) => {
+    if (!graph || !entityCell?.geometry) {
+        return null;
+    }
+
+    const semantics = {
+        key: true,
+        partialKey: false,
+    };
+    const attributeX =
+        entityCell.geometry.x + DEFAULT_PRIMARY_KEY_ATTRIBUTE_OFFSET_X;
+    const attributeY =
+        entityCell.geometry.y + DEFAULT_PRIMARY_KEY_ATTRIBUTE_OFFSET_Y;
+    const { width, height } = getAttributeDimensions(
+        DEFAULT_PRIMARY_KEY_ATTRIBUTE_NAME,
+    );
+
+    const target = graph.insertVertex(
+        null,
+        null,
+        DEFAULT_PRIMARY_KEY_ATTRIBUTE_NAME,
+        attributeX,
+        attributeY,
+        width,
+        height,
+        getAttributeStyleString({
+            name: DEFAULT_PRIMARY_KEY_ATTRIBUTE_NAME,
+            ...semantics,
+        }),
+    );
+
+    const edge = graph.insertEdge(entityCell, null, null, entityCell, target);
+
+    graph.orderCells(false);
+
+    return createAttribute({
+        idMx: target.id,
+        name: DEFAULT_PRIMARY_KEY_ATTRIBUTE_NAME,
+        position: {
+            x: target.geometry.x,
+            y: target.geometry.y,
+        },
+        key: semantics.key,
+        partialKey: semantics.partialKey,
+        cell: [target.id, edge.id],
+        offsetX: DEFAULT_PRIMARY_KEY_ATTRIBUTE_OFFSET_X,
+        offsetY: DEFAULT_PRIMARY_KEY_ATTRIBUTE_OFFSET_Y,
+    });
+};
 
 export default function addToolbarItem(
     graph,
@@ -94,7 +151,7 @@ export default function addToolbarItem(
         graph.addCell(vertex);
 
         if (addEntityToDiagram) {
-            diagramRef.current.entities.push({
+            const entityData = {
                 idMx: vertex.id,
                 name: vertex.value,
                 position: { x: vertex.geometry.x, y: vertex.geometry.y },
@@ -102,7 +159,15 @@ export default function addToolbarItem(
                 ownerEntityId: null,
                 identifyingRelationId: null,
                 attributes: [],
-            });
+            };
+            const primaryKeyAttribute =
+                createDefaultPrimaryKeyAttributeForEntity(graph, vertex);
+
+            if (primaryKeyAttribute) {
+                entityData.attributes.push(primaryKeyAttribute);
+            }
+
+            diagramRef.current.entities.push(entityData);
         }
         if (addRelationToDiagram) {
             diagramRef.current.relations.push(

@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 import {
     addEntity,
+    expectSavedEntityAttributeToMatch,
     expectSavedEntityToMatch,
     renameElement,
 } from '../helpers/canvas';
@@ -15,6 +16,12 @@ test('add an entity to the canvas and rename it', async ({ page }) => {
 
     await expectSavedEntityToMatch(page, 'Entidad', {
         name: 'Entidad',
+    });
+
+    await expectSavedEntityAttributeToMatch(page, 'Entidad', 0, {
+        name: 'id',
+        key: true,
+        partialKey: false,
     });
 
     await renameElement(page, 'Entidad', 'Clientes');

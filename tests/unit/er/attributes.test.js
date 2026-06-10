@@ -4,6 +4,7 @@ import {
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
     toggleExclusivePartialKeyAttributeInTree,
+    clearPrimaryKeyAttributesInTree,
     convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
     groupRootAttributesIntoCompositeAttribute,
@@ -872,6 +873,40 @@ describe("Tree attribute key semantic transitions", () => {
 })
 
 describe("Flat attribute key semantic transitions", () => {
+
+    test("clearPrimaryKeyAttributesInTree should remove primary key semantics from root attributes", () => {
+        const attributes = [
+            {
+                idMx: "attr-id",
+                name: "id",
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: "attr-address",
+                name: "address",
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: "attr-street",
+                        name: "street",
+                        key: true,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ];
+
+        const changedAttributes = clearPrimaryKeyAttributesInTree(attributes);
+
+        expect(changedAttributes.map((attribute) => attribute.idMx)).toEqual([
+            "attr-id",
+            "attr-address",
+        ]);
+        expect(getPrimaryKeyAttributesInTree(attributes)).toEqual([]);
+    });
+    
     test("convertPrimaryKeyToPartialKey should preserve the selected key candidate", () => {
         const attributes = [
             {

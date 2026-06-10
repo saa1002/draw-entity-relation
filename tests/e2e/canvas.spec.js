@@ -150,10 +150,6 @@ test.describe('keyboard deletion', () => {
 
         await selectEntity(page, 'Entidad');
         await addAttributeToSelectedEntity(page);
-        await renameElement(page, 'Atributo', 'id');
-
-        await selectEntity(page, 'Entidad');
-        await addAttributeToSelectedEntity(page);
         await renameElement(page, 'Atributo', 'nombre');
 
         await page.getByText('nombre', { exact: true }).click();
