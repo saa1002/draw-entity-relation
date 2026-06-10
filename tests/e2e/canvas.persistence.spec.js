@@ -14,6 +14,7 @@ import {
 
 import {
     exportCurrentDiagram,
+    exportCurrentDiagramImage,
     importDiagram,
     resetDiagram,
     seedSavedDiagram,
@@ -554,4 +555,34 @@ test('export/import round-trip preserves nested attribute trees', async ({ page 
     const exportedAfter = await exportCurrentDiagram(page);
 
     expect(exportedAfter).toEqual(exportedBefore);
+});
+
+test('export current diagram as SVG image', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 260, y: 180 });
+
+    const exportedFile = await exportCurrentDiagramImage(page, 'SVG');
+
+    expect(exportedFile.fileName).toMatch(
+        /^diagrama-er-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.svg$/,
+    );
+    expect(exportedFile.mimeType).toBe('image/svg+xml;charset=utf-8');
+    expect(exportedFile.content).toContain('<svg');
+    expect(exportedFile.content).toContain('viewBox');
+    expect(exportedFile.content).toContain('Entidad');
+});
+
+test('export current diagram as PNG image', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 260, y: 180 });
+
+    const exportedFile = await exportCurrentDiagramImage(page, 'PNG');
+
+    expect(exportedFile.fileName).toMatch(
+        /^diagrama-er-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.png$/,
+    );
+    expect(exportedFile.mimeType).toBe('image/png');
+    expect(exportedFile.size).toBeGreaterThan(0);
 });

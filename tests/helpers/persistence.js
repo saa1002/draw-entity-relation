@@ -10,32 +10,42 @@ async function mockSaveFilePicker(page) {
             value: async (options = {}) => ({
                 async createWritable() {
                     const chunks = [];
+                    let mimeType = '';
+                    let size = 0;
 
                     return {
                         async write(data) {
                             if (data instanceof Blob) {
+                                mimeType = data.type;
+                                size += data.size;
                                 chunks.push(await data.text());
                                 return;
                             }
 
                             if (typeof data === 'string') {
+                                size += data.length;
                                 chunks.push(data);
                                 return;
                             }
 
                             if (data instanceof ArrayBuffer) {
+                                size += data.byteLength;
                                 chunks.push(new TextDecoder().decode(data));
                                 return;
                             }
 
-                            chunks.push(String(data));
+                            const fallbackContent = String(data);
+
+                            size += fallbackContent.length;
+                            chunks.push(fallbackContent);
                         },
 
                         async close() {
                             window.__E2E_SAVED_FILES__.push({
-                                fileName:
-                                    options.suggestedName ?? 'diagram.json',
+                                fileName: options.suggestedName ?? 'diagram.json',
                                 content: chunks.join(''),
+                                mimeType,
+                                size,
                             });
                         },
                     };
@@ -72,6 +82,39 @@ export async function exportCurrentDiagram(page) {
     );
     
     return JSON.parse(raw);
+}
+
+export async function exportCurrentDiagramImage(page, format = 'PNG') {
+    await mockSaveFilePicker(page);
+
+    const previousExportsCount = await page.evaluate(
+        () => window.__E2E_SAVED_FILES__.length,
+    );
+
+    await page.getByRole('button', { name: 'Exportar imagen' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(
+        dialog.getByText('Exportar diagrama como imagen'),
+    ).toBeVisible();
+
+    if (format !== 'PNG') {
+        await dialog.getByLabel('Formato').click();
+
+        const optionsList = page.getByRole('listbox');
+        await optionsList.getByRole('option', { name: format }).click();
+        await expect(optionsList).toBeHidden();
+    }
+
+    await dialog.getByRole('button', { name: 'Exportar imagen' }).click();
+
+    await page.waitForFunction(
+        (count) => window.__E2E_SAVED_FILES__.length > count,
+        previousExportsCount,
+    );
+
+    return page.evaluate(() => window.__E2E_SAVED_FILES__.at(-1));
 }
 
 export async function resetDiagram(page) {

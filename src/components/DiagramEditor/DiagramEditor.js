@@ -115,8 +115,10 @@ import {
     isRelationShapeCell,
 } from "./utils/mxStyles/diagramStyles";
 import {
+    DIAGRAM_IMAGE_EXPORT_FORMATS,
     SAVE_FILE_RESULT,
     clearDiagramLocalStorage,
+    exportDiagramImageToFile,
     exportDiagramToJsonFile,
     exportSqlScriptToFile,
     loadDiagramFromLocalStorage,
@@ -3517,6 +3519,108 @@ export default function App(props) {
         );
     };
 
+    const ExportImageButton = () => {
+        const [open, setOpen] = React.useState(false);
+        const [selectedFormat, setSelectedFormat] = React.useState(
+            DIAGRAM_IMAGE_EXPORT_FORMATS.PNG,
+        );
+
+        const handleClickOpen = () => {
+            setOpen(true);
+        };
+
+        const handleClose = () => {
+            setOpen(false);
+        };
+
+        const handleFormatChange = (event) => {
+            setSelectedFormat(event.target.value);
+        };
+
+        const handleAccept = async () => {
+            if (isDiagramEmpty) {
+                toast.error(t("feedback.diagramImageExportEmpty"));
+                setOpen(false);
+                return;
+            }
+
+            if (typeof graph?.clearSelection === "function") {
+                graph.clearSelection();
+            }
+
+            setSelected(null);
+            setSelectionVersion((prevVersion) => prevVersion + 1);
+
+            setOpen(false);
+
+            const result = await exportDiagramImageToFile(
+                graph,
+                selectedFormat,
+            );
+
+            showSaveFileResultToast(result);
+        };
+
+        return (
+            <>
+                <button
+                    type="button"
+                    className="button-toolbar-action"
+                    onClick={handleClickOpen}
+                >
+                    {t("diagram.exportImage")}
+                </button>
+                <Dialog
+                    open={open}
+                    onClose={handleClose}
+                    aria-labelledby="export-image-dialog-title"
+                    aria-describedby="export-image-dialog-description"
+                >
+                    <DialogTitle id="export-image-dialog-title">
+                        {t("diagram.exportImageTitle")}
+                    </DialogTitle>
+                    <DialogContent>
+                        <DialogContentText id="export-image-dialog-description">
+                            {t("diagram.exportImageHelp")}
+                        </DialogContentText>
+
+                        <FormControl fullWidth margin="normal" size="small">
+                            <InputLabel id="export-image-format-label">
+                                {t("diagram.exportImageFormatLabel")}
+                            </InputLabel>
+                            <Select
+                                labelId="export-image-format-label"
+                                id="export-image-format"
+                                value={selectedFormat}
+                                label={t("diagram.exportImageFormatLabel")}
+                                onChange={handleFormatChange}
+                            >
+                                <MenuItem
+                                    value={DIAGRAM_IMAGE_EXPORT_FORMATS.PNG}
+                                >
+                                    {t("diagram.exportImageFormatPng")}
+                                </MenuItem>
+                                <MenuItem
+                                    value={DIAGRAM_IMAGE_EXPORT_FORMATS.SVG}
+                                >
+                                    {t("diagram.exportImageFormatSvg")}
+                                </MenuItem>
+                            </Select>
+                        </FormControl>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClose}>
+                            {t("common.cancel")}
+                        </Button>
+                        <Button onClick={handleAccept} autoFocus>
+                            {t("diagram.exportImage")}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </>
+        );
+    };
+
     const ImportJSONButton = () => {
         const [open, setOpen] = React.useState(false);
         const [validationMessages, setValidationMessages] = React.useState([]);
@@ -3881,6 +3985,7 @@ export default function App(props) {
                     {renderSidebarAction(GenerateStructureButton())}
                     {renderSidebarAction(GenerateSQLButton())}
                     {renderSidebarAction(ExportJSONButton())}
+                    {renderSidebarAction(ExportImageButton())}
                     {renderSidebarAction(ImportJSONButton())}
                     {renderSidebarAction(ResetCanvasButton())}
                 </SidebarSection>

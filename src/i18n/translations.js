@@ -72,6 +72,13 @@ export const TRANSLATIONS = {
         "diagram.generateSqlTitle": "Generar script SQL",
         "diagram.exportJson": "Exportar JSON",
         "diagram.exportJsonTitle": "Exportar diagrama en JSON",
+        "diagram.exportImage": "Exportar imagen",
+        "diagram.exportImageTitle": "Exportar diagrama como imagen",
+        "diagram.exportImageHelp":
+            "Exporta la representación visual actual del diagrama en un formato de imagen. Esta acción no modifica el modelo interno ni el SQL generado.",
+        "diagram.exportImageFormatLabel": "Formato",
+        "diagram.exportImageFormatPng": "PNG",
+        "diagram.exportImageFormatSvg": "SVG",
         "diagram.importJson": "Importar JSON",
         "diagram.importJsonTitle": "Importar diagrama desde JSON",
         "diagram.importJsonHelp":
@@ -148,6 +155,8 @@ export const TRANSLATIONS = {
         "feedback.fileSaveUnsupported":
             "Tu navegador no permite elegir dónde guardar el archivo.",
         "feedback.fileSaveFailed": "No se pudo guardar el archivo.",
+        "feedback.diagramImageExportEmpty":
+            "No se puede exportar una imagen de un diagrama vacío.",
 
         "feedback.attributeInserted": "Atributo insertado",
         "feedback.compositeAttributePrompt": "Nombre del atributo compuesto:",
@@ -425,6 +434,13 @@ export const TRANSLATIONS = {
         "diagram.generateSqlTitle": "Generate SQL script",
         "diagram.exportJson": "Export JSON",
         "diagram.exportJsonTitle": "Export diagram as JSON",
+        "diagram.exportImage": "Export image",
+        "diagram.exportImageTitle": "Export diagram as image",
+        "diagram.exportImageHelp":
+            "Exports the current visual representation of the diagram as an image. This action does not modify the internal model or the generated SQL.",
+        "diagram.exportImageFormatLabel": "Format",
+        "diagram.exportImageFormatPng": "PNG",
+        "diagram.exportImageFormatSvg": "SVG",
         "diagram.importJson": "Import JSON",
         "diagram.importJsonTitle": "Import diagram from JSON",
         "diagram.importJsonHelp":
@@ -503,6 +519,8 @@ export const TRANSLATIONS = {
         "feedback.fileSaveUnsupported":
             "Your browser does not allow choosing where to save the file.",
         "feedback.fileSaveFailed": "The file could not be saved.",
+        "feedback.diagramImageExportEmpty":
+            "An empty diagram cannot be exported as an image.",
 
         "feedback.attributeInserted": "Attribute inserted",
         "feedback.compositeAttributePrompt": "Composite attribute name:",
