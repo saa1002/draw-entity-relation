@@ -74,6 +74,7 @@ const createDefaultStrongEntity = ({
         attributes: [
             createAttribute({
                 idMx: `${attributePrefix}-attribute-1`,
+                name: "id",
                 position: {
                     x: position.x - 25,
                     y: position.y - 80,
@@ -116,6 +117,7 @@ const createDefaultWeakEntity = ({
         attributes: [
             createAttribute({
                 idMx: `${attributePrefix}-attribute-1`,
+                name: "discriminante",
                 position: {
                     x: position.x - 25,
                     y: position.y - 80,

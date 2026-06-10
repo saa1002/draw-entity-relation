@@ -380,11 +380,11 @@ test('generates the default N:M diagram structure', async ({ page }) => {
             relationNames: ['Relación'],
             isaCount: 0,
             firstEntityAttributes: [
-                { name: 'Atributo', key: true },
+                { name: 'id', key: true },
                 { name: 'Atributo 1', key: false },
             ],
             secondEntityAttributes: [
-                { name: 'Atributo', key: true },
+                { name: 'id', key: true },
                 { name: 'Atributo 1', key: false },
             ],
             relationAttributes: ['Atributo'],
