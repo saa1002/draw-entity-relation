@@ -126,13 +126,20 @@ export async function resetDiagram(page) {
     await dialog.getByRole('button', { name: 'Reiniciar' }).click();
 }
 
-export async function importDiagram(page, diagram) {
+export async function importDiagram(page, diagram, { mode = 'replace' } = {}) {
     await page.getByRole('button', { name: 'Importar JSON' }).click();
 
     const dialog = page.getByRole('dialog');
     await expect(
         dialog.getByText('Importar diagrama desde JSON'),
     ).toBeVisible();
+
+    if (mode === 'merge') {
+        await dialog.locator('#import-json-mode').click();
+        await page
+            .getByRole('option', { name: 'Combinar con el diagrama actual' })
+            .click();
+    }
 
     const input = dialog.locator('input[type="file"]');
 
