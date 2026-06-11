@@ -109,6 +109,7 @@ export const createRelationRenderingHelpers = ({
             graph.removeCells([decorator]);
         }
     };
+
     const getParallelTerminalPointsFromMainEdge = (mainEdge) => {
         if (!mainEdge) return null;
 
@@ -141,15 +142,25 @@ export const createRelationRenderingHelpers = ({
         const normalX = -dy / length;
         const normalY = dx / length;
 
+        const view = graph.getView();
+        const scale = view?.scale || 1;
+        const translate = view?.translate || { x: 0, y: 0 };
+
+        const toModelPoint = (absolutePoint) =>
+            new mxPoint(
+                absolutePoint.x / scale - translate.x,
+                absolutePoint.y / scale - translate.y,
+            );
+
         return {
-            source: new mxPoint(
-                start.x + normalX * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
-                start.y + normalY * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
-            ),
-            target: new mxPoint(
-                end.x + normalX * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
-                end.y + normalY * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
-            ),
+            source: toModelPoint({
+                x: start.x + normalX * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
+                y: start.y + normalY * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
+            }),
+            target: toModelPoint({
+                x: end.x + normalX * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
+                y: end.y + normalY * IDENTIFYING_RELATION_EDGE_PARALLEL_GAP,
+            }),
         };
     };
 
