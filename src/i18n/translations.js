@@ -101,8 +101,8 @@ export const TRANSLATIONS = {
         "generateStructure.title": "Generar estructura básica",
         "generateStructure.selectorLabel": "Estructura",
         "generateStructure.help":
-            "Selecciona una estructura E/R básica para generarla con los nombres por defecto de la aplicación. La estructura reemplazará el diagrama actual y podrá editarse después manualmente.",
-        "generateStructure.continueQuestion": "¿Deseas continuar?",
+            "Selecciona una estructura E/R básica y elige si quieres reemplazar el diagrama actual o combinarla con él. La estructura podrá editarse después manualmente.",
+        "generateStructure.continueQuestion": "¿Deseas generar la estructura?",
         "generateStructure.success": "Estructura generada: {{name}}.",
 
         "generateStructure.templates.many-to-many.name": "Relación N:M básica",
@@ -480,8 +480,9 @@ export const TRANSLATIONS = {
         "generateStructure.title": "Generate basic structure",
         "generateStructure.selectorLabel": "Structure",
         "generateStructure.help":
-            "Select a basic E/R structure to generate it with the application's default names. The structure will replace the current diagram and can be edited manually afterwards.",
-        "generateStructure.continueQuestion": "Do you want to continue?",
+            "Select a basic E/R structure and choose whether to replace the current diagram or merge it with it. The structure can be edited manually afterwards.",
+        "generateStructure.continueQuestion":
+            "Do you want to generate the structure?",
         "generateStructure.success": "Generated structure: {{name}}.",
 
         "generateStructure.templates.many-to-many.name":

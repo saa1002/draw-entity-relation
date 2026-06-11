@@ -3964,6 +3964,8 @@ export default function App(props) {
         const [selectedTemplateId, setSelectedTemplateId] = React.useState(
             GENERATE_STRUCTURE_TEMPLATES[0].id,
         );
+        const [selectedCompositionMode, setSelectedCompositionMode] =
+            React.useState(DIAGRAM_COMPOSITION_MODES.REPLACE);
 
         const selectedTemplate =
             getGenerateStructureTemplateById(selectedTemplateId);
@@ -3977,6 +3979,7 @@ export default function App(props) {
         const selectedTemplateName = getTemplateName(selectedTemplate);
 
         const handleClickOpen = () => {
+            setSelectedCompositionMode(DIAGRAM_COMPOSITION_MODES.REPLACE);
             setOpen(true);
         };
 
@@ -3988,13 +3991,18 @@ export default function App(props) {
             setSelectedTemplateId(event.target.value);
         };
 
+        const handleCompositionModeChange = (event) => {
+            setSelectedCompositionMode(event.target.value);
+        };
+
         const handleAccept = () => {
             const exampleDiagram = selectedTemplate.createDiagram();
+            const composedDiagram = composeDiagramWithCurrent({
+                incomingDiagram: exampleDiagram,
+                mode: selectedCompositionMode,
+            });
 
-            resetCanvas({ recordHistory: false });
-            recreateGraphFromDiagram(exampleDiagram);
-            saveToLocalStorage();
-            recordCurrentDiagramInHistory();
+            applyDiagramData(composedDiagram);
 
             setRefreshDiagram((prevState) => !prevState);
             setOpen(false);
@@ -4050,6 +4058,30 @@ export default function App(props) {
                                         </MenuItem>
                                     ),
                                 )}
+                            </Select>
+                        </FormControl>
+
+                        <FormControl fullWidth margin="normal" size="small">
+                            <InputLabel id="generate-structure-mode-label">
+                                {t("diagramComposition.modeLabel")}
+                            </InputLabel>
+                            <Select
+                                labelId="generate-structure-mode-label"
+                                id="generate-structure-mode"
+                                value={selectedCompositionMode}
+                                label={t("diagramComposition.modeLabel")}
+                                onChange={handleCompositionModeChange}
+                            >
+                                <MenuItem
+                                    value={DIAGRAM_COMPOSITION_MODES.REPLACE}
+                                >
+                                    {t("diagramComposition.replace")}
+                                </MenuItem>
+                                <MenuItem
+                                    value={DIAGRAM_COMPOSITION_MODES.MERGE}
+                                >
+                                    {t("diagramComposition.merge")}
+                                </MenuItem>
                             </Select>
                         </FormControl>
 
