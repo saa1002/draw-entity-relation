@@ -686,7 +686,7 @@ test("allows switching the interface language to English", async ({ page }) => {
         page.getByText("Añade una entidad para comenzar", { exact: true }),
     ).toBeVisible();
 
-    await page.getByLabel("Idioma").selectOption("en");
+    await page.getByRole("button", { name: "English" }).click();
 
     await expect(
         page.locator(".sidebar-section-title", { hasText: /^Language$/ }),

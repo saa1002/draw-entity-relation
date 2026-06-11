@@ -4107,28 +4107,54 @@ export default function App(props) {
     };
 
     const LanguageSelector = () => {
-        const handleChangeLanguage = (event) => {
-            setLanguage(event.target.value);
-        };
+        const languageOptions = [
+            {
+                code: "es",
+                shortLabel: "ES",
+                flagClass: "language-toggle-flag-es",
+                labelKey: "language.optionSpanish",
+            },
+            {
+                code: "en",
+                shortLabel: "EN",
+                flagClass: "language-toggle-flag-gb",
+                labelKey: "language.optionEnglish",
+            },
+        ];
 
         return (
-            <div className="language-selector-field">
-                <select
-                    id="language-selector"
-                    className="language-selector-select"
-                    value={language}
-                    onChange={handleChangeLanguage}
-                    aria-label={t("language.label")}
-                >
-                    {SUPPORTED_LANGUAGES.map((supportedLanguage) => (
-                        <option
-                            key={supportedLanguage.code}
-                            value={supportedLanguage.code}
+            <div
+                className="language-selector-field"
+                role="group"
+                aria-label={t("language.label")}
+            >
+                {languageOptions.map((languageOption) => {
+                    const isSelected = language === languageOption.code;
+
+                    return (
+                        <button
+                            key={languageOption.code}
+                            type="button"
+                            className={`language-toggle-button${
+                                isSelected
+                                    ? " language-toggle-button-active"
+                                    : ""
+                            }`}
+                            onClick={() => setLanguage(languageOption.code)}
+                            aria-label={t(languageOption.labelKey)}
+                            aria-pressed={isSelected}
+                            title={t(languageOption.labelKey)}
                         >
-                            {t(supportedLanguage.labelKey)}
-                        </option>
-                    ))}
-                </select>
+                            <span
+                                className={`language-toggle-flag ${languageOption.flagClass}`}
+                                aria-hidden="true"
+                            />
+                            <span className="language-toggle-code">
+                                {languageOption.shortLabel}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
         );
     };
