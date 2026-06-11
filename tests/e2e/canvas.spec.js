@@ -13,6 +13,50 @@ import {
     selectRelation,
 } from '../helpers/canvas';;
 
+const generateBasicStructure = async (
+    page,
+    { templateName = 'Relación N:M básica', mode = 'replace' } = {},
+) => {
+    await page.getByRole('button', { name: 'Generar estructura' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(
+        dialog.getByText('Generar estructura básica', { exact: true }),
+    ).toBeVisible();
+
+    await expect(dialog.locator('#generate-structure-mode')).toBeVisible();
+
+    if (templateName !== 'Relación N:M básica') {
+        await dialog.locator('#generate-structure-template').click();
+
+        const optionsList = page.getByRole('listbox');
+        await optionsList
+            .getByRole('option', { name: templateName, exact: true })
+            .click();
+        await expect(optionsList).toBeHidden();
+    }
+
+    if (mode === 'merge') {
+        await dialog.locator('#generate-structure-mode').click();
+
+        const optionsList = page.getByRole('listbox');
+        await optionsList
+            .getByRole('option', {
+                name: 'Combinar con el diagrama actual',
+                exact: true,
+            })
+            .click();
+        await expect(optionsList).toBeHidden();
+    }
+
+    await dialog.getByRole('button', { name: 'Generar estructura' }).click();
+
+    await expect(
+        page.getByText(`Estructura generada: ${templateName}.`).last(),
+    ).toBeVisible();
+};
+
 test('mxGraph transaction level stays balanced (updateLevel === 0)', async ({ page }) => {
     await page.addInitScript(() => {
         window.__PW__ = true;
@@ -666,4 +710,181 @@ test("allows switching the interface language to English", async ({ page }) => {
     ).toBeVisible();
 
     await page.getByRole("button", { name: "Close" }).click();
+});
+
+test('generated structure replace mode replaces the current diagram', async ({
+    page,
+}) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await renameElement(page, 'Entidad', 'Actual');
+
+    await expect(page.getByText('Actual', { exact: true })).toBeVisible();
+
+    await generateBasicStructure(page);
+
+    await expect(page.getByText('Actual', { exact: true })).toHaveCount(0);
+
+    await expectSavedDiagramState(
+        page,
+        (diagram) => ({
+            entityNames: diagram.entities.map((entity) => entity.name),
+            relationNames: diagram.relations.map((relation) => relation.name),
+            isaCount: diagram.isas.length,
+        }),
+        {
+            entityNames: ['Entidad', 'Entidad 1'],
+            relationNames: ['Relación'],
+            isaCount: 0,
+        },
+    );
+});
+
+test('generated structure merge mode keeps current diagram and renames conflicts', async ({
+    page,
+}) => {
+    await page.goto('/');
+
+    await addEntity(page);
+
+    await generateBasicStructure(page, { mode: 'merge' });
+
+    await expect(page.getByText('Entidad', { exact: true })).toBeVisible();
+    await expect(page.getByText('Entidad (1)', { exact: true })).toBeVisible();
+    await expect(page.getByText('Entidad 1', { exact: true })).toBeVisible();
+    await expect(page.getByText('Relación', { exact: true })).toBeVisible();
+
+    await expectSavedDiagramState(
+        page,
+        (diagram) => {
+            const existingEntity = diagram.entities.find(
+                (entity) => entity.name === 'Entidad',
+            );
+            const mergedFirstEntity = diagram.entities.find(
+                (entity) => entity.name === 'Entidad (1)',
+            );
+            const mergedSecondEntity = diagram.entities.find(
+                (entity) => entity.name === 'Entidad 1',
+            );
+            const mergedRelation = diagram.relations.find(
+                (relation) => relation.name === 'Relación',
+            );
+
+            return {
+                entityNames: diagram.entities.map((entity) => entity.name),
+                relationNames: diagram.relations.map(
+                    (relation) => relation.name,
+                ),
+                mergedIdsWereRemapped:
+                    mergedFirstEntity?.idMx !== 'template-nm-entity-1' &&
+                    mergedSecondEntity?.idMx !== 'template-nm-entity-2' &&
+                    mergedRelation?.idMx !== 'template-nm-relation-1',
+                mergedRelationTargetsWereRemapped:
+                    mergedRelation?.side1?.entity?.idMx ===
+                        mergedFirstEntity?.idMx &&
+                    mergedRelation?.side2?.entity?.idMx ===
+                        mergedSecondEntity?.idMx,
+                mergedDiagramWasShifted:
+                    mergedFirstEntity?.position?.x >
+                    existingEntity?.position?.x,
+                relationCardinalities: [
+                    mergedRelation?.side1?.cardinality,
+                    mergedRelation?.side2?.cardinality,
+                ],
+                relationAttributes: mergedRelation?.attributes.map(
+                    (attribute) => attribute.name,
+                ),
+            };
+        },
+        {
+            entityNames: ['Entidad', 'Entidad (1)', 'Entidad 1'],
+            relationNames: ['Relación'],
+            mergedIdsWereRemapped: true,
+            mergedRelationTargetsWereRemapped: true,
+            mergedDiagramWasShifted: true,
+            relationCardinalities: ['0:N', '0:N'],
+            relationAttributes: ['Atributo'],
+        },
+    );
+});
+
+test('generated ISA structure can be merged into a valid existing diagram', async ({
+    page,
+}) => {
+    await page.goto('/');
+
+    await addEntity(page);
+    await renameElement(page, 'Entidad', 'Auxiliar');
+
+    await generateBasicStructure(page, {
+        templateName: 'ISA básica',
+        mode: 'merge',
+    });
+
+    await expectSavedDiagramState(
+        page,
+        (diagram) => {
+            const isa = diagram.isas[0];
+            const generalization = diagram.entities.find(
+                (entity) => entity.name === 'Entidad',
+            );
+            const firstSpecialization = diagram.entities.find(
+                (entity) => entity.name === 'Entidad 1',
+            );
+            const secondSpecialization = diagram.entities.find(
+                (entity) => entity.name === 'Entidad 2',
+            );
+
+            return {
+                entityNames: diagram.entities.map((entity) => entity.name),
+                relationCount: diagram.relations.length,
+                isaCount: diagram.isas.length,
+                isaSpecializationCount: isa?.specializations.length,
+                generalizationPrimaryKeys: generalization?.attributes
+                    .filter((attribute) => attribute.key)
+                    .map((attribute) => attribute.name),
+                specializationPrimaryKeyCounts: [
+                    firstSpecialization?.attributes.filter(
+                        (attribute) => attribute.key,
+                    ).length,
+                    secondSpecialization?.attributes.filter(
+                        (attribute) => attribute.key,
+                    ).length,
+                ],
+                isaReferencesWereRemapped:
+                    isa?.generalization?.entity?.idMx ===
+                        generalization?.idMx &&
+                    isa?.specializations?.[0]?.entity?.idMx ===
+                        firstSpecialization?.idMx &&
+                    isa?.specializations?.[1]?.entity?.idMx ===
+                        secondSpecialization?.idMx,
+            };
+        },
+        {
+            entityNames: ['Auxiliar', 'Entidad', 'Entidad 1', 'Entidad 2'],
+            relationCount: 0,
+            isaCount: 1,
+            isaSpecializationCount: 2,
+            generalizationPrimaryKeys: ['id'],
+            specializationPrimaryKeyCounts: [0, 0],
+            isaReferencesWereRemapped: true,
+        },
+    );
+
+    await page.getByRole('button', { name: 'Comprobar diagrama' }).click();
+
+    await expect(page.getByText('El diagrama es válido.')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Generar SQL' }).click();
+
+    const sqlDialog = page.getByRole('dialog');
+
+    await expect(
+        sqlDialog.getByText('Generar script SQL', { exact: true }),
+    ).toBeVisible();
+
+    await expect(
+        sqlDialog.getByRole('button', { name: 'Generar SQL' }),
+    ).toBeEnabled();
 });
