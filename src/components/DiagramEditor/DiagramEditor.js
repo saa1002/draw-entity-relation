@@ -20,6 +20,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { BUILD_DATE } from "../../buildInfo";
 import {
     ATTRIBUTE_OWNER_TYPES,
+    DIAGRAM_COMPOSITION_MODES,
     GENERATE_STRUCTURE_TEMPLATES,
     IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY,
     IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES,
@@ -33,6 +34,7 @@ import {
     canRelationTypeHoldAttributes,
     clearIdentifyingRelationDomainSemantics,
     clearPrimaryKeyAttributesInTree,
+    composeDiagramData,
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
     convertSimpleAttributeToCompositeAttribute,
@@ -709,6 +711,28 @@ export default function App(props) {
             ensureIdentifyingRelationEdgeDecorator,
             syncRepeatedParticipantRelationEdges,
         });
+    };
+
+    const composeDiagramWithCurrent = ({ incomingDiagram, mode }) =>
+        composeDiagramData({
+            currentDiagram: diagramRef.current,
+            importedDiagram: incomingDiagram,
+            mode,
+        });
+
+    const applyDiagramData = (diagramData) => {
+        clearGraphCanvas(graph);
+        recreateGraphFromDiagram(diagramData);
+
+        if (typeof graph?.clearSelection === "function") {
+            graph.clearSelection();
+        }
+
+        setSelected(null);
+        setSelectionVersion((prevVersion) => prevVersion + 1);
+
+        saveToLocalStorage();
+        recordCurrentDiagramInHistory();
     };
 
     const recreateGraphFromLocalStorage = () => {
@@ -3734,14 +3758,22 @@ export default function App(props) {
     const ImportJSONButton = () => {
         const [open, setOpen] = React.useState(false);
         const [validationMessages, setValidationMessages] = React.useState([]);
+        const [selectedImportMode, setSelectedImportMode] = React.useState(
+            DIAGRAM_COMPOSITION_MODES.REPLACE,
+        );
 
         const handleClickOpen = () => {
             setValidationMessages([]);
+            setSelectedImportMode(DIAGRAM_COMPOSITION_MODES.REPLACE);
             setOpen(true);
         };
 
         const handleClose = () => {
             setOpen(false);
+        };
+
+        const handleImportModeChange = (event) => {
+            setSelectedImportMode(event.target.value);
         };
 
         const handleFileChange = async (event) => {
@@ -3751,22 +3783,23 @@ export default function App(props) {
 
             try {
                 const importedDiagram = await readDiagramJsonFile(file);
-                const diagnostics = validateGraph(importedDiagram);
+                const composedDiagram = composeDiagramWithCurrent({
+                    incomingDiagram: importedDiagram,
+                    mode: selectedImportMode,
+                });
+                const diagnostics = validateGraph(composedDiagram);
 
                 setValidationMessages(
                     getValidationDialogMessages(
                         diagnostics,
                         "importJson",
-                        importedDiagram,
+                        composedDiagram,
                         t,
                     ),
                 );
 
                 if (diagnostics.isValid) {
-                    resetCanvas({ recordHistory: false });
-                    recreateGraphFromDiagram(importedDiagram);
-                    saveToLocalStorage();
-                    recordCurrentDiagramInHistory();
+                    applyDiagramData(composedDiagram);
 
                     setOpen(false);
                     toast.success(t("feedback.diagramImported"));
@@ -3803,9 +3836,35 @@ export default function App(props) {
                         <DialogContentText>
                             {t("diagram.importJsonHelp")}
                         </DialogContentText>
+
+                        <FormControl fullWidth margin="normal" size="small">
+                            <InputLabel id="import-json-mode-label">
+                                {t("diagramComposition.modeLabel")}
+                            </InputLabel>
+                            <Select
+                                labelId="import-json-mode-label"
+                                id="import-json-mode"
+                                value={selectedImportMode}
+                                label={t("diagramComposition.modeLabel")}
+                                onChange={handleImportModeChange}
+                            >
+                                <MenuItem
+                                    value={DIAGRAM_COMPOSITION_MODES.REPLACE}
+                                >
+                                    {t("diagramComposition.replace")}
+                                </MenuItem>
+                                <MenuItem
+                                    value={DIAGRAM_COMPOSITION_MODES.MERGE}
+                                >
+                                    {t("diagramComposition.merge")}
+                                </MenuItem>
+                            </Select>
+                        </FormControl>
+
                         {validationMessages.map(
                             renderLocalizedValidationDialogMessage,
                         )}
+
                         <input
                             type="file"
                             accept="application/json"

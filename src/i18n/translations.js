@@ -88,7 +88,10 @@ export const TRANSLATIONS = {
         "diagram.importJson": "Importar JSON",
         "diagram.importJsonTitle": "Importar diagrama desde JSON",
         "diagram.importJsonHelp":
-            "Selecciona un archivo JSON exportado previamente. Si el archivo es válido, reemplazará el diagrama actual.",
+            "Selecciona un archivo JSON exportado previamente y elige si quieres reemplazar el diagrama actual o combinarlo con él.",
+        "diagramComposition.modeLabel": "Modo",
+        "diagramComposition.replace": "Reemplazar el diagrama actual",
+        "diagramComposition.merge": "Combinar con el diagrama actual",
         "diagram.reset": "Reiniciar",
         "diagram.resetTitle": "Reiniciar diagrama",
         "diagram.resetHelp":
@@ -464,7 +467,10 @@ export const TRANSLATIONS = {
         "diagram.importJson": "Import JSON",
         "diagram.importJsonTitle": "Import diagram from JSON",
         "diagram.importJsonHelp":
-            "Select a previously exported JSON file. If the file is valid, it will replace the current diagram.",
+            "Select a previously exported JSON file and choose whether to replace the current diagram or merge it with it.",
+        "diagramComposition.modeLabel": "Mode",
+        "diagramComposition.replace": "Replace current diagram",
+        "diagramComposition.merge": "Merge with current diagram",
         "diagram.reset": "Reset",
         "diagram.resetTitle": "Reset diagram",
         "diagram.resetHelp":
