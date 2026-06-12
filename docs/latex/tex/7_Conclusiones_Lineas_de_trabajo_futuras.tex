@@ -14,13 +14,19 @@ El soporte de jerarquías ISA se planteó de forma limitada y controlada. La apl
 
 También se mejoró la generación de SQL. En particular, se revisó el tratamiento de las claves foráneas para reducir el uso de sentencias \texttt{ALTER TABLE} cuando las dependencias entre tablas pueden resolverse mediante un orden adecuado de creación. Al mismo tiempo, se mantuvo \texttt{ALTER TABLE} como mecanismo de respaldo para los casos en los que existen ciclos reales de dependencias. Con ello, el SQL generado resulta más claro en los casos simples, pero conserva una solución para situaciones más complejas.
 
-Otro resultado relevante del proyecto es la mejora de la usabilidad del editor. Se reorganizó la interfaz, se añadieron mensajes de ayuda, se revisaron los diálogos de confirmación, se mejoró la presentación de errores de validación y se incorporó un soporte básico de idioma en español e inglés. Estas mejoras no cambian la notación académica del modelo Entidad-Relación, pero hacen que la herramienta sea más cómoda y comprensible para el usuario.
+Otro resultado relevante del proyecto es la mejora de la usabilidad del editor. Se reorganizó la interfaz, se añadieron mensajes de ayuda, se revisaron los diálogos de confirmación, se mejoró la presentación de errores de validación y se incorporó una acción explícita para comprobar el diagrama sin generar SQL. También se añadieron acciones prácticas como ajustar la vista al contenido del diagrama, exportar la representación visual en PNG o SVG y trabajar con importaciones o estructuras generadas tanto reemplazando el diagrama actual como combinándolas con el contenido existente. Estas mejoras no cambian la notación académica del modelo Entidad-Relación, pero hacen que la herramienta sea más cómoda y comprensible para el usuario.
 
-La funcionalidad de generación de estructuras de ejemplo también contribuye a facilitar el uso de la aplicación. Permite crear rápidamente modelos básicos, como relaciones binarias, relaciones ternarias, entidades débiles o jerarquías ISA sencillas. Esta funcionalidad se planteó como una ayuda para probar y explorar el editor, no como un sistema avanzado de plantillas o fusión de diagramas.
+La funcionalidad de generación de estructuras de ejemplo también contribuye a facilitar el uso de la aplicación. Permite crear rápidamente modelos básicos, como relaciones binarias, relaciones ternarias, entidades débiles o jerarquías ISA sencillas. Además, estas estructuras pueden reemplazar el diagrama actual o insertarse en el contenido existente mediante una combinación controlada. Esta funcionalidad se planteó como una ayuda para probar y explorar el editor, no como un sistema avanzado de plantillas semánticas ni como un mecanismo de fusión inteligente de diagramas.
 
 Durante el desarrollo también se ha comprobado la importancia de trabajar de forma incremental. Al tratarse de una aplicación heredada y visual, muchos cambios podían afectar a varias partes del sistema al mismo tiempo. Por ello, dividir el trabajo en issues, realizar cambios acotados y combinar pruebas automáticas con revisión manual permitió avanzar con más seguridad y reducir el riesgo de introducir regresiones.
 
+También se incorporaron pequeñas mejoras orientadas a reducir la fricción durante la edición. Un ejemplo de ello es la creación automática de una clave \texttt{id} en las entidades fuertes nuevas, manteniendo al mismo tiempo las excepciones necesarias para no alterar la semántica de entidades débiles o especializaciones ISA.
+
+Al estar orientada a un contexto académico, la herramienta no busca sustituir la explicación teórica del modelo Entidad-Relación, sino servir como apoyo práctico para construir diagramas, validarlos y observar una posible traducción al modelo relacional y a SQL.
+
 En conjunto, el resultado final es una herramienta más completa que la aplicación inicial, con mayor soporte para elementos del modelo Entidad-Relación, una salida SQL más cuidada y una interfaz más clara. Aunque no cubre todos los casos posibles del modelo E/R, sí proporciona una base más sólida y coherente para continuar ampliando el proyecto en el futuro.
+
+% Figura: captura final del editor con un diagrama completo que combine varias funcionalidades implementadas.
 
 \section{Líneas de trabajo futuras}
 
@@ -31,11 +37,9 @@ A pesar de las mejoras realizadas, el proyecto sigue ofreciendo varias posibilid
 
 \item \textbf{Incorporar agregaciones.} Las agregaciones forman parte del modelo Entidad-Relación avanzado, pero no se implementaron en este trabajo. Su incorporación supondría representar relaciones tratadas como entidades de nivel superior, lo que afectaría al lienzo, a la persistencia, a la validación y a la generación del modelo relacional.
 
-\item \textbf{Revisar el flujo de creación de atributos compuestos.} Actualmente existen formas de construir atributos compuestos que pueden no resultar completamente intuitivas para el usuario. Una posible mejora sería hacer este proceso más explícito, de forma que la creación del atributo compuesto y de sus subatributos quede más clara desde la interfaz.
+\item \textbf{Estudiar una fusión semántica avanzada de diagramas.} La aplicación permite combinar un diagrama importado o una estructura generada con el contenido actual mediante una solución controlada basada en remapeo de identificadores, renombrado de conflictos y desplazamiento visual. Como trabajo futuro podría estudiarse una fusión más inteligente, capaz de detectar elementos equivalentes, reutilizar entidades ya existentes o resolver conflictos de forma guiada por el usuario. Esta ampliación tendría más complejidad, porque afectaría a nombres, referencias internas, relaciones, ISA, validación y persistencia.
 
-\item \textbf{Estudiar la importación combinada de diagramas.} En la versión actual, la importación de JSON se plantea principalmente como una sustitución del diagrama existente. En el futuro podría valorarse la posibilidad de añadir un diagrama importado al contenido actual, siempre que se controlen adecuadamente los conflictos de nombres, identificadores internos, referencias entre elementos y solapamientos visuales.
-
-\item \textbf{Valorar la creación automática de claves por defecto.} Otra mejora posible sería crear automáticamente un atributo clave al añadir una nueva entidad. Esto podría reducir algunos errores habituales de validación y agilizar la construcción de diagramas sencillos. Sin embargo, debería diseñarse con cuidado para no imponer decisiones de modelado al usuario y para respetar casos especiales como entidades débiles o especializaciones ISA.
+\item \textbf{Localizar nombres por defecto de nuevos elementos.} Actualmente la interfaz puede mostrarse en español o en inglés, pero los nombres creados por defecto para elementos del diagrama se mantienen como datos del usuario y no se traducen automáticamente. Una posible mejora sería adaptar los nombres iniciales de nuevos elementos al idioma activo, sin modificar los elementos ya existentes al cambiar de idioma.
 
 \item \textbf{Permitir una configuración más detallada del SQL generado.} Actualmente la herramienta genera una estructura SQL suficiente para representar el esquema obtenido, pero no permite editar en detalle los tipos de datos, tamaños, restricciones adicionales o decisiones específicas de un sistema gestor concreto. Esta sería una posible ampliación si se quisiera acercar más la herramienta a un uso práctico avanzado.
 
@@ -46,4 +50,3 @@ A pesar de las mejoras realizadas, el proyecto sigue ofreciendo varias posibilid
 \end{itemize}
 
 En definitiva, el proyecto deja una base funcional sobre la que pueden construirse nuevas ampliaciones. Estas mejoras deberían abordarse de forma gradual, manteniendo el mismo criterio seguido durante este trabajo: introducir cambios acotados, comprobar su impacto en el modelo interno y asegurar que cada nueva funcionalidad se integre de forma coherente con la validación, la persistencia y la generación de SQL.
-

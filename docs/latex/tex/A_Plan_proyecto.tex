@@ -2,65 +2,104 @@
 
 \section{Introducción}
 
-En este anexo se recoge la planificación general seguida durante el desarrollo del Trabajo Fin de Grado, así como una valoración inicial de su viabilidad. El proyecto se ha abordado como una evolución de una aplicación ya existente para el diseño de diagramas Entidad-Relación, por lo que la planificación no partió de un desarrollo completamente nuevo, sino de una fase previa de análisis del sistema heredado.
+En este anexo se describe la planificación seguida durante el desarrollo del Trabajo Fin de Grado, así como una valoración de la viabilidad del proyecto. El trabajo parte de una aplicación heredada para el diseño de diagramas Entidad-Relación, por lo que la planificación no consistió en desarrollar una herramienta desde cero, sino en analizar, estabilizar y ampliar una base ya existente.
 
-El trabajo se organizó de forma incremental. En primer lugar se revisó el estado inicial del editor, se preparó el entorno de desarrollo y se analizaron los principales módulos de la aplicación. A partir de esa base, se fueron realizando tareas de estabilización, ampliación funcional, validación y redacción de la memoria.
+El proyecto se abordó de forma incremental. En primer lugar, fue necesario comprender el funcionamiento del editor original, identificar sus módulos principales y preparar el entorno de desarrollo. Después se fueron incorporando mejoras funcionales y de usabilidad, procurando que cada cambio quedara integrado en el modelo interno, la validación, la transformación relacional y la generación de SQL.
 
-La planificación del proyecto no debe entenderse como una secuencia totalmente cerrada desde el inicio, sino como una organización progresiva del trabajo. Algunas decisiones se fueron ajustando a medida que se comprendía mejor el funcionamiento interno del editor y las implicaciones de incorporar nuevos elementos del modelo Entidad-Relación.
+La planificación no debe entenderse como una secuencia completamente cerrada desde el inicio. Al tratarse de un proyecto heredado, algunas decisiones se ajustaron a medida que se conocía mejor la aplicación y se valoraba el coste de incorporar nuevos elementos del modelo Entidad-Relación. Por ello, el desarrollo se organizó en fases y bloques de trabajo, apoyándose en control de versiones, ramas, issues y milestones.
 
 \section{Planificación temporal}
 
-El desarrollo del proyecto se dividió en varias fases principales. La primera fase estuvo centrada en la preparación del entorno de trabajo y en la toma de contacto con el proyecto heredado. Durante esta etapa se revisó la estructura del repositorio, se configuró el entorno local de desarrollo y se comprobaron los comandos principales de ejecución, construcción y pruebas.
+\subsection{Metodología de trabajo}
 
-Después se llevó a cabo una fase de análisis del sistema existente. En ella se estudió el funcionamiento del editor, especialmente la relación entre la representación visual gestionada con mxGraph y el modelo interno utilizado por la aplicación. Esta fase fue necesaria para comprender cómo se almacenaban las entidades, atributos y relaciones, y cómo se utilizaba esa información en la validación y en la generación de SQL.
+La metodología seguida durante el proyecto fue incremental e iterativa. En cada fase se abordó un conjunto limitado de tareas, se revisó su impacto sobre el editor y se comprobó que no se rompieran funcionalidades anteriores. Esta forma de trabajo resultó especialmente importante porque la aplicación combina una parte visual, basada en el lienzo de edición, con una estructura interna que se utiliza para validar, guardar y transformar los diagramas.
 
-Una vez comprendido el funcionamiento general del sistema, se abordó una fase de estabilización del núcleo del editor. El objetivo de esta etapa fue reducir algunas dependencias implícitas y corregir comportamientos que podían dificultar futuras ampliaciones. Esta parte del trabajo permitió disponer de una base más segura antes de incorporar nuevos elementos del modelo Entidad-Relación.
+El uso de Git permitió mantener un seguimiento de los cambios realizados. Las tareas se agruparon en ramas y commits separados, de forma que cada bloque de trabajo pudiera revisarse de manera más controlada. Además, se utilizaron issues y milestones para organizar las funcionalidades pendientes, los errores detectados y las mejoras planteadas durante el desarrollo.
 
-A continuación, el desarrollo se centró en ampliar las funcionalidades soportadas por el editor. En esta fase se fueron incorporando nuevos elementos y comportamientos relacionados con el modelo Entidad-Relación, prestando atención a que cada ampliación quedara integrada no solo en la interfaz, sino también en el modelo interno, las validaciones, la transformación relacional y la generación de SQL.
+Esta metodología permitió avanzar de manera progresiva. Primero se estudiaron y estabilizaron las partes más importantes de la aplicación heredada, y posteriormente se añadieron nuevas funcionalidades relacionadas con el modelo Entidad-Relación y con la experiencia de uso del editor.
 
-Paralelamente al desarrollo, se realizaron pruebas automáticas y revisiones manuales del comportamiento de la aplicación. Estas comprobaciones sirvieron para revisar casos concretos y para detectar posibles incoherencias entre lo que el usuario diseña en el lienzo y lo que la aplicación procesa internamente.
+\subsection{Fases del proyecto}
 
-Finalmente, se inició la fase de redacción de la memoria y de los anexos. Esta fase se ha realizado de forma progresiva, comenzando por los capítulos cuyo contenido estaba más estabilizado y dejando pendientes de cierre aquellas partes que dependen de las últimas ampliaciones del proyecto.
+El desarrollo del proyecto se dividió en varias fases principales. La primera fase consistió en la preparación del entorno y la revisión inicial de la aplicación heredada. En ella se comprobó la estructura del repositorio, la forma de ejecutar la aplicación y los comandos disponibles para construir y probar el proyecto.
 
-% TODO: añadir tabla resumen de fases/milestones cuando esté cerrado el desarrollo.
+La segunda fase estuvo centrada en el análisis del sistema existente. Durante esta etapa se estudió la relación entre la representación visual del diagrama y el modelo interno utilizado por la aplicación. Esta parte fue necesaria para entender cómo se almacenaban las entidades, atributos y relaciones, y cómo se utilizaba esa información en la validación y en la generación de SQL.
 
-\begin{table}[h]
-    \centering
-    \begin{tabular}{p{0.25\textwidth} p{0.60\textwidth}}
-        \toprule
-        \textbf{Fase} & \textbf{Descripción} \\
-        \midrule
-        Preparación y análisis inicial & Configuración del entorno, revisión del repositorio y toma de contacto con el proyecto heredado. \\
-        Análisis del sistema heredado & Estudio de la arquitectura del editor, del modelo interno y de los módulos de validación y generación de SQL. \\
-        Estabilización del núcleo & Revisión de dependencias internas, persistencia, sincronización entre modelo y vista y configuración de relaciones. \\
-        Ampliación del modelo E/R & Incorporación progresiva de nuevos elementos del modelo Entidad-Relación y adaptación de las validaciones y transformaciones. \\
-        Pruebas y revisión manual & Comprobación de funcionalidades mediante pruebas automáticas y revisión manual de casos de uso relevantes. \\
-        Redacción y cierre & Redacción de la memoria, revisión de anexos y ajustes finales del proyecto. \\
-        \bottomrule
-    \end{tabular}
-    \caption{Resumen de las fases principales del desarrollo.}
-    \label{tab:fases-desarrollo}
+A continuación, se abordó una fase de estabilización del núcleo del editor. El objetivo fue corregir comportamientos delicados y reducir dependencias implícitas que podían dificultar futuras ampliaciones. Esta fase sirvió como base para incorporar nuevos elementos del modelo Entidad-Relación con mayor seguridad.
+
+Después se desarrollaron las ampliaciones funcionales del editor. En esta fase se incorporaron o revisaron distintos elementos del modelo, como entidades débiles, atributos compuestos y multivaluados, relaciones ternarias, roles y soporte inicial para jerarquías ISA. Cada ampliación tuvo que integrarse tanto en la interfaz como en el modelo interno, la validación, la transformación relacional y la generación de SQL.
+
+También se realizaron mejoras de usabilidad, orientadas a facilitar la edición y revisión de diagramas. Entre ellas se encuentran la comprobación explícita del diagrama, la exportación visual, el ajuste de vista, la mejora de algunos diálogos, la generación de estructuras básicas y el soporte básico de idioma español/inglés.
+
+Finalmente, se llevó a cabo la fase de documentación y cierre. En esta etapa se redactaron la memoria y los anexos, se revisaron las funcionalidades implementadas y se ajustó la redacción para reflejar correctamente el alcance final del proyecto.
+
+% Figura: cronograma general o captura de milestones/issues utilizados durante el desarrollo.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{p{0.25\textwidth} p{0.60\textwidth}}
+\toprule
+\textbf{Fase} & \textbf{Descripción} \tabularnewline
+\midrule
+Preparación inicial & Configuración del entorno de desarrollo, revisión del repositorio y toma de contacto con la aplicación heredada. \tabularnewline
+Análisis del sistema existente & Estudio del editor visual, del modelo interno, de la persistencia, de la validación y de la generación de SQL. \tabularnewline
+Estabilización del núcleo & Corrección de comportamientos delicados y revisión de la sincronización entre la vista y el modelo interno. \tabularnewline
+Ampliación funcional & Incorporación progresiva de nuevos elementos del modelo Entidad-Relación y adaptación de las validaciones y transformaciones. \tabularnewline
+Mejoras de usabilidad & Revisión de la interfaz, acciones de apoyo, exportación visual, generación de estructuras y soporte básico de idioma. \tabularnewline
+Pruebas y revisión & Ejecución de pruebas automáticas y revisión manual de casos representativos del editor. \tabularnewline
+Documentación y cierre & Redacción de la memoria, revisión de anexos y ajuste del alcance final del proyecto. \tabularnewline
+\bottomrule
+\end{tabular}
+\caption{Resumen de las fases principales del desarrollo.}
+\label{tab:fases-desarrollo}
 \end{table}
+
+\subsection{Seguimiento del proyecto}
+
+El seguimiento del proyecto se apoyó principalmente en el sistema de control de versiones. Los cambios se organizaron mediante commits separados, procurando que cada uno correspondiera a una unidad de trabajo concreta. Esta forma de trabajo facilitó la revisión posterior de las modificaciones realizadas y permitió localizar con mayor facilidad el origen de posibles errores.
+
+Las tareas también se agruparon en milestones e issues. Esta organización permitió separar el trabajo en bloques más pequeños y mantener una relación entre los objetivos planteados, las tareas realizadas y las comprobaciones efectuadas. En un proyecto basado en una aplicación heredada, esta trazabilidad resulta útil porque muchos cambios afectan simultáneamente a la interfaz, al modelo interno, a la persistencia o a la generación de SQL.
+
+Durante el desarrollo también se realizaron revisiones manuales de la aplicación. Estas comprobaciones fueron necesarias porque el editor tiene una parte visual importante y no todos los aspectos de uso pueden validarse únicamente mediante pruebas automáticas. Por ello, además de comprobar funciones concretas, se revisó el comportamiento general del editor desde el punto de vista del usuario.
 
 \section{Estudio de viabilidad}
 
-El estudio de viabilidad permite valorar si el proyecto puede llevarse a cabo con los recursos disponibles y dentro del contexto académico en el que se desarrolla. En este caso, se trata de un proyecto software realizado como Trabajo Fin de Grado, por lo que la viabilidad se analiza principalmente desde dos puntos de vista: el económico y el legal.
+El estudio de viabilidad permite valorar si el proyecto puede llevarse a cabo con los recursos disponibles y dentro del contexto académico en el que se desarrolla. En este caso, se analiza principalmente la viabilidad económica y la viabilidad legal.
 
 \subsection{Viabilidad económica}
 
-Desde el punto de vista económico, el proyecto no requiere una inversión elevada en infraestructura. La aplicación se desarrolla como una herramienta web y puede ejecutarse en un entorno local utilizando un equipo personal y herramientas de desarrollo habituales.
+Desde el punto de vista económico, el proyecto no requiere una inversión elevada en infraestructura. La aplicación se desarrolla como una herramienta web que puede ejecutarse en local utilizando un equipo personal y herramientas de desarrollo habituales.
 
-La mayor parte del coste del proyecto está asociado al tiempo de trabajo dedicado al análisis, implementación, pruebas y redacción de la documentación. También se han utilizado herramientas y servicios de apoyo al desarrollo, como el editor de código, el sistema de control de versiones, la plataforma de alojamiento del repositorio y el entorno de redacción de la memoria.
+El principal coste del proyecto está asociado al tiempo dedicado al análisis, desarrollo, pruebas y documentación. Al partir de una aplicación existente, una parte importante del esfuerzo se destinó a comprender el sistema heredado antes de poder ampliarlo con seguridad.
 
-% TODO: completar la estimación económica con horas dedicadas, coste/hora aproximado
-% y herramientas utilizadas cuando se cierre la planificación final.
+\subsubsection{Costes de personal}
+
+El coste de personal corresponde al tiempo invertido en las distintas tareas del proyecto: análisis de la aplicación, implementación de mejoras, pruebas, revisión del comportamiento y redacción de la documentación. Al tratarse de un Trabajo Fin de Grado, este coste no se traduce en un gasto real contratado, pero puede estimarse de forma orientativa para valorar el esfuerzo necesario.
+
+% Tabla sugerida: aquí se puede añadir una tabla con horas estimadas por fase si finalmente quieres cuantificar el coste.
+% Ejemplo de columnas: Fase, Horas estimadas, Coste/hora, Coste total.
+
+\subsubsection{Costes de hardware}
+
+El desarrollo puede realizarse con un equipo personal convencional, sin necesidad de servidores propios ni dispositivos específicos. La aplicación se ejecuta en el navegador y el entorno de desarrollo se instala localmente, por lo que no se requiere infraestructura adicional.
+
+\subsubsection{Costes de software}
+
+Las herramientas utilizadas durante el proyecto son herramientas habituales en el desarrollo web y en la redacción académica. Entre ellas se encuentran el editor de código, el sistema de control de versiones, el navegador, el entorno de ejecución de la aplicación, las librerías del proyecto y la plataforma de redacción de la memoria.
+
+En general, el proyecto puede desarrollarse utilizando herramientas gratuitas o de acceso académico, por lo que el coste económico directo asociado al software es reducido.
 
 \subsection{Viabilidad legal}
 
-Desde el punto de vista legal, el proyecto se apoya en tecnologías y librerías de uso habitual en el desarrollo web. Al tratarse de una evolución de una aplicación existente, es importante tener en cuenta tanto la licencia del proyecto heredado como las licencias de las dependencias utilizadas.
+Desde el punto de vista legal, el proyecto se apoya en tecnologías y librerías de uso habitual en el desarrollo web. Al tratarse de una evolución de una aplicación existente, es necesario respetar tanto la licencia del proyecto heredado como las licencias de las dependencias utilizadas.
 
-Durante el cierre del proyecto deberá revisarse que las librerías empleadas sean compatibles con el uso académico del trabajo y que se respeten las condiciones de sus respectivas licencias. También será necesario citar adecuadamente las herramientas principales utilizadas en el desarrollo y en la redacción de la memoria.
+También se debe tener en cuenta que la aplicación no requiere autenticación, backend ni almacenamiento remoto de datos personales. El almacenamiento del diagrama se realiza en el navegador del usuario, por lo que el proyecto no plantea un tratamiento centralizado de información personal.
 
-% TODO: revisar licencias concretas del proyecto y dependencias principales antes de cerrar este apartado.
+\subsubsection{Licencias y dependencias}
 
+Las dependencias empleadas deben ser compatibles con el uso académico del proyecto. En caso de reutilizar código, librerías o recursos externos, estos deben citarse correctamente y respetar las condiciones de sus licencias.
 
+\subsubsection{Protección de datos}
+
+La aplicación funciona como herramienta cliente y no incorpora registro de usuarios ni envío de diagramas a un servidor propio. Por ello, el riesgo asociado a protección de datos es reducido. Aun así, los diagramas que el usuario cree o importe deben considerarse información bajo su control, almacenada localmente en su navegador o exportada a archivos cuando así lo decida.
+
+En conclusión, el proyecto es viable tanto económica como legalmente dentro de un contexto académico. No requiere infraestructura específica, puede desarrollarse con herramientas habituales y su alcance funcional se ajusta a los recursos disponibles para un Trabajo Fin de Grado.

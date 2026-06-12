@@ -8,6 +8,8 @@ Esta separación resulta útil porque permite razonar primero sobre el problema 
 
 En el contexto de este trabajo, el modelo Entidad-Relación sirve como base teórica para el editor desarrollado. La aplicación permite representar visualmente diagramas E/R y, a partir de esa representación, aplicar validaciones y transformaciones posteriores hacia el modelo relacional. Por ello, los elementos gráficos del editor no deben entenderse solo como dibujos, sino como partes de un modelo con significado propio.
 
+% Figura: ejemplo básico de diagrama Entidad-Relación con entidad, atributos, relación y cardinalidades.
+
 \section{Elementos básicos del modelo}
 
 Un diagrama Entidad-Relación se construye a partir de varios elementos que permiten describir la información de un dominio de forma visual. Aunque existen distintas notaciones y variantes, en este trabajo se consideran especialmente los conceptos que son necesarios para entender el funcionamiento del editor y las transformaciones que se realizan posteriormente.
@@ -38,17 +40,23 @@ Una entidad débil es una entidad que no puede identificarse completamente por s
 
 En estos casos, la clave de la entidad débil se construye a partir de la clave de la entidad fuerte y de un atributo propio que actúa como discriminante. Por este motivo, las entidades débiles tienen un tratamiento especial tanto en la validación del diagrama como en la transformación al modelo relacional.
 
+% Figura: ejemplo de entidad débil con entidad propietaria, relación identificadora y discriminante.
+
 \subsection{Atributos compuestos y multivaluados}
 
 Los atributos compuestos permiten representar información que puede dividirse en partes. Por ejemplo, una dirección podría descomponerse en calle, número, ciudad y código postal. Esta descomposición ayuda a expresar mejor la estructura de la información en el modelo conceptual.
 
 Los atributos multivaluados representan propiedades que pueden tener varios valores para una misma entidad. Por ejemplo, una persona podría tener varios teléfonos. En el paso al modelo relacional, este tipo de atributo no suele representarse como una única columna de la tabla principal, sino mediante una estructura separada que permita almacenar varios valores.
 
+% Figura: ejemplo de atributo compuesto y atributo multivaluado en notación Entidad-Relación.
+
 \subsection{Interrelaciones ternarias}
 
 Las interrelaciones ternarias son relaciones en las que participan tres entidades. No siempre pueden sustituirse por varias relaciones binarias sin perder significado, ya que en algunos casos el hecho que se quiere representar depende de la combinación de los tres participantes.
 
 Este tipo de relación requiere prestar atención a las cardinalidades y a los posibles roles de los participantes. En el editor desarrollado, las relaciones ternarias son relevantes porque obligan a conservar más información en el modelo interno y a tratarlas de forma específica durante la transformación relacional.
+
+% Figura: ejemplo de interrelación ternaria con tres entidades participantes y cardinalidades.
 
 \subsection{Jerarquías ISA}
 
@@ -58,6 +66,8 @@ En este tipo de jerarquías, las especializaciones heredan la identificación de
 
 En este trabajo se considera un soporte inicial de ISA. La idea principal es permitir representar una generalización con una o varias especializaciones y trasladar esa estructura al modelo relacional de forma controlada.
 
+% Figura: ejemplo de jerarquía ISA con una entidad general y dos especializaciones.
+
 \subsection{Agregaciones}
 
 Las agregaciones permiten tratar una interrelación como un elemento de nivel superior dentro del modelo Entidad-Relación. Esto resulta útil cuando una relación entre entidades debe participar, a su vez, en otra relación con nuevos elementos del dominio.
@@ -65,7 +75,6 @@ Las agregaciones permiten tratar una interrelación como un elemento de nivel su
 Este tipo de construcción añade complejidad al modelo, porque no solo es necesario representar entidades e interrelaciones simples, sino también una estructura formada por varios elementos que actúa como una unidad dentro del diagrama. Por ello, su incorporación a una herramienta visual requiere decisiones específicas sobre representación gráfica, validación, persistencia y transformación al modelo relacional.
 
 En este trabajo las agregaciones se consideran como parte del contexto teórico del modelo Entidad-Relación, pero no se incorporan al editor desarrollado. Su implementación se deja como una posible línea de trabajo futura.
-
 
 \section{Transformación al modelo relacional}
 
@@ -78,6 +87,8 @@ Las relaciones uno a muchos suelen representarse incorporando una clave foránea
 Algunos elementos requieren reglas específicas. Los atributos multivaluados pueden necesitar tablas propias; las entidades débiles incorporan la clave de su entidad propietaria como parte de su identificación; y las relaciones ternarias suelen transformarse mediante una tabla que referencia a las entidades participantes.
 
 En el caso de las jerarquías ISA, existen varias estrategias posibles de transformación. En este trabajo se adopta una estrategia sencilla: la entidad general se transforma como una tabla ordinaria y cada especialización se transforma en una tabla propia que incorpora la clave de la generalización como clave primaria y clave foránea. De esta forma, la especialización queda vinculada con la entidad general mediante una relación uno a uno.
+
+% Figura: esquema de transformación relacional de una jerarquía ISA.
 
 Esta fase es importante en el contexto del proyecto porque conecta el diseño visual realizado por el usuario con una estructura relacional que la aplicación puede utilizar después para generar SQL.
 
