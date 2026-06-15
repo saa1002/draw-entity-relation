@@ -8,8 +8,6 @@ Una de las ideas principales del proyecto ha sido mantener la coherencia entre l
 
 Por esta razón, el desarrollo se planteó de forma incremental. Primero se analizó el funcionamiento del proyecto heredado y se revisaron algunos puntos que podían dificultar futuras ampliaciones. Después se realizaron tareas de estabilización y reorganización del núcleo del editor. A partir de esa base se fueron incorporando nuevos elementos del modelo Entidad-Relación, intentando que cada ampliación quedara integrada tanto en la interfaz como en la validación, la transformación relacional y la generación de SQL.
 
-% Figura: resumen de fases del desarrollo: análisis, estabilización, ampliación funcional, usabilidad, pruebas y documentación.
-
 En este capítulo se recogen los aspectos más relevantes de ese proceso. No se pretende hacer una descripción cronológica de todos los cambios realizados, sino explicar las decisiones técnicas más importantes y cómo estas permitieron evolucionar el editor desde su estado inicial hasta una versión más completa y ajustada a los objetivos del trabajo.
 
 \subsection{Organización del trabajo}
@@ -58,6 +56,8 @@ Una parte importante del desarrollo fue la evolución del modelo interno utiliza
 
 Este modelo interno actúa como una representación del diagrama Entidad-Relación diseñado por el usuario. En él se almacenan las entidades, las relaciones, los atributos y el resto de elementos necesarios para reconstruir el diagrama, validarlo y transformarlo posteriormente al modelo relacional.
 
+La Figura \ref{fig:modelo_interno_editor} resume la relación entre el lienzo visual del editor, el modelo interno y las operaciones que dependen de esa representación.
+
 \imagen{modelo_interno_editor}{Relación entre el lienzo del editor, el modelo interno y las operaciones principales de la aplicación.}{0.75}
 
 Por tanto, cualquier ampliación visual del editor debía ir acompañada de una ampliación coherente de esta estructura.
@@ -82,8 +82,6 @@ La exportación en JSON permite guardar el diagrama fuera del navegador y recupe
 
 En las fases finales se amplió además el flujo de importación para permitir dos modos de trabajo. El usuario puede reemplazar el diagrama actual por el contenido del archivo importado, manteniendo el comportamiento más simple y seguro, o combinar el diagrama importado con el contenido existente. En este segundo caso no se realiza una fusión semántica de elementos equivalentes, sino una inserción controlada basada en remapeo de identificadores, actualización de referencias internas, renombrado de conflictos y desplazamiento visual del bloque importado.
 
-% Figura: esquema de importación JSON con reemplazo o combinación controlada.
-
 Esta parte fue especialmente relevante porque cada ampliación del modelo debía ser compatible con la persistencia. Si se añade un nuevo elemento al editor, como una relación ternaria o una jerarquía ISA, no basta con mostrarlo correctamente en pantalla: también debe poder guardarse, exportarse, importarse y reconstruirse de forma coherente.
 
 De esta manera, la persistencia actúa como un punto de unión entre varias partes del sistema. El modelo interno no solo sirve para validar y generar SQL, sino también para mantener la continuidad del trabajo del usuario y permitir que los diagramas puedan moverse entre sesiones o entre distintos entornos.
@@ -92,7 +90,9 @@ En conjunto, esta evolución permitió que las nuevas funcionalidades pudieran c
 
 \section{Ampliación de los elementos Entidad-Relación soportados}
 
-Una vez estabilizada la base del editor, el desarrollo se centró en ampliar los elementos del modelo Entidad-Relación que podían representarse en la aplicación. Esta ampliación no consistió únicamente en añadir nuevas figuras al lienzo, sino en adaptar también el modelo interno, las validaciones y la transformación posterior al modelo relacional.
+Una vez estabilizada la base del editor, el desarrollo se centró en ampliar los elementos del modelo Entidad-Relación que podían representarse en la aplicación. Los elementos incorporados ya se han presentado desde el punto de vista teórico, por lo que en esta sección se explica cómo se integraron en el editor, atendiendo especialmente a su representación interna, validación, persistencia y transformación relacional.
+
+Esta ampliación no consistió únicamente en añadir nuevas figuras al lienzo, sino en adaptar también el modelo interno, las validaciones y la transformación posterior al modelo relacional.
 
 El punto de partida del editor ya permitía trabajar con elementos básicos, como entidades, atributos y relaciones binarias. A partir de esa base se fueron incorporando elementos que permiten representar modelos más completos, manteniendo siempre la correspondencia entre la parte visual y la información almacenada internamente por la aplicación.
 
@@ -102,8 +102,6 @@ Una de las primeras ampliaciones relevantes fue el soporte para entidades débil
 
 Esta ampliación afectó a varias partes del sistema. En la interfaz fue necesario diferenciar visualmente las entidades débiles y las relaciones identificadoras. En el modelo interno se añadieron los datos necesarios para recordar la dependencia entre la entidad débil y su propietaria. Además, la validación y la transformación relacional tuvieron que contemplar que la clave de una entidad débil se construye a partir de su discriminante y de la clave heredada de la entidad fuerte de la que depende.
 
-% Figura: captura del editor mostrando una entidad débil, su relación identificadora y su discriminante.
-
 \subsection{Atributos compuestos y multivaluados}
 
 También se amplió el tratamiento de los atributos. Además de los atributos simples y las claves primarias, el editor pasó a permitir atributos compuestos y atributos multivaluados.
@@ -111,8 +109,6 @@ También se amplió el tratamiento de los atributos. Además de los atributos si
 En el caso de los atributos compuestos, fue necesario representar una estructura jerárquica de atributos dentro del modelo interno. Esto permite que un atributo pueda actuar como padre de otros atributos más simples. Esta representación también debía poder reconstruirse visualmente al cargar un diagrama guardado.
 
 Los atributos multivaluados requirieron un tratamiento diferente, ya que no se pueden trasladar al modelo relacional como una simple columna dentro de la tabla de la entidad. Por ello, su incorporación tuvo impacto no solo en la representación visual, sino también en la transformación relacional y en la generación del SQL final.
-
-% Figura: captura o esquema de atributos compuestos y multivaluados dentro del editor.
 
 \subsection{Relaciones ternarias y roles}
 
@@ -122,8 +118,6 @@ En las relaciones ternarias, el modelo interno debía conservar tres participant
 
 Esta información resulta importante tanto para que el diagrama sea comprensible como para evitar ambigüedades durante la transformación posterior. Por este motivo, los roles se integraron en el modelo interno y en la representación visual de las relaciones ternarias.
 
-% Figura: captura del editor con una relación ternaria configurada y roles visibles.
-
 \subsection{Soporte inicial de jerarquías ISA}
 
 Durante la fase final del desarrollo se incorporó también un soporte inicial para jerarquías ISA. Esta ampliación se planteó con un alcance controlado, ya que las jerarquías de especialización y generalización pueden tener muchas variantes y no todas ellas eran necesarias para los objetivos del proyecto.
@@ -131,8 +125,6 @@ Durante la fase final del desarrollo se incorporó también un soporte inicial p
 El editor permite crear un elemento ISA y configurarlo indicando una entidad general y una o varias entidades especializadas. Esta información se guarda en el modelo interno, se reconstruye al cargar el diagrama y se tiene en cuenta en la validación y en la generación del esquema relacional.
 
 Una decisión importante fue limitar la funcionalidad a jerarquías ISA sencillas. Cada ISA debe tener una única generalización y una o varias especializaciones. No se incorporaron restricciones de totalidad o parcialidad, ni especializaciones solapadas o exclusivas, ni discriminantes, ni herencia múltiple real. Estas variantes se dejaron fuera para mantener una implementación coherente con el alcance del trabajo.
-
-% Figura: captura del editor con una jerarquía ISA sencilla formada por una generalización y varias especializaciones.
 
 También se decidió que las especializaciones no tengan clave primaria propia, ya que heredan la clave de la generalización. Sin embargo, sí se permite que una especialización no tenga atributos propios, porque puede seguir siendo útil dentro del modelo si participa en relaciones con otras entidades.
 
@@ -160,7 +152,9 @@ El objetivo de estas comprobaciones no es sustituir a un sistema gestor de bases
 
 También se procuró que los errores detectados pudieran comunicarse al usuario de forma comprensible. Esto es importante porque, si un diagrama no puede transformarse o generar SQL, el usuario necesita saber qué parte debe revisar. Por tanto, la validación no solo tiene una función interna, sino que también ayuda a guiar el uso correcto de la herramienta.
 
-% Figura: captura del diálogo de validación mostrando errores agrupados del diagrama.
+La Figura \ref{fig:dialogo_validacion} muestra un ejemplo de los errores detectados durante la validación, presentados de forma agrupada para facilitar su revisión por parte del usuario.
+
+\imagen{dialogo_validacion}{Diálogo de validación con errores agrupados del diagrama.}{0.82}
 
 \subsection{Transformación al modelo relacional}
 
@@ -177,8 +171,6 @@ Algunos elementos requieren un tratamiento específico. Por ejemplo, los atribut
 En el caso de relaciones más complejas, como las ternarias, la transformación debe conservar la información de los participantes y sus roles cuando son necesarios. Esto evita ambigüedades, especialmente cuando una misma entidad aparece más de una vez en una relación o cuando la relación necesita generar una estructura propia dentro del modelo relacional.
 
 Para las jerarquías ISA se adoptó una estrategia sencilla y explícita. La entidad general se transforma como una tabla ordinaria. Cada especialización genera también su propia tabla, pero incorporando la clave de la generalización como clave primaria y, al mismo tiempo, como clave foránea hacia la tabla general. De esta forma, la relación entre la generalización y cada especialización queda representada en el modelo relacional mediante una relación uno a uno.
-
-% Figura: flujo de transformación desde el diagrama validado hasta la representación relacional.
 
 \subsection{Generación de SQL}
 
@@ -200,7 +192,9 @@ El generador de SQL no pretende cubrir todos los detalles posibles de un sistema
 
 En conjunto, esta fase completa el recorrido desde el diagrama visual hasta una salida textual utilizable. El resultado no debe entenderse como un diseño de base de datos final para cualquier contexto real, sino como una traducción razonable del modelo creado en el editor, adecuada para el objetivo académico y práctico del proyecto.
 
-% Figura: ejemplo de script SQL generado a partir de un diagrama validado.
+La Figura \ref{fig:sql_generado} muestra un ejemplo de script SQL generado por la aplicación a partir de un diagrama previamente validado.
+
+\imagen{sql_generado}{Ejemplo de script SQL generado a partir de un diagrama validado.}{0.82}
 
 \section{Refinamientos de usabilidad del editor}
 
@@ -212,7 +206,9 @@ Una de las primeras mejoras consistió en revisar la organización general de la
 
 Con esta reorganización se buscó que el usuario pudiera localizar las acciones principales de forma más rápida. Además, las acciones disponibles se presentan de forma más clara en función del elemento seleccionado. Por ejemplo, al seleccionar una entidad, una relación o un atributo, la interfaz muestra un encabezado contextual que ayuda a identificar sobre qué tipo de elemento se está trabajando.
 
-% Figura: captura de la barra lateral con acciones contextuales para una entidad, atributo, relación o elemento ISA.
+La Figura \ref{fig:acciones_contextuales_editor} muestra un ejemplo de las acciones contextuales disponibles al seleccionar un elemento del diagrama, lo que permite concentrar las opciones relevantes según el tipo de elemento activo.
+
+\imagen{acciones_contextuales_editor}{Acciones contextuales mostradas por el editor al seleccionar un elemento del diagrama.}{0.82}
 
 También se añadieron pequeños textos de ayuda en zonas concretas del editor. Cuando el lienzo está vacío, la aplicación muestra un mensaje inicial que orienta al usuario sobre cómo comenzar a construir el diagrama. Del mismo modo, los elementos arrastrables disponen de textos explicativos para indicar qué representa cada uno dentro de la notación E/R.
 
@@ -240,7 +236,9 @@ El objetivo de esta funcionalidad es facilitar tanto las pruebas como la explora
 
 Para mantener el comportamiento controlado, la generación de estructuras permite elegir entre reemplazar el diagrama actual o combinar la estructura generada con el contenido existente. En el modo de reemplazo se mantiene el flujo más simple, útil para crear diagramas desde cero o para probar una estructura concreta. En el modo de combinación, la estructura generada se inserta en el diagrama actual mediante la misma lógica común utilizada en la importación combinada: se remapean identificadores internos, se actualizan referencias entre elementos, se renombran conflictos de nombres y se desplaza visualmente el bloque insertado para reducir solapamientos.
 
-% Figura: captura de la generación de estructuras básicas o de una estructura insertada en el lienzo.
+La Figura \ref{fig:generacion_estructuras} muestra la generación de una estructura básica de ejemplo, utilizada como apoyo para crear rápidamente patrones habituales del modelo Entidad-Relación.
+
+\imagen{generacion_estructuras}{Generación de una estructura básica de ejemplo en el editor.}{0.82}
 
 Esta funcionalidad se plantea como una ayuda práctica para crear modelos base y revisar el comportamiento del editor. No pretende ser un sistema avanzado de plantillas semánticas ni fusionar elementos equivalentes del dominio, sino ofrecer una forma sencilla y controlada de añadir estructuras habituales al diagrama.
 
@@ -253,8 +251,6 @@ También se incorporó una acción explícita para comprobar el diagrama sin gen
 Otra mejora añadida fue la opción de ajustar la vista al contenido del diagrama. Esta acción centra y adapta la visualización al modelo actual sin modificar las coordenadas reales de los elementos ni alterar el modelo persistido. Resulta útil cuando el diagrama crece, cuando se importa contenido o cuando se combinan estructuras generadas con un diagrama ya existente.
 
 Además, se realizaron pequeños ajustes de interfaz para mejorar la comodidad de uso: la barra lateral pasó a ser desplazable verticalmente cuando las acciones no caben en pantalla, el selector de idioma se simplificó mediante botones compactos ES/EN y se añadió una guía breve cuando no hay ningún elemento seleccionado. Estas mejoras no cambian la notación académica del modelo Entidad-Relación, pero ayudan a que la herramienta resulte más clara durante la edición.
-
-% Figura: captura de las acciones globales del editor: comprobar diagrama, ajustar vista y exportar imagen.
 
 \section{Pruebas y revisión manual}
 

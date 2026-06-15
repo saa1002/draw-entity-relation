@@ -398,8 +398,8 @@ D. Jesús Manuel Maudes Raedo
 \hfill
 \begin{minipage}{0.45\textwidth}
 \begin{flushleft} %\large
-Vº. Bº. del co-tutor:\\[2cm]
-D. nombre co-tutor
+%Vº. Bº. del co-tutor:\\[2cm]
+%D. nombre co-tutor
 \end{flushleft}
 \end{minipage}
 \hfill
@@ -422,27 +422,23 @@ D. nombre co-tutor
 % Abstract en castellano
 \renewcommand*\abstractname{Resumen}
 \begin{abstract}
-Este Trabajo de Fin de Grado aborda la evolución de un editor web de diagramas Entidad-Relación desarrollado con React y mxGraph. El proyecto parte de una aplicación heredada y se centra en estabilizar su núcleo funcional, ampliar el soporte de elementos propios del modelo Entidad-Relación y reforzar la conexión entre la representación gráfica del diagrama, su modelo interno, la validación semántica, la transformación al modelo relacional y la generación de código SQL.
-
-El trabajo se desarrolla con un enfoque incremental, prestando especial atención a la mantenibilidad del sistema, la persistencia de los diagramas, la reconstrucción del canvas, el tratamiento de atributos compuestos y multivaluados, las entidades débiles, las relaciones binarias y el soporte de relaciones ternarias. Además, se documentan las decisiones de diseño adoptadas, las limitaciones conocidas y las posibles líneas de trabajo futuras.
+Este Trabajo Fin de Grado aborda la evolución de un editor web de diagramas Entidad-Relación desarrollado con React y mxGraph. El proyecto parte de una aplicación heredada y se centra en analizar su funcionamiento interno, estabilizar su núcleo funcional y ampliar de forma controlada los elementos del modelo Entidad-Relación soportados por la herramienta. El trabajo se ha desarrollado con un enfoque incremental, prestando especial atención a la coherencia entre la representación gráfica del diagrama, el modelo interno mantenido por la aplicación, la validación semántica, la transformación al modelo relacional y la generación de código SQL. Entre las ampliaciones realizadas se incluyen entidades débiles, atributos compuestos y multivaluados, relaciones ternarias y un soporte inicial para jerarquías ISA, limitado a una generalización y una o varias especializaciones con herencia de clave. Además, se han incorporado mejoras de usabilidad y de apoyo al uso del editor, como una validación explícita del diagrama, acciones contextuales más claras, exportación visual, opciones de importación JSON, generación de estructuras de ejemplo, ajuste de vista y soporte básico de idioma español/inglés. El resultado debe entenderse como una evolución académica de la herramienta, orientada a mantener una traducción razonable entre el diagrama Entidad-Relación diseñado por el usuario y la salida relacional o SQL generada.
 \end{abstract}
 
 \renewcommand*\abstractname{Descriptores}
 \begin{abstract}
-Modelo Entidad-Relación, diagramas E/R, React, mxGraph, transformación relacional, SQL, validación de modelos, aplicación web
+Modelo Entidad-Relación, diagramas E/R, React, mxGraph, transformación relacional, SQL, validación de modelos, aplicación web, jerarquías ISA
 \end{abstract}
 
 \clearpage
 
 % Abstract en inglés
 \renewcommand*\abstractname{Abstract}
-\begin{abstract}
-A \textbf{brief} presentation of the topic addressed in the project.
-\end{abstract}
+\begin{abstract} This Bachelor's Thesis addresses the evolution of a web-based Entity-Relationship diagram editor developed with React and mxGraph. The project starts from an existing application and focuses on analysing its internal structure, stabilising its core behaviour and extending the support for several elements of the Entity-Relationship model. The work has been carried out incrementally, paying special attention to the consistency between the visual representation of the diagram, the internal model maintained by the application, semantic validation, transformation into the relational model and SQL generation. The implemented extensions include support for weak entities, composite and multivalued attributes, ternary relationships and an initial, controlled support for ISA hierarchies. In addition, the project includes usability refinements such as clearer contextual actions, explicit diagram validation, visual export, JSON import options, generation of example structures, view adjustment and basic Spanish/English interface support. The resulting application should be understood as an academic editor that provides a reasonable translation from Entity-Relationship diagrams to SQL, rather than as a complete professional database design tool. \end{abstract}
 
 \renewcommand*\abstractname{Keywords}
 \begin{abstract}
-keywords separated by commas.
+Entity-Relationship model, E/R diagrams, React, mxGraph, relational transformation, SQL, model validation, web application, ISA hierarchies
 \end{abstract}
 
 \clearpage
