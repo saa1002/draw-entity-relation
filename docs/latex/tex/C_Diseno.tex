@@ -16,7 +16,9 @@ El diseño de datos se centra en la estructura interna utilizada por la aplicaci
 
 El modelo interno actúa como la fuente principal de información lógica del editor. En él se almacenan los elementos creados por el usuario, sus propiedades y las relaciones entre ellos. Esta representación permite que las operaciones principales de la aplicación no dependan únicamente de la posición o de la apariencia de los elementos gráficos.
 
-% Figura: esquema simplificado del modelo interno del editor.
+La Figura \ref{fig:estructura_modelo_interno} muestra una visión simplificada de los principales elementos que forman parte del modelo interno del diagrama.
+
+\imagen{estructura_modelo_interno}{Estructura simplificada del modelo interno del diagrama.}
 
 Cada elemento del diagrama tiene un identificador interno y una serie de propiedades asociadas. Esta información permite distinguir entidades, atributos, relaciones y elementos especiales, así como reconstruir el diagrama cuando se carga desde el almacenamiento local o desde un archivo JSON.
 
@@ -48,7 +50,9 @@ El modelo interno también se utiliza para conservar el estado del diagrama. La 
 
 Además, el sistema permite exportar e importar diagramas en formato JSON. La exportación genera una representación del modelo interno que puede almacenarse en un archivo. La importación permite reconstruir un diagrama previamente guardado. En las operaciones de importación y generación de estructuras, el usuario puede reemplazar el contenido actual o combinarlo con el diagrama existente mediante una inserción controlada.
 
-% Figura: esquema de persistencia e intercambio de diagramas mediante localStorage y JSON.
+La Figura \ref{fig:flujo_persistencia_intercambio} resume el papel del modelo interno como punto común entre la edición visual, la persistencia local y el intercambio de diagramas mediante JSON.
+
+\imagen{flujo_persistencia_intercambio}{Flujo de persistencia local e intercambio de diagramas mediante JSON.}
 
 \section{Diseño procedimental}
 
@@ -59,8 +63,6 @@ El diseño procedimental describe los principales flujos de funcionamiento de la
 El flujo principal comienza cuando el usuario crea o modifica elementos en el lienzo del editor. Cada acción visual debe reflejarse en el modelo interno, de forma que lo que aparece en pantalla coincida con la información que la aplicación conserva y procesa.
 
 Este flujo incluye operaciones como crear entidades, añadir atributos, configurar relaciones, establecer cardinalidades, mover elementos, renombrarlos o eliminarlos. En todos los casos, la aplicación debe mantener la sincronización entre la vista y el modelo interno.
-
-% Figura: diagrama de flujo edición visual -> actualización del modelo interno -> persistencia local.
 
 \subsection{Validación del modelo}
 
@@ -82,13 +84,15 @@ La generación de SQL toma como entrada la representación relacional obtenida e
 
 La salida SQL debe entenderse como una traducción razonable del modelo relacional generado por la aplicación, no como un generador industrial completo para cualquier sistema gestor de bases de datos. Su objetivo principal dentro del proyecto es servir como apoyo académico y como punto de partida para comprender la transformación desde el modelo Entidad-Relación.
 
-% Figura: diagrama de flujo validación -> modelo relacional -> generación SQL.
+La Figura \ref{fig:flujo_validacion_sql} resume este proceso: el modelo interno se valida antes de construir la representación relacional y solo después se genera el script SQL correspondiente.
+
+\imagen{flujo_validacion_sql}{Flujo de validación, transformación relacional y generación de SQL.}
 
 \subsection{Importación, combinación y generación de estructuras}
 
 Además del flujo principal de edición, la aplicación incluye operaciones para importar diagramas JSON y generar estructuras básicas. En ambos casos, el usuario puede reemplazar el diagrama actual o combinar el nuevo contenido con el existente.
 
-Cuando se combina contenido, la aplicación debe evitar conflictos directos de identificadores y nombres. Para ello, el proceso de inserción debe remapear referencias internas y desplazar visualmente los elementos añadidos, de forma que el resultado sea más claro para el usuario.
+Cuando se combina contenido, la aplicación debe evitar conflictos directos de identificadores y reducir posibles conflictos de nombres. Para ello, el proceso de inserción debe remapear referencias internas y desplazar visualmente los elementos añadidos, de forma que el resultado sea más claro para el usuario.
 
 Estas operaciones se diseñan como ayudas a la edición, no como mecanismos de fusión semántica avanzada. Por tanto, la aplicación no intenta interpretar si dos entidades representan el mismo concepto, sino insertar el contenido de forma controlada.
 
@@ -100,9 +104,11 @@ El diseño arquitectónico describe la organización general de la aplicación y
 
 La aplicación está construida alrededor de un editor visual que permite manipular diagramas Entidad-Relación. La parte gráfica se apoya en un lienzo de edición, mientras que la lógica de la aplicación trabaja con el modelo interno del diagrama.
 
-Esta separación entre vista y modelo es una de las decisiones más importantes del diseño. La vista permite que el usuario interactúe con el diagrama, pero las operaciones principales deben apoyarse en una estructura interna más estable. Gracias a ello, el sistema puede validar, persistir, importar, exportar y transformar diagramas sin depender únicamente de la representación visual.
+La separación entre vista y modelo es una de las decisiones más importantes del diseño, aunque en la práctica existe una dependencia entre el lienzo gráfico y el modelo interno durante la sincronización de elementos. La vista permite que el usuario interactúe con el diagrama, pero las operaciones principales intentan apoyarse en una representación estructurada del modelo. Gracias a ello, el sistema puede validar, persistir, importar, exportar y transformar diagramas sin depender únicamente de la representación visual.
 
-% Figura: esquema arquitectónico general de la aplicación, separando interfaz visual, modelo interno, validación, persistencia, transformación relacional y generación SQL.
+La Figura \ref{fig:arquitectura_general_aplicacion} resume la organización general de la aplicación, separando la interfaz visual, el modelo interno y los procesos que trabajan sobre dicho modelo.
+
+\imagen{arquitectura_general_aplicacion}{Arquitectura general de la aplicación.}
 
 \subsection{Organización por módulos}
 

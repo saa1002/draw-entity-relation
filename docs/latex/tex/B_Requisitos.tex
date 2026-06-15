@@ -8,7 +8,7 @@ Durante el trabajo se han incorporado nuevas funcionalidades del modelo Entidad-
 
 \section{Objetivos generales}
 
-Este proyecto tiene como objetivo los siguientes puntos:
+Los objetivos generales del proyecto se pueden resumir en los siguientes puntos:
 
 \begin{itemize}
 \tightlist
@@ -35,12 +35,12 @@ En este apartado se definirán los requisitos funcionales y no funcionales del p
 \begin{itemize}
 \tightlist
 \item \textbf{RF1 - Modelar elementos básicos E-R:} La aplicación debe permitir crear y manipular entidades, atributos y relaciones dentro del lienzo del editor.
-\item \textbf{RF2 - Configurar atributos:} La aplicación debe permitir trabajar con atributos simples, clave, compuestos, multivaluados y discriminantes en los casos soportados.
+\item \textbf{RF2 - Configurar atributos:} La aplicación debe permitir trabajar con atributos simples, clave, compuestos, multivaluados y discriminantes de entidades débiles en los casos soportados.
 \item \textbf{RF3 - Configurar relaciones:} La aplicación debe permitir configurar relaciones binarias, cardinalidades y atributos propios de relación cuando proceda.
 \item \textbf{RF4 - Modelar relaciones ternarias y roles:} La aplicación debe permitir representar relaciones de grado tres y distinguir roles de participación cuando sean necesarios.
 \item \textbf{RF5 - Modelar entidades débiles:} La aplicación debe permitir representar entidades débiles, relaciones identificadoras y discriminantes.
 \item \textbf{RF6 - Modelar jerarquías ISA sencillas:} La aplicación debe permitir representar una generalización con una o varias especializaciones.
-\item \textbf{RF7 - Controlar el alcance de ISA:} La aplicación debe impedir configuraciones ISA no soportadas, como especializaciones con clave propia o una entidad especializada en más de una ISA.
+\item \textbf{RF7 - Controlar el alcance de ISA:} La aplicación debe acotar el soporte de ISA al caso implementado. En particular, no debe tratar especializaciones con clave propia, herencia múltiple real, discriminantes ISA ni restricciones de totalidad, parcialidad, solapamiento o exclusividad.
 \item \textbf{RF8 - Mantener el modelo interno:} La aplicación debe mantener una estructura interna coherente con el contenido representado en el lienzo.
 \item \textbf{RF9 - Persistir diagramas localmente:} La aplicación debe conservar el diagrama en el almacenamiento local del navegador.
 \item \textbf{RF10 - Exportar e importar JSON:} La aplicación debe permitir exportar diagramas a JSON e importar diagramas desde archivos JSON válidos.
@@ -51,6 +51,8 @@ En este apartado se definirán los requisitos funcionales y no funcionales del p
 \item \textbf{RF15 - Exportar imagen del diagrama:} La aplicación debe permitir exportar la representación visual del diagrama en formato PNG y SVG.
 \item \textbf{RF16 - Ofrecer acciones de apoyo:} La aplicación debe incluir acciones como comprobar el diagrama, ajustar la vista, cambiar el idioma de la interfaz y reiniciar el lienzo previa confirmación.
 \end{itemize}
+
+El soporte de ISA se considera inicial y controlado: se contempla una única generalización con una o varias especializaciones, con clave heredada desde la generalización, pero quedan fuera del alcance la totalidad o parcialidad, el solapamiento o exclusividad, los discriminantes ISA y la herencia múltiple real. Las agregaciones no forman parte de los requisitos implementados en esta versión.
 
 \newpage
 
@@ -82,6 +84,8 @@ La transformación relacional y la generación de SQL constituyen la salida prin
 Finalmente, la aplicación incorpora varias funcionalidades de apoyo a la edición: generación de estructuras básicas, importación y generación combinada de contenido, exportación visual en PNG y SVG, ajuste de la vista, soporte básico de idioma y reinicio controlado del lienzo.
 
 \subsection{Casos de uso}
+
+Las tablas siguientes describen los principales casos de uso del sistema a nivel funcional, sin entrar en detalles internos de implementación ni en pasos concretos dependientes de la interfaz.
 
 \begin{table}[p]
 \centering
@@ -153,7 +157,7 @@ Finalmente, la aplicación incorpora varias funcionalidades de apoyo a la edici�
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item El usuario selecciona un atributo.
-\item El usuario configura el atributo como clave, discriminante, compuesto o multivaluado cuando la acción está disponible.
+\item El usuario configura el atributo como clave, discriminante de entidad débil, compuesto o multivaluado cuando la acción está disponible.
 \item En atributos compuestos, el usuario puede añadir subatributos.
 \end{enumerate}\\
 \textbf{Postcondición} & El atributo queda representado con la notación correspondiente y su tipo se conserva en el modelo interno. \\
@@ -269,7 +273,7 @@ Finalmente, la aplicación incorpora varias funcionalidades de apoyo a la edici�
 \item La aplicación impide configuraciones fuera del alcance implementado.
 \end{enumerate}\\
 \textbf{Postcondición} & La jerarquía ISA queda representada en el lienzo y almacenada en el modelo interno. \\
-\textbf{Excepciones} & La validación rechaza ISA sin generalización, sin especializaciones, con claves propias en especializaciones o con herencia múltiple no soportada. \\
+\textbf{Excepciones} & La validación informa de ISA sin generalización, sin especializaciones, con claves propias en especializaciones o con configuraciones de herencia no soportadas. Las restricciones de totalidad, solapamiento y discriminante ISA quedan fuera del alcance. \\
 \textbf{Importancia} & Alta \\
 \bottomrule
 \end{tabularx}
