@@ -179,6 +179,34 @@ const renderSidebarAction = (action) => {
     return <div>{action}</div>;
 };
 
+const getActionTooltip = (label, shortcut) =>
+    shortcut ? `${label} (${shortcut})` : label;
+
+const SidebarActionButton = ({
+    children,
+    className = "",
+    tooltip,
+    ...props
+}) => {
+    const title =
+        tooltip ?? (typeof children === "string" ? children : undefined);
+
+    const buttonClassName = ["button-toolbar-action", className]
+        .filter(Boolean)
+        .join(" ");
+
+    return (
+        <button
+            type="button"
+            {...props}
+            className={buttonClassName}
+            title={title}
+        >
+            {children}
+        </button>
+    );
+};
+
 const renderValidationDialogMessage = (message, index, sectionTitles) => {
     const isSectionTitle = sectionTitles.has(message);
     const isDetailMessage = message.startsWith("- ");
@@ -1528,20 +1556,12 @@ export default function App(props) {
     const MoveBackAndFrontButtons = () =>
         selected && (
             <React.Fragment>
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={pushCellsBack(true)}
-                >
+                <SidebarActionButton onClick={pushCellsBack(true)}>
                     {t("action.sendToBack")}
-                </button>
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={pushCellsBack(false)}
-                >
+                </SidebarActionButton>
+                <SidebarActionButton onClick={pushCellsBack(false)}>
                     {t("action.bringToFront")}
-                </button>
+                </SidebarActionButton>
             </React.Fragment>
         );
 
@@ -1591,13 +1611,9 @@ export default function App(props) {
             !isWeakEntityDecoratorCell(selected)
         ) {
             return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={addAttribute}
-                >
+                <SidebarActionButton onClick={addAttribute}>
                     {t("action.addAttribute")}
-                </button>
+                </SidebarActionButton>
             );
         }
     };
@@ -1609,13 +1625,9 @@ export default function App(props) {
             )
         ) {
             return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={addAttribute}
-                >
+                <SidebarActionButton onClick={addAttribute}>
                     {t("action.addAttribute")}
-                </button>
+                </SidebarActionButton>
             );
         }
     };
@@ -1628,13 +1640,11 @@ export default function App(props) {
         }
 
         return (
-            <button
-                type="button"
-                className="button-toolbar-action"
+            <SidebarActionButton
                 onClick={groupSelectedSimpleAttributesIntoComposite}
             >
                 {t("action.groupCompositeAttribute")}
-            </button>
+            </SidebarActionButton>
         );
     };
 
@@ -1657,13 +1667,9 @@ export default function App(props) {
         }
 
         return (
-            <button
-                type="button"
-                className="button-toolbar-action"
-                onClick={addChildAttribute}
-            >
+            <SidebarActionButton onClick={addChildAttribute}>
                 {t("action.addSiblingSubattribute")}
-            </button>
+            </SidebarActionButton>
         );
     };
 
@@ -1686,13 +1692,11 @@ export default function App(props) {
         }
 
         return (
-            <button
-                type="button"
-                className="button-toolbar-action"
+            <SidebarActionButton
                 onClick={convertSelectedSubattributeToSimpleAttribute}
             >
                 {t("action.convertToSimpleAttribute")}
-            </button>
+            </SidebarActionButton>
         );
     };
 
@@ -1720,23 +1724,19 @@ export default function App(props) {
 
             if (attributesHidden !== true) {
                 return (
-                    <button
-                        type="button"
-                        className="button-toolbar-action"
+                    <SidebarActionButton
                         onClick={() => hideAttributes(isRelationNM)}
                     >
                         {t("action.hideAttributes")}
-                    </button>
+                    </SidebarActionButton>
                 );
             }
             return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
+                <SidebarActionButton
                     onClick={() => showAttributes(isRelationNM)}
                 >
                     {t("action.showAttributes")}
-                </button>
+                </SidebarActionButton>
             );
         }
     };
@@ -1769,15 +1769,11 @@ export default function App(props) {
         }
 
         return (
-            <button
-                type="button"
-                className="button-toolbar-action"
-                onClick={toggleAttrKey}
-            >
+            <SidebarActionButton onClick={toggleAttrKey}>
                 {attribute.key
                     ? t("action.removeKey")
                     : t("action.convertToKey")}
-            </button>
+            </SidebarActionButton>
         );
     };
 
@@ -1804,15 +1800,11 @@ export default function App(props) {
         }
 
         return (
-            <button
-                type="button"
-                className="button-toolbar-action"
-                onClick={togglePartialKey}
-            >
+            <SidebarActionButton onClick={togglePartialKey}>
                 {attribute.partialKey
                     ? t("action.removeDiscriminant")
                     : t("action.convertToDiscriminant")}
-            </button>
+            </SidebarActionButton>
         );
     };
 
@@ -1841,13 +1833,9 @@ export default function App(props) {
               : t("action.markMultivalued");
 
         return (
-            <button
-                type="button"
-                className="button-toolbar-action"
-                onClick={toggleMultivaluedAttribute}
-            >
+            <SidebarActionButton onClick={toggleMultivaluedAttribute}>
                 {label}
-            </button>
+            </SidebarActionButton>
         );
     };
 
@@ -1859,15 +1847,11 @@ export default function App(props) {
 
         if (isEntity && selectedEntityDiag) {
             return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={toggleWeakEntity}
-                >
+                <SidebarActionButton onClick={toggleWeakEntity}>
                     {isWeakEntity(selectedEntityDiag)
                         ? t("action.removeWeakEntity")
                         : t("action.markWeakEntity")}
-                </button>
+                </SidebarActionButton>
             );
         }
     };
@@ -1882,15 +1866,11 @@ export default function App(props) {
             isBinaryRelation(selectedRelationDiag)
         ) {
             return (
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={toggleIdentifyingRelation}
-                >
+                <SidebarActionButton onClick={toggleIdentifyingRelation}>
                     {isIdentifyingRelation(selectedRelationDiag)
                         ? t("action.unmarkIdentifyingRelation")
                         : t("action.markIdentifyingRelation")}
-                </button>
+                </SidebarActionButton>
             );
         }
     };
@@ -2104,13 +2084,9 @@ export default function App(props) {
         if (isRelation) {
             return (
                 <>
-                    <button
-                        type="button"
-                        className="button-toolbar-action"
-                        onClick={handleClickOpen}
-                    >
+                    <SidebarActionButton onClick={handleClickOpen}>
                         {t("action.configureRelation")}
-                    </button>
+                    </SidebarActionButton>
                     <Dialog
                         open={open}
                         onClose={handleClose}
@@ -2437,13 +2413,9 @@ export default function App(props) {
 
         return (
             <>
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={handleClickOpen}
-                >
+                <SidebarActionButton onClick={handleClickOpen}>
                     {t("action.editRoles")}
-                </button>
+                </SidebarActionButton>
                 <Dialog
                     open={open}
                     onClose={handleClose}
@@ -2617,13 +2589,9 @@ export default function App(props) {
 
         return (
             <>
-                <button
-                    type="button"
-                    className="button-toolbar-action"
-                    onClick={handleClickOpen}
-                >
+                <SidebarActionButton onClick={handleClickOpen}>
                     {t("action.configureIsa")}
-                </button>
+                </SidebarActionButton>
                 <Dialog
                     open={open}
                     onClose={handleClose}
@@ -2895,13 +2863,9 @@ export default function App(props) {
 
             return (
                 <>
-                    <button
-                        type="button"
-                        className="button-toolbar-action"
-                        onClick={handleClickOpen}
-                    >
+                    <SidebarActionButton onClick={handleClickOpen}>
                         {t("action.configureCardinalities")}
-                    </button>
+                    </SidebarActionButton>
                     <Dialog
                         open={open}
                         onClose={handleClose}
@@ -3254,13 +3218,12 @@ export default function App(props) {
         }
 
         return (
-            <button
-                type="button"
-                className="button-toolbar-action button-toolbar-action-danger"
+            <SidebarActionButton
+                className="button-toolbar-action-danger"
                 onClick={deleteSelectedEntity}
             >
                 {t("action.delete")}
-            </button>
+            </SidebarActionButton>
         );
     };
 
@@ -3289,13 +3252,12 @@ export default function App(props) {
         }
 
         return (
-            <button
-                type="button"
-                className="button-toolbar-action button-toolbar-action-danger"
+            <SidebarActionButton
+                className="button-toolbar-action-danger"
                 onClick={deleteSelectedAttribute}
             >
                 {t("action.delete")}
-            </button>
+            </SidebarActionButton>
         );
     };
 
@@ -3307,13 +3269,12 @@ export default function App(props) {
         }
 
         return (
-            <button
-                type="button"
-                className="button-toolbar-action button-toolbar-action-danger"
+            <SidebarActionButton
+                className="button-toolbar-action-danger"
                 onClick={deleteSelectedRelation}
             >
                 {t("action.delete")}
-            </button>
+            </SidebarActionButton>
         );
     };
 
@@ -3325,13 +3286,12 @@ export default function App(props) {
         }
 
         return (
-            <button
-                type="button"
-                className="button-toolbar-action button-toolbar-action-danger"
+            <SidebarActionButton
+                className="button-toolbar-action-danger"
                 onClick={deleteSelectedIsa}
             >
                 {t("action.delete")}
-            </button>
+            </SidebarActionButton>
         );
     };
 
@@ -3382,24 +3342,23 @@ export default function App(props) {
 
     const UndoRedoButtons = () => (
         <>
-            <button
-                type="button"
-                className="button-toolbar-action"
+            <SidebarActionButton
                 onClick={undoDiagramChange}
                 disabled={!canUndo}
-                title="Ctrl+Z"
+                tooltip={getActionTooltip(t("action.undo"), "Ctrl+Z")}
             >
                 {t("action.undo")}
-            </button>
-            <button
-                type="button"
-                className="button-toolbar-action"
+            </SidebarActionButton>
+            <SidebarActionButton
                 onClick={redoDiagramChange}
                 disabled={!canRedo}
-                title="Ctrl+Y / Ctrl+Shift+Z"
+                tooltip={getActionTooltip(
+                    t("action.redo"),
+                    "Ctrl+Y / Ctrl+Shift+Z",
+                )}
             >
                 {t("action.redo")}
-            </button>
+            </SidebarActionButton>
         </>
     );
 
@@ -3436,13 +3395,12 @@ export default function App(props) {
 
         return (
             <>
-                <button
-                    type="button"
-                    className="button-toolbar-action"
+                <SidebarActionButton
                     onClick={handleClickOpen}
+                    tooltip={t("diagram.validateTitle")}
                 >
                     {t("diagram.validate")}
-                </button>
+                </SidebarActionButton>
                 <Dialog
                     open={open}
                     onClose={handleClose}
@@ -3489,14 +3447,12 @@ export default function App(props) {
         };
 
         return (
-            <button
-                type="button"
-                className="button-toolbar-action"
+            <SidebarActionButton
                 onClick={handleClick}
-                title={t("diagram.fitViewTitle")}
+                tooltip={t("diagram.fitViewTitle")}
             >
                 {t("diagram.fitView")}
-            </button>
+            </SidebarActionButton>
         );
     };
 
@@ -3538,13 +3494,12 @@ export default function App(props) {
 
         return (
             <>
-                <button
-                    type="button"
-                    className="button-toolbar-action"
+                <SidebarActionButton
                     onClick={handleClickOpen}
+                    tooltip={t("diagram.generateSqlTitle")}
                 >
                     {t("diagram.generateSql")}
-                </button>
+                </SidebarActionButton>
                 <Dialog
                     open={open}
                     onClose={handleClose}
@@ -3613,13 +3568,12 @@ export default function App(props) {
 
         return (
             <>
-                <button
-                    type="button"
-                    className="button-toolbar-action"
+                <SidebarActionButton
                     onClick={handleClickOpen}
+                    tooltip={t("diagram.exportJsonTitle")}
                 >
                     {t("diagram.exportJson")}
-                </button>
+                </SidebarActionButton>
                 <Dialog
                     open={open}
                     onClose={handleClose}
@@ -3697,13 +3651,12 @@ export default function App(props) {
 
         return (
             <>
-                <button
-                    type="button"
-                    className="button-toolbar-action"
+                <SidebarActionButton
                     onClick={handleClickOpen}
+                    tooltip={t("diagram.exportImageTitle")}
                 >
                     {t("diagram.exportImage")}
-                </button>
+                </SidebarActionButton>
                 <Dialog
                     open={open}
                     onClose={handleClose}
@@ -3816,13 +3769,12 @@ export default function App(props) {
 
         return (
             <>
-                <button
-                    type="button"
-                    className="button-toolbar-action"
+                <SidebarActionButton
                     onClick={handleClickOpen}
+                    tooltip={t("diagram.importJsonTitle")}
                 >
                     {t("diagram.importJson")}
-                </button>
+                </SidebarActionButton>
                 <Dialog
                     open={open}
                     onClose={handleClose}
@@ -3925,13 +3877,13 @@ export default function App(props) {
 
         return (
             <>
-                <button
-                    type="button"
-                    className="button-toolbar-action button-toolbar-action-danger"
+                <SidebarActionButton
+                    className="button-toolbar-action-danger"
                     onClick={handleClickOpen}
+                    tooltip={t("diagram.resetTitle")}
                 >
                     {t("diagram.reset")}
-                </button>
+                </SidebarActionButton>
                 <Dialog
                     open={open}
                     onClose={handleClose}
@@ -4016,13 +3968,12 @@ export default function App(props) {
 
         return (
             <>
-                <button
-                    type="button"
-                    className="button-toolbar-action"
+                <SidebarActionButton
                     onClick={handleClickOpen}
+                    tooltip={t("generateStructure.title")}
                 >
                     {t("generateStructure.button")}
-                </button>
+                </SidebarActionButton>
                 <Dialog
                     open={open}
                     onClose={handleClose}
