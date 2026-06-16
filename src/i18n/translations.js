@@ -27,6 +27,7 @@ export const TRANSLATIONS = {
         "sidebar.order": "Orden",
         "sidebar.history": "Historial",
         "sidebar.diagram": "Diagrama",
+        "sidebar.information": "Información",
 
         "selection.selectedEntity": "Entidad seleccionada",
         "selection.selectedRelation": "Relación seleccionada",
@@ -69,6 +70,34 @@ export const TRANSLATIONS = {
         "common.cancel": "Cancelar",
         "common.accept": "Aceptar",
         "common.close": "Cerrar",
+
+        "help.button": "Ayuda",
+        "help.title": "Ayuda",
+        "help.intro":
+            "Draw E-R App permite construir diagramas Entidad-Relación desde el navegador y trabajar con una representación visual e interna del modelo.",
+        "help.createElements":
+            "Para crear elementos, arrastra desde la paleta una entidad, una relación o una ISA al lienzo. Después puedes seleccionar cada elemento para editarlo mediante las acciones disponibles.",
+        "help.contextualActions":
+            "Las acciones contextuales aparecen al seleccionar entidades, atributos, relaciones o jerarquías ISA. Desde ellas se pueden añadir atributos, configurar relaciones, marcar entidades débiles, ajustar cardinalidades o eliminar elementos.",
+        "help.validationAndSql":
+            "Antes de exportar SQL, la aplicación valida el diagrama y muestra diagnósticos cuando detecta problemas estructurales o semánticos.",
+        "help.persistence":
+            "El diagrama puede guardarse y recuperarse mediante JSON. La importación permite reemplazar el diagrama actual o combinarlo con el existente.",
+        "help.isaScope":
+            "El soporte ISA es inicial y controlado: contempla una generalización, una o varias especializaciones y herencia de clave hacia las especializaciones.",
+
+        "about.button": "Acerca de",
+        "about.title": "Acerca de Draw E-R App",
+        "about.description":
+            "Draw E-R App es una aplicación web orientada al modelado de diagramas Entidad-Relación y a su transformación a una representación relacional en SQL.",
+        "about.currentWork":
+            "Esta versión corresponde a un Trabajo Fin de Grado centrado en analizar, estabilizar y ampliar una aplicación heredada, manteniendo un alcance académico y controlado.",
+        "about.previousWork":
+            "El proyecto parte de un TFG previo desarrollado por Rubén Maté Iturriaga, titulado Draw Entity-Relation App / Draw E-R App.",
+        "about.technologies":
+            "Tecnologías principales: React, mxGraph, Material UI, Vitest y Playwright.",
+        "about.license":
+            "Licencia: no indicada expresamente en la documentación y el repositorio revisados.",
 
         "diagram.validate": "Comprobar diagrama",
         "diagram.validateTitle": "Comprobar diagrama",
@@ -408,6 +437,7 @@ export const TRANSLATIONS = {
         "sidebar.order": "Order",
         "sidebar.history": "History",
         "sidebar.diagram": "Diagram",
+        "sidebar.information": "Information",
 
         "selection.selectedEntity": "Selected entity",
         "selection.selectedRelation": "Selected relation",
@@ -448,6 +478,34 @@ export const TRANSLATIONS = {
         "common.cancel": "Cancel",
         "common.accept": "Accept",
         "common.close": "Close",
+
+        "help.button": "Help",
+        "help.title": "Help",
+        "help.intro":
+            "Draw E-R App lets users build Entity-Relationship diagrams in the browser and work with both a visual and an internal representation of the model.",
+        "help.createElements":
+            "To create elements, drag an entity, relationship or ISA element from the palette onto the canvas. Then select each element to edit it through the available actions.",
+        "help.contextualActions":
+            "Contextual actions appear when selecting entities, attributes, relationships or ISA hierarchies. They allow adding attributes, configuring relationships, marking weak entities, adjusting cardinalities or deleting elements.",
+        "help.validationAndSql":
+            "Before exporting SQL, the application validates the diagram and shows diagnostics when structural or semantic problems are detected.",
+        "help.persistence":
+            "The diagram can be saved and restored using JSON. Importing allows replacing the current diagram or merging it with the existing one.",
+        "help.isaScope":
+            "ISA support is initial and controlled: it covers one generalization, one or more specializations and key inheritance towards the specializations.",
+
+        "about.button": "About",
+        "about.title": "About Draw E-R App",
+        "about.description":
+            "Draw E-R App is a web application for modelling Entity-Relationship diagrams and transforming them into a relational SQL representation.",
+        "about.currentWork":
+            "This version belongs to a Bachelor's Thesis focused on analysing, stabilising and extending a legacy application while keeping an academic and controlled scope.",
+        "about.previousWork":
+            "The project builds on a previous Bachelor's Thesis developed by Rubén Maté Iturriaga, titled Draw Entity-Relation App / Draw E-R App.",
+        "about.technologies":
+            "Main technologies: React, mxGraph, Material UI, Vitest and Playwright.",
+        "about.license":
+            "License: not explicitly stated in the reviewed documentation and repository.",
 
         "diagram.validate": "Validate diagram",
         "diagram.validateTitle": "Validate diagram",

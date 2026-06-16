@@ -186,6 +186,7 @@ const SidebarActionButton = ({
     children,
     className = "",
     tooltip,
+    ariaLabel,
     ...props
 }) => {
     const title =
@@ -201,11 +202,18 @@ const SidebarActionButton = ({
             {...props}
             className={buttonClassName}
             title={title}
+            aria-label={ariaLabel}
         >
             {children}
         </button>
     );
 };
+
+const SidebarActionIcon = ({ children }) => (
+    <span className="button-toolbar-action-icon" aria-hidden="true">
+        {children}
+    </span>
+);
 
 const renderValidationDialogMessage = (message, index, sectionTitles) => {
     const isSectionTitle = sectionTitles.has(message);
@@ -4057,6 +4065,121 @@ export default function App(props) {
         );
     };
 
+    const HelpButton = () => {
+        const [open, setOpen] = React.useState(false);
+
+        const handleClickOpen = () => {
+            setOpen(true);
+        };
+
+        const handleClose = () => {
+            setOpen(false);
+        };
+
+        return (
+            <>
+                <SidebarActionButton
+                    className="button-toolbar-action-icon-only"
+                    onClick={handleClickOpen}
+                    tooltip={t("help.title")}
+                    ariaLabel={t("help.button")}
+                >
+                    <SidebarActionIcon>?</SidebarActionIcon>
+                </SidebarActionButton>
+                <Dialog
+                    open={open}
+                    onClose={handleClose}
+                    aria-labelledby="help-dialog-title"
+                >
+                    <DialogTitle id="help-dialog-title">
+                        {t("help.title")}
+                    </DialogTitle>
+                    <DialogContent>
+                        <DialogContentText sx={{ mb: 1 }}>
+                            {t("help.intro")}
+                        </DialogContentText>
+                        <DialogContentText sx={{ mb: 1 }}>
+                            {t("help.createElements")}
+                        </DialogContentText>
+                        <DialogContentText sx={{ mb: 1 }}>
+                            {t("help.contextualActions")}
+                        </DialogContentText>
+                        <DialogContentText sx={{ mb: 1 }}>
+                            {t("help.validationAndSql")}
+                        </DialogContentText>
+                        <DialogContentText sx={{ mb: 1 }}>
+                            {t("help.persistence")}
+                        </DialogContentText>
+                        <DialogContentText>
+                            {t("help.isaScope")}
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClose}>
+                            {t("common.close")}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </>
+        );
+    };
+
+    const AboutButton = () => {
+        const [open, setOpen] = React.useState(false);
+
+        const handleClickOpen = () => {
+            setOpen(true);
+        };
+
+        const handleClose = () => {
+            setOpen(false);
+        };
+
+        return (
+            <>
+                <SidebarActionButton
+                    className="button-toolbar-action-icon-only"
+                    onClick={handleClickOpen}
+                    tooltip={t("about.title")}
+                    ariaLabel={t("about.button")}
+                >
+                    <SidebarActionIcon>i</SidebarActionIcon>
+                </SidebarActionButton>
+                <Dialog
+                    open={open}
+                    onClose={handleClose}
+                    aria-labelledby="about-dialog-title"
+                >
+                    <DialogTitle id="about-dialog-title">
+                        {t("about.title")}
+                    </DialogTitle>
+                    <DialogContent>
+                        <DialogContentText sx={{ mb: 1 }}>
+                            {t("about.description")}
+                        </DialogContentText>
+                        <DialogContentText sx={{ mb: 1 }}>
+                            {t("about.currentWork")}
+                        </DialogContentText>
+                        <DialogContentText sx={{ mb: 1 }}>
+                            {t("about.previousWork")}
+                        </DialogContentText>
+                        <DialogContentText sx={{ mb: 1 }}>
+                            {t("about.technologies")}
+                        </DialogContentText>
+                        <DialogContentText>
+                            {t("about.license")}
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClose}>
+                            {t("common.close")}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </>
+        );
+    };
+
     const LanguageSelector = () => {
         const languageOptions = [
             {
@@ -4169,6 +4292,13 @@ export default function App(props) {
                     {renderSidebarAction(ExportImageButton())}
                     {renderSidebarAction(ImportJSONButton())}
                     {renderSidebarAction(ResetCanvasButton())}
+                </SidebarSection>
+
+                <SidebarSection title={t("sidebar.information")}>
+                    <div className="sidebar-info-actions">
+                        <HelpButton />
+                        <AboutButton />
+                    </div>
                 </SidebarSection>
             </div>
             {isDiagramEmpty && (
