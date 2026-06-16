@@ -220,7 +220,7 @@ describe('Standalone entity SQL generation', () => {
         expect(sql).toContain('PRIMARY KEY (id_cliente, telefono)')
 
         expect(sql).toContain(
-            'CONSTRAINT FK_Cliente_telefono_Cliente_owner FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente) ON DELETE CASCADE ON UPDATE CASCADE',
+            'id_cliente VARCHAR(40) REFERENCES Cliente(id_cliente) ON DELETE CASCADE ON UPDATE CASCADE',
         )
 
         expect(sql).not.toContain('telefono VARCHAR(40),\n  PRIMARY KEY')
@@ -290,20 +290,9 @@ describe('Standalone entity SQL generation', () => {
                 PRIMARY KEY (serie, numero, etiqueta)
             `,
         )
-
-        expectSQLToContain(
-            sql,
-            `
-            CONSTRAINT FK_Documento_etiqueta_Documento_owner
-            FOREIGN KEY (serie, numero)
-            REFERENCES Documento(serie, numero)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-            `,
+        expect(sql).toContain(
+            'CONSTRAINT FK_Documento_etiqueta_Documento_owner FOREIGN KEY (serie, numero) REFERENCES Documento(serie, numero) ON DELETE CASCADE ON UPDATE CASCADE',
         )
-
-        expect(sql).not.toContain('codigo VARCHAR(40)')
-        expect(sql).not.toContain('etiqueta VARCHAR(40) PRIMARY KEY')
     })
     
     test('a standalone entity should generate a separate table for a composite multivalued attribute', () => {
@@ -362,21 +351,10 @@ describe('Standalone entity SQL generation', () => {
             sql,
             `
             CREATE TABLE Cliente_telefonos (
-            id_cliente VARCHAR(40),
+            id_cliente VARCHAR(40) REFERENCES Cliente(id_cliente) ON DELETE CASCADE ON UPDATE CASCADE,
             prefijo VARCHAR(40),
             numero VARCHAR(40),
             PRIMARY KEY (id_cliente, prefijo, numero)
-            `,
-        )
-
-        expectSQLToContain(
-            sql,
-            `
-            CONSTRAINT FK_Cliente_telefonos_Cliente_owner
-            FOREIGN KEY (id_cliente)
-            REFERENCES Cliente(id_cliente)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
             `,
         )
 

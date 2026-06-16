@@ -160,11 +160,8 @@ describe('ISA SQL generation', () => {
             sql,
             `
             CREATE TABLE Alumno (
-            id_persona VARCHAR(40) PRIMARY KEY,
-            expediente VARCHAR(40),
-            CONSTRAINT FK_Alumno_Persona_isa
-            FOREIGN KEY (id_persona)
-            REFERENCES Persona(id_persona)
+            id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona(id_persona),
+            expediente VARCHAR(40)
             );
             `,
         )
@@ -173,11 +170,8 @@ describe('ISA SQL generation', () => {
             sql,
             `
             CREATE TABLE Profesor (
-            id_persona VARCHAR(40) PRIMARY KEY,
-            categoria VARCHAR(40),
-            CONSTRAINT FK_Profesor_Persona_isa
-            FOREIGN KEY (id_persona)
-            REFERENCES Persona(id_persona)
+            id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona(id_persona),
+            categoria VARCHAR(40)
             );
             `,
         )
@@ -260,10 +254,7 @@ describe('ISA SQL generation', () => {
             `
             CREATE TABLE Matricula (
             id_matricula VARCHAR(40) PRIMARY KEY,
-            id_persona_Realiza VARCHAR(40) NOT NULL,
-            CONSTRAINT FK_id_persona_Realiza
-            FOREIGN KEY (id_persona_Realiza)
-            REFERENCES Alumno(id_persona)
+            id_persona_Realiza VARCHAR(40) NOT NULL REFERENCES Alumno(id_persona)
             );
             `,
         )
@@ -323,14 +314,8 @@ describe('ISA SQL generation', () => {
             sql,
             `
             CREATE TABLE Profesor (
-            id_persona VARCHAR(40) PRIMARY KEY,
-            id_departamento_Asignado VARCHAR(40) UNIQUE NOT NULL,
-            CONSTRAINT FK_Profesor_Persona_isa
-            FOREIGN KEY (id_persona)
-            REFERENCES Persona(id_persona),
-            CONSTRAINT FK_id_departamento_Asignado
-            FOREIGN KEY (id_departamento_Asignado)
-            REFERENCES Departamento(id_departamento)
+            id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona(id_persona),
+            id_departamento_Asignado VARCHAR(40) UNIQUE NOT NULL REFERENCES Departamento(id_departamento)
             );
             `,
         )

@@ -27,14 +27,9 @@ describe("N:M relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_email (
-            Atributo VARCHAR(40),
+            Atributo VARCHAR(40) REFERENCES Entidad(Atributo) ON DELETE CASCADE ON UPDATE CASCADE,
             email VARCHAR(40),
-            PRIMARY KEY (Atributo, email),
-            CONSTRAINT FK_Entidad_email_Entidad_owner
-            FOREIGN KEY (Atributo)
-            REFERENCES Entidad(Atributo)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+            PRIMARY KEY (Atributo, email)
             );
             `,
         );

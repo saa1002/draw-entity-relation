@@ -342,11 +342,8 @@ test('generate SQL from a reconstructed ISA diagram', async ({ page }) => {
         sql,
         `
         CREATE TABLE Alumno (
-        id_persona VARCHAR(40) PRIMARY KEY,
-        expediente VARCHAR(40),
-        CONSTRAINT FK_Alumno_Persona_isa
-        FOREIGN KEY (id_persona)
-        REFERENCES Persona(id_persona)
+        id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona(id_persona),
+        expediente VARCHAR(40)
         );
         `,
     );
@@ -355,11 +352,8 @@ test('generate SQL from a reconstructed ISA diagram', async ({ page }) => {
         sql,
         `
         CREATE TABLE Profesor (
-        id_persona VARCHAR(40) PRIMARY KEY,
-        categoria VARCHAR(40),
-        CONSTRAINT FK_Profesor_Persona_isa
-        FOREIGN KEY (id_persona)
-        REFERENCES Persona(id_persona)
+        id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona(id_persona),
+        categoria VARCHAR(40)
         );
         `,
     )

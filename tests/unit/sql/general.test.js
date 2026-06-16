@@ -34,8 +34,7 @@ CREATE TABLE Entidad (
 
 CREATE TABLE Entidad_1 (
   Atributo VARCHAR(40) PRIMARY KEY,
-  Atributo_Relacion VARCHAR(40),
-  CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad(Atributo)
+  Atributo_Relacion VARCHAR(40) REFERENCES Entidad(Atributo)
 );
 `;
         expectSQLToMatch(sql, expectedSQL)
@@ -53,8 +52,7 @@ CREATE TABLE Entidad_1 (
 
 CREATE TABLE Entidad (
   Atributo VARCHAR(40) PRIMARY KEY,
-  Atributo_Relacion VARCHAR(40) UNIQUE NOT NULL,
-  CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad_1(Atributo)
+  Atributo_Relacion VARCHAR(40) UNIQUE NOT NULL REFERENCES Entidad_1(Atributo)
 );
 `;
         expectSQLToMatch(sql, expectedSQL)
@@ -74,12 +72,10 @@ CREATE TABLE Entidad_1 (
 );
 
 CREATE TABLE Relacion (
-  Atributo_Relacion_1 VARCHAR(40),
-  Atributo_Relacion_2 VARCHAR(40),
+  Atributo_Relacion_1 VARCHAR(40) REFERENCES Entidad(Atributo),
+  Atributo_Relacion_2 VARCHAR(40) REFERENCES Entidad_1(Atributo),
   Atributo VARCHAR(40),
-  PRIMARY KEY (Atributo_Relacion_1, Atributo_Relacion_2),
-  CONSTRAINT FK_Atributo_Relacion_1 FOREIGN KEY (Atributo_Relacion_1) REFERENCES Entidad(Atributo),
-  CONSTRAINT FK_Atributo_Relacion_2 FOREIGN KEY (Atributo_Relacion_2) REFERENCES Entidad_1(Atributo)
+  PRIMARY KEY (Atributo_Relacion_1, Atributo_Relacion_2)
 );
 `;
 
@@ -98,8 +94,7 @@ CREATE TABLE Entidad_1 (
 
 CREATE TABLE Entidad_2 (
   Atributo VARCHAR(40) PRIMARY KEY,
-  Atributo_Relacion VARCHAR(40) NOT NULL,
-  CONSTRAINT FK_Atributo_Relacion FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad_1(Atributo)
+  Atributo_Relacion VARCHAR(40) NOT NULL REFERENCES Entidad_1(Atributo)
 );
 
 CREATE TABLE Entidad (
@@ -124,7 +119,7 @@ CREATE TABLE Entidad (
         const sql = generateSQL(oneNGraph)
 
         expect(sql).toContain(
-            "FOREIGN KEY (Atributo_Relacion) REFERENCES Entidad(Atributo)"
+            "Atributo_Relacion VARCHAR(40) REFERENCES Entidad(Atributo)"
         );
     });
     

@@ -162,11 +162,7 @@ describe('Weak entity SQL generation', () => {
         expectSQLToContain(
             sql,
             `
-            CONSTRAINT FK_LineaPedido_Pedido_identifying_owner
-            FOREIGN KEY (id_pedido_Pedido)
-            REFERENCES Pedido(id_pedido)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+            id_pedido_Pedido VARCHAR(40) REFERENCES Pedido(id_pedido) ON DELETE CASCADE ON UPDATE CASCADE
             `,
         )
         expect(sql).toContain('cantidad VARCHAR(40)')
@@ -203,13 +199,8 @@ describe('Weak entity SQL generation', () => {
             CREATE TABLE LineaPedido (
             numero_linea VARCHAR(40),
             cantidad VARCHAR(40),
-            id_pedido_Pedido VARCHAR(40),
-            PRIMARY KEY (numero_linea, id_pedido_Pedido),
-            CONSTRAINT FK_LineaPedido_Pedido_identifying_owner
-            FOREIGN KEY (id_pedido_Pedido)
-            REFERENCES Pedido(id_pedido)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+            id_pedido_Pedido VARCHAR(40) REFERENCES Pedido(id_pedido) ON DELETE CASCADE ON UPDATE CASCADE,
+            PRIMARY KEY (numero_linea, id_pedido_Pedido)
             );
             `,
         )
@@ -257,13 +248,8 @@ describe('Weak entity SQL generation', () => {
             `
             CREATE TABLE Entidad1 (
             A1 VARCHAR(40),
-            A0_Entidad0 VARCHAR(40),
-            PRIMARY KEY (A1, A0_Entidad0),
-            CONSTRAINT FK_Entidad1_Entidad0_identifying_owner
-            FOREIGN KEY (A0_Entidad0)
-            REFERENCES Entidad0(A0)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+            A0_Entidad0 VARCHAR(40) REFERENCES Entidad0(A0) ON DELETE CASCADE ON UPDATE CASCADE,
+            PRIMARY KEY (A1, A0_Entidad0)
             );
             `,
         )
@@ -540,13 +526,8 @@ describe('Weak entity SQL generation', () => {
             CREATE TABLE LineaPedido (
             numero_linea VARCHAR(40),
             cantidad VARCHAR(40),
-            id_pedido_Pedido VARCHAR(40),
-            PRIMARY KEY (numero_linea, id_pedido_Pedido),
-            CONSTRAINT FK_LineaPedido_Pedido_identifying_owner
-            FOREIGN KEY (id_pedido_Pedido)
-            REFERENCES Pedido(id_pedido)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+            id_pedido_Pedido VARCHAR(40) REFERENCES Pedido(id_pedido) ON DELETE CASCADE ON UPDATE CASCADE,
+            PRIMARY KEY (numero_linea, id_pedido_Pedido)
             );
             `,
         )

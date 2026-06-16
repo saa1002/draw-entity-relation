@@ -831,16 +831,11 @@ test.describe('SQL export from attribute editor flows', () => {
             sql,
             `
             CREATE TABLE Entidad_telefonos (
-            id VARCHAR(40),
+            id VARCHAR(40) REFERENCES Entidad(id) ON DELETE CASCADE ON UPDATE CASCADE,
             telefonos VARCHAR(40),
             prefijo VARCHAR(40),
             numero VARCHAR(40),
-            PRIMARY KEY (id, telefonos, prefijo, numero),
-            CONSTRAINT FK_Entidad_telefonos_Entidad_owner
-            FOREIGN KEY (id)
-            REFERENCES Entidad(id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+            PRIMARY KEY (id, telefonos, prefijo, numero)
             );
             `,
         );

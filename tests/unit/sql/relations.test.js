@@ -122,14 +122,9 @@ describe("1:N relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_1_telefono (
-            Atributo VARCHAR(40),
+            Atributo VARCHAR(40) REFERENCES Entidad_1(Atributo) ON DELETE CASCADE ON UPDATE CASCADE,
             telefono VARCHAR(40),
-            PRIMARY KEY (Atributo, telefono),
-            CONSTRAINT FK_Entidad_1_telefono_Entidad_1_owner
-            FOREIGN KEY (Atributo)
-            REFERENCES Entidad_1(Atributo)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+            PRIMARY KEY (Atributo, telefono)
             );
             `,
         );
@@ -166,15 +161,10 @@ describe("1:N relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_1_contacto (
-            Atributo VARCHAR(40),
+            Atributo VARCHAR(40) REFERENCES Entidad_1(Atributo) ON DELETE CASCADE ON UPDATE CASCADE,
             prefijo VARCHAR(40),
             numero VARCHAR(40),
-            PRIMARY KEY (Atributo, prefijo, numero),
-            CONSTRAINT FK_Entidad_1_contacto_Entidad_1_owner
-            FOREIGN KEY (Atributo)
-            REFERENCES Entidad_1(Atributo)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+            PRIMARY KEY (Atributo, prefijo, numero)
             );
             `,
         );
@@ -203,14 +193,9 @@ describe("1:1 relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_telefono (
-            Atributo_Relacion VARCHAR(40),
+            Atributo_Relacion VARCHAR(40) REFERENCES Relacion(Atributo_Relacion) ON DELETE CASCADE ON UPDATE CASCADE,
             telefono VARCHAR(40),
-            PRIMARY KEY (Atributo_Relacion, telefono),
-            CONSTRAINT FK_Entidad_telefono_Relacion_owner
-            FOREIGN KEY (Atributo_Relacion)
-            REFERENCES Relacion(Atributo_Relacion)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+            PRIMARY KEY (Atributo_Relacion, telefono)
             );
             `,
         );
@@ -250,15 +235,10 @@ describe("1:1 relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_contacto (
-            Atributo_Relacion VARCHAR(40),
+            Atributo_Relacion VARCHAR(40) REFERENCES Relacion(Atributo_Relacion) ON DELETE CASCADE ON UPDATE CASCADE,
             prefijo VARCHAR(40),
             numero VARCHAR(40),
-            PRIMARY KEY (Atributo_Relacion, prefijo, numero),
-            CONSTRAINT FK_Entidad_contacto_Relacion_owner
-            FOREIGN KEY (Atributo_Relacion)
-            REFERENCES Relacion(Atributo_Relacion)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+            PRIMARY KEY (Atributo_Relacion, prefijo, numero)
             );
             `,
         );
