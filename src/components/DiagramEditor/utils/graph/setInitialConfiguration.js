@@ -13,9 +13,9 @@ export default function setInitialConfiguration(graph, diagramRef, toolbarRef) {
         // Enables rubberband selection
         new mxRubberband(graph);
 
-        // Enables tooltips, new connections and panning
+        // Enables new connections and panning
         graph.setPanning(true);
-        graph.setTooltips(true);
+        graph.setTooltips(false);
         graph.setConnectable(false); // The connections will be managed internally so no manual connections for the user
         graph.setEnabled(true);
         graph.setEdgeLabelsMovable(false);
