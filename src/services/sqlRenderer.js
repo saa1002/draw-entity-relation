@@ -31,13 +31,17 @@ const getForeignKeyGroups = (table) => {
 
         const referencedTable = normalizeIdentifier(firstAttribute.foreign_key);
 
-        const sourceColumns = group
-            .map((attr) => normalizeIdentifier(attr.name))
-            .join(", ");
+        const sourceColumnNames = group.map((attr) =>
+            normalizeIdentifier(attr.name),
+        );
 
-        const referencedColumns = group
-            .map((attr) => normalizeIdentifier(attr.foreign_key_column))
-            .join(", ");
+        const referencedColumnNames = group.map((attr) =>
+            normalizeIdentifier(attr.foreign_key_column),
+        );
+
+        const sourceColumns = sourceColumnNames.join(", ");
+
+        const referencedColumns = referencedColumnNames.join(", ");
 
         const constraintName = normalizeIdentifier(
             firstAttribute.foreign_key_constraint ??
@@ -58,6 +62,8 @@ const getForeignKeyGroups = (table) => {
             referencedTable,
             sourceColumns,
             referencedColumns,
+            sourceColumnNames,
+            referencedColumnNames,
             constraintName,
             onDeleteClause,
             onUpdateClause,
@@ -72,6 +78,23 @@ const createDeferredForeignKeySQL = (foreignKeyGroup) =>
     `ALTER TABLE ${
         foreignKeyGroup.tableName
     } ADD ${createForeignKeyConstraintSQL(foreignKeyGroup)};`;
+
+const canRenderForeignKeyInline = (foreignKeyGroup) =>
+    foreignKeyGroup.sourceColumnNames.length === 1 &&
+    foreignKeyGroup.referencedColumnNames.length === 1;
+
+const createInlineForeignKeySQL = (foreignKeyGroup) =>
+    ` REFERENCES ${foreignKeyGroup.referencedTable}(${foreignKeyGroup.referencedColumnNames[0]})${foreignKeyGroup.onDeleteClause}${foreignKeyGroup.onUpdateClause}`;
+
+const getInlineForeignKeyGroupsByColumn = (foreignKeyGroups) =>
+    new Map(
+        foreignKeyGroups
+            .filter(canRenderForeignKeyInline)
+            .map((foreignKeyGroup) => [
+                foreignKeyGroup.sourceColumnNames[0],
+                foreignKeyGroup,
+            ]),
+    );
 
 const createDropTablesSQL = (tables) => {
     const tableNames = [...new Set([...tables].map(getTableName))];
@@ -101,6 +124,14 @@ const createTableSQL = (table, inlineForeignKeyGroups = []) => {
         uniqueGroups.get(attr.unique_group).push(attr);
     }
 
+    const inlineForeignKeyGroupsByColumn = getInlineForeignKeyGroupsByColumn(
+        inlineForeignKeyGroups,
+    );
+
+    const tableForeignKeyGroups = inlineForeignKeyGroups.filter(
+        (foreignKeyGroup) => !canRenderForeignKeyInline(foreignKeyGroup),
+    );
+
     const columns = table.attributes
         .map((attr) => {
             let columnDef = `${normalizeIdentifier(attr.name)} ${getSQLType(
@@ -117,6 +148,14 @@ const createTableSQL = (table, inlineForeignKeyGroups = []) => {
 
             if (attr.notnull && !attr.key) {
                 columnDef += " NOT NULL";
+            }
+
+            const inlineForeignKeyGroup = inlineForeignKeyGroupsByColumn.get(
+                normalizeIdentifier(attr.name),
+            );
+
+            if (inlineForeignKeyGroup) {
+                columnDef += createInlineForeignKeySQL(inlineForeignKeyGroup);
             }
 
             return columnDef;
@@ -160,7 +199,7 @@ const createTableSQL = (table, inlineForeignKeyGroups = []) => {
               .join("")
         : "";
 
-    const foreignKeyClauses = inlineForeignKeyGroups
+    const foreignKeyClauses = tableForeignKeyGroups
         .map(
             (foreignKeyGroup) =>
                 `, \n  ${createForeignKeyConstraintSQL(foreignKeyGroup)}`,
