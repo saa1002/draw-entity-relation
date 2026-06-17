@@ -3027,21 +3027,42 @@ export default function App(props) {
         );
     };
 
-    const deleteSelectedEntity = () => {
+    const getSelectedDiagramCells = () => {
+        const selectionCells =
+            typeof graph?.getSelectionCells === "function"
+                ? graph.getSelectionCells()
+                : [];
+
+        const cells =
+            selectionCells.length > 1
+                ? selectionCells
+                : [...selectionCells, selected].filter(Boolean);
+
+        return Array.from(
+            new Map(
+                cells
+                    .filter(Boolean)
+                    .filter((cell) => typeof cell.id === "string")
+                    .map((cell) => [cell.id, cell]),
+            ).values(),
+        );
+    };
+
+    const deleteEntityCell = (cell, { syncAfterDelete = true } = {}) => {
         const isEntity =
-            isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
+            isEntityShapeCell(cell) && !isWeakEntityDecoratorCell(cell);
 
         if (!isEntity) {
             return false;
         }
 
-        const entityIndex = findEntityIndexById(
-            diagramRef.current,
-            selected.id,
-        );
+        const entityIndex = findEntityIndexById(diagramRef.current, cell.id);
 
         if (entityIndex === -1) {
-            syncAndPersistDiagramData();
+            if (syncAfterDelete) {
+                syncAndPersistDiagramData();
+            }
+
             return false;
         }
 
@@ -3066,19 +3087,23 @@ export default function App(props) {
             .filter((isa) => isaInvolvesEntity(isa, entity.idMx))
             .forEach(removeIsaConfiguration);
 
-        syncAndPersistDiagramData();
+        if (syncAfterDelete) {
+            syncAndPersistDiagramData();
+        }
 
         return true;
     };
 
-    const deleteSelectedAttribute = () => {
-        if (!isAttributeShapeCell(selected)) {
+    const deleteSelectedEntity = () => deleteEntityCell(selected);
+
+    const deleteAttributeCell = (cell, { syncAfterDelete = true } = {}) => {
+        if (!isAttributeShapeCell(cell)) {
             return false;
         }
 
         const attributeOwner = findAttributeTreeOwnerById(
             diagramRef.current,
-            selected.id,
+            cell.id,
         );
 
         if (!attributeOwner) {
@@ -3100,7 +3125,7 @@ export default function App(props) {
             removedAttribute,
             removedCompositeAttribute,
             promotedAttribute,
-        } = removeAttributeFromOwnerTreeByIdWithPromotion(owner, selected.id);
+        } = removeAttributeFromOwnerTreeByIdWithPromotion(owner, cell.id);
 
         if (!removedAttribute) {
             return false;
@@ -3124,24 +3149,31 @@ export default function App(props) {
             syncAttributeVisualRepresentation(parentAttribute);
         }
 
-        refreshGraph();
-        syncAndPersistDiagramData();
+        if (syncAfterDelete) {
+            refreshGraph();
+            syncAndPersistDiagramData();
+        }
 
         return true;
     };
 
-    const deleteSelectedRelation = () => {
-        if (!isRelationShapeCell(selected)) {
+    const deleteSelectedAttribute = () => deleteAttributeCell(selected);
+
+    const deleteRelationCell = (cell, { syncAfterDelete = true } = {}) => {
+        if (!isRelationShapeCell(cell)) {
             return false;
         }
 
         const relationIndex = findRelationIndexById(
             diagramRef.current,
-            selected.id,
+            cell.id,
         );
 
         if (relationIndex === -1) {
-            syncAndPersistDiagramData();
+            if (syncAfterDelete) {
+                syncAndPersistDiagramData();
+            }
+
             return false;
         }
 
@@ -3158,20 +3190,27 @@ export default function App(props) {
             getAttributesCells,
         });
 
-        syncAndPersistDiagramData();
+        if (syncAfterDelete) {
+            syncAndPersistDiagramData();
+        }
 
         return true;
     };
 
-    const deleteSelectedIsa = () => {
-        if (!isIsaShapeCell(selected)) {
+    const deleteSelectedRelation = () => deleteRelationCell(selected);
+
+    const deleteIsaCell = (cell, { syncAfterDelete = true } = {}) => {
+        if (!isIsaShapeCell(cell)) {
             return false;
         }
 
-        const isaIndex = findIsaIndexById(diagramRef.current, selected.id);
+        const isaIndex = findIsaIndexById(diagramRef.current, cell.id);
 
         if (isaIndex === -1) {
-            syncAndPersistDiagramData();
+            if (syncAfterDelete) {
+                syncAndPersistDiagramData();
+            }
+
             return false;
         }
 
@@ -3185,6 +3224,93 @@ export default function App(props) {
             accessCell,
         });
 
+        if (syncAfterDelete) {
+            syncAndPersistDiagramData();
+        }
+
+        return true;
+    };
+
+    const deleteSelectedIsa = () => deleteIsaCell(selected);
+
+    const deleteDiagramElementCell = (
+        cell,
+        { syncAfterDelete = true } = {},
+    ) => {
+        if (!cell) {
+            return false;
+        }
+
+        if (isEntityShapeCell(cell) && !isWeakEntityDecoratorCell(cell)) {
+            return deleteEntityCell(cell, { syncAfterDelete });
+        }
+
+        if (isRelationShapeCell(cell)) {
+            return deleteRelationCell(cell, { syncAfterDelete });
+        }
+
+        if (isAttributeShapeCell(cell)) {
+            return deleteAttributeCell(cell, { syncAfterDelete });
+        }
+
+        if (isIsaShapeCell(cell)) {
+            return deleteIsaCell(cell, { syncAfterDelete });
+        }
+
+        return false;
+    };
+
+    const getCellDeletionPriority = (cell) => {
+        if (isRelationShapeCell(cell)) return 1;
+        if (isIsaShapeCell(cell)) return 2;
+
+        if (isEntityShapeCell(cell) && !isWeakEntityDecoratorCell(cell)) {
+            return 3;
+        }
+
+        if (isAttributeShapeCell(cell)) return 4;
+
+        return 5;
+    };
+
+    const deleteSelectedDiagramElements = () => {
+        if (!graph) {
+            return false;
+        }
+
+        const cells = getSelectedDiagramCells()
+            .filter((cell) => getCellDeletionPriority(cell) < 5)
+            .sort(
+                (cellA, cellB) =>
+                    getCellDeletionPriority(cellA) -
+                    getCellDeletionPriority(cellB),
+            );
+
+        if (cells.length <= 1) {
+            return deleteSelectedDiagramElement();
+        }
+
+        let deleted = false;
+
+        cells.forEach((cell) => {
+            deleted =
+                deleteDiagramElementCell(cell, {
+                    syncAfterDelete: false,
+                }) || deleted;
+        });
+
+        if (!deleted) {
+            return false;
+        }
+
+        if (typeof graph.clearSelection === "function") {
+            graph.clearSelection();
+        }
+
+        setSelected(null);
+        setSelectionVersion((prevVersion) => prevVersion + 1);
+
+        refreshGraph();
         syncAndPersistDiagramData();
 
         return true;
@@ -3195,26 +3321,7 @@ export default function App(props) {
             return false;
         }
 
-        if (
-            isEntityShapeCell(selected) &&
-            !isWeakEntityDecoratorCell(selected)
-        ) {
-            return deleteSelectedEntity();
-        }
-
-        if (isRelationShapeCell(selected)) {
-            return deleteSelectedRelation();
-        }
-
-        if (isAttributeShapeCell(selected)) {
-            return deleteSelectedAttribute();
-        }
-
-        if (isIsaShapeCell(selected)) {
-            return deleteSelectedIsa();
-        }
-
-        return false;
+        return deleteDiagramElementCell(selected);
     };
 
     const DeleteEntityButton = () => {
@@ -3228,7 +3335,7 @@ export default function App(props) {
         return (
             <SidebarActionButton
                 className="button-toolbar-action-danger"
-                onClick={deleteSelectedEntity}
+                onClick={deleteSelectedDiagramElements}
             >
                 {t("action.delete")}
             </SidebarActionButton>
@@ -3262,7 +3369,7 @@ export default function App(props) {
         return (
             <SidebarActionButton
                 className="button-toolbar-action-danger"
-                onClick={deleteSelectedAttribute}
+                onClick={deleteSelectedDiagramElements}
             >
                 {t("action.delete")}
             </SidebarActionButton>
@@ -3279,7 +3386,7 @@ export default function App(props) {
         return (
             <SidebarActionButton
                 className="button-toolbar-action-danger"
-                onClick={deleteSelectedRelation}
+                onClick={deleteSelectedDiagramElements}
             >
                 {t("action.delete")}
             </SidebarActionButton>
@@ -3296,7 +3403,7 @@ export default function App(props) {
         return (
             <SidebarActionButton
                 className="button-toolbar-action-danger"
-                onClick={deleteSelectedIsa}
+                onClick={deleteSelectedDiagramElements}
             >
                 {t("action.delete")}
             </SidebarActionButton>
@@ -3333,7 +3440,7 @@ export default function App(props) {
                 return;
             }
 
-            const deleted = deleteSelectedDiagramElement();
+            const deleted = deleteSelectedDiagramElements();
 
             if (deleted) {
                 event.preventDefault();

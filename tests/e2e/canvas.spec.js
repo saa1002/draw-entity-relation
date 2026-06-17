@@ -5,6 +5,7 @@ import {
     addEntity,
     addIsa,
     addRelation,
+    enableMxGraphDebug,
     expectSavedDiagramState,
     getSavedDiagram,
     renameElement,
@@ -887,4 +888,46 @@ test('generated ISA structure can be merged into a valid existing diagram', asyn
     await expect(
         sqlDialog.getByRole('button', { name: 'Generar SQL' }),
     ).toBeEnabled();
+});
+
+test("delete multiple selected diagram elements with the delete action", async ({
+    page,
+}) => {
+    await enableMxGraphDebug(page);
+    await page.goto("/");
+
+    await addEntity(page, "Entidad", { x: 180, y: 180 });
+    await addEntity(page, "Entidad 1", { x: 420, y: 180 });
+    await addRelation(page, "Relación", { x: 300, y: 320 });
+
+    const diagram = await getSavedDiagram(page);
+    const selectedCellIds = [
+        ...diagram.entities.map((entity) => entity.idMx),
+        ...diagram.relations.map((relation) => relation.idMx),
+    ];
+
+    await page.evaluate((cellIds) => {
+        const graph = window.__DEBUG_GRAPH__;
+        const cells = cellIds
+            .map((cellId) => graph.getModel().getCell(cellId))
+            .filter(Boolean);
+
+        graph.setSelectionCells(cells);
+    }, selectedCellIds);
+
+    await page.getByRole("button", { name: "Borrar" }).click();
+
+    await expectSavedDiagramState(
+        page,
+        (savedDiagram) => ({
+            entities: savedDiagram.entities.length,
+            relations: savedDiagram.relations.length,
+            isas: savedDiagram.isas.length,
+        }),
+        {
+            entities: 0,
+            relations: 0,
+            isas: 0,
+        },
+    );
 });
