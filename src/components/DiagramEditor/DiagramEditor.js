@@ -4192,9 +4192,6 @@ export default function App(props) {
             />
             <div className="sidebar-app-branding-text">
                 <p className="sidebar-app-branding-name">{t("app.name")}</p>
-                <p className="sidebar-app-branding-institution">
-                    {t("app.institution")}
-                </p>
             </div>
         </div>
     );
