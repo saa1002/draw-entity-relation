@@ -1,10 +1,14 @@
 {
-  "name": "react",
+  "name": "ubu-er-app",
   "version": "1.0.0",
-  "description": "React example starter project",
+  "description": "Web editor for Entity-Relationship diagrams with validation, relational transformation and SQL generation.",
   "keywords": [
-    "react",
-    "starter"
+  "entity-relationship",
+  "database-design",
+  "sql",
+  "react",
+  "mxgraph",
+  "ubu"
   ],
   "main": "src/index.js",
   "dependencies": {
