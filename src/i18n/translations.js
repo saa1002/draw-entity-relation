@@ -15,7 +15,11 @@ export const SUPPORTED_LANGUAGES = [
 
 export const TRANSLATIONS = {
     es: {
-        "app.buildLabel": "Compilacion: {{date}}",
+        "app.version": "Versión",
+        "app.date": "Fecha",
+        "app.commit": "Commit",
+        "app.buildLabel":
+            "Versión {{version}} · Fecha {{date}} · Commit {{commit}}",
         "app.name": "UBU E-R App",
         "app.institution": "Universidad de Burgos",
         "app.logoAlt": "Escudo de la Universidad de Burgos",
@@ -94,6 +98,8 @@ export const TRANSLATIONS = {
         "about.description":
             "UBU E-R App es una aplicación web orientada al modelado de diagramas Entidad-Relación y a su transformación a una representación relacional en SQL.",
         "about.author": "Autor: Steven Paul Alba Alba.",
+        "about.versionInfo":
+            "Versión: {{version}}. Fecha: {{date}}. Commit: {{commit}}.",
         "about.currentWork":
             "Esta versión corresponde a un Trabajo Fin de Grado centrado en analizar, estabilizar y ampliar una aplicación heredada, manteniendo un alcance académico y controlado.",
         "about.previousWork":
@@ -434,7 +440,11 @@ export const TRANSLATIONS = {
             "Revisa nombres que solo se diferencien por mayúsculas, acentos, espacios o caracteres especiales.",
     },
     en: {
-        "app.buildLabel": "Build: {{date}}",
+        "app.version": "Version",
+        "app.date": "Date",
+        "app.commit": "Commit",
+        "app.buildLabel":
+            "Version {{version}} · Date {{date}} · Commit {{commit}}",
         "app.name": "UBU E-R App",
         "app.institution": "University of Burgos",
         "app.logoAlt": "University of Burgos coat of arms",
@@ -511,6 +521,8 @@ export const TRANSLATIONS = {
         "about.description":
             "UBU E-R App is a web application for modelling Entity-Relationship diagrams and transforming them into a relational SQL representation.",
         "about.author": "Author: Steven Paul Alba Alba.",
+        "about.versionInfo":
+            "Version: {{version}}. Date: {{date}}. Commit: {{commit}}.",
         "about.currentWork":
             "This version belongs to a Bachelor's Thesis focused on analysing, stabilising and extending a legacy application while keeping an academic and controlled scope.",
         "about.previousWork":

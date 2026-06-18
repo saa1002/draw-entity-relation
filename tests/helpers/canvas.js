@@ -164,11 +164,17 @@ export async function addIsa(page, position = { x: 360, y: 300 }) {
 }
 
 export async function selectEntity(page, entityName) {
-    await page.getByText(entityName, { exact: true }).click();
+    await page
+        .locator("svg text")
+        .filter({ hasText: new RegExp(`^${entityName}$`) })
+        .click();
 }
 
 export async function selectRelation(page, relationName) {
-    await page.getByText(relationName, { exact: true }).click();
+    await page
+        .locator("svg text")
+        .filter({ hasText: new RegExp(`^${relationName}$`) })
+        .click();
 }
 
 export async function selectIsa(page, isaIndex = 0) {

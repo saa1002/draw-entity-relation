@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
-import { BUILD_DATE } from "../../buildInfo";
+import { APP_VERSION, BUILD_COMMIT, BUILD_DATE } from "../../buildInfo";
 import {
     ATTRIBUTE_OWNER_TYPES,
     DIAGRAM_COMPOSITION_MODES,
@@ -323,7 +323,18 @@ export default function App(props) {
     const { language, setLanguage, t } = useLanguage();
 
     const BUILD_LABEL = t("app.buildLabel", {
+        version: APP_VERSION,
         date: BUILD_DATE,
+        commit: BUILD_COMMIT,
+    });
+
+    const BUILD_TITLE_LABEL = t("app.buildTitleLabel", {
+        version: APP_VERSION,
+    });
+
+    const BUILD_METADATA_LABEL = t("app.buildMetadataLabel", {
+        date: BUILD_DATE,
+        commit: BUILD_COMMIT,
     });
 
     const validationDialogSectionTitles = React.useMemo(
@@ -4304,6 +4315,13 @@ export default function App(props) {
                             {t("about.author")}
                         </DialogContentText>
                         <DialogContentText sx={{ mb: 1 }}>
+                            {t("about.versionInfo", {
+                                version: APP_VERSION,
+                                date: BUILD_DATE,
+                                commit: BUILD_COMMIT,
+                            })}
+                        </DialogContentText>
+                        <DialogContentText sx={{ mb: 1 }}>
                             {t("about.currentWork")}
                         </DialogContentText>
                         <DialogContentText sx={{ mb: 1 }}>
@@ -4411,7 +4429,16 @@ export default function App(props) {
 
     return (
         <div className="mxgraph-container">
-            <div className="build-info-badge">{BUILD_LABEL}</div>
+            <div className="build-info-badge" title={BUILD_LABEL}>
+                <span className="build-info-label">{t("app.version")}</span>
+                <span className="build-info-value">{APP_VERSION}</span>
+
+                <span className="build-info-label">{t("app.date")}</span>
+                <span className="build-info-value">{BUILD_DATE}</span>
+
+                <span className="build-info-label">{t("app.commit")}</span>
+                <span className="build-info-value">{BUILD_COMMIT}</span>
+            </div>
             <div className="mxgraph-toolbar-container">
                 <AppBranding />
 

@@ -24,7 +24,6 @@
     "start": "react-scripts start",
     "prebuild": "node scripts/generateBuildInfo.js",
     "build": "react-scripts build",
-    "pretest": "node scripts/generateBuildInfo.js",
     "test": "vitest --exclude \"**/tests/e2e\"",
     "test:e2e": "npx playwright test",
     "test:coverage": "vitest --exclude \"**/tests/e2e\" --coverage",
