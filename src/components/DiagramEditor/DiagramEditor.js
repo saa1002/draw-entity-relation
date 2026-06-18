@@ -4172,6 +4172,22 @@ export default function App(props) {
         );
     };
 
+    const AppBranding = () => (
+        <div className="sidebar-app-branding" aria-label={t("app.name")}>
+            <img
+                className="sidebar-app-branding-logo"
+                src="images/ubu-logo.png"
+                alt={t("app.logoAlt")}
+            />
+            <div className="sidebar-app-branding-text">
+                <p className="sidebar-app-branding-name">{t("app.name")}</p>
+                <p className="sidebar-app-branding-institution">
+                    {t("app.institution")}
+                </p>
+            </div>
+        </div>
+    );
+
     const HelpButton = () => {
         const [open, setOpen] = React.useState(false);
 
@@ -4256,25 +4272,78 @@ export default function App(props) {
                     open={open}
                     onClose={handleClose}
                     aria-labelledby="about-dialog-title"
+                    maxWidth="sm"
+                    fullWidth
                 >
                     <DialogTitle id="about-dialog-title">
                         {t("about.title")}
                     </DialogTitle>
                     <DialogContent>
+                        <Box className="about-dialog-branding">
+                            <img
+                                className="about-dialog-logo"
+                                src="images/ubu-logo.png"
+                                alt={t("app.logoAlt")}
+                            />
+                            <Box>
+                                <DialogContentText
+                                    sx={{ mb: 0, fontWeight: 600 }}
+                                >
+                                    {t("app.name")}
+                                </DialogContentText>
+                                <DialogContentText sx={{ mb: 0 }}>
+                                    {t("app.institution")}
+                                </DialogContentText>
+                            </Box>
+                        </Box>
+
                         <DialogContentText sx={{ mb: 1 }}>
                             {t("about.description")}
+                        </DialogContentText>
+                        <DialogContentText sx={{ mb: 1 }}>
+                            {t("about.author")}
                         </DialogContentText>
                         <DialogContentText sx={{ mb: 1 }}>
                             {t("about.currentWork")}
                         </DialogContentText>
                         <DialogContentText sx={{ mb: 1 }}>
-                            {t("about.previousWork")}
+                            {t("about.previousWork")}{" "}
+                            <a
+                                className="about-dialog-link"
+                                href="https://github.com/rubenmate/draw-entity-relation"
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                {t("about.previousWorkLink")}
+                            </a>
+                            .
                         </DialogContentText>
                         <DialogContentText sx={{ mb: 1 }}>
                             {t("about.technologies")}
                         </DialogContentText>
+                        <DialogContentText sx={{ mb: 1 }}>
+                            {t("about.license")}{" "}
+                            <a
+                                className="about-dialog-link"
+                                href="https://github.com/jgraph/mxgraph/blob/master/LICENSE"
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                {t("about.mxGraphLicenseLink")}
+                            </a>
+                            .
+                        </DialogContentText>
                         <DialogContentText>
-                            {t("about.license")}
+                            {t("about.ubuImage")}{" "}
+                            <a
+                                className="about-dialog-link"
+                                href="https://www.ubu.es/servicio-de-publicaciones-e-imagen-institucional/imagen-institucional/imagen-corporativa-de-la-universidad-de-burgos"
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                {t("about.ubuImageLink")}
+                            </a>
+                            .
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
@@ -4344,6 +4413,8 @@ export default function App(props) {
         <div className="mxgraph-container">
             <div className="build-info-badge">{BUILD_LABEL}</div>
             <div className="mxgraph-toolbar-container">
+                <AppBranding />
+
                 <SidebarSection title={t("language.sectionTitle")}>
                     {renderSidebarAction(<LanguageSelector />)}
                 </SidebarSection>

@@ -16,6 +16,9 @@ export const SUPPORTED_LANGUAGES = [
 export const TRANSLATIONS = {
     es: {
         "app.buildLabel": "Compilacion: {{date}}",
+        "app.name": "UBU E-R App",
+        "app.institution": "Universidad de Burgos",
+        "app.logoAlt": "Escudo de la Universidad de Burgos",
 
         "language.sectionTitle": "Idioma",
         "language.label": "Idioma",
@@ -74,7 +77,7 @@ export const TRANSLATIONS = {
         "help.button": "Ayuda",
         "help.title": "Ayuda",
         "help.intro":
-            "Draw E-R App permite construir diagramas Entidad-Relación desde el navegador y trabajar con una representación visual e interna del modelo.",
+            "UBU E-R App permite construir diagramas Entidad-Relación desde el navegador y trabajar con una representación visual e interna del modelo.",
         "help.createElements":
             "Para crear elementos, arrastra desde la paleta una entidad, una relación o una ISA al lienzo. Después puedes seleccionar cada elemento para editarlo mediante las acciones disponibles.",
         "help.contextualActions":
@@ -87,17 +90,23 @@ export const TRANSLATIONS = {
             "El soporte ISA es inicial y controlado: contempla una generalización, una o varias especializaciones y herencia de clave hacia las especializaciones.",
 
         "about.button": "Acerca de",
-        "about.title": "Acerca de Draw E-R App",
+        "about.title": "Acerca de UBU E-R App",
         "about.description":
-            "Draw E-R App es una aplicación web orientada al modelado de diagramas Entidad-Relación y a su transformación a una representación relacional en SQL.",
+            "UBU E-R App es una aplicación web orientada al modelado de diagramas Entidad-Relación y a su transformación a una representación relacional en SQL.",
+        "about.author": "Autor: Steven Paul Alba Alba.",
         "about.currentWork":
             "Esta versión corresponde a un Trabajo Fin de Grado centrado en analizar, estabilizar y ampliar una aplicación heredada, manteniendo un alcance académico y controlado.",
         "about.previousWork":
-            "El proyecto parte de un TFG previo desarrollado por Rubén Maté Iturriaga, titulado Draw Entity-Relation App / Draw E-R App.",
+            "El proyecto parte de una primera versión desarrollada por Rubén Maté Iturriaga. Se agradece y referencia esa base inicial:",
+        "about.previousWorkLink": "repositorio original draw-entity-relation",
         "about.technologies":
             "Tecnologías principales: React, mxGraph, Material UI, Vitest y Playwright.",
         "about.license":
-            "Licencia: no indicada expresamente en la documentación y el repositorio revisados.",
+            "Licencia del proyecto: pendiente de formalización. Las dependencias mantienen sus respectivas licencias; mxGraph se distribuye bajo Apache License 2.0.",
+        "about.mxGraphLicenseLink": "licencia de mxGraph",
+        "about.ubuImage":
+            "La imagen institucional se ha tomado de los recursos oficiales de imagen corporativa de la Universidad de Burgos.",
+        "about.ubuImageLink": "imagen corporativa de la Universidad de Burgos",
 
         "diagram.validate": "Comprobar diagrama",
         "diagram.validateTitle": "Comprobar diagrama",
@@ -426,6 +435,9 @@ export const TRANSLATIONS = {
     },
     en: {
         "app.buildLabel": "Build: {{date}}",
+        "app.name": "UBU E-R App",
+        "app.institution": "University of Burgos",
+        "app.logoAlt": "University of Burgos coat of arms",
 
         "language.sectionTitle": "Language",
         "language.label": "Language",
@@ -482,7 +494,7 @@ export const TRANSLATIONS = {
         "help.button": "Help",
         "help.title": "Help",
         "help.intro":
-            "Draw E-R App lets users build Entity-Relationship diagrams in the browser and work with both a visual and an internal representation of the model.",
+            "UBU E-R App lets users build Entity-Relationship diagrams in the browser and work with both a visual and an internal representation of the model.",
         "help.createElements":
             "To create elements, drag an entity, relationship or ISA element from the palette onto the canvas. Then select each element to edit it through the available actions.",
         "help.contextualActions":
@@ -495,17 +507,23 @@ export const TRANSLATIONS = {
             "ISA support is initial and controlled: it covers one generalization, one or more specializations and key inheritance towards the specializations.",
 
         "about.button": "About",
-        "about.title": "About Draw E-R App",
+        "about.title": "About UBU E-R App",
         "about.description":
-            "Draw E-R App is a web application for modelling Entity-Relationship diagrams and transforming them into a relational SQL representation.",
+            "UBU E-R App is a web application for modelling Entity-Relationship diagrams and transforming them into a relational SQL representation.",
+        "about.author": "Author: Steven Paul Alba Alba.",
         "about.currentWork":
             "This version belongs to a Bachelor's Thesis focused on analysing, stabilising and extending a legacy application while keeping an academic and controlled scope.",
         "about.previousWork":
-            "The project builds on a previous Bachelor's Thesis developed by Rubén Maté Iturriaga, titled Draw Entity-Relation App / Draw E-R App.",
+            "The project builds on a first version developed by Rubén Maté Iturriaga. That initial work is acknowledged and referenced here:",
+        "about.previousWorkLink": "original draw-entity-relation repository",
         "about.technologies":
             "Main technologies: React, mxGraph, Material UI, Vitest and Playwright.",
         "about.license":
-            "License: not explicitly stated in the reviewed documentation and repository.",
+            "Project license: pending formalisation. Dependencies keep their respective licenses; mxGraph is distributed under the Apache License 2.0.",
+        "about.mxGraphLicenseLink": "mxGraph license",
+        "about.ubuImage":
+            "The institutional image has been taken from the official corporate image resources of the University of Burgos.",
+        "about.ubuImageLink": "University of Burgos corporate image",
 
         "diagram.validate": "Validate diagram",
         "diagram.validateTitle": "Validate diagram",
