@@ -8,10 +8,13 @@
 }
 
 .mxgraph-drawing-container {
-  display: flex;
+  display: block;
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
   text-align: left;
   height: 100%;
-  width: 100%;
+  overflow: hidden;
 }
 
 .mxgraph-toolbar-container {
@@ -395,4 +398,14 @@ button {
 
 .about-dialog-link:hover {
   text-decoration-thickness: 2px;
+}
+
+.mxRubberband {
+  position: absolute !important;
+  overflow: hidden !important;
+  border: 2px dashed #2e7d32 !important;
+  background-color: rgba(46, 125, 50, 0.16) !important;
+  pointer-events: none !important;
+  box-sizing: border-box;
+  z-index: 30;
 }
