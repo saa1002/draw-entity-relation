@@ -96,10 +96,8 @@ describe("1:N relation SQL generation", () => {
             CREATE TABLE Pedido (
             id_pedido VARCHAR(40) PRIMARY KEY,
             calle_Compra VARCHAR(40) NOT NULL,
-            ciudad_Compra VARCHAR(40) NOT NULL,
-            CONSTRAINT FK_calle_ciudad_Compra
-            FOREIGN KEY (calle_Compra, ciudad_Compra)
-            REFERENCES Cliente(calle, ciudad)
+            ciudad_Compra VARCHAR(40) NOT NULL, 
+            FOREIGN KEY (calle_Compra, ciudad_Compra) REFERENCES Cliente
             );
             `,
         )
@@ -122,7 +120,7 @@ describe("1:N relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_1_telefono (
-            Atributo VARCHAR(40) REFERENCES Entidad_1(Atributo) ON DELETE CASCADE ON UPDATE CASCADE,
+            Atributo VARCHAR(40) REFERENCES Entidad_1 ON DELETE CASCADE ON UPDATE CASCADE,
             telefono VARCHAR(40),
             PRIMARY KEY (Atributo, telefono)
             );
@@ -161,7 +159,7 @@ describe("1:N relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_1_contacto (
-            Atributo VARCHAR(40) REFERENCES Entidad_1(Atributo) ON DELETE CASCADE ON UPDATE CASCADE,
+            Atributo VARCHAR(40) REFERENCES Entidad_1 ON DELETE CASCADE ON UPDATE CASCADE,
             prefijo VARCHAR(40),
             numero VARCHAR(40),
             PRIMARY KEY (Atributo, prefijo, numero)
@@ -193,7 +191,7 @@ describe("1:1 relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_telefono (
-            Atributo_Relacion VARCHAR(40) REFERENCES Relacion(Atributo_Relacion) ON DELETE CASCADE ON UPDATE CASCADE,
+            Atributo_Relacion VARCHAR(40) REFERENCES Relacion ON DELETE CASCADE ON UPDATE CASCADE,
             telefono VARCHAR(40),
             PRIMARY KEY (Atributo_Relacion, telefono)
             );
@@ -235,7 +233,7 @@ describe("1:1 relation SQL generation", () => {
             sql,
             `
             CREATE TABLE Entidad_contacto (
-            Atributo_Relacion VARCHAR(40) REFERENCES Relacion(Atributo_Relacion) ON DELETE CASCADE ON UPDATE CASCADE,
+            Atributo_Relacion VARCHAR(40) REFERENCES Relacion ON DELETE CASCADE ON UPDATE CASCADE,
             prefijo VARCHAR(40),
             numero VARCHAR(40),
             PRIMARY KEY (Atributo_Relacion, prefijo, numero)

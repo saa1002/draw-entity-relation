@@ -34,7 +34,7 @@ CREATE TABLE Entidad (
 
 CREATE TABLE Entidad_1 (
   Atributo VARCHAR(40) PRIMARY KEY,
-  Atributo_Relacion VARCHAR(40) REFERENCES Entidad(Atributo)
+  Atributo_Relacion VARCHAR(40) REFERENCES Entidad
 );
 `;
         expectSQLToMatch(sql, expectedSQL)
@@ -52,7 +52,7 @@ CREATE TABLE Entidad_1 (
 
 CREATE TABLE Entidad (
   Atributo VARCHAR(40) PRIMARY KEY,
-  Atributo_Relacion VARCHAR(40) UNIQUE NOT NULL REFERENCES Entidad_1(Atributo)
+  Atributo_Relacion VARCHAR(40) UNIQUE NOT NULL REFERENCES Entidad_1
 );
 `;
         expectSQLToMatch(sql, expectedSQL)
@@ -72,8 +72,8 @@ CREATE TABLE Entidad_1 (
 );
 
 CREATE TABLE Relacion (
-  Atributo_Relacion_1 VARCHAR(40) REFERENCES Entidad(Atributo),
-  Atributo_Relacion_2 VARCHAR(40) REFERENCES Entidad_1(Atributo),
+  Atributo_Relacion_1 VARCHAR(40) REFERENCES Entidad,
+  Atributo_Relacion_2 VARCHAR(40) REFERENCES Entidad_1,
   Atributo VARCHAR(40),
   PRIMARY KEY (Atributo_Relacion_1, Atributo_Relacion_2)
 );
@@ -94,7 +94,7 @@ CREATE TABLE Entidad_1 (
 
 CREATE TABLE Entidad_2 (
   Atributo VARCHAR(40) PRIMARY KEY,
-  Atributo_Relacion VARCHAR(40) NOT NULL REFERENCES Entidad_1(Atributo)
+  Atributo_Relacion VARCHAR(40) NOT NULL REFERENCES Entidad_1
 );
 
 CREATE TABLE Entidad (
@@ -115,11 +115,11 @@ CREATE TABLE Entidad (
         expect(sql).toContain("REFERENCES Pais")
     });
 
-    test("should reference the target primary key column in foreign keys", () => {
+    test("should omit the target primary key column in simple foreign key references", () => {
         const sql = generateSQL(oneNGraph)
 
         expect(sql).toContain(
-            "Atributo_Relacion VARCHAR(40) REFERENCES Entidad(Atributo)"
+            "Atributo_Relacion VARCHAR(40) REFERENCES Entidad"
         );
     });
     

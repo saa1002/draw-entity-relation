@@ -831,7 +831,7 @@ test.describe('SQL export from attribute editor flows', () => {
             sql,
             `
             CREATE TABLE Entidad_telefonos (
-            id VARCHAR(40) REFERENCES Entidad(id) ON DELETE CASCADE ON UPDATE CASCADE,
+            id VARCHAR(40) REFERENCES Entidad ON DELETE CASCADE ON UPDATE CASCADE,
             telefonos VARCHAR(40),
             prefijo VARCHAR(40),
             numero VARCHAR(40),

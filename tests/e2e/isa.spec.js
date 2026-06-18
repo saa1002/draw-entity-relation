@@ -342,7 +342,7 @@ test('generate SQL from a reconstructed ISA diagram', async ({ page }) => {
         sql,
         `
         CREATE TABLE Alumno (
-        id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona(id_persona),
+        id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona,
         expediente VARCHAR(40)
         );
         `,
@@ -352,7 +352,7 @@ test('generate SQL from a reconstructed ISA diagram', async ({ page }) => {
         sql,
         `
         CREATE TABLE Profesor (
-        id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona(id_persona),
+        id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona,
         categoria VARCHAR(40)
         );
         `,

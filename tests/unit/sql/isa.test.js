@@ -160,7 +160,7 @@ describe('ISA SQL generation', () => {
             sql,
             `
             CREATE TABLE Alumno (
-            id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona(id_persona),
+            id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona,
             expediente VARCHAR(40)
             );
             `,
@@ -170,7 +170,7 @@ describe('ISA SQL generation', () => {
             sql,
             `
             CREATE TABLE Profesor (
-            id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona(id_persona),
+            id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona,
             categoria VARCHAR(40)
             );
             `,
@@ -200,11 +200,9 @@ describe('ISA SQL generation', () => {
             CREATE TABLE Libro (
             serie VARCHAR(40),
             numero VARCHAR(40),
-            isbn VARCHAR(40),
-            PRIMARY KEY (serie, numero),
-            CONSTRAINT FK_Libro_Documento_isa
-            FOREIGN KEY (serie, numero)
-            REFERENCES Documento(serie, numero)
+            isbn VARCHAR(40), 
+            PRIMARY KEY (serie, numero), 
+            FOREIGN KEY (serie, numero) REFERENCES Documento
             );
             `,
         )
@@ -254,7 +252,7 @@ describe('ISA SQL generation', () => {
             `
             CREATE TABLE Matricula (
             id_matricula VARCHAR(40) PRIMARY KEY,
-            id_persona_Realiza VARCHAR(40) NOT NULL REFERENCES Alumno(id_persona)
+            id_persona_Realiza VARCHAR(40) NOT NULL REFERENCES Alumno
             );
             `,
         )
@@ -314,8 +312,8 @@ describe('ISA SQL generation', () => {
             sql,
             `
             CREATE TABLE Profesor (
-            id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona(id_persona),
-            id_departamento_Asignado VARCHAR(40) UNIQUE NOT NULL REFERENCES Departamento(id_departamento)
+            id_persona VARCHAR(40) PRIMARY KEY REFERENCES Persona,
+            id_departamento_Asignado VARCHAR(40) UNIQUE NOT NULL REFERENCES Departamento
             );
             `,
         )

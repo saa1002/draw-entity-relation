@@ -220,7 +220,7 @@ describe('Standalone entity SQL generation', () => {
         expect(sql).toContain('PRIMARY KEY (id_cliente, telefono)')
 
         expect(sql).toContain(
-            'id_cliente VARCHAR(40) REFERENCES Cliente(id_cliente) ON DELETE CASCADE ON UPDATE CASCADE',
+            'id_cliente VARCHAR(40) REFERENCES Cliente ON DELETE CASCADE ON UPDATE CASCADE',
         )
 
         expect(sql).not.toContain('telefono VARCHAR(40),\n  PRIMARY KEY')
@@ -291,7 +291,7 @@ describe('Standalone entity SQL generation', () => {
             `,
         )
         expect(sql).toContain(
-            'CONSTRAINT FK_Documento_etiqueta_Documento_owner FOREIGN KEY (serie, numero) REFERENCES Documento(serie, numero) ON DELETE CASCADE ON UPDATE CASCADE',
+            'FOREIGN KEY (serie, numero) REFERENCES Documento ON DELETE CASCADE ON UPDATE CASCADE',
         )
     })
     
@@ -351,10 +351,11 @@ describe('Standalone entity SQL generation', () => {
             sql,
             `
             CREATE TABLE Cliente_telefonos (
-            id_cliente VARCHAR(40) REFERENCES Cliente(id_cliente) ON DELETE CASCADE ON UPDATE CASCADE,
+            id_cliente VARCHAR(40) REFERENCES Cliente ON DELETE CASCADE ON UPDATE CASCADE,
             prefijo VARCHAR(40),
-            numero VARCHAR(40),
+            numero VARCHAR(40), 
             PRIMARY KEY (id_cliente, prefijo, numero)
+            );
             `,
         )
 
