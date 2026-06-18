@@ -1,8 +1,10 @@
 # Análisis del Sistema Heredado
 
+Este documento recoge el análisis técnico realizado durante la fase inicial de ingeniería inversa del sistema heredado. Su objetivo fue comprender la arquitectura, los módulos principales y los mecanismos internos de la aplicación original antes de introducir tareas posteriores de estabilización, refactorización y ampliación funcional. Por tanto, debe interpretarse como documentación de trabajo del estado analizado en esa fase, no como una descripción definitiva del estado actual del proyecto.
+
 ## Visión General del Sistema
 
-La aplicación web permite la creación y edición de diagramas Entidad-Relación (ER). Utiliza **React** como marco de trabajo, con **mxGraph** como motor gráfico para renderizar las entidades y relaciones. Los diagramas se representan internamente en formato **JSON** y se sincronizan bidireccionalmente con la vista gráfica, asegurando que los cambios en el gráfico actualicen el modelo de datos y viceversa.
+En el estado analizado, la aplicación web permitía la creación y edición de diagramas Entidad-Relación (E/R). Utilizaba **React** como marco de trabajo, con **mxGraph** como motor gráfico para renderizar las entidades y relaciones. Los diagramas se representaban internamente en formato **JSON** y se sincronizaban bidireccionalmente con la vista gráfica, asegurando que los cambios en el gráfico actualizasen el modelo de datos y viceversa.
 
 ### Estructura General
 
@@ -14,7 +16,7 @@ La estructura del proyecto está organizada principalmente en componentes React,
 
 El componente **App.js** es el contenedor principal de la aplicación. Su rol se limita a establecer la estructura base de la interfaz y a montar el componente **DiagramEditor**, encargado de gestionar el editor de diagramas.
 
-### Funciones Principales:
+### Funciones principales:
 - **Contenedor de componentes**: No contiene lógica de negocio ni interacción con el modelo ER, solo organiza la interfaz.
 - **Integración de DiagramEditor**: Inicia y monta el editor, que se gestiona de manera independiente.
 
@@ -50,11 +52,11 @@ La sincronización entre el modelo interno y la vista gráfica es impulsada por 
 
 ---
 
-## Nuevas Funciones y Archivos Revisados
+## Módulos revisados durante el análisis
 
 ### **Barra de Herramientas**
 
-Una de las funcionalidades claves del sistema heredado es la **barra de herramientas**. Se han identificado las siguientes clases que gestionan su comportamiento:
+Una de las funcionalidades clave revisadas durante el análisis del sistema heredado fue la barra de herramientas. En esta fase se identificaron los siguientes módulos relacionados con su comportamiento:
 
 1. **`initToolbar.js`**: Este archivo es responsable de crear y configurar la barra de herramientas, donde se añaden los íconos para las entidades y relaciones. Permite al usuario arrastrar y soltar elementos en el diagrama. Además, se configura el gráfico para permitir nuevas conexiones entre los elementos.
    - **Funciones Principales**:
@@ -68,7 +70,7 @@ Una de las funcionalidades claves del sistema heredado es la **barra de herramie
      - Asignación de un nombre único a cada nuevo elemento utilizando la función **`generateUniqueName`**.
      - Actualización del modelo de datos (**`diagramRef`**) con los nuevos elementos creados.
 
-3. **`configureToolbar.js`**: Aunque está vacío en el código actual, se espera que se utilice para configurar la disposición o los comportamientos adicionales de los elementos dentro de la barra de herramientas.
+3. **`configureToolbar.js`**: En el momento del análisis, este archivo no contenía lógica relevante. Se identificó como un posible punto de extensión o configuración adicional de la barra de herramientas dentro de la estructura heredada del proyecto.
 
 ### **Manejo de Estilos**
 
@@ -147,7 +149,7 @@ Este mecanismo complementa el almacenamiento local y facilita la reutilización 
 
 La estructura modular del sistema proporciona claridad en la separación de responsabilidades. La lógica relacionada con la barra de herramientas, la configuración del entorno gráfico, la validación, la generación de SQL y la gestión de estilos están organizadas en módulos separados, lo que facilita tanto el mantenimiento como la extensión futura del sistema.
 
-Este enfoque modular permite identificar de forma clara qué funcionalidades están siendo gestionadas en cada archivo, facilitando el análisis del sistema heredado y proporcionando una base sólida para su comprensión completa.
+Este enfoque modular permitió identificar de forma clara qué funcionalidades gestionaba cada archivo durante la fase de análisis, facilitando la comprensión del sistema heredado y proporcionando una base para planificar las mejoras posteriores.
 
 
 
