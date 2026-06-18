@@ -7,7 +7,24 @@ const getSQLType = (attribute) => {
 
 const getTableName = (table) => normalizeIdentifier(table.name);
 
-const getForeignKeyGroups = (table) => {
+const getTablePrimaryKeyColumns = (table) =>
+    table.attributes
+        .filter((attr) => attr.key)
+        .map((attr) => normalizeIdentifier(attr.name));
+
+const createPrimaryKeyColumnsByTable = (tables) =>
+    new Map(
+        tables.map((table) => [
+            getTableName(table),
+            getTablePrimaryKeyColumns(table),
+        ]),
+    );
+
+const areSameColumnList = (firstColumns, secondColumns) =>
+    firstColumns.length === secondColumns.length &&
+    firstColumns.every((column, index) => column === secondColumns[index]);
+
+const getForeignKeyGroups = (table, primaryKeyColumnsByTable) => {
     const foreignKeyAttributes = table.attributes.filter(
         (attr) => attr.foreign_key,
     );
@@ -43,10 +60,15 @@ const getForeignKeyGroups = (table) => {
 
         const referencedColumns = referencedColumnNames.join(", ");
 
-        const constraintName = normalizeIdentifier(
-            firstAttribute.foreign_key_constraint ??
-                group.map((attr) => attr.name).join("_"),
-        );
+        const referencedPrimaryKeyColumns =
+            primaryKeyColumnsByTable.get(referencedTable) ?? [];
+
+        const referencesPrimaryKey =
+            referencedPrimaryKeyColumns.length > 0 &&
+            areSameColumnList(
+                referencedColumnNames,
+                referencedPrimaryKeyColumns,
+            );
 
         const onDeleteClause = firstAttribute.foreign_key_on_delete
             ? ` ON DELETE ${firstAttribute.foreign_key_on_delete}`
@@ -64,27 +86,39 @@ const getForeignKeyGroups = (table) => {
             referencedColumns,
             sourceColumnNames,
             referencedColumnNames,
-            constraintName,
+            referencesPrimaryKey,
             onDeleteClause,
             onUpdateClause,
         };
     });
 };
 
-const createForeignKeyConstraintSQL = (foreignKeyGroup) =>
-    `CONSTRAINT FK_${foreignKeyGroup.constraintName} FOREIGN KEY (${foreignKeyGroup.sourceColumns}) REFERENCES ${foreignKeyGroup.referencedTable}(${foreignKeyGroup.referencedColumns})${foreignKeyGroup.onDeleteClause}${foreignKeyGroup.onUpdateClause}`;
+const getReferencedTableSQL = (foreignKeyGroup) =>
+    foreignKeyGroup.referencesPrimaryKey
+        ? foreignKeyGroup.referencedTable
+        : `${foreignKeyGroup.referencedTable}(${foreignKeyGroup.referencedColumns})`;
+
+const createReferencesSQL = (foreignKeyGroup) =>
+    `REFERENCES ${getReferencedTableSQL(foreignKeyGroup)}${
+        foreignKeyGroup.onDeleteClause
+    }${foreignKeyGroup.onUpdateClause}`;
+
+const createForeignKeySQL = (foreignKeyGroup) =>
+    `FOREIGN KEY (${foreignKeyGroup.sourceColumns}) ${createReferencesSQL(
+        foreignKeyGroup,
+    )}`;
 
 const createDeferredForeignKeySQL = (foreignKeyGroup) =>
-    `ALTER TABLE ${
-        foreignKeyGroup.tableName
-    } ADD ${createForeignKeyConstraintSQL(foreignKeyGroup)};`;
+    `ALTER TABLE ${foreignKeyGroup.tableName} ADD ${createForeignKeySQL(
+        foreignKeyGroup,
+    )};`;
 
 const canRenderForeignKeyInline = (foreignKeyGroup) =>
     foreignKeyGroup.sourceColumnNames.length === 1 &&
     foreignKeyGroup.referencedColumnNames.length === 1;
 
 const createInlineForeignKeySQL = (foreignKeyGroup) =>
-    ` REFERENCES ${foreignKeyGroup.referencedTable}(${foreignKeyGroup.referencedColumnNames[0]})${foreignKeyGroup.onDeleteClause}${foreignKeyGroup.onUpdateClause}`;
+    ` ${createReferencesSQL(foreignKeyGroup)}`;
 
 const getInlineForeignKeyGroupsByColumn = (foreignKeyGroups) =>
     new Map(
@@ -202,7 +236,7 @@ const createTableSQL = (table, inlineForeignKeyGroups = []) => {
     const foreignKeyClauses = tableForeignKeyGroups
         .map(
             (foreignKeyGroup) =>
-                `, \n  ${createForeignKeyConstraintSQL(foreignKeyGroup)}`,
+                `, \n  ${createForeignKeySQL(foreignKeyGroup)}`,
         )
         .join("");
 
@@ -214,13 +248,13 @@ const createTableSQL = (table, inlineForeignKeyGroups = []) => {
 const getForeignKeyGroupId = (foreignKeyGroup) =>
     `${foreignKeyGroup.tableName}_${foreignKeyGroup.key}`;
 
-const collectForeignKeyGroupsByTable = (tables) => {
+const collectForeignKeyGroupsByTable = (tables, primaryKeyColumnsByTable) => {
     const foreignKeyGroupsByTable = new Map();
 
     for (const table of tables) {
         foreignKeyGroupsByTable.set(
             getTableName(table),
-            getForeignKeyGroups(table),
+            getForeignKeyGroups(table, primaryKeyColumnsByTable),
         );
     }
 
@@ -263,7 +297,11 @@ const orderTablesAndForeignKeys = (tables) => {
     const orderedTables = [];
     const createdTableNames = new Set();
     const tableNames = new Set(tables.map(getTableName));
-    const foreignKeyGroupsByTable = collectForeignKeyGroupsByTable(tables);
+    const primaryKeyColumnsByTable = createPrimaryKeyColumnsByTable(tables);
+    const foreignKeyGroupsByTable = collectForeignKeyGroupsByTable(
+        tables,
+        primaryKeyColumnsByTable,
+    );
     const inlineForeignKeysByTable = new Map();
     const deferredForeignKeyGroups = [];
     const deferredForeignKeyGroupIds = new Set();
