@@ -23,13 +23,15 @@ A partir del objetivo general anterior, se plantean los siguientes objetivos esp
 
 \item Mantener la coherencia entre la parte visual del editor, las reglas de validación y la transformación al modelo relacional, de forma que los elementos soportados puedan traducirse de manera razonable a tablas, columnas, claves primarias y claves foráneas.
 
-\item Revisar la generación de SQL a partir del modelo construido, intentando que el resultado sea coherente con las decisiones de transformación aplicadas y reduciendo el uso de sentencias \texttt{ALTER TABLE} cuando las dependencias entre tablas puedan resolverse mediante el orden de creación.
+\item Revisar la generación de SQL a partir del modelo construido, de modo que el resultado sea coherente con las decisiones de transformación aplicadas, reduzca el uso de sentencias \texttt{ALTER TABLE} cuando las dependencias entre tablas puedan resolverse mediante el orden de creación y simplifique la representación de claves foráneas cuando sea posible.
 
-\item Mejorar la validación del diagrama y la comunicación de errores al usuario, agrupando los mensajes de forma más clara e indicando, cuando sea posible, los elementos concretos relacionados con cada problema.
+\item Mejorar la validación del diagrama y la comunicación de errores al usuario, haciendo que los mensajes sean más claros y, cuando sea posible, indicando los elementos concretos relacionados con cada problema.
 
-\item Incorporar mejoras de usabilidad en el editor que faciliten el trabajo del usuario, como una organización más clara de la interfaz, acciones contextuales más comprensibles, diálogos de confirmación más explícitos y textos de ayuda en operaciones complejas.
+\item Incorporar mejoras de usabilidad en el editor que faciliten el trabajo del usuario, como una organización más clara de la interfaz, acciones contextuales más comprensibles, diálogos de confirmación más explícitos, textos de ayuda en operaciones complejas, soporte para selección múltiple y ventanas de ayuda e información de la aplicación.
 
 \item Añadir un soporte básico de idioma para la interfaz, permitiendo alternar entre español e inglés sin modificar el contenido creado por el usuario dentro del diagrama.
+
+\item Facilitar la documentación y reutilización de los diagramas mediante opciones de exportación e importación, incluyendo el intercambio en formato JSON, la exportación visual del diagrama y acciones de ajuste de vista sobre el contenido del lienzo.
 
 \item Facilitar la creación de estructuras Entidad-Relación básicas de ejemplo, de forma que el usuario pueda generar rápidamente diagramas iniciales para probar o explorar el funcionamiento de la herramienta.
 
@@ -43,6 +45,6 @@ A partir del objetivo general anterior, se plantean los siguientes objetivos esp
 
 Estos objetivos se plantean dentro del alcance de un Trabajo Fin de Grado. Por ello, no se busca construir una herramienta profesional completa de diseño de bases de datos ni cubrir todas las variantes posibles del modelo Entidad-Relación. El propósito principal es evolucionar la aplicación heredada de forma progresiva, incorporando mejoras justificadas y manteniendo la coherencia entre la interfaz, el modelo interno, la validación, la persistencia y la generación de SQL.
 
-Dentro del alcance implementado se incluyen las ampliaciones del modelo Entidad-Relación descritas anteriormente, junto con mejoras de validación, generación SQL y usabilidad del editor. En cambio, algunas funcionalidades avanzadas se mantienen fuera del alcance de este trabajo o se plantean como posibles líneas futuras. Entre ellas se encuentran las agregaciones, las variantes completas de jerarquías ISA, la herencia múltiple real, la fusión avanzada de diagramas importados, la persistencia remota con usuarios o la configuración detallada de tipos de datos SQL.
+Dentro del alcance implementado se incluyen las ampliaciones del modelo Entidad-Relación descritas anteriormente, junto con mejoras de validación, generación SQL y usabilidad del editor. En cambio, algunas funcionalidades avanzadas se mantienen fuera del alcance de este trabajo o se plantean como posibles líneas futuras. Entre ellas se encuentran las agregaciones, las variantes completas de jerarquías ISA, la herencia múltiple real, la fusión avanzada de diagramas importados más allá de las opciones básicas de reemplazo o combinación, la persistencia remota con usuarios o la configuración detallada de tipos de datos SQL.
 
 Esta delimitación permite mantener un desarrollo más controlado y evita presentar como completas funcionalidades que requerirían un tratamiento más amplio. De esta forma, el proyecto se centra en mejorar y ampliar la herramienta existente sin perder de vista sus límites técnicos y académicos.

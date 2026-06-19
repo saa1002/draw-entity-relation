@@ -40,7 +40,7 @@ Además de los elementos básicos, el modelo Entidad-Relación permite represent
 
 Una entidad débil es una entidad que no puede identificarse completamente por sí misma y depende de otra entidad para formar su identificación. Esta dependencia suele representarse mediante una relación identificadora entre la entidad débil y la entidad propietaria.
 
-En estos casos, la clave de la entidad débil se construye a partir de la clave de la entidad fuerte y de un atributo propio que actúa como discriminante. Por este motivo, las entidades débiles tienen un tratamiento especial tanto en la validación del diagrama como en la transformación al modelo relacional \cite{tema6}.
+En estos casos, la clave de la entidad débil se construye normalmente a partir de la clave de la entidad fuerte y de un atributo propio que actúa como discriminante. Por este motivo, las entidades débiles tienen un tratamiento especial tanto en la validación del diagrama como en la transformación al modelo relacional \cite{tema6}.
 
 La Figura \ref{fig:er_entidad_debil} resume este patrón: la entidad débil se identifica mediante la clave de la entidad propietaria y un discriminante propio.
 
@@ -88,11 +88,11 @@ El modelo Entidad-Relación permite describir un dominio desde un punto de vista
 
 De forma general, las entidades del diagrama suelen convertirse en tablas, sus atributos pasan a ser columnas y los atributos identificadores se utilizan para definir claves primarias. Las interrelaciones entre entidades condicionan la forma en la que se crean claves foráneas o tablas intermedias, dependiendo de la cardinalidad y de la participación de cada entidad en la relación.
 
-Las relaciones uno a muchos suelen representarse incorporando una clave foránea en la tabla del lado correspondiente. En las relaciones muchos a muchos, normalmente se crea una tabla intermedia que contiene las claves de las entidades participantes y, si existen, los atributos propios de la relación.
+Las relaciones uno a muchos suelen representarse incorporando una clave foránea en la tabla situada en el lado muchos de la relación. En las relaciones muchos a muchos, normalmente se crea una tabla intermedia que contiene las claves de las entidades participantes y, si existen, los atributos propios de la relación.
 
 Algunos elementos requieren reglas específicas. Los atributos multivaluados pueden necesitar tablas propias; las entidades débiles incorporan la clave de su entidad propietaria como parte de su identificación; y las relaciones ternarias suelen transformarse mediante una tabla que referencia a las entidades participantes.
 
-En el caso de las jerarquías ISA, existen varias estrategias posibles de transformación. En este trabajo se adopta una estrategia sencilla: la entidad general se transforma como una tabla ordinaria y cada especialización se transforma en una tabla propia que incorpora la clave de la generalización como clave primaria y clave foránea \cite{tema6}. De esta forma, la especialización queda vinculada con la entidad general mediante una relación uno a uno.
+En el caso de las jerarquías ISA, existen varias estrategias posibles de transformación. En este trabajo, para el soporte inicial implementado, se adopta una estrategia sencilla: la entidad general se transforma como una tabla ordinaria y cada especialización se transforma en una tabla propia que incorpora la clave de la generalización como clave primaria y clave foránea \cite{tema6}. De esta forma, la especialización queda vinculada con la entidad general mediante una relación uno a uno.
 
 La Figura \ref{fig:isa_transformacion_relacional} recoge la estrategia aplicada en este trabajo para transformar una jerarquía ISA en tablas: una tabla para la generalización y una tabla por cada especialización.
 
@@ -107,6 +107,8 @@ SQL es el lenguaje utilizado habitualmente para definir y manipular bases de dat
 Una vez que un diagrama Entidad-Relación se ha transformado en un modelo relacional, es posible generar sentencias SQL que representen esa estructura. En este proceso, las tablas resultantes se convierten en sentencias \texttt{CREATE TABLE}, los atributos se traducen a columnas y las relaciones entre tablas se expresan mediante claves foráneas.
 
 En el editor desarrollado, la generación de SQL se entiende como una fase posterior al diseño y a la validación del diagrama. Por tanto, el resultado generado depende de que el modelo interno conserve correctamente la información necesaria sobre entidades, atributos, claves, interrelaciones y jerarquías ISA. De esta forma, el SQL no se genera únicamente a partir de la parte visual del diagrama, sino a partir de la interpretación interna que la aplicación mantiene de él.
+
+En la herramienta, esta generación se realiza intentando mantener un resultado legible, evitando detalles innecesarios cuando la restricción puede expresarse de forma más simple, por ejemplo al referenciar la clave primaria completa de una tabla mediante una clave foránea.
 
 El SQL generado debe entenderse como una traducción razonable del modelo diseñado, adecuada para los objetivos del proyecto. No pretende sustituir el trabajo completo de diseño físico de una base de datos real, donde podrían decidirse tipos de datos concretos, índices, restricciones adicionales u optimizaciones específicas.
 

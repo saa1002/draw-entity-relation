@@ -184,6 +184,8 @@ Las claves foráneas se generan intentando aprovechar el propio orden de creaci�
 
 Sin embargo, existen casos en los que las tablas presentan dependencias cíclicas. En esas situaciones no siempre es posible declarar todas las claves foráneas durante la creación inicial de las tablas, ya que alguna de ellas puede depender de una tabla que todavía no ha sido creada. Para estos casos se mantiene el uso de sentencias \texttt{ALTER TABLE} como mecanismo de respaldo. Así, el generador intenta producir un script más simple cuando el modelo lo permite, pero conserva una solución válida para escenarios con ciclos reales de dependencias.
 
+Además, se revisó la forma de representar las claves foráneas en el script final. Cuando una clave foránea referencia la clave primaria completa de la tabla destino, el generador puede utilizar una forma más compacta, referenciando directamente la tabla. También se evitaron nombres explícitos innecesarios para las restricciones de clave foránea, manteniendo una sintaxis más simple y legible sin modificar la estructura relacional obtenida previamente.
+
 También se realiza una normalización de los identificadores utilizados en el SQL. Esta normalización ayuda a evitar problemas con nombres que puedan contener espacios, acentos u otros caracteres poco adecuados para identificadores de base de datos. Además, cuando se detectan posibles repeticiones de nombres dentro de una misma tabla, se ajustan para evitar conflictos en el esquema resultante.
 
 En el caso de las jerarquías ISA, el SQL generado refleja la estrategia relacional adoptada. La tabla correspondiente a la generalización se crea como una tabla ordinaria. Las tablas de especialización incluyen la clave heredada de la generalización, que se declara como clave primaria y también como clave foránea hacia la tabla general. Con ello se mantiene la relación entre la entidad general y sus especializaciones dentro del esquema SQL.
@@ -210,7 +212,10 @@ La Figura \ref{fig:acciones_contextuales_editor} muestra un ejemplo de las accio
 
 \imagen{acciones_contextuales_editor}{Acciones contextuales mostradas por el editor al seleccionar un elemento del diagrama.}{0.82}
 
-También se añadieron pequeños textos de ayuda en zonas concretas del editor. Cuando el lienzo está vacío, la aplicación muestra un mensaje inicial que orienta al usuario sobre cómo comenzar a construir el diagrama. Del mismo modo, los elementos arrastrables disponen de textos explicativos para indicar qué representa cada uno dentro de la notación E/R.
+También se añadieron pequeños textos de ayuda en zonas concretas del editor. Cuando no hay ningún elemento seleccionado, la aplicación muestra una guía breve que orienta al usuario sobre el uso de las acciones contextuales. Del mismo modo, los elementos arrastrables disponen de textos explicativos para indicar qué representa cada uno dentro de la notación E/R.
+
+También se refinó el comportamiento de la selección múltiple. El rectángulo utilizado para seleccionar varios elementos se hizo visible para que el usuario pueda identificar claramente el área seleccionada. Además, cuando existen varios elementos seleccionados, la barra lateral evita mostrar acciones contextuales propias de una única entidad, atributo, relación o ISA. En ese caso se mantienen únicamente acciones aplicables al conjunto seleccionado, como el desplazamiento en el lienzo o el borrado conjunto. De esta forma se evita que la interfaz muestre opciones asociadas al primer elemento detectado cuando realmente el usuario está trabajando con una selección múltiple.
+
 
 \subsection{Mejora de validaciones, diálogos y mensajes de ayuda}
 
@@ -250,7 +255,9 @@ También se incorporó una acción explícita para comprobar el diagrama sin gen
 
 Otra mejora añadida fue la opción de ajustar la vista al contenido del diagrama. Esta acción centra y adapta la visualización al modelo actual sin modificar las coordenadas reales de los elementos ni alterar el modelo persistido. Resulta útil cuando el diagrama crece, cuando se importa contenido o cuando se combinan estructuras generadas con un diagrama ya existente.
 
-Además, se realizaron pequeños ajustes de interfaz para mejorar la comodidad de uso: la barra lateral pasó a ser desplazable verticalmente cuando las acciones no caben en pantalla, el selector de idioma se simplificó mediante botones compactos ES/EN y se añadió una guía breve cuando no hay ningún elemento seleccionado. Estas mejoras no cambian la notación académica del modelo Entidad-Relación, pero ayudan a que la herramienta resulte más clara durante la edición.
+Además, se realizaron pequeños ajustes de interfaz para mejorar la comodidad de uso: la barra lateral pasó a ser desplazable verticalmente cuando las acciones no caben en pantalla y el selector de idioma se simplificó mediante botones compactos ES/EN. Estas mejoras no cambian la notación académica del modelo Entidad-Relación, pero ayudan a que la herramienta resulte más clara durante la edición.
+
+En la fase final también se incorporaron acciones de ayuda e información de la aplicación. La ventana de ayuda reúne indicaciones básicas de uso, mientras que la ventana ``Acerca de'' contextualiza el proyecto, indica las tecnologías utilizadas y reconoce el trabajo original del que parte la aplicación. Además, se añadió una identificación visual asociada a la Universidad de Burgos y se revisó el nombre mostrado por la herramienta.
 
 \section{Pruebas y revisión manual}
 
@@ -267,6 +274,8 @@ Por eso, la revisión manual también tuvo un papel importante. Se comprobaron d
 En las fases finales se prestó especial atención a los casos relacionados con las jerarquías ISA, las mejoras de usabilidad y la generación de SQL. En el caso de ISA, se revisó que las especializaciones heredasen correctamente la clave de la generalización, que se rechazasen configuraciones no soportadas y que el SQL generado mantuviera la relación entre las tablas de generalización y especialización. También se comprobaron mejoras de interfaz como los mensajes de validación agrupados, los diálogos de confirmación, el selector de idioma y la generación de estructuras básicas de ejemplo.
 
 La generación de SQL también requirió pruebas específicas después de modificar el tratamiento de las claves foráneas. Se revisaron casos en los que las dependencias entre tablas podían resolverse mediante el orden de creación, evitando sentencias \texttt{ALTER TABLE}, y casos con dependencias cíclicas reales, donde dicho mecanismo debía mantenerse como respaldo.
+
+Además, se revisó la forma de representar las claves foráneas en el script final. Cuando una clave foránea referencia la clave primaria completa de la tabla destino, el generador puede utilizar una forma más compacta, referenciando directamente la tabla. También se evitaron nombres explícitos innecesarios para las restricciones de clave foránea, manteniendo una sintaxis más simple y legible sin modificar la estructura relacional obtenida previamente.
 
 Esta combinación de pruebas automáticas y revisión manual permitió avanzar con más seguridad durante la ampliación del editor. Las pruebas ayudaron a controlar casos concretos y evitar regresiones, mientras que la revisión manual permitió comprobar el comportamiento global de la herramienta desde el punto de vista del usuario.
 

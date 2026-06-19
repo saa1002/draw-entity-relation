@@ -18,6 +18,8 @@ Para la representación y manipulación de los diagramas se utiliza mxGraph \cit
 
 Además, el proyecto utiliza Material UI para algunos componentes de la interfaz \cite{material-ui}. Esta librería facilita la creación de elementos visuales comunes, como botones, diálogos o controles de interacción, manteniendo una apariencia más uniforme dentro de la aplicación.
 
+También se emplean dependencias de apoyo para aspectos concretos de la interfaz, como la visualización de notificaciones al usuario tras determinadas acciones. Estas dependencias no constituyen el núcleo del editor, pero contribuyen a mejorar la respuesta visual de la aplicación durante su uso.
+
 En conjunto, estas librerías permiten construir un editor web en el que la interfaz, el área gráfica y las acciones del usuario trabajan de forma coordinada. En este trabajo, lo relevante no es solo el uso de estas herramientas por separado, sino la forma en la que se integran para representar diagramas Entidad-Relación de manera coherente.
 
 \section{Herramientas de validación y pruebas}
@@ -36,7 +38,7 @@ Para el control de versiones se utiliza Git, lo que permite registrar los cambio
 
 El proyecto se gestiona mediante GitHub, que se utiliza como repositorio remoto y como apoyo para la organización del desarrollo \cite{github}. A través de sus herramientas se pueden documentar tareas, agrupar el trabajo en issues y milestones, revisar cambios y mantener una trazabilidad básica de la evolución del editor.
 
-También se utilizaron mecanismos de comprobación asociados al repositorio, como la ejecución de pruebas y revisiones automáticas cuando correspondía. Este tipo de apoyo resulta útil en un proyecto incremental, ya que permite detectar problemas antes de integrar cambios y ayuda a mantener cierta estabilidad durante la evolución de la aplicación.
+También se utilizaron mecanismos de comprobación asociados al repositorio mediante GitHub Actions. En concreto, se definieron flujos para ejecutar pruebas y revisiones de calidad del código, lo que ayuda a detectar problemas antes de integrar cambios y contribuye a mantener la estabilidad durante la evolución incremental de la aplicación.
 
 \section{Documentación y redacción de la memoria}
 
@@ -66,6 +68,7 @@ La Tabla \ref{tab:herramientas_proyecto} resume el papel principal de las herram
         Biome & Formateo y análisis estático del código. \\
         Lefthook & Ejecución de comprobaciones asociadas al flujo de trabajo con Git. \\
         Git y GitHub & Control de versiones, organización de tareas y trazabilidad. \\
+        GitHub Actions & Ejecución automática de comprobaciones, pruebas y revisiones de calidad del código. \\
         Overleaf y LaTeX & Redacción y compilación de la memoria y los anexos. \\
         \bottomrule
     \end{tabular}

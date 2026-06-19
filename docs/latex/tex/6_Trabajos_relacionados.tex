@@ -48,23 +48,23 @@ El proyecto desarrollado se sitúa en un punto intermedio. No pretende competir 
 
 La principal diferencia del proyecto no está en ofrecer más funcionalidades que el resto de alternativas, sino en su enfoque concreto. La herramienta desarrollada está pensada para trabajar con diagramas Entidad-Relación dentro de un contexto académico, manteniendo la coherencia entre el diagrama creado por el usuario y la estructura interna que permite validarlo, guardarlo, transformarlo y generar SQL.
 
-La Tabla \ref{tab:comparativa_herramientas} resume las diferencias principales entre algunas herramientas relacionadas y Draw E-R App, atendiendo especialmente a su enfoque, su relación con el modelado de bases de datos y el tipo de soporte que ofrecen.
+La Tabla \ref{tab:comparativa_herramientas} resume las diferencias principales entre algunas herramientas relacionadas y la aplicación desarrollada, atendiendo especialmente a su enfoque, su relación con el modelado de bases de datos y el tipo de soporte que ofrecen.
 
 \begin{table}[p]
     \centering
     \small
-    \caption{Comparativa general entre herramientas relacionadas y Draw E-R App.}
+    \caption{Comparativa general entre herramientas relacionadas y la aplicación desarrollada.}
     \label{tab:comparativa_herramientas}
     \renewcommand{\arraystretch}{1.15}
     \begin{tabularx}{\textwidth}{p{0.17\textwidth} p{0.18\textwidth} p{0.23\textwidth} X}
         \toprule
-        \textbf{Herramienta} & \textbf{Enfoque principal} & \textbf{Relación con bases de datos} & \textbf{Diferencia respecto a Draw E-R App} \\
+        \textbf{Herramienta} & \textbf{Enfoque principal} & \textbf{Relación con bases de datos} & \textbf{Diferencia respecto a la aplicación desarrollada} \\
         \midrule
         diagrams.net / draw.io & Diagramación general & Permite dibujar diagramas E/R dentro de un conjunto amplio de diagramas. & Es una herramienta más generalista; no se centra en validar semánticamente un modelo E/R académico ni en transformarlo de forma guiada a SQL. \\
         Excalidraw & Pizarra colaborativa y dibujo libre & Puede utilizarse para bocetar modelos, pero no está orientada específicamente a bases de datos. & Prioriza la libertad de dibujo frente a una estructura interna validable del modelo. \\
-        ERDPlus & Modelado de bases de datos & Permite crear diagramas E/R, esquemas relacionales y generar SQL. & Es una herramienta más especializada; Draw E-R App se centra en evolucionar un editor académico heredado e incorporar soporte controlado para los elementos tratados en el proyecto. \\
-        dbdiagram.io & Diseño mediante texto & Usa DBML para definir estructuras de base de datos y generar diagramas. & Parte de una sintaxis textual, mientras que Draw E-R App prioriza la edición visual directa del diagrama E/R. \\
-        \mbox{Draw E-R App} & Editor académico E/R web & Representa diagramas E/R, los valida y genera SQL a partir del modelo interno. & Su interés está en la coherencia entre editor visual, modelo interno, validación, transformación relacional y alcance académico definido. \\
+        ERDPlus & Modelado de bases de datos & Permite crear diagramas E/R, esquemas relacionales y generar SQL. & Es una herramienta más especializada; la aplicación desarrollada se centra en evolucionar un editor académico heredado e incorporar soporte controlado para los elementos tratados en el proyecto. \\
+        dbdiagram.io & Diseño mediante texto & Usa DBML para definir estructuras de base de datos y generar diagramas. & Parte de una sintaxis textual, mientras que la aplicación desarrollada prioriza la edición visual directa del diagrama E/R. \\
+        Aplicación desarrollada & Editor académico E/R web & Representa diagramas E/R, los valida y genera SQL a partir del modelo interno. & Su interés está en la coherencia entre editor visual, modelo interno, validación, transformación relacional y alcance académico definido. \\
         \bottomrule
     \end{tabularx}
 \end{table}
