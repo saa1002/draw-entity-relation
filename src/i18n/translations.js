@@ -42,6 +42,8 @@ export const TRANSLATIONS = {
         "selection.selectedAttribute": "Atributo seleccionado",
         "selection.emptyGuidance":
             "Selecciona una entidad, relación, atributo o ISA para ver sus acciones disponibles.",
+        "selection.multipleGuidance":
+            "Hay varios elementos seleccionados. Selecciona un único elemento para ver sus acciones.",
 
         "action.addAttribute": "Añadir atributo",
         "action.groupCompositeAttribute": "Agrupar en atributo compuesto",
@@ -467,6 +469,8 @@ export const TRANSLATIONS = {
         "selection.selectedAttribute": "Selected attribute",
         "selection.emptyGuidance":
             "Select an entity, relationship, attribute or ISA element to see available actions.",
+        "selection.multipleGuidance":
+            "Multiple elements selected. Select a single element to view its actions.",
 
         "action.addAttribute": "Add attribute",
         "action.groupCompositeAttribute": "Group as composite attribute",

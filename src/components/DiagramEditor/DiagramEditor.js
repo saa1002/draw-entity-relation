@@ -367,6 +367,7 @@ export default function App(props) {
         isas: [],
     });
     const [selected, setSelected] = React.useState(null);
+    const [selectionSize, setSelectionSize] = React.useState(0);
     const [selectionVersion, setSelectionVersion] = React.useState(0);
 
     const [entityWithAttributesHidden, setEntityWithAttributesHidden] =
@@ -399,10 +400,17 @@ export default function App(props) {
             if (props.onSelected) {
                 props.onSelected(evt);
             }
-            setSelected(evt.cells?.[0] ?? null);
+
+            const selectedCells =
+                typeof graph?.getSelectionCells === "function"
+                    ? graph.getSelectionCells().filter(Boolean)
+                    : (evt.cells ?? []).filter(Boolean);
+
+            setSelectionSize(selectedCells.length);
+            setSelected(selectedCells.length === 1 ? selectedCells[0] : null);
             setSelectionVersion((prevVersion) => prevVersion + 1);
         },
-        [props],
+        [props, graph],
     );
 
     function accessCell(idMx) {
@@ -1584,6 +1592,8 @@ export default function App(props) {
             </React.Fragment>
         );
 
+    const hasMultipleSelectedCells = selectionSize > 1;
+
     const SelectedElementHeader = () => {
         if (!selected) {
             return null;
@@ -1615,6 +1625,14 @@ export default function App(props) {
     const EmptySelectionGuidance = () => {
         if (selected) {
             return null;
+        }
+
+        if (hasMultipleSelectedCells) {
+            return (
+                <p className="empty-selection-guidance">
+                    {t("selection.multipleGuidance")}
+                </p>
+            );
         }
 
         return (
@@ -3421,6 +3439,21 @@ export default function App(props) {
         );
     };
 
+    const DeleteMultipleSelectionButton = () => {
+        if (!hasMultipleSelectedCells) {
+            return;
+        }
+
+        return (
+            <SidebarActionButton
+                className="button-toolbar-action-danger"
+                onClick={deleteSelectedDiagramElements}
+            >
+                {t("action.delete")}
+            </SidebarActionButton>
+        );
+    };
+
     React.useEffect(() => {
         if (!graph) {
             return;
@@ -4471,6 +4504,7 @@ export default function App(props) {
                     {renderSidebarAction(IsaConfigurationButton())}
                     {renderSidebarAction(RelationCardinalitiesButton())}
 
+                    {renderSidebarAction(DeleteMultipleSelectionButton())}
                     {renderSidebarAction(DeleteEntityButton())}
                     {renderSidebarAction(DeleteRelationButton())}
                     {renderSidebarAction(DeleteAttributeButton())}
