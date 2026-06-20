@@ -6,8 +6,6 @@ En este anexo se describe la planificación seguida durante el desarrollo del Tr
 
 El proyecto se abordó de forma incremental. En primer lugar, fue necesario comprender el funcionamiento del editor original, identificar sus módulos principales y preparar el entorno de desarrollo. Después se fueron incorporando mejoras funcionales y de usabilidad, procurando que cada cambio quedara integrado en el modelo interno, la validación, la transformación relacional y la generación de SQL.
 
-La planificación no debe entenderse como una secuencia completamente cerrada desde el inicio. Al tratarse de un proyecto heredado, algunas decisiones se ajustaron a medida que se conocía mejor la aplicación y se valoraba el coste de incorporar nuevos elementos del modelo Entidad-Relación. Por ello, el desarrollo se organizó en fases y bloques de trabajo, apoyándose en control de versiones, ramas, issues y milestones.
-
 \section{Planificación temporal}
 
 \subsection{Metodología de trabajo}
@@ -28,9 +26,9 @@ A continuación, se abordó una fase de estabilización del núcleo del editor. 
 
 Después se desarrollaron las ampliaciones funcionales del editor. En esta fase se incorporaron o revisaron distintos elementos del modelo, como entidades débiles, atributos compuestos y multivaluados, relaciones ternarias, roles y soporte inicial para jerarquías ISA. Cada ampliación tuvo que integrarse tanto en la interfaz como en el modelo interno, la validación, la transformación relacional y la generación de SQL.
 
-También se realizaron mejoras de usabilidad, orientadas a facilitar la edición y revisión de diagramas. Entre ellas se encuentran la comprobación explícita del diagrama, la exportación visual, el ajuste de vista, la mejora de algunos diálogos, la generación de estructuras básicas y el soporte básico de idioma español/inglés.
+También se realizaron mejoras de usabilidad, orientadas a facilitar la edición y revisión de diagramas. Entre ellas se encuentran la comprobación explícita del diagrama, la exportación visual, el ajuste de vista, la mejora de algunos diálogos, la generación de estructuras básicas, el soporte básico de idioma español/inglés, la selección múltiple visible, la gestión contextual de acciones y la incorporación de secciones de ayuda e información del proyecto.
 
-Finalmente, se llevó a cabo la fase de documentación y cierre. En esta etapa se redactaron la memoria y los anexos, se revisaron las funcionalidades implementadas y se ajustó la redacción para reflejar correctamente el alcance final del proyecto.
+Finalmente, se llevó a cabo la fase de documentación y cierre. En esta etapa se redactaron la memoria y los anexos, se revisaron las funcionalidades implementadas, se actualizaron los recursos de presentación del repositorio y se ajustó la redacción para reflejar correctamente el alcance final del proyecto. También se revisó la información de licencia y créditos del proyecto para alinearla con la versión final de la aplicación.
 
 La Figura \ref{fig:cronograma_fases_proyecto} resume la evolución general del trabajo, desde la preparación inicial y el análisis del sistema heredado hasta la ampliación funcional, la revisión final y la elaboración de la documentación.
 
@@ -46,7 +44,7 @@ Preparación inicial & Configuración del entorno de desarrollo, revisión del r
 Análisis del sistema existente & Estudio del editor visual, del modelo interno, de la persistencia, de la validación y de la generación de SQL. \tabularnewline
 Estabilización del núcleo & Corrección de comportamientos delicados y revisión de la sincronización entre la vista y el modelo interno. \tabularnewline
 Ampliación funcional & Incorporación progresiva de nuevos elementos del modelo Entidad-Relación y adaptación de las validaciones y transformaciones. \tabularnewline
-Mejoras de usabilidad & Revisión de la interfaz, acciones de apoyo, exportación visual, generación de estructuras y soporte básico de idioma. \tabularnewline
+Mejoras de usabilidad & Revisión de la interfaz, acciones de apoyo, exportación visual, ajuste de vista, selección múltiple visible, ayuda e información del proyecto y soporte básico de idioma. \tabularnewline
 Pruebas y revisión & Ejecución de pruebas automáticas y revisión manual de casos representativos del editor. \tabularnewline
 Documentación y cierre & Redacción de la memoria, revisión de anexos y ajuste del alcance final del proyecto. \tabularnewline
 \bottomrule
@@ -89,13 +87,44 @@ En general, el proyecto puede desarrollarse utilizando herramientas gratuitas o 
 
 \subsection{Viabilidad legal}
 
-Desde el punto de vista legal, el proyecto se apoya en tecnologías y librerías de uso habitual en el desarrollo web. Al tratarse de una evolución de una aplicación existente, es necesario respetar tanto la licencia del proyecto heredado como las licencias de las dependencias utilizadas.
+Desde el punto de vista legal, el proyecto se apoya en tecnologías y librerías de uso habitual en el desarrollo web. Al tratarse de una evolución de una aplicación existente, se revisó la información disponible sobre el proyecto original y las licencias de las dependencias utilizadas.
+
+La Tabla~\ref{tab:licencias_proyecto} resume las principales licencias consideradas durante el desarrollo. La licencia MIT se adopta para el código desarrollado en la versión actual del proyecto, mientras que las dependencias de terceros mantienen sus respectivas licencias.
+
+\begin{table}[!htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{0.28\textwidth}|p{0.22\textwidth}|p{0.40\textwidth}|}
+\hline
+\textbf{Elemento} & \textbf{Licencia} & \textbf{Observación} \\
+\hline
+Código desarrollado en el proyecto & MIT & La versión final incorpora un fichero \texttt{LICENSE} y la información correspondiente en \texttt{package.json}. \\
+\hline
+React & MIT & Librería principal empleada para construir la interfaz de usuario. \\
+\hline
+Material UI & MIT & Biblioteca de componentes utilizada para diferentes elementos de la interfaz. \\
+\hline
+mxGraph & Apache License 2.0 & Librería utilizada para la creación y manipulación del lienzo de diagramas. \\
+\hline
+Vitest & MIT & Herramienta utilizada para la ejecución de pruebas unitarias. \\
+\hline
+Playwright & Apache License 2.0 & Herramienta utilizada para la ejecución de pruebas end-to-end. \\
+\hline
+Biome & MIT & Herramienta empleada como apoyo para el análisis estático y el formateo del código. \\
+\hline
+Lefthook & MIT & Herramienta utilizada como apoyo en la automatización de comprobaciones durante el desarrollo. \\
+\hline
+\end{tabular}
+\caption{Licencias principales consideradas en el proyecto.}
+\label{tab:licencias_proyecto}
+\end{table}
 
 También se debe tener en cuenta que la aplicación no requiere autenticación, backend ni almacenamiento remoto de datos personales. El almacenamiento del diagrama se realiza en el navegador del usuario, por lo que el proyecto no plantea un tratamiento centralizado de información personal.
 
 \subsubsection{Licencias y dependencias}
 
-Las dependencias empleadas deben ser compatibles con el uso académico del proyecto. En caso de reutilizar código, librerías o recursos externos, estos deben citarse correctamente y respetar las condiciones de sus licencias.
+Las dependencias empleadas deben ser compatibles con el uso académico del proyecto. En caso de reutilizar código, librerías o recursos externos, estos deben citarse correctamente y respetar las condiciones de sus licencias. La versión final incorpora un fichero de licencia y la información correspondiente en los metadatos del proyecto, manteniendo separada la licencia del código desarrollado respecto a las licencias de las dependencias de terceros.
 
 \subsubsection{Protección de datos}
 

@@ -64,6 +64,8 @@ El flujo principal comienza cuando el usuario crea o modifica elementos en el li
 
 Este flujo incluye operaciones como crear entidades, añadir atributos, configurar relaciones, establecer cardinalidades, mover elementos, renombrarlos o eliminarlos. En todos los casos, la aplicación debe mantener la sincronización entre la vista y el modelo interno.
 
+Además, la interfaz contempla la selección múltiple de elementos. Este comportamiento permite mover o eliminar varios elementos de forma conjunta, pero evita mostrar acciones individuales cuando la selección contiene más de un elemento. De esta forma, se mantiene la coherencia entre las acciones disponibles en la interfaz y las operaciones que realmente pueden aplicarse sobre el modelo.
+
 \subsection{Validación del modelo}
 
 Antes de generar una salida relacional o SQL, la aplicación valida el modelo interno. Esta validación comprueba que el diagrama contiene la información necesaria y que no existen configuraciones incompletas o incompatibles con el alcance implementado.
@@ -81,6 +83,8 @@ La existencia de una representación intermedia permite separar la lógica de tr
 \subsection{Generación de SQL}
 
 La generación de SQL toma como entrada la representación relacional obtenida en la fase anterior. A partir de ella, se generan las sentencias necesarias para crear las tablas y definir sus claves principales y foráneas.
+
+En la versión final se opta por una salida SQL más legible, evitando nombres explícitos de restricciones de clave foránea cuando no resultan necesarios y simplificando las referencias cuando una clave foránea referencia la clave primaria completa de la tabla destino. Esta decisión no modifica la transformación relacional previa, sino únicamente la forma en la que se renderiza el script SQL generado.
 
 La salida SQL debe entenderse como una traducción razonable del modelo relacional generado por la aplicación, no como un generador industrial completo para cualquier sistema gestor de bases de datos. Su objetivo principal dentro del proyecto es servir como apoyo académico y como punto de partida para comprender la transformación desde el modelo Entidad-Relación.
 
@@ -112,7 +116,7 @@ La Figura \ref{fig:arquitectura_general_aplicacion} resume la organización gene
 
 \subsection{Organización por módulos}
 
-A nivel funcional, pueden distinguirse varios bloques dentro de la aplicación. El primero corresponde a la interfaz de usuario, encargada de mostrar el lienzo, los paneles de acciones, los diálogos y los mensajes de validación.
+A nivel funcional, pueden distinguirse varios bloques dentro de la aplicación. El primero corresponde a la interfaz de usuario, encargada de mostrar el lienzo, los paneles de acciones, las acciones contextuales, los diálogos, los mensajes de validación y las secciones de ayuda e información del proyecto.
 
 El segundo bloque corresponde al modelo interno del diagrama. Este bloque representa la información lógica creada por el usuario y sirve como base para el resto de operaciones. Sobre este modelo trabajan los procesos de validación, persistencia, transformación relacional y generación de SQL.
 

@@ -21,7 +21,7 @@ Los objetivos generales del proyecto se pueden resumir en los siguientes puntos:
 \item Exportar e importar diagramas en formato JSON.
 \item Permitir la combinación controlada de diagramas importados o estructuras generadas.
 \item Exportar la representación visual del diagrama en formatos de imagen.
-\item Mejorar la usabilidad del editor sin alterar la notación académica del modelo E-R.
+\item Mejorar la usabilidad del editor sin alterar la notación académica del modelo E-R, incorporando acciones contextuales, selección múltiple visible y secciones de ayuda e información del proyecto.
 \end{itemize}
 
 \newpage
@@ -46,10 +46,12 @@ En este apartado se definirán los requisitos funcionales y no funcionales del p
 \item \textbf{RF10 - Exportar e importar JSON:} La aplicación debe permitir exportar diagramas a JSON e importar diagramas desde archivos JSON válidos.
 \item \textbf{RF11 - Reemplazar o combinar contenido:} La aplicación debe permitir importar diagramas o generar estructuras reemplazando el diagrama actual o combinándolas con el contenido existente.
 \item \textbf{RF12 - Validar diagramas:} La aplicación debe validar el modelo interno y mostrar los errores detectados de forma comprensible.
-\item \textbf{RF13 - Generar SQL:} La aplicación debe transformar el diagrama validado al modelo relacional y generar un script SQL.
+\item \textbf{RF13 - Generar SQL:} La aplicación debe transformar el diagrama validado al modelo relacional y generar un script SQL con un formato claro y legible.
 \item \textbf{RF14 - Generar estructuras básicas:} La aplicación debe permitir crear estructuras de ejemplo para facilitar la prueba y exploración del editor.
 \item \textbf{RF15 - Exportar imagen del diagrama:} La aplicación debe permitir exportar la representación visual del diagrama en formato PNG y SVG.
-\item \textbf{RF16 - Ofrecer acciones de apoyo:} La aplicación debe incluir acciones como comprobar el diagrama, ajustar la vista, cambiar el idioma de la interfaz y reiniciar el lienzo previa confirmación.
+\item \textbf{RF16 - Ofrecer acciones de apoyo:} La aplicación debe incluir acciones como comprobar el diagrama, ajustar la vista, cambiar el idioma de la interfaz, consultar ayuda, visualizar información del proyecto y reiniciar el lienzo previa confirmación.
+\item \textbf{RF17 - Gestionar selección múltiple y acciones contextuales:} La aplicación debe permitir seleccionar varios elementos de forma visible, mover o eliminar una selección múltiple y evitar mostrar acciones individuales cuando hay varios elementos seleccionados.
+
 \end{itemize}
 
 El soporte de ISA se considera inicial y controlado: se contempla una única generalización con una o varias especializaciones, con clave heredada desde la generalización, pero quedan fuera del alcance la totalidad o parcialidad, el solapamiento o exclusividad, los discriminantes ISA y la herencia múltiple real. Las agregaciones no forman parte de los requisitos implementados en esta versión.
@@ -60,7 +62,7 @@ El soporte de ISA se considera inicial y controlado: se contempla una única gen
 
 \begin{itemize}
 \tightlist
-\item \textbf{RNF1 - Usabilidad:} La aplicación debe ofrecer una interfaz clara y cómoda para la creación y revisión de diagramas E-R.
+\item \textbf{RNF1 - Usabilidad:} La aplicación debe ofrecer una interfaz clara y cómoda para la creación y revisión de diagramas E-R, incluyendo guías, descripciones breves de acciones, acciones contextuales y retroalimentación visual durante la selección de elementos.
 \item \textbf{RNF2 - Compatibilidad:} La aplicación debe poder ejecutarse en navegadores web modernos.
 \item \textbf{RNF3 - Mantenibilidad:} El código debe organizarse de forma que permita seguir ampliando el editor con nuevas funcionalidades.
 \item \textbf{RNF4 - Coherencia visual:} La representación gráfica debe respetar la notación académica utilizada para entidades, relaciones, atributos, entidades débiles, relaciones identificadoras e ISA.
@@ -81,7 +83,7 @@ La validación del diagrama permite comprobar si el modelo contiene errores ante
 
 La transformación relacional y la generación de SQL constituyen la salida principal del sistema. A partir del diagrama validado, la aplicación obtiene una representación basada en tablas, columnas, claves primarias y claves foráneas, y posteriormente genera el script SQL correspondiente.
 
-Finalmente, la aplicación incorpora varias funcionalidades de apoyo a la edición: generación de estructuras básicas, importación y generación combinada de contenido, exportación visual en PNG y SVG, ajuste de la vista, soporte básico de idioma y reinicio controlado del lienzo.
+Finalmente, la aplicación incorpora varias funcionalidades de apoyo a la edición: generación de estructuras básicas, importación y generación combinada de contenido, exportación visual en PNG y SVG, ajuste de la vista, soporte básico de idioma, selección múltiple visible, acciones contextuales, secciones de ayuda e información del proyecto y reinicio controlado del lienzo.
 
 \subsection{Casos de uso}
 
@@ -273,7 +275,7 @@ Las tablas siguientes describen los principales casos de uso del sistema a nivel
 \item La aplicación impide configuraciones fuera del alcance implementado.
 \end{enumerate}\\
 \textbf{Postcondición} & La jerarquía ISA queda representada en el lienzo y almacenada en el modelo interno. \\
-\textbf{Excepciones} & La validación informa de ISA sin generalización, sin especializaciones, con claves propias en especializaciones o con configuraciones de herencia no soportadas. Las restricciones de totalidad, solapamiento y discriminante ISA quedan fuera del alcance. \\
+\textbf{Excepciones} & La validación informa de ISA sin generalización, sin especializaciones, con claves propias en especializaciones o con configuraciones de herencia no soportadas. Las restricciones de totalidad o parcialidad, solapamiento o exclusividad y discriminante ISA quedan fuera del alcance. \\
 \textbf{Importancia} & Alta \\
 \bottomrule
 \end{tabularx}
@@ -452,7 +454,7 @@ Las tablas siguientes describen los principales casos de uso del sistema a nivel
 \toprule
 \textbf{Versión} & 1.0 \\
 \textbf{Autor} & Steven Paul Alba Alba \\
-\textbf{Requisitos asociados} & RF16 \\
+\textbf{Requisitos asociados} & RF16, RF17 \\
 \textbf{Descripción} & Permite utilizar acciones auxiliares que facilitan la interacción con el editor. \\
 \textbf{Precondición} & La aplicación debe estar abierta. \\
 \textbf{Acciones} &
@@ -463,6 +465,9 @@ Las tablas siguientes describen los principales casos de uso del sistema a nivel
 \item El usuario puede cambiar el idioma de la interfaz entre español e inglés.
 \item El usuario puede consultar la guía mostrada cuando no hay selección.
 \item El usuario puede reiniciar el lienzo previa confirmación.
+\item El usuario puede consultar la ayuda de uso y la información del proyecto.
+\item El usuario puede seleccionar varios elementos de forma visible.
+\item El usuario puede mover o eliminar una selección múltiple cuando proceda.
 \end{enumerate}\\
 \textbf{Postcondición} & La edición del diagrama resulta más cómoda sin modificar la semántica del modelo E-R. \\
 \textbf{Excepciones} & El reinicio del lienzo no se realiza si el usuario cancela la confirmación. \\
