@@ -88,6 +88,6 @@ The current version extends and stabilises that application as part of a Bachelo
 
 ## License
 
-The project license is pending final formalisation.
+This project is distributed under the MIT License.
 
 Third-party dependencies keep their respective licenses.

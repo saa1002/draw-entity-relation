@@ -110,7 +110,7 @@ export const TRANSLATIONS = {
         "about.technologies":
             "Tecnologías principales: React, mxGraph, Material UI, Vitest y Playwright.",
         "about.license":
-            "Licencia: MIT, según la viabilidad legal documentada en el proyecto original. Las dependencias mantienen sus respectivas licencias; mxGraph se distribuye bajo Apache License 2.0.",
+            "Licencia: MIT. Esta licencia se adopta para la versión actual tras revisar la viabilidad legal y las licencias de las dependencias. Las dependencias mantienen sus respectivas licencias; mxGraph se distribuye bajo Apache License 2.0.",
         "about.mxGraphLicenseLink": "licencia de mxGraph",
         "about.ubuImage":
             "La imagen institucional se ha tomado de los recursos oficiales de imagen corporativa de la Universidad de Burgos.",
@@ -535,7 +535,7 @@ export const TRANSLATIONS = {
         "about.technologies":
             "Main technologies: React, mxGraph, Material UI, Vitest and Playwright.",
         "about.license":
-            "License: MIT, according to the legal feasibility analysis documented in the original project. Dependencies retain their respective licenses; mxGraph is distributed under the Apache License 2.0.",
+            "License: MIT. This license is adopted for the current version after reviewing the legal feasibility and the licenses of the dependencies. Third-party dependencies keep their respective licenses; mxGraph is distributed under the Apache License 2.0.",
         "about.mxGraphLicenseLink": "mxGraph license",
         "about.ubuImage":
             "The institutional image has been taken from the official corporate image resources of the University of Burgos.",

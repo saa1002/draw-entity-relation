@@ -1,6 +1,7 @@
 {
   "name": "ubu-er-app",
   "version": "1.0.0",
+  "license": "MIT",
   "description": "Web editor for Entity-Relationship diagrams with validation, relational transformation and SQL generation.",
   "keywords": [
   "entity-relationship",
