@@ -2,10 +2,274 @@
 
 \section{Introducción}
 
-\section{Requisitos de usuarios}
+Este anexo presenta una guía de uso de la aplicación desarrollada. Su objetivo es explicar, desde el punto de vista del usuario final, cómo acceder al editor, qué requisitos básicos son necesarios y cómo utilizar las principales funcionalidades disponibles para crear, validar, importar, exportar y transformar diagramas Entidad-Relación.
+
+A diferencia de la documentación técnica de programación, este apartado no se centra en la estructura interna del código ni en las decisiones de implementación. El propósito es ofrecer una referencia práctica para manejar la aplicación de forma autónoma, describiendo las acciones más habituales sobre el lienzo y los elementos del diagrama.
+
+La aplicación puede utilizarse directamente desde el navegador y está orientada principalmente a usuarios con conocimientos básicos del modelo Entidad-Relación. Por ello, el manual asume que el usuario conoce los conceptos generales de entidad, atributo, relación, cardinalidad y clave primaria, aunque la propia interfaz incorpora mensajes de ayuda, acciones contextuales y validaciones para facilitar el uso del editor.
+
+\section{Requisitos de usuario}
+
+Para utilizar esta aplicación, los usuarios deben cumplir con los siguientes requisitos básicos:
+
+\begin{itemize}
+\item Disponer de un navegador web actualizado. Durante el desarrollo se ha trabajado y probado principalmente con navegadores basados en Chromium y con Firefox.
+
+\item Tener conexión a Internet si se utiliza una versión desplegada de la aplicación.
+
+\item Contar con conocimientos básicos sobre diagramas Entidad-Relación y transformación al modelo relacional.
+
+\item Disponer de un dispositivo con pantalla y ratón, panel táctil o mecanismo equivalente que permita interactuar con el lienzo gráfico.
+
+\end{itemize}
+
+Aunque la aplicación ofrece ayuda contextual y mensajes de validación, es recomendable que el usuario conozca previamente los elementos principales del modelo E/R. En particular, resulta útil entender la diferencia entre entidades fuertes y débiles, atributos simples, compuestos o multivaluados, relaciones binarias y ternarias, cardinalidades y claves primarias.
 
 \section{Instalación}
 
+La aplicación puede utilizarse desde una versión desplegada en línea mediante Vercel. En ese caso, no es necesario realizar ninguna instalación local, ya que basta con acceder desde el navegador web.
+
+% TODO: Añadir aquí el enlace definitivo de despliegue en Vercel.
+
+No obstante, también es posible ejecutar el proyecto en un entorno local. Esta opción resulta útil para revisar el código, realizar pruebas o continuar el desarrollo de la aplicación. Para ello, es necesario disponer previamente de Node.js y npm instalados en el equipo.
+
+En primer lugar, se debe clonar el repositorio del proyecto:
+
+\begin{verbatim}
+git clone <url-del-repositorio>
+\end{verbatim}
+
+Después, se accede al directorio del proyecto:
+
+\begin{verbatim}
+cd <directorio-del-proyecto>
+\end{verbatim}
+
+A continuación, se instalan las dependencias:
+
+\begin{verbatim}
+npm install
+\end{verbatim}
+
+Una vez instaladas, la aplicación puede ejecutarse en modo desarrollo mediante:
+
+\begin{verbatim}
+npm start
+\end{verbatim}
+
+Tras arrancar el servidor de desarrollo, la aplicación estará disponible normalmente en la dirección local indicada por la propia terminal, habitualmente:
+
+\begin{verbatim}
+http://localhost:3000
+\end{verbatim}
+
+También es posible generar una versión preparada para producción mediante:
+
+\begin{verbatim}
+npm run build
+\end{verbatim}
+
+Este último comando crea una versión optimizada de la aplicación en la carpeta de construcción correspondiente, pensada principalmente para despliegue o revisión técnica.
+
 \section{Manual del usuario}
 
+En esta sección se describe el uso principal de la aplicación desde el punto de vista del usuario. El manual se organiza siguiendo un flujo habitual de trabajo: acceso a la aplicación, reconocimiento de la interfaz, creación de elementos del diagrama, edición mediante acciones contextuales, validación, generación de SQL e importación o exportación de información.
 
+\subsection{Pantalla principal}
+
+Al acceder a la aplicación se muestra la pantalla principal del editor, formada por un panel lateral de herramientas y acciones, y un lienzo central donde se construye el modelo Entidad-Relación. La interfaz está pensada para que el usuario pueda añadir elementos de forma progresiva y editar el diagrama directamente sobre el lienzo.
+
+
+\imagen{editor_general_anexos}{Pantalla principal de UBU E-R App con un elemento seleccionado.}
+
+La zona principal de trabajo es el lienzo. Sobre él se colocan las entidades, atributos, relaciones y otros elementos del modelo. El usuario puede seleccionar los elementos ya creados para moverlos, modificarlos o aplicar acciones contextuales. Cuando no hay ningún elemento seleccionado, la aplicación muestra una guía de ayuda inicial con indicaciones básicas de uso.
+
+En el panel lateral se encuentran las acciones generales de la aplicación, como la importación y exportación de diagramas, la generación de SQL, el ajuste de vista, el cambio de idioma y el acceso a la ayuda o a la información del proyecto. Estas acciones permiten trabajar con el diagrama completo y no con un elemento concreto.
+
+\subsection{Componentes de la interfaz}
+
+La interfaz de la aplicación se divide en varias zonas principales. Cada una de ellas cumple una función concreta dentro del proceso de creación y revisión del diagrama E/R.
+
+En la figura se muestra la interfaz con una entidad seleccionada, lo que permite observar tanto el lienzo de edición como las acciones disponibles en el panel lateral.
+
+\imagen{componentes_interfaz}{Componentes principales de la interfaz de usuario.}
+
+Los componentes más relevantes son los siguientes:
+
+\begin{itemize}
+\item \textbf{Panel lateral}: agrupa el acceso al cambio de idioma, las herramientas de creación, las acciones contextuales, las acciones generales del diagrama y los botones de información.
+
+\item \textbf{Herramientas de creación}: permiten crear los elementos principales que se arrastran inicialmente al lienzo, como entidades, relaciones o elementos ISA. Otros elementos, como los atributos, se añaden posteriormente mediante acciones contextuales.
+
+\item \textbf{Lienzo de edición}: es la zona central en la que se construye el diagrama. Los elementos pueden colocarse, seleccionarse, moverse y relacionarse visualmente.
+
+\item \textbf{Acciones contextuales}: aparecen al seleccionar un elemento del diagrama. Estas acciones dependen del tipo de elemento seleccionado y permiten modificarlo, añadir elementos asociados o eliminarlo.
+
+\item \textbf{Acciones generales}: permiten trabajar con el diagrama completo, por ejemplo generar la estructura interna, comprobar el diagrama, ajustar la vista, generar SQL, exportar o importar información y reiniciar el lienzo.
+
+\item \textbf{Diálogos y salidas de información}: se utilizan para mostrar resultados o información generada por la aplicación, como diagnósticos de validación, mensajes de confirmación o el script SQL resultante.
+
+\end{itemize}
+
+\subsection{Creación de elementos del diagrama}
+
+La creación de un diagrama comienza incorporando elementos al lienzo de edición. Para ello, el usuario puede utilizar las herramientas de creación disponibles en el panel lateral. Estos elementos permiten construir de forma progresiva el modelo Entidad-Relación.
+
+El funcionamiento básico consiste en arrastrar el elemento deseado desde el panel lateral hasta el lienzo. Una vez situado en el área de trabajo, el elemento pasa a formar parte del diagrama y puede moverse, seleccionarse o modificarse mediante las acciones contextuales correspondientes.
+
+Los elementos principales que se pueden crear desde la interfaz son los siguientes:
+
+\begin{itemize}
+\item \textbf{Entidades}: representan los conjuntos de entidades del modelo. Se muestran mediante rectángulos y pueden tener atributos asociados.
+
+\item \textbf{Relaciones}: representan interrelaciones entre entidades. Se muestran mediante rombos y posteriormente pueden configurarse indicando sus participantes y cardinalidades.
+
+\item \textbf{ISA}: permite representar una generalización/especialización de forma inicial y controlada, vinculando una entidad general con una o varias entidades especializadas.
+\end{itemize}
+
+Una forma habitual de comenzar un diagrama es crear una entidad fuerte y añadirle sus atributos principales. Por ejemplo, en una entidad \textit{Alumno} pueden añadirse atributos como \textit{dni} y \textit{nombre}, marcando como clave primaria aquel atributo que identifica de forma única a cada alumno.
+
+A partir de estos elementos básicos, el usuario puede ir completando el diagrama mediante relaciones entre entidades, atributos asociados a entidades o relaciones, entidades débiles cuando sea necesario y estructuras ISA en los casos soportados por la aplicación.
+
+\subsection{Edición mediante acciones contextuales}
+
+La edición de los elementos del diagrama se realiza principalmente mediante la selección directa sobre el lienzo. Al seleccionar una entidad, atributo, relación u otro elemento, el panel lateral muestra las acciones disponibles para ese tipo de elemento. De esta forma, la aplicación evita mostrar todas las operaciones al mismo tiempo y adapta la interfaz al contexto de trabajo.
+
+En el caso de una entidad, las acciones contextuales permiten añadir atributos, ocultar o mostrar sus atributos asociados, marcarla como entidad débil cuando proceda, eliminarla o modificar su orden visual respecto al resto de elementos del lienzo. Estas acciones facilitan la construcción progresiva del diagrama sin necesidad de utilizar menús adicionales.
+
+En el caso de los atributos, las acciones disponibles dependen del tipo de atributo seleccionado. Entre otras operaciones, el usuario puede marcar un atributo como clave primaria, convertirlo en multivaluado, crear atributos compuestos mediante subatributos o eliminarlo del diagrama.
+
+Las relaciones también disponen de acciones específicas. El usuario puede configurarlas indicando las entidades participantes, ajustar las cardinalidades de sus extremos y, en los casos soportados, añadir atributos propios de la relación. Estas operaciones son especialmente importantes antes de validar el diagrama o generar el SQL, ya que la transformación relacional depende de la información definida en las relaciones.
+
+En el caso de los elementos ISA, las acciones contextuales permiten configurar la generalización y sus especializaciones dentro del soporte inicial incorporado en la aplicación. Este soporte está pensado para representar casos controlados de herencia, en los que existe una entidad general y una o varias especializaciones que heredan su clave.
+
+Cuando se seleccionan varios elementos al mismo tiempo, la interfaz muestra la selección múltiple de forma visual y permite realizar operaciones conjuntas, como mover o eliminar los elementos seleccionados. En este caso, las acciones individuales se ocultan para evitar aplicar operaciones específicas sobre un conjunto de elementos que pueden ser de tipos distintos.
+
+\subsection{Configuración de relaciones y cardinalidades}
+
+Las relaciones se incorporan al diagrama arrastrando el elemento correspondiente desde el panel lateral hasta el lienzo. Una vez creada la relación, es necesario configurarla para indicar qué entidades participan en ella y qué cardinalidades se aplican en cada extremo.
+
+Para configurar una relación, el usuario debe seleccionarla en el lienzo y utilizar las acciones contextuales disponibles en el panel lateral. Desde estas acciones puede abrirse el diálogo de configuración de la relación, donde se definen sus participantes. En las relaciones binarias se seleccionan las dos entidades conectadas por la relación. En los casos soportados, como las relaciones ternarias, se pueden definir más participantes.
+
+\imagen{configuracion_relacion}{Configuración de los participantes de una relación.}
+
+Una vez definidos los participantes, la relación puede completarse indicando las cardinalidades correspondientes. Estas cardinalidades representan las restricciones de participación entre las entidades y la relación, y son necesarias para que la aplicación pueda validar correctamente el diagrama y transformarlo después al modelo relacional.
+
+\imagen{configuracion_cardinalidades}{Configuración de cardinalidades de una relación.}
+
+La aplicación permite trabajar con cardinalidades habituales del modelo E/R, como relaciones uno a uno, uno a muchos y muchos a muchos. La información introducida en este paso influye directamente en la estructura relacional generada posteriormente. Por ejemplo, una relación muchos a muchos se transforma normalmente en una tabla intermedia, mientras que una relación uno a muchos suele traducirse mediante una clave ajena en la tabla correspondiente.
+
+En las relaciones que admiten atributos propios, el usuario puede añadir dichos atributos desde las acciones contextuales de la relación. Esta opción resulta especialmente útil en relaciones muchos a muchos, cuando la relación no solo conecta entidades, sino que también tiene información propia que debe conservarse en el modelo relacional.
+
+Cuando una relación todavía no ha sido configurada correctamente, la aplicación puede mostrar mensajes de validación o impedir determinadas operaciones hasta que la información necesaria esté completa. De esta forma se reduce la posibilidad de generar una estructura relacional incoherente o incompleta.
+
+\subsection{Validación del diagrama y generación de SQL}
+
+Una vez creado el diagrama, la aplicación permite comprobar su coherencia antes de generar el script SQL. Esta validación ayuda a detectar errores o situaciones incompletas, como entidades sin clave primaria, relaciones sin configurar, nombres repetidos o cardinalidades no definidas correctamente.
+
+Para realizar esta comprobación, el usuario puede utilizar la acción de validación disponible en el panel lateral. Si el diagrama contiene algún problema, la aplicación muestra un diagnóstico con los aspectos que deben revisarse. De esta forma, el usuario puede corregir el modelo antes de continuar con la transformación relacional.
+
+\imagen{dialogo_validacion}{Resultado de la validación de un diagrama.}
+
+Cuando el diagrama es válido, el usuario puede generar el SQL mediante la acción correspondiente. La aplicación transforma internamente el modelo Entidad-Relación en una estructura relacional y, a partir de ella, construye un script SQL con las tablas, claves primarias y claves ajenas necesarias.
+
+\imagen{sql_generado}{Script SQL generado a partir del diagrama.}
+
+El SQL generado se presenta en un formato simplificado para facilitar su lectura. En lugar de mostrar una salida excesivamente fragmentada, la aplicación agrupa la información principal de cada tabla y mantiene las restricciones relevantes para representar el modelo relacional obtenido. Este resultado puede utilizarse como referencia para comprender cómo se traduce el diagrama al modelo relacional o como punto de partida para su adaptación a un sistema gestor de bases de datos concreto.
+
+La transformación depende de los elementos definidos en el diagrama. Las entidades fuertes se convierten en tablas, las claves primarias se reflejan como restricciones de identificación y las relaciones se transforman según sus cardinalidades. Por ejemplo, las relaciones muchos a muchos generan una tabla intermedia, mientras que las relaciones uno a muchos se representan habitualmente mediante claves ajenas.
+
+En el caso de las entidades débiles y de las estructuras ISA soportadas, la aplicación aplica reglas específicas dentro del alcance implementado. Las entidades débiles se transforman teniendo en cuenta su dependencia de identificación, mientras que las estructuras ISA se tratan como un soporte inicial y controlado en el que las especializaciones heredan la clave de la entidad general.
+
+La generación de SQL debe entenderse como una ayuda para obtener una representación relacional coherente con el diagrama construido. En caso de que el usuario necesite un script adaptado a un entorno concreto, puede revisar y ajustar posteriormente el resultado generado.
+
+\subsection{Importación y exportación de diagramas}
+
+La aplicación permite guardar y recuperar diagramas mediante ficheros JSON. Esta funcionalidad resulta útil para conservar el trabajo realizado, compartir un diagrama con otra persona o continuar editándolo en otro momento.
+
+Para guardar el diagrama actual, el usuario puede utilizar la acción de exportación JSON disponible en el panel lateral. Al seleccionarla, la aplicación genera un fichero con la información interna del diagrama, incluyendo los elementos creados, sus posiciones y la configuración necesaria para reconstruirlo posteriormente.
+
+Para cargar un diagrama previamente exportado, se utiliza la acción de importación JSON. Al importar un fichero, la aplicación ofrece un comportamiento controlado para decidir cómo incorporar el contenido al lienzo. En función de la opción seleccionada, el diagrama importado puede reemplazar al diagrama actual o combinarse con los elementos ya existentes.
+
+\imagen{importacion_json}{Importación de un diagrama desde un fichero JSON.}
+
+La opción de reemplazar resulta adecuada cuando se desea abrir un diagrama guardado y trabajar únicamente sobre él. En cambio, la opción de combinar permite añadir los elementos importados al diagrama que ya está abierto, lo que puede ser útil para reutilizar partes de otros modelos.
+
+Además de la exportación JSON, la aplicación permite exportar una representación visual del diagrama. Esta opción genera una imagen del lienzo en formatos como PNG o SVG, pensada para incluir el diagrama en documentos, entregas o material de apoyo. A diferencia del JSON, estos formatos visuales no están pensados para volver a editar el diagrama dentro de la aplicación, sino para obtener una copia gráfica del resultado.
+
+\subsection{Acciones generales del diagrama}
+
+El panel lateral incluye varias acciones que afectan al diagrama completo. Estas acciones sirven para comprobar, transformar, ajustar, guardar o reiniciar el trabajo realizado en el lienzo.
+
+Entre las acciones generales más relevantes se encuentran las siguientes:
+
+\begin{itemize}
+\item \textbf{Generar estructura}: actualiza o muestra la estructura interna derivada del diagrama. Esta acción resulta útil como apoyo para comprobar cómo está interpretando la aplicación los elementos representados en el lienzo.
+
+\item \textbf{Comprobar diagrama}: ejecuta la validación del modelo y muestra los posibles problemas detectados antes de generar SQL.
+
+\item \textbf{Ajustar vista}: centra y adapta la vista del lienzo para facilitar la visualización del diagrama completo.
+
+\item \textbf{Generar SQL}: transforma el diagrama validado en una representación relacional y genera el script SQL correspondiente.
+
+\item \textbf{Exportar JSON}: guarda el diagrama en un fichero que puede importarse posteriormente en la aplicación.
+
+\item \textbf{Importar JSON}: carga un diagrama desde un fichero externo, permitiendo reemplazar el contenido actual o combinarlo con el diagrama abierto.
+
+\item \textbf{Exportar visualmente}: genera una imagen del diagrama en formato PNG o SVG.
+
+\item \textbf{Reiniciar}: elimina el contenido actual del lienzo tras solicitar confirmación al usuario.
+\end{itemize}
+
+Estas acciones permiten gestionar el ciclo completo de trabajo con un diagrama: crear el modelo, revisarlo, obtener su representación SQL, guardarlo, recuperarlo o exportarlo como imagen. En las operaciones destructivas, como el reinicio del lienzo o la importación con reemplazo, la aplicación solicita confirmación para evitar pérdidas accidentales de información.
+
+\subsection{Selección múltiple y edición conjunta}
+
+Además de seleccionar elementos de forma individual, la aplicación permite seleccionar varios elementos del lienzo al mismo tiempo. Esta funcionalidad resulta útil cuando el usuario quiere reorganizar una parte del diagrama o eliminar varios elementos en una única operación.
+
+La selección múltiple se muestra visualmente sobre el lienzo, permitiendo identificar qué elementos forman parte del conjunto seleccionado. Una vez seleccionados, los elementos pueden moverse de forma conjunta, manteniendo su disposición relativa dentro del diagrama.
+
+\imagen{seleccion_multiple}{Selección múltiple de elementos en el lienzo.}
+
+Cuando existe una selección múltiple, la interfaz oculta las acciones contextuales individuales. Esta decisión evita que el usuario aplique por error una acción específica de una entidad, atributo o relación sobre un conjunto de elementos de distintos tipos. En su lugar, se mantienen disponibles únicamente las operaciones que tienen sentido sobre el conjunto seleccionado, como el movimiento conjunto o la eliminación.
+
+La eliminación de varios elementos seleccionados permite limpiar partes del diagrama de forma más cómoda. En las operaciones destructivas de mayor alcance, como el reinicio del lienzo o la importación con reemplazo, la aplicación utiliza confirmaciones o mecanismos de control para reducir la posibilidad de pérdidas accidentales de información.
+
+\subsection{Ayuda, idioma e información del proyecto}
+
+La aplicación incluye varias acciones de apoyo pensadas para facilitar su uso y proporcionar información adicional al usuario. Estas acciones no modifican directamente el modelo E/R, pero ayudan a comprender la interfaz, consultar información general del proyecto o adaptar el idioma de la aplicación.
+
+El selector de idioma permite alternar entre español e inglés. Al cambiar el idioma, la interfaz actualiza sus textos principales, incluyendo botones, mensajes de ayuda y diagnósticos mostrados al usuario.
+
+La acción de ayuda muestra una guía breve sobre el funcionamiento general de la aplicación. Esta guía sirve como referencia rápida para recordar cómo crear elementos, utilizar las acciones contextuales, validar el diagrama o generar SQL.
+
+La opción de información del proyecto muestra datos generales sobre la aplicación, incluyendo su nombre, autoría, créditos, tecnologías utilizadas, referencia al proyecto original y licencia de la versión actual.
+
+\imagen{about_aplicacion}{Información general del proyecto.}
+
+Estas acciones complementan el flujo principal de edición y contribuyen a que la aplicación sea más comprensible para usuarios que acceden por primera vez al editor o que necesitan recordar el propósito de alguna funcionalidad.
+
+\subsection{Flujo de trabajo recomendado}
+
+Aunque la aplicación permite editar el diagrama de forma flexible, se recomienda seguir un flujo de trabajo ordenado para reducir errores y facilitar la generación posterior del SQL.
+
+En primer lugar, conviene crear las entidades principales del modelo y añadir sus atributos más relevantes, marcando como clave primaria aquellos atributos que identifiquen a cada entidad. A continuación, pueden incorporarse las relaciones entre entidades, configurando sus participantes y cardinalidades. En caso de utilizar entidades débiles o estructuras ISA, es recomendable comprobar que su configuración queda correctamente definida antes de continuar con el resto del diagrama.
+
+Una vez construido el modelo, se aconseja utilizar la acción de comprobación del diagrama. Esta validación permite detectar problemas antes de generar la estructura relacional o el script SQL. Si aparecen mensajes de diagnóstico, el usuario debe revisar los elementos indicados y corregir la información incompleta o incoherente.
+
+Cuando el diagrama sea válido, puede generarse el SQL y revisarse el resultado obtenido. Si el modelo se quiere conservar para futuras ediciones, debe exportarse en formato JSON. Si únicamente se necesita una representación visual para incluirla en un documento o entrega, puede utilizarse la exportación en formato PNG o SVG.
+
+De forma resumida, el flujo habitual de uso es el siguiente:
+
+\begin{enumerate}
+\item Crear las entidades principales.
+\item Añadir atributos y definir claves primarias.
+\item Incorporar relaciones y configurar sus participantes.
+\item Definir las cardinalidades correspondientes.
+\item Añadir elementos adicionales, como entidades débiles, atributos de relación o estructuras ISA, cuando proceda.
+\item Comprobar el diagrama mediante la validación.
+\item Generar y revisar el SQL.
+\item Exportar el diagrama en JSON o como imagen, según el uso previsto.
+\end{enumerate}
+
+Este flujo no es obligatorio, pero ayuda a mantener el diagrama coherente y facilita que la transformación relacional refleje correctamente el modelo diseñado.
