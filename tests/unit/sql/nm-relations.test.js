@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
+import { createAttribute } from '../../helpers/diagramBuilders'
 import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import { generateSQL } from '../../../src/services/sql'
@@ -13,13 +14,13 @@ beforeEach(() => {
 
 describe("N:M relation SQL generation", () => {
     test("should generate a separate table for a simple multivalued attribute on an N:M related entity", () => {
-        nMGraph.entities.at(0).attributes.push({
-            idMx: "attr-email",
-            name: "email",
-            key: false,
-            partialKey: false,
-            multivalued: true,
-        });
+        nMGraph.entities.at(0).attributes.push(
+            createAttribute({
+                idMx: 'attr-email',
+                name: 'email',
+                multivalued: true,
+            }),
+        )
 
         const sql = generateSQL(nMGraph);
 

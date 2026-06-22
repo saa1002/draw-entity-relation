@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { loadGraphFixture } from '../../helpers/graphLoader'
+import {
+    createAttribute,
+    createDiagram,
+    createStrongEntity,
+} from '../../helpers/diagramBuilders'
 import { generateSQL } from '../../../src/services/sql'
 
 let oneNGraph
@@ -14,79 +19,68 @@ beforeEach(() => {
     oneOneGraph = loadGraphFixture('1-1-relation.json')
 })
 
+const createCompositeConnectorOneNGraph = () =>
+    createDiagram({
+        entities: [
+            createStrongEntity({
+                idMx: 'cliente',
+                name: 'Cliente',
+                attributes: [
+                    createAttribute({
+                        idMx: 'attr-internal-client-key',
+                        name: 'internal_cliente_key_connector',
+                        key: true,
+                        children: [
+                            createAttribute({
+                                idMx: 'attr-calle',
+                                name: 'calle',
+                            }),
+                            createAttribute({
+                                idMx: 'attr-ciudad',
+                                name: 'ciudad',
+                            }),
+                        ],
+                    }),
+                ],
+            }),
+            createStrongEntity({
+                idMx: 'pedido',
+                name: 'Pedido',
+                keyName: 'id_pedido',
+            }),
+        ],
+        relations: [
+            {
+                idMx: 'relation-compra',
+                name: 'Compra',
+                canHoldAttributes: false,
+                isIdentifying: false,
+                attributes: [],
+                side1: {
+                    idMx: 'side-cliente',
+                    cardinality: '1:1',
+                    cell: 'side-cell-cliente',
+                    edgeId: 'edge-cliente',
+                    entity: {
+                        idMx: 'cliente',
+                    },
+                },
+                side2: {
+                    idMx: 'side-pedido',
+                    cardinality: '0:N',
+                    cell: 'side-cell-pedido',
+                    edgeId: 'edge-pedido',
+                    entity: {
+                        idMx: 'pedido',
+                    },
+                },
+            },
+        ],
+    })
+
 describe("1:N relation SQL generation", () => {
     test("should not use composite connector names in 1:N foreign key columns or constraints", () => {
-        const graph = {
-            entities: [
-                {
-                    idMx: "cliente",
-                    name: "Cliente",
-                    weak: false,
-                    attributes: [
-                        {
-                            idMx: "attr-internal-client-key",
-                            name: "internal_cliente_key_connector",
-                            key: true,
-                            partialKey: false,
-                            children: [
-                                {
-                                    idMx: "attr-calle",
-                                    name: "calle",
-                                    key: false,
-                                    partialKey: false,
-                                },
-                                {
-                                    idMx: "attr-ciudad",
-                                    name: "ciudad",
-                                    key: false,
-                                    partialKey: false,
-                                },
-                            ],
-                        },
-                    ],
-                },
-                {
-                    idMx: "pedido",
-                    name: "Pedido",
-                    weak: false,
-                    attributes: [
-                        {
-                            idMx: "attr-id-pedido",
-                            name: "id_pedido",
-                            key: true,
-                            partialKey: false,
-                        },
-                    ],
-                },
-            ],
-            relations: [
-                {
-                    idMx: "relation-compra",
-                    name: "Compra",
-                    canHoldAttributes: false,
-                    isIdentifying: false,
-                    attributes: [],
-                    side1: {
-                        idMx: "side-cliente",
-                        cardinality: "1:1",
-                        cell: "side-cell-cliente",
-                        edgeId: "edge-cliente",
-                        entity: {
-                            idMx: "cliente",
-                        },
-                    },
-                    side2: {
-                        idMx: "side-pedido",
-                        cardinality: "0:N",
-                        cell: "side-cell-pedido",
-                        edgeId: "edge-pedido",
-                        entity: {
-                            idMx: "pedido",
-                        },
-                    },
-                },
-            ],
-        }
+        const graph = createCompositeConnectorOneNGraph()
 
         const sql = generateSQL(graph)
 
@@ -106,13 +100,13 @@ describe("1:N relation SQL generation", () => {
     });
 
     test("should generate a separate table for a simple multivalued attribute on a 1:N related entity", () => {
-        oneNGraph.entities.at(1).attributes.push({
-            idMx: "attr-phones",
-            name: "telefono",
-            key: false,
-            partialKey: false,
-            multivalued: true,
-        });
+        oneNGraph.entities.at(1).attributes.push(
+            createAttribute({
+                idMx: 'attr-phones',
+                name: 'telefono',
+                multivalued: true,
+            }),
+        )
 
         const sql = generateSQL(oneNGraph);
 
@@ -131,27 +125,23 @@ describe("1:N relation SQL generation", () => {
     });
 
     test("should generate a separate table for a composite multivalued attribute on a 1:N related entity", () => {
-        oneNGraph.entities.at(1).attributes.push({
-            idMx: "attr-contact",
-            name: "contacto",
-            key: false,
-            partialKey: false,
-            multivalued: true,
-            children: [
-                {
-                    idMx: "attr-prefix",
-                    name: "prefijo",
-                    key: false,
-                    partialKey: false,
-                },
-                {
-                    idMx: "attr-number",
-                    name: "numero",
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        });
+        oneNGraph.entities.at(1).attributes.push(
+            createAttribute({
+                idMx: 'attr-contact',
+                name: 'contacto',
+                multivalued: true,
+                children: [
+                    createAttribute({
+                        idMx: 'attr-prefix',
+                        name: 'prefijo',
+                    }),
+                    createAttribute({
+                        idMx: 'attr-number',
+                        name: 'numero',
+                    }),
+                ],
+            }),
+        )
 
         const sql = generateSQL(oneNGraph);
 
@@ -177,13 +167,13 @@ describe("1:1 relation SQL generation", () => {
         oneOneGraph.relations.at(0).side1.cardinality = "1:1";
         oneOneGraph.relations.at(0).side2.cardinality = "1:1";
 
-        oneOneGraph.entities.at(0).attributes.push({
-            idMx: "attr-phone",
-            name: "telefono",
-            key: false,
-            partialKey: false,
-            multivalued: true,
-        });
+        oneOneGraph.entities.at(0).attributes.push(
+            createAttribute({
+                idMx: 'attr-phone',
+                name: 'telefono',
+                multivalued: true,
+            }),
+        )
 
         const sql = generateSQL(oneOneGraph);
 
@@ -205,27 +195,23 @@ describe("1:1 relation SQL generation", () => {
         oneOneGraph.relations.at(0).side1.cardinality = "1:1";
         oneOneGraph.relations.at(0).side2.cardinality = "1:1";
 
-        oneOneGraph.entities.at(0).attributes.push({
-            idMx: "attr-contact",
-            name: "contacto",
-            key: false,
-            partialKey: false,
-            multivalued: true,
-            children: [
-                {
-                    idMx: "attr-prefix",
-                    name: "prefijo",
-                    key: false,
-                    partialKey: false,
-                },
-                {
-                    idMx: "attr-number",
-                    name: "numero",
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        });
+        oneOneGraph.entities.at(0).attributes.push(
+            createAttribute({
+                idMx: 'attr-contact',
+                name: 'contacto',
+                multivalued: true,
+                children: [
+                    createAttribute({
+                        idMx: 'attr-prefix',
+                        name: 'prefijo',
+                    }),
+                    createAttribute({
+                        idMx: 'attr-number',
+                        name: 'numero',
+                    }),
+                ],
+            }),
+        )
 
         const sql = generateSQL(oneOneGraph);
 
