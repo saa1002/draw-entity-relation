@@ -1,36 +1,45 @@
 import { describe, expect, test } from 'vitest'
+import {
+    createAttribute,
+    createDiagram,
+    createStrongEntity,
+} from '../../helpers/diagramBuilders'
 import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { generateSQL } from '../../../src/services/sql'
 
 const { expectSQLToContain, expectSQLNotToContain } =
     buildSQLAssertions(expect)
 
+const createStandaloneEntityGraph = ({
+    idMx = '1',
+    name = 'Cliente',
+    attributes,
+}) =>
+    createDiagram({
+        entities: [
+            createStrongEntity({
+                idMx,
+                name,
+                attributes,
+            }),
+        ],
+    })
+
 describe('Standalone entity SQL generation', () => {
     test('a standalone strong entity should generate a single table with its primary key', () => {
-        const graph = {
-            entities: [
-                {
-                    idMx: '1',
-                    name: 'Cliente',
-                    weak: false,
-                    attributes: [
-                        {
-                            idMx: '2',
-                            name: 'id_cliente',
-                            key: true,
-                            partialKey: false,
-                        },
-                        {
-                            idMx: '3',
-                            name: 'nombre',
-                            key: false,
-                            partialKey: false,
-                        },
-                    ],
-                },
+        const graph = createStandaloneEntityGraph({
+            attributes: [
+                createAttribute({
+                    idMx: '2',
+                    name: 'id_cliente',
+                    key: true,
+                }),
+                createAttribute({
+                    idMx: '3',
+                    name: 'nombre',
+                }),
             ],
-            relations: [],
-        }
+        })
 
         const sql = generateSQL(graph)
 
@@ -42,44 +51,29 @@ describe('Standalone entity SQL generation', () => {
     })
 
     test('a standalone strong entity should project composite attributes to leaf columns', () => {
-        const graph = {
-            entities: [
-                {
-                    idMx: '1',
-                    name: 'Cliente',
-                    weak: false,
-                    attributes: [
-                        {
-                            idMx: '2',
-                            name: 'id_cliente',
-                            key: true,
-                            partialKey: false,
-                        },
-                        {
-                            idMx: '3',
-                            name: 'direccion',
-                            key: false,
-                            partialKey: false,
-                            children: [
-                                {
-                                    idMx: '4',
-                                    name: 'calle',
-                                    key: false,
-                                    partialKey: false,
-                                },
-                                {
-                                    idMx: '5',
-                                    name: 'ciudad',
-                                    key: false,
-                                    partialKey: false,
-                                },
-                            ],
-                        },
+        const graph = createStandaloneEntityGraph({
+            attributes: [
+                createAttribute({
+                    idMx: '2',
+                    name: 'id_cliente',
+                    key: true,
+                }),
+                createAttribute({
+                    idMx: '3',
+                    name: 'direccion',
+                    children: [
+                        createAttribute({
+                            idMx: '4',
+                            name: 'calle',
+                        }),
+                        createAttribute({
+                            idMx: '5',
+                            name: 'ciudad',
+                        }),
                     ],
-                },
+                }),
             ],
-            relations: [],
-        }
+        })
 
         const sql = generateSQL(graph)
 
@@ -91,38 +85,26 @@ describe('Standalone entity SQL generation', () => {
     })
 
     test('a standalone strong entity should project a composite primary key to leaf columns', () => {
-        const graph = {
-            entities: [
-                {
-                    idMx: '1',
-                    name: 'Documento',
-                    weak: false,
-                    attributes: [
-                        {
-                            idMx: '2',
-                            name: 'codigo',
-                            key: true,
-                            partialKey: false,
-                            children: [
-                                {
-                                    idMx: '3',
-                                    name: 'serie',
-                                    key: false,
-                                    partialKey: false,
-                                },
-                                {
-                                    idMx: '4',
-                                    name: 'numero',
-                                    key: false,
-                                    partialKey: false,
-                                },
-                            ],
-                        },
+        const graph = createStandaloneEntityGraph({
+            name: 'Documento',
+            attributes: [
+                createAttribute({
+                    idMx: '2',
+                    name: 'codigo',
+                    key: true,
+                    children: [
+                        createAttribute({
+                            idMx: '3',
+                            name: 'serie',
+                        }),
+                        createAttribute({
+                            idMx: '4',
+                            name: 'numero',
+                        }),
                     ],
-                },
+                }),
             ],
-            relations: [],
-        }
+        })
 
         const sql = generateSQL(graph)
 
@@ -133,38 +115,25 @@ describe('Standalone entity SQL generation', () => {
     })
 
     test('a composite connector name should not be emitted in standalone entity SQL', () => {
-        const graph = {
-            entities: [
-                {
-                    idMx: '1',
-                    name: 'Cliente',
-                    weak: false,
-                    attributes: [
-                        {
-                            idMx: '2',
-                            name: 'internal_direccion_connector',
-                            key: true,
-                            partialKey: false,
-                            children: [
-                                {
-                                    idMx: '3',
-                                    name: 'calle',
-                                    key: false,
-                                    partialKey: false,
-                                },
-                                {
-                                    idMx: '4',
-                                    name: 'ciudad',
-                                    key: false,
-                                    partialKey: false,
-                                },
-                            ],
-                        },
+        const graph = createStandaloneEntityGraph({
+            attributes: [
+                createAttribute({
+                    idMx: '2',
+                    name: 'internal_direccion_connector',
+                    key: true,
+                    children: [
+                        createAttribute({
+                            idMx: '3',
+                            name: 'calle',
+                        }),
+                        createAttribute({
+                            idMx: '4',
+                            name: 'ciudad',
+                        }),
                     ],
-                },
+                }),
             ],
-            relations: [],
-        }
+        })
 
         const sql = generateSQL(graph)
 
@@ -181,33 +150,22 @@ describe('Standalone entity SQL generation', () => {
 
         expectSQLNotToContain(sql, 'internal_direccion_connector')
     })
-    
+
     test('a standalone entity should generate a separate table for a simple multivalued attribute', () => {
-        const graph = {
-            entities: [
-                {
-                    idMx: '1',
-                    name: 'Cliente',
-                    weak: false,
-                    attributes: [
-                        {
-                            idMx: '2',
-                            name: 'id_cliente',
-                            key: true,
-                            partialKey: false,
-                        },
-                        {
-                            idMx: '3',
-                            name: 'telefono',
-                            key: false,
-                            partialKey: false,
-                            multivalued: true,
-                        },
-                    ],
-                },
+        const graph = createStandaloneEntityGraph({
+            attributes: [
+                createAttribute({
+                    idMx: '2',
+                    name: 'id_cliente',
+                    key: true,
+                }),
+                createAttribute({
+                    idMx: '3',
+                    name: 'telefono',
+                    multivalued: true,
+                }),
             ],
-            relations: [],
-        }
+        })
 
         const sql = generateSQL(graph)
 
@@ -225,47 +183,33 @@ describe('Standalone entity SQL generation', () => {
 
         expect(sql).not.toContain('telefono VARCHAR(40),\n  PRIMARY KEY')
     })
-    
+
     test('a simple multivalued attribute should reference every column of a composite owner key', () => {
-        const graph = {
-            entities: [
-                {
-                    idMx: '1',
-                    name: 'Documento',
-                    weak: false,
-                    attributes: [
-                        {
-                            idMx: '2',
-                            name: 'codigo',
-                            key: true,
-                            partialKey: false,
-                            children: [
-                                {
-                                    idMx: '3',
-                                    name: 'serie',
-                                    key: false,
-                                    partialKey: false,
-                                },
-                                {
-                                    idMx: '4',
-                                    name: 'numero',
-                                    key: false,
-                                    partialKey: false,
-                                },
-                            ],
-                        },
-                        {
-                            idMx: '5',
-                            name: 'etiqueta',
-                            key: false,
-                            partialKey: false,
-                            multivalued: true,
-                        },
+        const graph = createStandaloneEntityGraph({
+            name: 'Documento',
+            attributes: [
+                createAttribute({
+                    idMx: '2',
+                    name: 'codigo',
+                    key: true,
+                    children: [
+                        createAttribute({
+                            idMx: '3',
+                            name: 'serie',
+                        }),
+                        createAttribute({
+                            idMx: '4',
+                            name: 'numero',
+                        }),
                     ],
-                },
+                }),
+                createAttribute({
+                    idMx: '5',
+                    name: 'etiqueta',
+                    multivalued: true,
+                }),
             ],
-            relations: [],
-        }
+        })
 
         const sql = generateSQL(graph)
 
@@ -290,51 +234,37 @@ describe('Standalone entity SQL generation', () => {
                 PRIMARY KEY (serie, numero, etiqueta)
             `,
         )
+
         expect(sql).toContain(
             'FOREIGN KEY (serie, numero) REFERENCES Documento ON DELETE CASCADE ON UPDATE CASCADE',
         )
     })
-    
+
     test('a standalone entity should generate a separate table for a composite multivalued attribute', () => {
-        const graph = {
-            entities: [
-                {
-                    idMx: '1',
-                    name: 'Cliente',
-                    weak: false,
-                    attributes: [
-                        {
-                            idMx: '2',
-                            name: 'id_cliente',
-                            key: true,
-                            partialKey: false,
-                        },
-                        {
-                            idMx: '3',
-                            name: 'telefonos',
-                            key: false,
-                            partialKey: false,
-                            multivalued: true,
-                            children: [
-                                {
-                                    idMx: '4',
-                                    name: 'prefijo',
-                                    key: false,
-                                    partialKey: false,
-                                },
-                                {
-                                    idMx: '5',
-                                    name: 'numero',
-                                    key: false,
-                                    partialKey: false,
-                                },
-                            ],
-                        },
+        const graph = createStandaloneEntityGraph({
+            attributes: [
+                createAttribute({
+                    idMx: '2',
+                    name: 'id_cliente',
+                    key: true,
+                }),
+                createAttribute({
+                    idMx: '3',
+                    name: 'telefonos',
+                    multivalued: true,
+                    children: [
+                        createAttribute({
+                            idMx: '4',
+                            name: 'prefijo',
+                        }),
+                        createAttribute({
+                            idMx: '5',
+                            name: 'numero',
+                        }),
                     ],
-                },
+                }),
             ],
-            relations: [],
-        }
+        })
 
         const sql = generateSQL(graph)
 
