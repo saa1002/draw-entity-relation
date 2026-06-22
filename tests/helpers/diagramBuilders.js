@@ -22,13 +22,15 @@ export const createStrongEntity = ({ idMx, name, keyName, attributes }) => ({
     weak: false,
     attributes:
         attributes ??
-        [
-            createAttribute({
-                idMx: `${idMx}-key`,
-                name: keyName,
-                key: true,
-            }),
-        ],
+        (keyName
+            ? [
+                  createAttribute({
+                      idMx: `${idMx}-key`,
+                      name: keyName,
+                      key: true,
+                  }),
+              ]
+            : []),
 })
 
 export const createTernarySide = ({

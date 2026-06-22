@@ -1,118 +1,34 @@
 import { expect } from '@playwright/test';
 
-export async function getSavedDiagram(page) {
-    return page.evaluate(() => {
-        const savedDiagram = JSON.parse(
-            window.localStorage.getItem('diagramData') ||
-                '{"entities":[],"relations":[]}',
-        );
-        
-        return {
-            ...savedDiagram,
-            entities: savedDiagram.entities || [],
-            relations: savedDiagram.relations || [],
-            isas: savedDiagram.isas || [],
-        };
+import {
+    expectSavedEntityToExist,
+    expectSavedRelationToExist,
+    expectSavedIsaToExist,
+    getSavedEntity,
+    getSavedRelation,
+    getSavedAttribute,
+} from './diagramState';
+
+export {
+    expectAttributeCellVisible,
+    expectSavedDiagramState,
+    expectSavedEntityAttributeToMatch,
+    expectSavedEntityToMatch,
+    expectSavedIsaToExist,
+    expectSavedRelationAttributeToMatch,
+    expectSavedRelationToExist,
+    expectSavedRelationToMatch,
+    getSavedAttribute,
+    getSavedDiagram,
+    getSavedEntity,
+    getSavedIsa,
+    getSavedRelation,
+} from './diagramState';
+
+export async function enableMxGraphDebug(page) {
+    await page.addInitScript(() => {
+        window.__PW__ = true;
     });
-}
-
-export async function getSavedEntity(page, entityName = 'Entidad') {
-    const diagram = await getSavedDiagram(page);
-
-    return diagram.entities.find((entity) => entity.name === entityName);
-}
-
-export async function getSavedRelation(page, relationName = 'Relación') {
-    const diagram = await getSavedDiagram(page);
-
-    return diagram.relations.find((relation) => relation.name === relationName);
-}
-
-export async function getSavedIsa(page, isaIndex = 0) {
-    const diagram = await getSavedDiagram(page);
-
-    return diagram.isas?.[isaIndex] ?? null;
-}
-
-export async function expectSavedEntityToExist(page, entityName = 'Entidad') {
-    await expect
-        .poll(async () => Boolean(await getSavedEntity(page, entityName)))
-        .toBe(true);
-}
-
-export async function expectSavedRelationToExist(
-    page,
-    relationName = 'Relación',
-) {
-    await expect
-        .poll(async () => Boolean(await getSavedRelation(page, relationName)))
-        .toBe(true);
-}
-
-export async function expectSavedIsaToExist(page, isaIndex = 0) {
-    await expect
-        .poll(async () => Boolean(await getSavedIsa(page, isaIndex)))
-        .toBe(true);
-}
-
-export async function expectSavedEntityToMatch(
-    page,
-    entityName = 'Entidad',
-    expected,
-) {
-    await expect
-        .poll(async () => getSavedEntity(page, entityName))
-        .toMatchObject(expected);
-}
-
-export async function expectSavedRelationToMatch(
-    page,
-    relationName = 'Relación',
-    expected,
-) {
-    await expect
-        .poll(async () => getSavedRelation(page, relationName))
-        .toMatchObject(expected);
-}
-
-export async function expectSavedEntityAttributeToMatch(
-    page,
-    entityName,
-    attributeIndex,
-    expected,
-) {
-    await expect
-        .poll(async () => {
-            const entity = await getSavedEntity(page, entityName);
-
-            return entity?.attributes?.[attributeIndex];
-        })
-        .toMatchObject(expected);
-}
-
-export async function expectSavedRelationAttributeToMatch(
-    page,
-    relationName,
-    attributeIndex,
-    expected,
-) {
-    await expect
-        .poll(async () => {
-            const relation = await getSavedRelation(page, relationName);
-
-            return relation?.attributes?.[attributeIndex];
-        })
-        .toMatchObject(expected);
-}
-
-export async function expectSavedDiagramState(page, getState, expectedState) {
-    await expect
-        .poll(async () => {
-            const diagram = await getSavedDiagram(page);
-
-            return getState(diagram);
-        })
-        .toEqual(expectedState);
 }
 
 export async function deselectCanvas(page) {
@@ -181,6 +97,98 @@ export async function selectIsa(page, isaIndex = 0) {
     await page.getByText('ISA', { exact: true }).nth(isaIndex).click();
 }
 
+export async function selectAttributeByName(page, ownerName, attributeName) {
+    await expect
+        .poll(async () => {
+            const attribute = await getSavedAttribute(
+                page,
+                ownerName,
+                attributeName,
+            );
+
+            return attribute?.idMx ?? null;
+        })
+        .not.toBeNull();
+
+    const attribute = await getSavedAttribute(
+        page,
+        ownerName,
+        attributeName,
+    );
+
+    await page.waitForFunction((attributeId) => {
+        const graph = window.__DEBUG_GRAPH__;
+        return Boolean(graph?.getModel?.()?.getCell?.(attributeId));
+    }, attribute.idMx);
+
+    await page.evaluate((attributeId) => {
+        const graph = window.__DEBUG_GRAPH__;
+        const cell = graph.getModel().getCell(attributeId);
+
+        graph.setSelectionCell(cell);
+    }, attribute.idMx);
+}
+
+export async function selectAttributesByName(page, ownerName, attributeNames) {
+    await expect
+        .poll(async () => {
+            const attributes = await Promise.all(
+                attributeNames.map((attributeName) =>
+                    getSavedAttribute(page, ownerName, attributeName),
+                ),
+            );
+
+            return attributes.every((attribute) => Boolean(attribute?.idMx));
+        })
+        .toBe(true);
+
+    const attributes = await Promise.all(
+        attributeNames.map((attributeName) =>
+            getSavedAttribute(page, ownerName, attributeName),
+        ),
+    );
+    const attributeIds = attributes.map((attribute) => attribute.idMx);
+
+    await page.waitForFunction((ids) => {
+        const graph = window.__DEBUG_GRAPH__;
+        return ids.every((attributeId) =>
+            Boolean(graph?.getModel?.()?.getCell?.(attributeId)),
+        );
+    }, attributeIds);
+
+    await page.evaluate((ids) => {
+        const graph = window.__DEBUG_GRAPH__;
+        const cells = ids
+            .map((attributeId) => graph.getModel().getCell(attributeId))
+            .filter(Boolean);
+
+        graph.setSelectionCells(cells);
+    }, attributeIds);
+}
+
+export async function renameElement(page, currentName, newName) {
+    await page.getByText(currentName, { exact: true }).first().dblclick();
+
+    const editor = page.locator('.mxCellEditor');
+
+    await expect(editor).toBeVisible();
+
+    await editor.press('Control+A');
+    await editor.type(newName);
+
+    await page.locator('svg').click({ position: { x: 20, y: 20 } });
+}
+
+export async function addAttributeToSelectedElement(page) {
+    await page.getByRole('button', { name: 'Añadir atributo' }).click();
+
+    await expect(page.getByText('Atributo insertado').last()).toBeVisible();
+}
+
+export async function addAttributeToSelectedEntity(page) {
+    await addAttributeToSelectedElement(page);
+}
+
 export async function markEntityAsWeak(page, entityName = 'Entidad') {
     await selectEntity(page, entityName);
 
@@ -197,16 +205,6 @@ export async function unmarkSelectedWeakEntity(page) {
     await expect(page.getByText('Entidad marcada como fuerte')).toBeVisible();
 }
 
-export async function addAttributeToSelectedElement(page) {
-    await page.getByRole('button', { name: 'Añadir atributo' }).click();
-
-    await expect(page.getByText('Atributo insertado').last()).toBeVisible();
-}
-
-export async function addAttributeToSelectedEntity(page) {
-    await addAttributeToSelectedElement(page);
-}
-
 export async function openRelationConfigDialog(
     page,
     relationName = 'Relación',
@@ -221,6 +219,11 @@ export async function openRelationConfigDialog(
     return dialog;
 }
 
+export async function selectRelationArity(page, dialog, arityName) {
+    await dialog.locator('#relation-arity').click();
+    await page.getByRole('option', { name: arityName, exact: true }).click();
+}
+
 export async function selectRelationSide(page, dialog, sideId, entityName) {
     await dialog.locator(`#${sideId}`).click();
     await page.getByRole('option', { name: entityName, exact: true }).click();
@@ -228,11 +231,6 @@ export async function selectRelationSide(page, dialog, sideId, entityName) {
 
 export async function fillRelationSideRole(dialog, sideId, role) {
     await dialog.locator(`#${sideId}-role`).fill(role);
-}
-
-export async function selectRelationArity(page, dialog, arityName) {
-    await dialog.locator('#relation-arity').click();
-    await page.getByRole('option', { name: arityName, exact: true }).click();
 }
 
 export async function configureRelationSides(
@@ -285,55 +283,6 @@ export async function configureTernaryRelationSides(
 
     await acceptBtn.click();
     await expect(dialog).toBeHidden();
-}
-
-export async function openIsaConfigDialog(page, isaIndex = 0) {
-    await selectIsa(page, isaIndex);
-
-    await page.getByRole('button', { name: 'Configurar ISA' }).click();
-
-    const dialog = page.getByRole('dialog');
-
-    await expect(dialog.getByText('Configurar ISA')).toBeVisible();
-
-    return dialog;
-}
-
-export async function configureIsaHierarchy(
-    page,
-    generalizationName,
-    specializationNames,
-    isaIndex = 0,
-) {
-    const dialog = await openIsaConfigDialog(page, isaIndex);
-
-    await dialog.locator('#isa-generalization').click();
-    await page
-        .getByRole('option', { name: generalizationName, exact: true })
-        .click();
-
-    await dialog.locator('#isa-specializations').click();
-
-    for (const specializationName of specializationNames) {
-        await page
-            .getByRole('option', {
-                name: specializationName,
-                exact: true,
-            })
-            .click();
-    }
-
-    await page.keyboard.press('Escape');
-
-    const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
-    await expect(acceptBtn).toBeEnabled();
-
-    await acceptBtn.click();
-    await expect(dialog).toBeHidden();
-
-    await expect(
-        page.getByText('Jerarquía ISA configurada').last(),
-    ).toBeVisible();
 }
 
 export async function openRelationCardinalitiesDialog(
@@ -444,154 +393,53 @@ export async function markSelectedRelationAsIdentifying(page) {
     ).toBeVisible();
 }
 
-export async function renameElement(page, currentName, newName) {
-    await page.getByText(currentName, { exact: true }).first().dblclick();
+export async function openIsaConfigDialog(page, isaIndex = 0) {
+    await selectIsa(page, isaIndex);
 
-    const editor = page.locator('.mxCellEditor');
+    await page.getByRole('button', { name: 'Configurar ISA' }).click();
 
-    await expect(editor).toBeVisible();
+    const dialog = page.getByRole('dialog');
 
-    await editor.press('Control+A');
-    await editor.type(newName);
+    await expect(dialog.getByText('Configurar ISA')).toBeVisible();
 
-    await page.locator('svg').click({ position: { x: 20, y: 20 } });
+    return dialog;
 }
 
-export async function enableMxGraphDebug(page) {
-    await page.addInitScript(() => {
-        window.__PW__ = true;
-    });
-}
+export async function configureIsaHierarchy(
+    page,
+    generalizationName,
+    specializationNames,
+    isaIndex = 0,
+) {
+    const dialog = await openIsaConfigDialog(page, isaIndex);
 
-function findAttributeByName(attributes = [], attributeName) {
-    for (const attribute of attributes) {
-        if (attribute.name === attributeName) {
-            return attribute;
-        }
+    await dialog.locator('#isa-generalization').click();
+    await page
+        .getByRole('option', { name: generalizationName, exact: true })
+        .click();
 
-        const childAttribute = findAttributeByName(
-            attribute.children ?? [],
-            attributeName,
-        );
+    await dialog.locator('#isa-specializations').click();
 
-        if (childAttribute) {
-            return childAttribute;
-        }
+    for (const specializationName of specializationNames) {
+        await page
+            .getByRole('option', {
+                name: specializationName,
+                exact: true,
+            })
+            .click();
     }
 
-    return null;
-}
+    await page.keyboard.press('Escape');
 
-export async function getSavedAttribute(page, ownerName, attributeName) {
-    const diagram = await getSavedDiagram(page);
+    const acceptBtn = dialog.getByRole('button', { name: 'Aceptar' });
+    await expect(acceptBtn).toBeEnabled();
 
-    const owner = [
-        ...(diagram.entities ?? []),
-        ...(diagram.relations ?? []),
-    ].find((candidate) => candidate.name === ownerName);
+    await acceptBtn.click();
+    await expect(dialog).toBeHidden();
 
-    return findAttributeByName(owner?.attributes ?? [], attributeName);
-}
-
-export async function selectAttributeByName(page, ownerName, attributeName) {
-    await expect
-        .poll(async () => {
-            const attribute = await getSavedAttribute(
-                page,
-                ownerName,
-                attributeName,
-            );
-
-            return attribute?.idMx ?? null;
-        })
-        .not.toBeNull();
-
-    const attribute = await getSavedAttribute(
-        page,
-        ownerName,
-        attributeName,
-    );
-
-    await page.waitForFunction((attributeId) => {
-        const graph = window.__DEBUG_GRAPH__;
-        return Boolean(graph?.getModel?.()?.getCell?.(attributeId));
-    }, attribute.idMx);
-
-    await page.evaluate((attributeId) => {
-        const graph = window.__DEBUG_GRAPH__;
-        const cell = graph.getModel().getCell(attributeId);
-
-        graph.setSelectionCell(cell);
-    }, attribute.idMx);
-}
-
-export async function selectAttributesByName(page, ownerName, attributeNames) {
-    await expect
-        .poll(async () => {
-            const attributes = await Promise.all(
-                attributeNames.map((attributeName) =>
-                    getSavedAttribute(page, ownerName, attributeName),
-                ),
-            );
-
-            return attributes.every((attribute) => Boolean(attribute?.idMx));
-        })
-        .toBe(true);
-
-    const attributes = await Promise.all(
-        attributeNames.map((attributeName) =>
-            getSavedAttribute(page, ownerName, attributeName),
-        ),
-    );
-    const attributeIds = attributes.map((attribute) => attribute.idMx);
-
-    await page.waitForFunction((ids) => {
-        const graph = window.__DEBUG_GRAPH__;
-        return ids.every((attributeId) =>
-            Boolean(graph?.getModel?.()?.getCell?.(attributeId)),
-        );
-    }, attributeIds);
-
-    await page.evaluate((ids) => {
-        const graph = window.__DEBUG_GRAPH__;
-        const cells = ids
-            .map((attributeId) => graph.getModel().getCell(attributeId))
-            .filter(Boolean);
-
-        graph.setSelectionCells(cells);
-    }, attributeIds);
-}
-
-export async function expectAttributeCellVisible(
-    page,
-    ownerName,
-    attributeName,
-    expectedVisible = true,
-) {
-    await expect
-        .poll(async () => {
-            const attribute = await getSavedAttribute(
-                page,
-                ownerName,
-                attributeName,
-            );
-
-            if (!attribute?.idMx) {
-                return null;
-            }
-
-            return page.evaluate((attributeId) => {
-                const graph = window.__DEBUG_GRAPH__;
-                const cell = graph?.getModel?.()?.getCell?.(attributeId);
-
-                if (!cell) {
-                    return null;
-                }
-
-                return cell.visible !== false;
-            }, attribute.idMx);
-        })
-        .toBe(expectedVisible);
+    await expect(
+        page.getByText('Jerarquía ISA configurada').last(),
+    ).toBeVisible();
 }
 
 export async function dragCompositeAttributeRootEdge(
