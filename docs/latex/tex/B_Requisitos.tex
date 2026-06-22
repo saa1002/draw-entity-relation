@@ -412,7 +412,7 @@ Las tablas siguientes describen los principales casos de uso del sistema a nivel
 \item El usuario decide si desea reemplazar el diagrama actual o combinar la estructura con el contenido existente.
 \end{enumerate}\\
 \textbf{Postcondición} & La estructura seleccionada aparece en el lienzo y queda integrada en el modelo interno. \\
-\textbf{Excepciones} & El resultado no se aplica si el diagrama combinado no es válido. \\
+\textbf{Excepciones} & La operación no se realiza si el usuario cancela la confirmación. Si el diagrama resultante queda incompleto o incoherente, podrá detectarse posteriormente mediante la validación del diagrama. \\
 \textbf{Importancia} & Media \\
 \bottomrule
 \end{tabularx}
