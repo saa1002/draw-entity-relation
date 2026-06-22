@@ -122,6 +122,7 @@ describe("N:M relation extraction", () => {
             ),
         ).toEqual(["serie", "numero"]);
     });
+    
     test("should project composite relation attributes in the junction table", () => {
         nMGraph.relations.at(0).attributes = [
             createAttribute({
