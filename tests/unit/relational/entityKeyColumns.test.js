@@ -1,36 +1,31 @@
 import { describe, expect, test } from 'vitest'
 import {
+    createAttribute,
+    createStrongEntity,
+} from '../../helpers/diagramBuilders'
+import {
     getEntityPrimaryKeyColumnNamesIgnoringCycles,
     getEntityPrimaryKeyColumnReferences,
 } from '../../../src/domain/relational/entityKeyColumns'
 
 const createCascadedWeakGraph = () => ({
     entities: [
-        {
+        createStrongEntity({
             idMx: 'entity-0',
             name: 'Pedido',
-            weak: false,
-            attributes: [
-                {
-                    idMx: 'attr-0',
-                    name: 'id_pedido',
-                    key: true,
-                    partialKey: false,
-                },
-            ],
-        },
+            keyName: 'id_pedido',
+        }),
         {
             idMx: 'entity-1',
             name: 'LineaPedido',
             weak: true,
             ownerEntityId: 'entity-0',
             attributes: [
-                {
+                createAttribute({
                     idMx: 'attr-1',
                     name: 'numero_linea',
-                    key: false,
                     partialKey: true,
-                },
+                }),
             ],
         },
         {
@@ -39,12 +34,11 @@ const createCascadedWeakGraph = () => ({
             weak: true,
             ownerEntityId: 'entity-1',
             attributes: [
-                {
+                createAttribute({
                     idMx: 'attr-2',
                     name: 'secuencia',
-                    key: false,
                     partialKey: true,
-                },
+                }),
             ],
         },
     ],

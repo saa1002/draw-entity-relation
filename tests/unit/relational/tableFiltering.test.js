@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { loadGraphFixture } from '../../helpers/graphLoader'
 import { filterTables } from '../../../src/domain/relational/erToRelationalModel'
+import { loadGraphFixture } from '../../helpers/graphLoader'
 
 let oneNGraph
 let oneOneGraph
@@ -14,30 +14,34 @@ beforeEach(() => {
     oneNGraphAndEntity = loadGraphFixture('1-n-relation_alone-entity.json')
 })
 
-describe("Table filtering", () => {
-    test("should classify a 1:1 relation as a single table candidate", () => {
-        const tables = filterTables(oneOneGraph)
-        expect(tables.length).toBe(1)
-        expect(tables.at(0).type).toBe("1:1")
+const expectSingleTableCandidate = (graph, expectedType) => {
+    const tables = filterTables(graph)
+
+    expect(tables).toHaveLength(1)
+    expect(tables.at(0).type).toBe(expectedType)
+
+    return tables.at(0)
+}
+
+describe('Table filtering', () => {
+    test('should classify a 1:1 relation as a single table candidate', () => {
+        expectSingleTableCandidate(oneOneGraph, '1:1')
     })
 
-    test("should classify a 1:N relation as a single table candidate", () => {
-        const tables = filterTables(oneNGraph)
-        expect(tables.length).toBe(1)
-        expect(tables.at(0).type).toBe("1:N")
+    test('should classify a 1:N relation as a single table candidate', () => {
+        expectSingleTableCandidate(oneNGraph, '1:N')
     })
 
-    test("should classify an N:M relation as a single table candidate", () => {
-        const tables = filterTables(nMGraph)
-        expect(tables.length).toBe(1)
-        expect(tables.at(0).type).toBe("N:M")
+    test('should classify an N:M relation as a single table candidate', () => {
+        expectSingleTableCandidate(nMGraph, 'N:M')
     })
 
-    test("should preserve unconnected entities when filtering table candidates", () => {
+    test('should preserve unconnected entities when filtering table candidates', () => {
         const tables = filterTables(oneNGraphAndEntity)
-        expect(tables.length).toBe(2)
-        expect(tables.at(0).type).toBe("1:N")
-        expect(tables.at(0).name).toBe("Relación")
-        expect(tables.at(1).name).toBe("Entidad")
+
+        expect(tables).toHaveLength(2)
+        expect(tables.at(0).type).toBe('1:N')
+        expect(tables.at(0).name).toBe('Relación')
+        expect(tables.at(1).name).toBe('Entidad')
     })
 })
