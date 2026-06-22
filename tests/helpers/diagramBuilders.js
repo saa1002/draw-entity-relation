@@ -1,5 +1,9 @@
 import { RELATION_ARITIES } from '../../src/domain/er/relations'
 
+const getEntityReference = (entity) => ({
+    idMx: typeof entity === 'string' ? entity : entity.idMx,
+})
+
 export const createAttribute = ({
     idMx,
     name,
@@ -42,7 +46,7 @@ export const createTernarySide = ({
     idMx,
     cardinality,
     ...(role ? { role } : {}),
-    entity: { idMx: typeof entity === 'string' ? entity : entity.idMx },
+    entity: getEntityReference(entity),
 })
 
 export const createTernaryRelation = ({
@@ -64,6 +68,22 @@ export const createTernaryRelation = ({
     side2,
     side3,
     attributes,
+})
+
+export const createIsaHierarchy = ({
+    idMx,
+    generalization,
+    specializations,
+}) => ({
+    idMx,
+    generalization: {
+        edgeId: `edge-${getEntityReference(generalization).idMx}`,
+        entity: getEntityReference(generalization),
+    },
+    specializations: specializations.map((specialization) => ({
+        edgeId: `edge-${getEntityReference(specialization).idMx}`,
+        entity: getEntityReference(specialization),
+    })),
 })
 
 export const createDiagram = ({ entities = [], relations = [], isas = [] } = {}) => ({
@@ -166,6 +186,108 @@ export const createRepeatedParticipantTernaryDiagram = () => {
                     role: 'fecha',
                     entity: entities[1],
                 }),
+            }),
+        ],
+    })
+}
+
+export const createBasicIsaDiagram = () => {
+    const entities = [
+        createStrongEntity({
+            idMx: 'entity-persona',
+            name: 'Persona',
+            attributes: [
+                createAttribute({
+                    idMx: 'attr-id-persona',
+                    name: 'id_persona',
+                    key: true,
+                }),
+                createAttribute({
+                    idMx: 'attr-nombre',
+                    name: 'nombre',
+                }),
+            ],
+        }),
+        createStrongEntity({
+            idMx: 'entity-alumno',
+            name: 'Alumno',
+            attributes: [
+                createAttribute({
+                    idMx: 'attr-expediente',
+                    name: 'expediente',
+                }),
+            ],
+        }),
+        createStrongEntity({
+            idMx: 'entity-profesor',
+            name: 'Profesor',
+            attributes: [
+                createAttribute({
+                    idMx: 'attr-categoria',
+                    name: 'categoria',
+                }),
+            ],
+        }),
+    ]
+
+    return createDiagram({
+        entities,
+        isas: [
+            createIsaHierarchy({
+                idMx: 'isa-persona',
+                generalization: entities[0],
+                specializations: [entities[1], entities[2]],
+            }),
+        ],
+    })
+}
+
+export const createCompositeIsaDiagram = () => {
+    const entities = [
+        createStrongEntity({
+            idMx: 'entity-documento',
+            name: 'Documento',
+            attributes: [
+                createAttribute({
+                    idMx: 'attr-codigo',
+                    name: 'codigo',
+                    key: true,
+                    children: [
+                        createAttribute({
+                            idMx: 'attr-serie',
+                            name: 'serie',
+                        }),
+                        createAttribute({
+                            idMx: 'attr-numero',
+                            name: 'numero',
+                        }),
+                    ],
+                }),
+                createAttribute({
+                    idMx: 'attr-titulo',
+                    name: 'titulo',
+                }),
+            ],
+        }),
+        createStrongEntity({
+            idMx: 'entity-libro',
+            name: 'Libro',
+            attributes: [
+                createAttribute({
+                    idMx: 'attr-isbn',
+                    name: 'isbn',
+                }),
+            ],
+        }),
+    ]
+
+    return createDiagram({
+        entities,
+        isas: [
+            createIsaHierarchy({
+                idMx: 'isa-documento',
+                generalization: entities[0],
+                specializations: [entities[1]],
             }),
         ],
     })

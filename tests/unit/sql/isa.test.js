@@ -1,150 +1,19 @@
 import { describe, expect, test } from 'vitest'
 import { generateSQL } from '../../../src/services/sql'
 import { buildSQLAssertions } from '../../helpers/sqlAssertions'
+import {
+    createAttribute,
+    createBasicIsaDiagram,
+    createCompositeIsaDiagram,
+    createStrongEntity,
+} from '../../helpers/diagramBuilders'
 
 const { expectSQLToContain, expectSQLNotToContain } =
     buildSQLAssertions(expect)
 
-const createIsaGraph = () => ({
-    entities: [
-        {
-            idMx: 'entity-persona',
-            name: 'Persona',
-            weak: false,
-            attributes: [
-                {
-                    idMx: 'attr-id-persona',
-                    name: 'id_persona',
-                    key: true,
-                    partialKey: false,
-                },
-                {
-                    idMx: 'attr-nombre',
-                    name: 'nombre',
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        },
-        {
-            idMx: 'entity-alumno',
-            name: 'Alumno',
-            weak: false,
-            attributes: [
-                {
-                    idMx: 'attr-expediente',
-                    name: 'expediente',
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        },
-        {
-            idMx: 'entity-profesor',
-            name: 'Profesor',
-            weak: false,
-            attributes: [
-                {
-                    idMx: 'attr-categoria',
-                    name: 'categoria',
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        },
-    ],
-    relations: [],
-    isas: [
-        {
-            idMx: 'isa-persona',
-            generalization: {
-                edgeId: 'edge-persona',
-                entity: { idMx: 'entity-persona' },
-            },
-            specializations: [
-                {
-                    edgeId: 'edge-alumno',
-                    entity: { idMx: 'entity-alumno' },
-                },
-                {
-                    edgeId: 'edge-profesor',
-                    entity: { idMx: 'entity-profesor' },
-                },
-            ],
-        },
-    ],
-})
-
-const createCompositeIsaGraph = () => ({
-    entities: [
-        {
-            idMx: 'entity-documento',
-            name: 'Documento',
-            weak: false,
-            attributes: [
-                {
-                    idMx: 'attr-codigo',
-                    name: 'codigo',
-                    key: true,
-                    partialKey: false,
-                    children: [
-                        {
-                            idMx: 'attr-serie',
-                            name: 'serie',
-                            key: false,
-                            partialKey: false,
-                        },
-                        {
-                            idMx: 'attr-numero',
-                            name: 'numero',
-                            key: false,
-                            partialKey: false,
-                        },
-                    ],
-                },
-                {
-                    idMx: 'attr-titulo',
-                    name: 'titulo',
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        },
-        {
-            idMx: 'entity-libro',
-            name: 'Libro',
-            weak: false,
-            attributes: [
-                {
-                    idMx: 'attr-isbn',
-                    name: 'isbn',
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        },
-    ],
-    relations: [],
-    isas: [
-        {
-            idMx: 'isa-documento',
-            generalization: {
-                edgeId: 'edge-documento',
-                entity: { idMx: 'entity-documento' },
-            },
-            specializations: [
-                {
-                    edgeId: 'edge-libro',
-                    entity: { idMx: 'entity-libro' },
-                },
-            ],
-        },
-    ],
-})
-
 describe('ISA SQL generation', () => {
     test('should generate specialization tables whose inherited key is both primary key and foreign key', () => {
-        const sql = generateSQL(createIsaGraph())
+        const sql = generateSQL(createBasicIsaDiagram())
 
         expectSQLToContain(
             sql,
@@ -180,7 +49,7 @@ describe('ISA SQL generation', () => {
     })
 
     test('should inherit composite primary keys in specialization tables', () => {
-        const sql = generateSQL(createCompositeIsaGraph())
+        const sql = generateSQL(createCompositeIsaDiagram())
 
         expectSQLToContain(
             sql,
@@ -212,21 +81,15 @@ describe('ISA SQL generation', () => {
     })
 
     test('should use the inherited specialization key when another relation references the specialization', () => {
-        const graph = createIsaGraph()
+        const graph = createBasicIsaDiagram()
 
-        graph.entities.push({
-            idMx: 'entity-matricula',
-            name: 'Matricula',
-            weak: false,
-            attributes: [
-                {
-                    idMx: 'attr-id-matricula',
-                    name: 'id_matricula',
-                    key: true,
-                    partialKey: false,
-                },
-            ],
-        })
+        graph.entities.push(
+            createStrongEntity({
+                idMx: 'entity-matricula',
+                name: 'Matricula',
+                keyName: 'id_matricula',
+            }),
+        )
 
         graph.relations.push({
             idMx: 'relation-realiza',
@@ -261,32 +124,30 @@ describe('ISA SQL generation', () => {
     })
     
     test('should generate an attribute-less specialization table with inherited key and relationship foreign key', () => {
-        const graph = createIsaGraph()
+        const graph = createBasicIsaDiagram()
 
         const profesor = graph.entities.find(
             (entity) => entity.idMx === 'entity-profesor',
         )
         profesor.attributes = []
 
-        graph.entities.push({
-            idMx: 'entity-departamento',
-            name: 'Departamento',
-            weak: false,
-            attributes: [
-                {
-                    idMx: 'attr-id-departamento',
-                    name: 'id_departamento',
-                    key: true,
-                    partialKey: false,
-                },
-                {
-                    idMx: 'attr-nombre-departamento',
-                    name: 'nombre_departamento',
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        })
+        graph.entities.push(
+            createStrongEntity({
+                idMx: 'entity-departamento',
+                name: 'Departamento',
+                attributes: [
+                    createAttribute({
+                        idMx: 'attr-id-departamento',
+                        name: 'id_departamento',
+                        key: true,
+                    }),
+                    createAttribute({
+                        idMx: 'attr-nombre-departamento',
+                        name: 'nombre_departamento',
+                    }),
+                ],
+            }),
+        )
 
         graph.relations.push({
             idMx: 'relation-asignado',
