@@ -37,6 +37,21 @@ export const createStrongEntity = ({ idMx, name, keyName, attributes }) => ({
             : []),
 })
 
+export const createWeakEntity = ({
+    idMx,
+    name,
+    ownerEntityId,
+    identifyingRelationId,
+    attributes = [],
+}) => ({
+    idMx,
+    name,
+    weak: true,
+    ownerEntityId,
+    ...(identifyingRelationId ? { identifyingRelationId } : {}),
+    attributes,
+})
+
 export const createTernarySide = ({
     idMx,
     entity,

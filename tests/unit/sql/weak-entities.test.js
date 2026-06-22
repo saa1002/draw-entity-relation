@@ -1,156 +1,143 @@
 import { describe, expect, test } from 'vitest'
+import {
+    createAttribute,
+    createDiagram,
+    createStrongEntity,
+    createWeakEntity,
+} from '../../helpers/diagramBuilders'
 import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { generateSQL } from '../../../src/services/sql'
 
 const { expectSQLToContain, expectSQLNotToContain } =
     buildSQLAssertions(expect)
 
+const getEntityId = (entity) =>
+    typeof entity === 'string' ? entity : entity.idMx
+
+const createIdentifyingRelation = ({
+    idMx,
+    name,
+    weakEntity,
+    ownerEntity,
+    weakCardinality = '1:N',
+}) => ({
+    idMx,
+    name,
+    isIdentifying: true,
+    attributes: [],
+    side1: {
+        cardinality: weakCardinality,
+        entity: { idMx: getEntityId(weakEntity) },
+    },
+    side2: {
+        cardinality: '1:1',
+        entity: { idMx: getEntityId(ownerEntity) },
+    },
+})
+
 function createPedidoLineaPedidoGraph(lineaPedidoAttributes = []) {
-    return {
-        entities: [
-            {
-                idMx: '1',
-                name: 'Pedido',
-                weak: false,
-                attributes: [
-                    {
-                        idMx: '2',
-                        name: 'id_pedido',
-                        key: true,
-                        partialKey: false,
-                    },
-                ],
-            },
-            {
-                idMx: '3',
-                name: 'LineaPedido',
-                weak: true,
-                ownerEntityId: '1',
-                identifyingRelationId: '4',
-                attributes: lineaPedidoAttributes,
-            },
-        ],
+    const pedido = createStrongEntity({
+        idMx: '1',
+        name: 'Pedido',
+        keyName: 'id_pedido',
+    })
+
+    const lineaPedido = createWeakEntity({
+        idMx: '3',
+        name: 'LineaPedido',
+        ownerEntityId: pedido.idMx,
+        identifyingRelationId: '4',
+        attributes: lineaPedidoAttributes,
+    })
+
+    return createDiagram({
+        entities: [pedido, lineaPedido],
         relations: [
-            {
+            createIdentifyingRelation({
                 idMx: '4',
                 name: 'Identifica',
-                isIdentifying: true,
-                attributes: [],
-                side1: {
-                    cardinality: '1:N',
-                    entity: { idMx: '3' },
-                },
-                side2: {
-                    cardinality: '1:1',
-                    entity: { idMx: '1' },
-                },
-            },
+                weakEntity: lineaPedido,
+                ownerEntity: pedido,
+            }),
         ],
-    }
+    })
 }
 
 function createCascadedWeakEntitiesGraph(extraRelations = []) {
-    const strongEntity = {
+    const strongEntity = createStrongEntity({
         idMx: 'entity-0',
         name: 'Entidad0',
-        weak: false,
         attributes: [
-            {
+            createAttribute({
                 idMx: 'attr-0',
                 name: 'A0',
                 key: true,
-                partialKey: false,
-            },
+            }),
         ],
-    }
+    })
 
-    const weakEntity1 = {
+    const weakEntity1 = createWeakEntity({
         idMx: 'entity-1',
         name: 'Entidad1',
-        weak: true,
         ownerEntityId: strongEntity.idMx,
         identifyingRelationId: 'relation-identifying-0',
         attributes: [
-            {
+            createAttribute({
                 idMx: 'attr-1',
                 name: 'A1',
-                key: false,
                 partialKey: true,
-            },
+            }),
         ],
-    }
+    })
 
-    const weakEntity2 = {
+    const weakEntity2 = createWeakEntity({
         idMx: 'entity-2',
         name: 'Entidad2',
-        weak: true,
         ownerEntityId: weakEntity1.idMx,
         identifyingRelationId: 'relation-identifying-1',
         attributes: [
-            {
+            createAttribute({
                 idMx: 'attr-2',
                 name: 'A2',
-                key: false,
                 partialKey: true,
-            },
+            }),
         ],
-    }
+    })
 
-    const identifyingRelation0 = {
-        idMx: 'relation-identifying-0',
-        name: 'R0',
-        isIdentifying: true,
-        attributes: [],
-        side1: {
-            cardinality: '0:N',
-            entity: { idMx: weakEntity1.idMx },
-        },
-        side2: {
-            cardinality: '1:1',
-            entity: { idMx: strongEntity.idMx },
-        },
-    }
-
-    const identifyingRelation1 = {
-        idMx: 'relation-identifying-1',
-        name: 'R1',
-        isIdentifying: true,
-        attributes: [],
-        side1: {
-            cardinality: '0:N',
-            entity: { idMx: weakEntity2.idMx },
-        },
-        side2: {
-            cardinality: '1:1',
-            entity: { idMx: weakEntity1.idMx },
-        },
-    }
-
-    return {
+    return createDiagram({
         entities: [strongEntity, weakEntity1, weakEntity2],
         relations: [
-            identifyingRelation0,
-            identifyingRelation1,
+            createIdentifyingRelation({
+                idMx: 'relation-identifying-0',
+                name: 'R0',
+                weakEntity: weakEntity1,
+                ownerEntity: strongEntity,
+                weakCardinality: '0:N',
+            }),
+            createIdentifyingRelation({
+                idMx: 'relation-identifying-1',
+                name: 'R1',
+                weakEntity: weakEntity2,
+                ownerEntity: weakEntity1,
+                weakCardinality: '0:N',
+            }),
             ...extraRelations,
         ],
-    }
+    })
 }
 
 describe('Weak entity SQL generation', () => {
     test('a weak entity should generate a composite primary key with owner key and partial key', () => {
         const graph = createPedidoLineaPedidoGraph([
-            {
+            createAttribute({
                 idMx: '5',
                 name: 'numero_linea',
-                key: false,
                 partialKey: true,
-            },
-            {
+            }),
+            createAttribute({
                 idMx: '6',
                 name: 'cantidad',
-                key: false,
-                partialKey: false,
-            },
+            })
         ])
 
         const sql = generateSQL(graph)
@@ -170,25 +157,20 @@ describe('Weak entity SQL generation', () => {
 
     test('a weak entity should generate a separate table for a simple multivalued attribute', () => {
         const graph = createPedidoLineaPedidoGraph([
-            {
+            createAttribute({
                 idMx: '5',
                 name: 'numero_linea',
-                key: false,
                 partialKey: true,
-            },
-            {
+            }),
+            createAttribute({
                 idMx: '6',
                 name: 'cantidad',
-                key: false,
-                partialKey: false,
-            },
-            {
+            }),
+            createAttribute({
                 idMx: '7',
                 name: 'etiqueta',
-                key: false,
-                partialKey: false,
                 multivalued: true,
-            },
+            })
         ])
 
         const sql = generateSQL(graph)
@@ -224,12 +206,11 @@ describe('Weak entity SQL generation', () => {
     
     test('an identifying relation should not generate a standalone table', () => {
         const graph = createPedidoLineaPedidoGraph([
-            {
+            createAttribute({
                 idMx: '5',
                 name: 'numero_linea',
-                key: false,
                 partialKey: true,
-            },
+            })
         ])
 
         const sql = generateSQL(graph)
@@ -353,12 +334,10 @@ describe('Weak entity SQL generation', () => {
             name: 'Reflex',
             isIdentifying: false,
             attributes: [
-                {
+                createAttribute({
                     idMx: 'relation-attr-0',
                     name: 'Atributo',
-                    key: false,
-                    partialKey: false,
-                },
+                }),
             ],
             side1: {
                 cardinality: '0:N',
@@ -402,32 +381,25 @@ describe('Weak entity SQL generation', () => {
 
     test('a weak entity should project a composite partial key to leaf columns', () => {
         const graph = createPedidoLineaPedidoGraph([
-            {
+            createAttribute({
                 idMx: '5',
                 name: 'codigo',
-                key: false,
                 partialKey: true,
                 children: [
-                    {
+                    createAttribute({
                         idMx: '6',
                         name: 'serie',
-                        key: false,
-                        partialKey: false,
-                    },
-                    {
+                    }),
+                    createAttribute({
                         idMx: '7',
                         name: 'numero',
-                        key: false,
-                        partialKey: false,
-                    },
+                    }),
                 ],
-            },
-            {
+            }),
+            createAttribute({
                 idMx: '8',
                 name: 'cantidad',
-                key: false,
-                partialKey: false,
-            },
+            })
         ])
 
         const sql = generateSQL(graph)
@@ -444,39 +416,30 @@ describe('Weak entity SQL generation', () => {
     
     test('a weak entity should generate a separate table for a composite multivalued attribute', () => {
         const graph = createPedidoLineaPedidoGraph([
-            {
+            createAttribute({
                 idMx: '5',
                 name: 'numero_linea',
-                key: false,
                 partialKey: true,
-            },
-            {
+            }),
+            createAttribute({
                 idMx: '6',
                 name: 'cantidad',
-                key: false,
-                partialKey: false,
-            },
-            {
-                idMx: '7',
+            }),
+            createAttribute({
+                idMx:'7',
                 name: 'contacto',
-                key: false,
-                partialKey: false,
                 multivalued: true,
                 children: [
-                    {
+                    createAttribute({
                         idMx: '8',
                         name: 'prefijo',
-                        key: false,
-                        partialKey: false,
-                    },
-                    {
+                    }),
+                    createAttribute({
                         idMx: '9',
                         name: 'numero',
-                        key: false,
-                        partialKey: false,
-                    },
-                ],
-            },
+                    })
+                ]
+            })
         ])
 
         const sql = generateSQL(graph)
