@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
+import { createAttribute } from '../../helpers/diagramBuilders'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     filterTables,
@@ -7,14 +8,19 @@ import {
 
 let nMGraph
 
+const extractNMTables = () => {
+    const filteredTables = filterTables(nMGraph)
+
+    return processNMRelation(filteredTables.at(0))
+}
+
 beforeEach(() => {
     nMGraph = loadGraphFixture('n-m-relation.json')
 })
 
 describe("N:M relation extraction", () => {
     test("should create a junction table with both foreign keys as a composite primary key", () => {
-        const filteredTables = filterTables(nMGraph)
-        const tables = processNMRelation(filteredTables.at(0))
+        const tables = extractNMTables()
 
         const leftEntityTable = tables.at(0)
         const rightEntityTable = tables.at(1)
@@ -38,8 +44,7 @@ describe("N:M relation extraction", () => {
     })
 
     test("should keep relation attributes in the junction table", () => {
-        const filteredTables = filterTables(nMGraph)
-        const tables = processNMRelation(filteredTables.at(0))
+        const tables = extractNMTables()
 
         const junctionTable = tables.at(2)
         const relationAttribute = junctionTable.attributes.at(2)
@@ -50,29 +55,24 @@ describe("N:M relation extraction", () => {
     })
 
     test("should project composite attributes in participating entity tables", () => {
-        nMGraph.entities.at(0).attributes.push({
-            idMx: "7",
-            name: "direccion",
-            key: false,
-            partialKey: false,
-            children: [
-                {
-                    idMx: "8",
-                    name: "calle",
-                    key: false,
-                    partialKey: false,
-                },
-                {
-                    idMx: "9",
-                    name: "ciudad",
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        });
+        nMGraph.entities.at(0).attributes.push(
+            createAttribute({
+                idMx: '7',
+                name: 'direccion',
+                children: [
+                    createAttribute({
+                        idMx: '8',
+                        name: 'calle',
+                    }),
+                    createAttribute({
+                        idMx: '9',
+                        name: 'ciudad',
+                    }),
+                ],
+            }),
+        )
 
-        const filteredTables = filterTables(nMGraph);
-        const tables = processNMRelation(filteredTables.at(0));
+        const tables = extractNMTables()
 
         const leftEntityTable = tables.at(0);
 
@@ -88,30 +88,24 @@ describe("N:M relation extraction", () => {
     
     test("should use all leaf columns from a composite primary key in the junction table", () => {
         nMGraph.entities.at(0).attributes = [
-            {
-                idMx: "3",
-                name: "codigo",
+            createAttribute({
+                idMx: '3',
+                name: 'codigo',
                 key: true,
-                partialKey: false,
                 children: [
-                    {
-                        idMx: "7",
-                        name: "serie",
-                        key: false,
-                        partialKey: false,
-                    },
-                    {
-                        idMx: "8",
-                        name: "numero",
-                        key: false,
-                        partialKey: false,
-                    },
+                    createAttribute({
+                        idMx: '7',
+                        name: 'serie',
+                    }),
+                    createAttribute({
+                        idMx: '8',
+                        name: 'numero',
+                    }),
                 ],
-            },
-        ];
+            }),
+        ]
 
-        const filteredTables = filterTables(nMGraph);
-        const tables = processNMRelation(filteredTables.at(0));
+        const tables = extractNMTables()
 
         const junctionTable = tables.at(2);
 
@@ -130,30 +124,23 @@ describe("N:M relation extraction", () => {
     });
     test("should project composite relation attributes in the junction table", () => {
         nMGraph.relations.at(0).attributes = [
-            {
-                idMx: "13",
-                name: "periodo",
-                key: false,
-                partialKey: false,
+            createAttribute({
+                idMx: '13',
+                name: 'periodo',
                 children: [
-                    {
-                        idMx: "14",
-                        name: "inicio",
-                        key: false,
-                        partialKey: false,
-                    },
-                    {
-                        idMx: "15",
-                        name: "fin",
-                        key: false,
-                        partialKey: false,
-                    },
+                    createAttribute({
+                        idMx: '14',
+                        name: 'inicio',
+                    }),
+                    createAttribute({
+                        idMx: '15',
+                        name: 'fin',
+                    }),
                 ],
-            },
-        ];
+            }),
+        ]
 
-        const filteredTables = filterTables(nMGraph);
-        const tables = processNMRelation(filteredTables.at(0));
+        const tables = extractNMTables()
 
         const junctionTable = tables.at(2);
 

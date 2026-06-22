@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
+import { createAttribute } from '../../helpers/diagramBuilders'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     filterTables,
@@ -56,26 +57,22 @@ describe("1:N relation extraction", () => {
     })
 
     test("should project composite attributes in related entity tables", () => {
-        oneNGraph.entities.at(1).attributes.push({
-            idMx: "7",
-            name: "direccion",
-            key: false,
-            partialKey: false,
-            children: [
-                {
-                    idMx: "8",
-                    name: "calle",
-                    key: false,
-                    partialKey: false,
-                },
-                {
-                    idMx: "9",
-                    name: "ciudad",
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        });
+        oneNGraph.entities.at(1).attributes.push(
+            createAttribute({
+                idMx: '7',
+                name: 'direccion',
+                children: [
+                    createAttribute({
+                        idMx: '8',
+                        name: 'calle',
+                    }),
+                    createAttribute({
+                        idMx: '9',
+                        name: 'ciudad',
+                    }),
+                ],
+            }),
+        )
 
         const tables = extract1NTables();
         const targetTable = tables.at(1);
@@ -93,27 +90,22 @@ describe("1:N relation extraction", () => {
 
     test("should copy all leaf columns from a composite primary key in a 1:N relation", () => {
         oneNGraph.entities.at(0).attributes = [
-            {
-                idMx: "3",
-                name: "codigo",
+            createAttribute({
+                idMx: '3',
+                name: 'codigo',
                 key: true,
-                partialKey: false,
                 children: [
-                    {
-                        idMx: "7",
-                        name: "serie",
-                        key: false,
-                        partialKey: false,
-                    },
-                    {
-                        idMx: "8",
-                        name: "numero",
-                        key: false,
-                        partialKey: false,
-                    },
+                    createAttribute({
+                        idMx: '7',
+                        name: 'serie',
+                    }),
+                    createAttribute({
+                        idMx: '8',
+                        name: 'numero',
+                    }),
                 ],
-            },
-        ];
+            }),
+        ]
 
         const tables = extract1NTables();
         const targetTable = tables.at(1);
@@ -185,26 +177,22 @@ describe("1:1 relation extraction", () => {
     })
     
     test("should project composite attributes when a mandatory 1:1 relation merges both entities", () => {
-        oneOneGraph.entities.at(0).attributes.push({
-            idMx: "7",
-            name: "nombre",
-            key: false,
-            partialKey: false,
-            children: [
-                {
-                    idMx: "8",
-                    name: "primero",
-                    key: false,
-                    partialKey: false,
-                },
-                {
-                    idMx: "9",
-                    name: "segundo",
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        });
+        oneOneGraph.entities.at(0).attributes.push(
+            createAttribute({
+                idMx: '7',
+                name: 'nombre',
+                children: [
+                    createAttribute({
+                        idMx: '8',
+                        name: 'primero',
+                    }),
+                    createAttribute({
+                        idMx: '9',
+                        name: 'segundo',
+                    }),
+                ],
+            }),
+        )
 
         const tables = extract11Tables();
         const mergedTable = tables.at(0);
