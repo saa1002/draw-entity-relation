@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     createAttribute,
     createBinaryRelation,
@@ -7,8 +6,14 @@ import {
     createRelationSide,
     createStrongEntity,
 } from '../../helpers/diagramBuilders'
+import { loadGraphFixture } from '../../helpers/graphLoader'
 import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { generateSQL } from '../../../src/services/sql'
+
+const { expectSQLToMatch } = buildSQLAssertions(expect)
+
+const countOccurrences = (text, fragment) =>
+    text.split(fragment).length - 1
 
 const createForeignKeyCycleRelation = ({
     idMx,
@@ -104,29 +109,41 @@ const createForeignKeyCycleGraph = () => {
     })
 }
 
-const { expectSQLToMatch, expectSQLToContain } = buildSQLAssertions(expect)
-
-const countOccurrences = (text, fragment) =>
-    text.split(fragment).length - 1
+const createCompositeRelationAttribute = () =>
+    createAttribute({
+        idMx: '13',
+        name: 'periodo',
+        children: [
+            createAttribute({
+                idMx: '14',
+                name: 'inicio',
+            }),
+            createAttribute({
+                idMx: '15',
+                name: 'fin',
+            }),
+        ],
+    })
 
 let oneNGraph
 let oneOneGraph
 let nMGraph
-let oneNGraphAndEntity
-
+let oneNGraphWithIsolatedEntity
 
 beforeEach(() => {
     oneNGraph = loadGraphFixture('1-n-relation.json')
     oneOneGraph = loadGraphFixture('1-1-relation.json')
     nMGraph = loadGraphFixture('n-m-relation.json')
-    oneNGraphAndEntity = loadGraphFixture('1-n-relation_alone-entity.json')
+    oneNGraphWithIsolatedEntity = loadGraphFixture(
+        '1-n-relation_alone-entity.json',
+    )
 })
 
-describe("SQL generation", () => {
-    test("should generate SQL for a 1:N relation", () => {
+describe('Basic SQL generation', () => {
+    test('generates SQL for a 1:N relation', () => {
         const sql = generateSQL(oneNGraph)
-        const expectedSQL = 
-`DROP TABLE IF EXISTS Entidad, Entidad_1 CASCADE;
+
+        const expectedSQL = `DROP TABLE IF EXISTS Entidad, Entidad_1 CASCADE;
 
 CREATE TABLE Entidad (
   Atributo VARCHAR(40) PRIMARY KEY
@@ -136,15 +153,17 @@ CREATE TABLE Entidad_1 (
   Atributo VARCHAR(40) PRIMARY KEY,
   Atributo_Relacion VARCHAR(40) REFERENCES Entidad
 );
-`;
-        expectSQLToMatch(sql, expectedSQL)
-    });
+`
 
-    test("should generate SQL for a 0:1-1:1 relation", () => {
-        oneOneGraph.relations.at(0).side1.cardinality = "0:1"
+        expectSQLToMatch(sql, expectedSQL)
+    })
+
+    test('generates SQL for a 0:1-1:1 relation', () => {
+        oneOneGraph.relations.at(0).side1.cardinality = '0:1'
+
         const sql = generateSQL(oneOneGraph)
-        const expectedSQL = 
-`DROP TABLE IF EXISTS Entidad_1, Entidad CASCADE;
+
+        const expectedSQL = `DROP TABLE IF EXISTS Entidad_1, Entidad CASCADE;
 
 CREATE TABLE Entidad_1 (
   Atributo VARCHAR(40) PRIMARY KEY
@@ -154,14 +173,15 @@ CREATE TABLE Entidad (
   Atributo VARCHAR(40) PRIMARY KEY,
   Atributo_Relacion VARCHAR(40) UNIQUE NOT NULL REFERENCES Entidad_1
 );
-`;
-        expectSQLToMatch(sql, expectedSQL)
-    });
+`
 
-    test("should generate SQL for an N:M relation", () => {
+        expectSQLToMatch(sql, expectedSQL)
+    })
+
+    test('generates SQL for an N:M relation', () => {
         const sql = generateSQL(nMGraph)
-        const expectedSQL = 
-`DROP TABLE IF EXISTS Entidad, Entidad_1, Relacion CASCADE;
+
+        const expectedSQL = `DROP TABLE IF EXISTS Entidad, Entidad_1, Relacion CASCADE;
 
 CREATE TABLE Entidad (
   Atributo VARCHAR(40) PRIMARY KEY
@@ -177,16 +197,15 @@ CREATE TABLE Relacion (
   Atributo VARCHAR(40),
   PRIMARY KEY (Atributo_Relacion_1, Atributo_Relacion_2)
 );
-`;
+`
 
         expectSQLToMatch(sql, expectedSQL)
-    });
+    })
 
-    test("should generate SQL for a graph with an isolated entity", () => {
-        const sql = generateSQL(oneNGraphAndEntity)
+    test('generates SQL for a graph with an isolated entity', () => {
+        const sql = generateSQL(oneNGraphWithIsolatedEntity)
 
-        const expectedSQL = 
-`DROP TABLE IF EXISTS Entidad_1, Entidad_2, Entidad CASCADE;
+        const expectedSQL = `DROP TABLE IF EXISTS Entidad_1, Entidad_2, Entidad CASCADE;
 
 CREATE TABLE Entidad_1 (
   Atributo VARCHAR(40) PRIMARY KEY
@@ -200,61 +219,46 @@ CREATE TABLE Entidad_2 (
 CREATE TABLE Entidad (
   Atributo VARCHAR(40) PRIMARY KEY
 );
-`;
+`
 
         expectSQLToMatch(sql, expectedSQL)
-    });
+    })
+})
 
-    test("should use normalized table names in foreign key references", () => {
-        oneNGraph.entities.at(0).name = "País";
-        oneNGraph.entities.at(1).name = "Ciudad";
+describe('SQL identifier rendering', () => {
+    test('uses normalized table names in foreign key references', () => {
+        oneNGraph.entities.at(0).name = 'País'
+        oneNGraph.entities.at(1).name = 'Ciudad'
 
-        const sql = generateSQL(oneNGraph);
+        const sql = generateSQL(oneNGraph)
 
-        expect(sql).toContain("CREATE TABLE Pais")
-        expect(sql).toContain("REFERENCES Pais")
-    });
+        expect(sql).toContain('CREATE TABLE Pais')
+        expect(sql).toContain('REFERENCES Pais')
+    })
 
-    test("should omit the target primary key column in simple foreign key references", () => {
+    test('omits the target primary key column in simple foreign key references', () => {
         const sql = generateSQL(oneNGraph)
 
         expect(sql).toContain(
-            "Atributo_Relacion VARCHAR(40) REFERENCES Entidad"
-        );
-    });
-    
-    test("should generate leaf columns for composite attributes in an N:M relation", () => {
-        nMGraph.relations.at(0).attributes = [
-            {
-                idMx: "13",
-                name: "periodo",
-                key: false,
-                partialKey: false,
-                children: [
-                    {
-                        idMx: "14",
-                        name: "inicio",
-                        key: false,
-                        partialKey: false,
-                    },
-                    {
-                        idMx: "15",
-                        name: "fin",
-                        key: false,
-                        partialKey: false,
-                    },
-                ],
-            },
-        ];
+            'Atributo_Relacion VARCHAR(40) REFERENCES Entidad',
+        )
+    })
+})
 
-        const sql = generateSQL(nMGraph);
+describe('Composite relation attributes', () => {
+    test('generates leaf columns for composite attributes in an N:M relation', () => {
+        nMGraph.relations.at(0).attributes = [createCompositeRelationAttribute()]
 
-        expect(sql).toContain("inicio VARCHAR(40)");
-        expect(sql).toContain("fin VARCHAR(40)");
-        expect(sql).not.toContain("periodo VARCHAR(40)");
-    });
+        const sql = generateSQL(nMGraph)
 
-    test("should keep ALTER TABLE fallback when foreign keys form a cycle", () => {
+        expect(sql).toContain('inicio VARCHAR(40)')
+        expect(sql).toContain('fin VARCHAR(40)')
+        expect(sql).not.toContain('periodo VARCHAR(40)')
+    })
+})
+
+describe('Foreign key cycle fallback', () => {
+    test('keeps ALTER TABLE fallback when foreign keys form a cycle', () => {
         const graph = createForeignKeyCycleGraph()
 
         const sql = generateSQL(graph)
@@ -263,4 +267,4 @@ CREATE TABLE Entidad (
         expect(countOccurrences(sql, 'ALTER TABLE')).toBe(1)
         expect(sql).toContain('FOREIGN KEY')
     })
-});
+})
