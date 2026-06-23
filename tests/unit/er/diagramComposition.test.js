@@ -4,48 +4,180 @@ import {
     composeDiagramData,
     mergeDiagramData,
 } from "../../../src/domain/er/diagramComposition";
+import {
+    createAttribute,
+    createBinaryRelation,
+    createDiagram,
+    createIsaHierarchy,
+    createRelationSide,
+    createStrongEntity,
+    createWeakEntity,
+} from "../../helpers/diagramBuilders";
 
-const createEntity = ({
+const createImportAttribute = ({
+    idMx,
+    name = "id",
+    x,
+    y,
+    key = true,
+    partialKey = false,
+    offsetX = 120,
+    offsetY = 0,
+} = {}) =>
+    createAttribute({
+        idMx,
+        name,
+        position: { x, y },
+        key,
+        partialKey,
+        cell: [idMx, `${idMx}-edge`],
+        offsetX,
+        offsetY,
+    });
+
+const createImportEntity = ({
     idMx,
     name,
     x,
     y,
     attributeId = `${idMx}-attr`,
     attributeName = "id",
+    attributes,
 }) => ({
-    idMx,
-    name,
+    ...createStrongEntity({
+        idMx,
+        name,
+        attributes:
+            attributes ??
+            [
+                createImportAttribute({
+                    idMx: attributeId,
+                    name: attributeName,
+                    x: x + 120,
+                    y,
+                }),
+            ],
+    }),
     position: { x, y },
-    weak: false,
     ownerEntityId: null,
     identifyingRelationId: null,
-    attributes: [
-        {
-            idMx: attributeId,
-            name: attributeName,
-            position: { x: x + 120, y },
-            key: true,
-            partialKey: false,
-            cell: [attributeId, `${attributeId}-edge`],
-            offsetX: 120,
-            offsetY: 0,
-        },
-    ],
 });
+
+const createImportWeakEntity = ({
+    idMx,
+    name,
+    x,
+    y,
+    ownerEntityId,
+    identifyingRelationId,
+    attributeId = "weak-discriminant",
+    attributeName = "discriminante",
+}) => ({
+    ...createWeakEntity({
+        idMx,
+        name,
+        ownerEntityId,
+        identifyingRelationId,
+        attributes: [
+            createImportAttribute({
+                idMx: attributeId,
+                name: attributeName,
+                x: x + 120,
+                y,
+                key: false,
+                partialKey: true,
+            }),
+        ],
+    }),
+    position: { x, y },
+});
+
+const createImportRelationSide = ({
+    idMx,
+    entity,
+    cardinality = "1:1",
+}) =>
+    createRelationSide({
+        idMx,
+        cardinality,
+        role: "",
+        cell: idMx,
+        edgeId: `${idMx}-edge`,
+        entity,
+    });
+
+const createSelfRelation = ({
+    idMx,
+    name,
+    entity,
+    x = 260,
+    y = 100,
+}) =>
+    createBinaryRelation({
+        idMx,
+        name,
+        position: { x, y },
+        canHoldAttributes: false,
+        isIdentifying: false,
+        side1: createImportRelationSide({
+            idMx: `${idMx}-side1`,
+            entity,
+        }),
+        side2: createImportRelationSide({
+            idMx: `${idMx}-side2`,
+            entity,
+        }),
+    });
+
+const createIdentifyingImportRelation = ({
+    idMx,
+    name,
+    ownerEntity,
+    weakEntity,
+    x = 200,
+    y = 100,
+}) =>
+    createBinaryRelation({
+        idMx,
+        name,
+        position: { x, y },
+        canHoldAttributes: false,
+        isIdentifying: true,
+        side1: createImportRelationSide({
+            idMx: `${idMx}-side-1`,
+            entity: ownerEntity,
+            cardinality: "1:1",
+        }),
+        side2: createImportRelationSide({
+            idMx: `${idMx}-side-2`,
+            entity: weakEntity,
+            cardinality: "0:N",
+        }),
+    });
 
 describe("diagram composition", () => {
     test("replace mode returns the imported diagram without keeping current elements", () => {
-        const currentDiagram = {
-            entities: [createEntity({ idMx: "entity-1", name: "Cliente", x: 0, y: 0 })],
-            relations: [],
-            isas: [],
-        };
+        const currentDiagram = createDiagram({
+            entities: [
+                createImportEntity({
+                    idMx: "entity-1",
+                    name: "Cliente",
+                    x: 0,
+                    y: 0,
+                }),
+            ],
+        });
 
-        const importedDiagram = {
-            entities: [createEntity({ idMx: "entity-2", name: "Pedido", x: 100, y: 100 })],
-            relations: [],
-            isas: [],
-        };
+        const importedDiagram = createDiagram({
+            entities: [
+                createImportEntity({
+                    idMx: "entity-2",
+                    name: "Pedido",
+                    x: 100,
+                    y: 100,
+                }),
+            ],
+        });
 
         const result = composeDiagramData({
             currentDiagram,
@@ -58,9 +190,9 @@ describe("diagram composition", () => {
     });
 
     test("merge mode keeps current elements and renames duplicated entity and relation names", () => {
-        const currentDiagram = {
+        const currentDiagram = createDiagram({
             entities: [
-                createEntity({
+                createImportEntity({
                     idMx: "entity-1",
                     name: "Entidad",
                     x: 100,
@@ -68,37 +200,17 @@ describe("diagram composition", () => {
                 }),
             ],
             relations: [
-                {
+                createSelfRelation({
                     idMx: "relation-1",
                     name: "Relación",
-                    position: { x: 260, y: 100 },
-                    canHoldAttributes: false,
-                    isIdentifying: false,
-                    attributes: [],
-                    side1: {
-                        idMx: "relation-1-side1",
-                        cardinality: "1:1",
-                        role: "",
-                        cell: "relation-1-side1",
-                        edgeId: "relation-1-side1-edge",
-                        entity: { idMx: "entity-1" },
-                    },
-                    side2: {
-                        idMx: "relation-1-side2",
-                        cardinality: "1:1",
-                        role: "",
-                        cell: "relation-1-side2",
-                        edgeId: "relation-1-side2-edge",
-                        entity: { idMx: "entity-1" },
-                    },
-                },
+                    entity: "entity-1",
+                }),
             ],
-            isas: [],
-        };
+        });
 
-        const importedDiagram = {
+        const importedDiagram = createDiagram({
             entities: [
-                createEntity({
+                createImportEntity({
                     idMx: "entity-2",
                     name: "Entidad",
                     x: 100,
@@ -106,33 +218,13 @@ describe("diagram composition", () => {
                 }),
             ],
             relations: [
-                {
+                createSelfRelation({
                     idMx: "relation-2",
                     name: "Relación",
-                    position: { x: 260, y: 100 },
-                    canHoldAttributes: false,
-                    isIdentifying: false,
-                    attributes: [],
-                    side1: {
-                        idMx: "relation-2-side1",
-                        cardinality: "1:1",
-                        role: "",
-                        cell: "relation-2-side1",
-                        edgeId: "relation-2-side1-edge",
-                        entity: { idMx: "entity-2" },
-                    },
-                    side2: {
-                        idMx: "relation-2-side2",
-                        cardinality: "1:1",
-                        role: "",
-                        cell: "relation-2-side2",
-                        edgeId: "relation-2-side2-edge",
-                        entity: { idMx: "entity-2" },
-                    },
-                },
+                    entity: "entity-2",
+                }),
             ],
-            isas: [],
-        };
+        });
 
         const result = mergeDiagramData(currentDiagram, importedDiagram);
 
@@ -147,112 +239,67 @@ describe("diagram composition", () => {
         ]);
 
         expect(result.entities[1].idMx).not.toBe("entity-2");
-        expect(result.relations[1].side1.entity.idMx).toBe(result.entities[1].idMx);
+        expect(result.relations[1].side1.entity.idMx).toBe(
+            result.entities[1].idMx,
+        );
         expect(result.entities[1].position.x).toBeGreaterThan(
             result.entities[0].position.x,
         );
     });
 
     test("merge mode remaps ISA and weak entity references", () => {
-        const currentDiagram = {
+        const currentDiagram = createDiagram({
             entities: [
-                createEntity({
+                createImportEntity({
                     idMx: "current-entity",
                     name: "Actual",
                     x: 100,
                     y: 100,
                 }),
             ],
-            relations: [],
-            isas: [],
-        };
+        });
 
-        const importedDiagram = {
-            entities: [
-                createEntity({
-                    idMx: "owner-entity",
-                    name: "Propietaria",
-                    x: 100,
-                    y: 100,
-                }),
-                {
-                    ...createEntity({
-                        idMx: "weak-entity",
-                        name: "Débil",
-                        x: 300,
-                        y: 100,
-                        attributeName: "discriminante",
-                    }),
-                    weak: true,
-                    ownerEntityId: "owner-entity",
-                    identifyingRelationId: "identifying-relation",
-                    attributes: [
-                        {
-                            idMx: "weak-discriminant",
-                            name: "discriminante",
-                            position: { x: 420, y: 100 },
-                            key: false,
-                            partialKey: true,
-                            cell: [
-                                "weak-discriminant",
-                                "weak-discriminant-edge",
-                            ],
-                            offsetX: 120,
-                            offsetY: 0,
-                        },
-                    ],
-                },
-            ],
+        const ownerEntity = createImportEntity({
+            idMx: "owner-entity",
+            name: "Propietaria",
+            x: 100,
+            y: 100,
+        });
+        const weakEntity = createImportWeakEntity({
+            idMx: "weak-entity",
+            name: "Débil",
+            x: 300,
+            y: 100,
+            ownerEntityId: ownerEntity.idMx,
+            identifyingRelationId: "identifying-relation",
+        });
+
+        const importedDiagram = createDiagram({
+            entities: [ownerEntity, weakEntity],
             relations: [
-                {
+                createIdentifyingImportRelation({
                     idMx: "identifying-relation",
                     name: "Identifica",
-                    position: { x: 200, y: 100 },
-                    canHoldAttributes: false,
-                    isIdentifying: true,
-                    attributes: [],
-                    side1: {
-                        idMx: "identifying-side-1",
-                        cardinality: "1:1",
-                        role: "",
-                        cell: "identifying-side-1",
-                        edgeId: "identifying-side-1-edge",
-                        entity: { idMx: "owner-entity" },
-                    },
-                    side2: {
-                        idMx: "identifying-side-2",
-                        cardinality: "0:N",
-                        role: "",
-                        cell: "identifying-side-2",
-                        edgeId: "identifying-side-2-edge",
-                        entity: { idMx: "weak-entity" },
-                    },
-                },
+                    ownerEntity,
+                    weakEntity,
+                }),
             ],
             isas: [
-                {
+                createIsaHierarchy({
                     idMx: "isa-1",
                     position: { x: 200, y: 300 },
-                    generalization: {
-                        edgeId: "isa-generalization-edge",
-                        entity: { idMx: "owner-entity" },
-                    },
-                    specializations: [
-                        {
-                            edgeId: "isa-specialization-edge",
-                            entity: { idMx: "weak-entity" },
-                        },
-                    ],
-                },
+                    generalization: ownerEntity,
+                    specializations: [weakEntity],
+                }),
             ],
-        };
+        });
 
         const result = mergeDiagramData(currentDiagram, importedDiagram);
 
-        const ownerEntity = result.entities.find(
+        const remappedOwnerEntity = result.entities.find(
             (entity) => entity.name === "Propietaria",
         );
-        const weakEntity = result.entities.find(
+        const remappedWeakEntity = result.entities.find(
             (entity) => entity.name === "Débil",
         );
         const identifyingRelation = result.relations.find(
@@ -260,63 +307,56 @@ describe("diagram composition", () => {
         );
         const isa = result.isas[0];
 
-        expect(weakEntity.ownerEntityId).toBe(ownerEntity.idMx);
-        expect(weakEntity.identifyingRelationId).toBe(
+        expect(remappedWeakEntity.ownerEntityId).toBe(remappedOwnerEntity.idMx);
+        expect(remappedWeakEntity.identifyingRelationId).toBe(
             identifyingRelation.idMx,
         );
-        expect(identifyingRelation.side1.entity.idMx).toBe(ownerEntity.idMx);
-        expect(identifyingRelation.side2.entity.idMx).toBe(weakEntity.idMx);
-        expect(isa.generalization.entity.idMx).toBe(ownerEntity.idMx);
-        expect(isa.specializations[0].entity.idMx).toBe(weakEntity.idMx);
+        expect(identifyingRelation.side1.entity.idMx).toBe(
+            remappedOwnerEntity.idMx,
+        );
+        expect(identifyingRelation.side2.entity.idMx).toBe(
+            remappedWeakEntity.idMx,
+        );
+        expect(isa.generalization.entity.idMx).toBe(remappedOwnerEntity.idMx);
+        expect(isa.specializations[0].entity.idMx).toBe(
+            remappedWeakEntity.idMx,
+        );
     });
 
     test("merge mode renames duplicated sibling attributes", () => {
-        const currentDiagram = {
-            entities: [],
-            relations: [],
-            isas: [],
-        };
+        const currentDiagram = createDiagram();
 
-        const importedDiagram = {
+        const importedDiagram = createDiagram({
             entities: [
-                {
+                createImportEntity({
                     idMx: "entity-1",
                     name: "Entidad",
-                    position: { x: 100, y: 100 },
-                    weak: false,
-                    ownerEntityId: null,
-                    identifyingRelationId: null,
+                    x: 100,
+                    y: 100,
                     attributes: [
-                        {
+                        createImportAttribute({
                             idMx: "attr-1",
                             name: "dato",
-                            position: { x: 220, y: 100 },
-                            key: true,
-                            partialKey: false,
-                            cell: ["attr-1", "attr-1-edge"],
-                            offsetX: 120,
-                            offsetY: 0,
-                        },
-                        {
+                            x: 220,
+                            y: 100,
+                        }),
+                        createImportAttribute({
                             idMx: "attr-2",
                             name: "dato",
-                            position: { x: 220, y: 160 },
+                            x: 220,
+                            y: 160,
                             key: false,
-                            partialKey: false,
-                            cell: ["attr-2", "attr-2-edge"],
-                            offsetX: 120,
                             offsetY: 60,
-                        },
+                        }),
                     ],
-                },
+                }),
             ],
-            relations: [],
-            isas: [],
-        };
+        });
 
         const result = mergeDiagramData(currentDiagram, importedDiagram);
 
-        expect(result.entities[0].attributes.map((attribute) => attribute.name))
-            .toEqual(["dato", "dato (1)"]);
+        expect(
+            result.entities[0].attributes.map((attribute) => attribute.name),
+        ).toEqual(["dato", "dato (1)"]);
     });
 });

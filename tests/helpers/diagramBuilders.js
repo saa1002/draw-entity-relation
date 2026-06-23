@@ -156,8 +156,10 @@ export const createIsaHierarchy = ({
     idMx,
     generalization,
     specializations,
+    ...rest
 }) => ({
     idMx,
+    ...rest,
     generalization: {
         edgeId: `edge-${getEntityReference(generalization).idMx}`,
         entity: getEntityReference(generalization),
