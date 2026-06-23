@@ -77,6 +77,7 @@ export const createBinaryRelation = ({
     attributes = [],
     canHoldAttributes = false,
     isIdentifying = false,
+    ...rest
 }) => ({
     idMx,
     name,
@@ -85,6 +86,7 @@ export const createBinaryRelation = ({
     attributes,
     side1,
     side2,
+    ...rest,
 })
 
 export const createIdentifyingRelation = ({
@@ -136,9 +138,11 @@ export const createTernaryRelation = ({
     attributes = [],
     canHoldAttributes = false,
     isIdentifying = false,
+    ...rest
 }) => ({
     idMx,
     name,
+    ...rest,
     arity: RELATION_ARITIES.TERNARY,
     canHoldAttributes,
     isIdentifying,

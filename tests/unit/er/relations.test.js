@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
+    createBinaryRelation,
+    createRelationSide,
+    createTernaryRelation as createTernaryRelationBuilder
+} from "../../helpers/diagramBuilders";
+import {
     BINARY_RELATION_SIDE_KEYS,
     canRelationTypeHoldAttributes,
     createEmptyRelationSide,
@@ -24,38 +29,58 @@ import {
     TERNARY_RELATION_SIDE_KEYS,
 } from "../../../src/domain/er/relations";
 
-const createSide = ({
+const createTestSide = ({
     idMx = "side-1",
     entityId = "entity-1",
     cardinality = "1:1",
     role = "",
-} = {}) => ({
-    idMx,
-    cardinality,
-    role,
-    cell: "",
-    edgeId: "",
-    entity: { idMx: entityId },
-});
+} = {}) =>
+    createRelationSide({
+        idMx,
+        entityId,
+        cardinality,
+        role,
+        cell: "",
+        edgeId: "",
+    });
 
-const createRelation = (overrides = {}) => ({
-    idMx: "relation-1",
-    side1: createSide({ idMx: "side-1", entityId: "entity-1" }),
-    side2: createSide({ idMx: "side-2", entityId: "entity-2" }),
-    canHoldAttributes: true,
-    ...overrides,
-});
-
-const createTernaryRelation = (overrides = {}) =>
-    createRelation({
-        arity: RELATION_ARITIES.TERNARY,
-        side3: createSide({ idMx: "side-3", entityId: "entity-3" }),
+const createTestRelation = (overrides = {}) =>
+    createBinaryRelation({
+        idMx: "relation-1",
+        side1: createTestSide({
+            idMx: "side-1",
+            entityId: "entity-1",
+        }),
+        side2: createTestSide({
+            idMx: "side-2",
+            entityId: "entity-2",
+        }),
+        canHoldAttributes: true,
         ...overrides,
-});
+    });
+
+const createTestTernaryRelation = (overrides = {}) =>
+    createTernaryRelationBuilder({
+        idMx: "relation-1",
+        side1: createTestSide({
+            idMx: "side-1",
+            entityId: "entity-1",
+        }),
+        side2: createTestSide({
+            idMx: "side-2",
+            entityId: "entity-2",
+        }),
+        side3: createTestSide({
+            idMx: "side-3",
+            entityId: "entity-3",
+        }),
+        canHoldAttributes: true,
+        ...overrides,
+    });
 
 describe("Relation participant helpers", () => {
     test("return binary side keys and sides in order", () => {
-        const relation = createRelation();
+        const relation = createTestRelation();
 
         expect(getRelationSideKeys(relation)).toEqual(
             BINARY_RELATION_SIDE_KEYS,
@@ -67,45 +92,45 @@ describe("Relation participant helpers", () => {
     });
 
     test("return configured entity ids", () => {
-        expect(getRelationEntityIds(createRelation())).toEqual([
+        expect(getRelationEntityIds(createTestRelation())).toEqual([
             "entity-1",
             "entity-2",
         ]);
     });
 
     test("detect configured binary relations", () => {
-        expect(relationHasBothEntitySides(createRelation())).toBe(true);
-        expect(relationHasAllSideIds(createRelation())).toBe(true);
-        expect(isRelationConfigured(createRelation())).toBe(true);
+        expect(relationHasBothEntitySides(createTestRelation())).toBe(true);
+        expect(relationHasAllSideIds(createTestRelation())).toBe(true);
+        expect(isRelationConfigured(createTestRelation())).toBe(true);
 
         expect(
             relationHasBothEntitySides(
-                createRelation({
-                    side2: createSide({ idMx: "side-2", entityId: "" }),
+                createTestRelation({
+                    side2: createTestSide({ idMx: "side-2", entityId: "" }),
                 }),
             ),
         ).toBe(false);
 
         expect(
             relationHasAllSideIds(
-                createRelation({
-                    side2: createSide({ idMx: "", entityId: "entity-2" }),
+                createTestRelation({
+                    side2: createTestSide({ idMx: "", entityId: "entity-2" }),
                 }),
             ),
         ).toBe(false);
 
         expect(
             isRelationConfigured(
-                createRelation({
-                    side2: createSide({ idMx: "", entityId: "entity-2" }),
+                createTestRelation({
+                    side2: createTestSide({ idMx: "", entityId: "entity-2" }),
                 }),
             ),
         ).toBe(false);
     });
 
     test("detect self relations and entity participation", () => {
-        const selfRelation = createRelation({
-            side2: createSide({ idMx: "side-2", entityId: "entity-1" }),
+        const selfRelation = createTestRelation({
+            side2: createTestSide({ idMx: "side-2", entityId: "entity-1" }),
         });
 
         expect(isSelfRelation(selfRelation)).toBe(true);
@@ -117,18 +142,18 @@ describe("Relation participant helpers", () => {
     test("detect many-to-many relations from side cardinalities", () => {
         expect(
             isManyToManyRelation(
-                createRelation({
-                    side1: createSide({ cardinality: "0:N" }),
-                    side2: createSide({ cardinality: "1:N" }),
+                createTestRelation({
+                    side1: createTestSide({ cardinality: "0:N" }),
+                    side2: createTestSide({ cardinality: "1:N" }),
                 }),
             ),
         ).toBe(true);
 
         expect(
             isManyToManyRelation(
-                createRelation({
-                    side1: createSide({ cardinality: "0:N" }),
-                    side2: createSide({ cardinality: "1:1" }),
+                createTestRelation({
+                    side1: createTestSide({ cardinality: "0:N" }),
+                    side2: createTestSide({ cardinality: "1:1" }),
                 }),
             ),
         ).toBe(false);
@@ -137,36 +162,36 @@ describe("Relation participant helpers", () => {
     test("allow attributes on binary many-to-many and ternary relations", () => {
         expect(
             canRelationTypeHoldAttributes(
-                createRelation({
-                    side1: createSide({ cardinality: "0:N" }),
-                    side2: createSide({ cardinality: "1:N" }),
+                createTestRelation({
+                    side1: createTestSide({ cardinality: "0:N" }),
+                    side2: createTestSide({ cardinality: "1:N" }),
                 }),
             ),
         ).toBe(true);
 
         expect(
             canRelationTypeHoldAttributes(
-                createRelation({
-                    side1: createSide({ cardinality: "0:N" }),
-                    side2: createSide({ cardinality: "1:1" }),
+                createTestRelation({
+                    side1: createTestSide({ cardinality: "0:N" }),
+                    side2: createTestSide({ cardinality: "1:1" }),
                 }),
             ),
         ).toBe(false);
 
         expect(
             canRelationTypeHoldAttributes(
-                createTernaryRelation({
-                    side1: createSide({ cardinality: "0:1" }),
-                    side2: createSide({ cardinality: "0:1" }),
-                    side3: createSide({ cardinality: "0:1" }),
+                createTestTernaryRelation({
+                    side1: createTestSide({ cardinality: "0:1" }),
+                    side2: createTestSide({ cardinality: "0:1" }),
+                    side3: createTestSide({ cardinality: "0:1" }),
                 }),
             ),
         ).toBe(true);
     });
 
     test("display ternary cardinalities as Chen maximum labels", () => {
-        const ternaryRelation = createTernaryRelation();
-        const binaryRelation = createRelation();
+        const ternaryRelation = createTestTernaryRelation();
+        const binaryRelation = createTestRelation();
 
         expect(
             getRelationCardinalityDisplayValue(ternaryRelation, "0:1"),
@@ -183,7 +208,7 @@ describe("Relation participant helpers", () => {
     });
 
     test("reset binary relation sides through side keys", () => {
-        const relation = createRelation();
+        const relation = createTestRelation();
 
         resetRelationSides(relation, { cardinality: "X:X" });
 
@@ -197,7 +222,7 @@ describe("Relation participant helpers", () => {
     });
 
     test("reset ternary relation sides through side keys", () => {
-        const relation = createTernaryRelation();
+        const relation = createTestTernaryRelation();
 
         resetRelationSides(relation, { cardinality: "X:X" });
 
@@ -214,7 +239,7 @@ describe("Relation participant helpers", () => {
     });
 
     test("treat relations without explicit arity as binary", () => {
-        const relation = createRelation();
+        const relation = createTestRelation();
 
         expect(getRelationArity(relation)).toBe(RELATION_ARITIES.BINARY);
         expect(isBinaryRelation(relation)).toBe(true);
@@ -222,7 +247,7 @@ describe("Relation participant helpers", () => {
     });
 
     test("return ternary side keys and sides when arity is ternary", () => {
-        const relation = createTernaryRelation();
+        const relation = createTestTernaryRelation();
 
         expect(getRelationArity(relation)).toBe(RELATION_ARITIES.TERNARY);
         expect(isBinaryRelation(relation)).toBe(false);
@@ -238,7 +263,7 @@ describe("Relation participant helpers", () => {
     });
 
     test("return configured entity ids for ternary relations", () => {
-        expect(getRelationEntityIds(createTernaryRelation())).toEqual([
+        expect(getRelationEntityIds(createTestTernaryRelation())).toEqual([
             "entity-1",
             "entity-2",
             "entity-3",
@@ -246,10 +271,10 @@ describe("Relation participant helpers", () => {
     });
 
     test("return optional side roles and side display names", () => {
-        const relation = createTernaryRelation({
-            side1: createSide({ role: "local player" }),
-            side2: createSide({ role: "  away player  " }),
-            side3: createSide({ role: "" }),
+        const relation = createTestTernaryRelation({
+            side1: createTestSide({ role: "local player" }),
+            side2: createTestSide({ role: "  away player  " }),
+            side3: createTestSide({ role: "" }),
         });
 
         expect(getRelationSideRole(relation.side1)).toBe("local player");
