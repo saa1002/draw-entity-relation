@@ -94,12 +94,12 @@ const createWeakEntityValidationScenario = ({
         weakEntity,
         ownerEntity,
         weakCardinality,
+        ownerCardinality,
+        weakSideId: 'side-weak',
+        ownerSideId: 'side-owner',
     })
 
     relation.isIdentifying = relationIsIdentifying
-    relation.side1.idMx = 'side-weak'
-    relation.side2.idMx = 'side-owner'
-    relation.side2.cardinality = ownerCardinality
 
     return {
         graph: createDiagram({
@@ -117,19 +117,26 @@ const createIdentifyingRelationForWeakEntity = ({
     name,
     weakEntity,
     ownerEntity,
-}) => {
-    const relation = createIdentifyingRelation({
+}) =>
+    createIdentifyingRelation({
         idMx,
         name,
         weakEntity,
         ownerEntity,
+        weakSideId: `${idMx}-weak-side`,
+        ownerSideId: `${idMx}-owner-side`,
     })
 
-    relation.side1.idMx = `${idMx}-weak-side`
-    relation.side2.idMx = `${idMx}-owner-side`
-
-    return relation
-}
+const createStrongEntityValidationGraph = ({ attributes }) =>
+    createDiagram({
+        entities: [
+            createStrongEntity({
+                idMx: 'entity-strong',
+                name: 'Pedido',
+                attributes,
+            }),
+        ],
+    })
 
 describe('Partial keys', () => {
     test('A weak entity with one partial key should pass partial key presence validation', () => {
@@ -227,36 +234,26 @@ describe('Partial keys', () => {
 
 describe('Partial keys in strong entities', () => {
     test('A strong entity without partial key should pass validation', () => {
-        const { graph } = createWeakEntityValidationScenario({
-            weakAttributes: [createPrimaryKeyAttribute()],
-            weakIdentifyingRelationId: null,
-            weakOwnerEntityId: null,
+        const graph = createStrongEntityValidationGraph({
+            attributes: [createPrimaryKeyAttribute()],
         })
-
-        graph.entities.at(0).weak = false
-        graph.relations = []
 
         expect(strongEntitiesWithPartialKey(graph)).toBe(false)
         expect(validateGraph(graph).noStrongEntitiesWithPartialKey).toBe(true)
     })
 
     test('A strong entity cannot have partial key', () => {
-        const { graph } = createWeakEntityValidationScenario({
-            weakAttributes: [createPartialKeyAttribute()],
-            weakIdentifyingRelationId: null,
-            weakOwnerEntityId: null,
+        const graph = createStrongEntityValidationGraph({
+            attributes: [createPartialKeyAttribute()],
         })
-
-        graph.entities.at(0).weak = false
-        graph.relations = []
 
         expect(strongEntitiesWithPartialKey(graph)).toBe(true)
         expect(validateGraph(graph).noStrongEntitiesWithPartialKey).toBe(false)
     })
 
     test('A strong entity cannot have a nested partial key', () => {
-        const { graph } = createWeakEntityValidationScenario({
-            weakAttributes: [
+        const graph = createStrongEntityValidationGraph({
+            attributes: [
                 createCompositeAttribute({
                     children: [
                         createPartialKeyAttribute({
@@ -266,35 +263,10 @@ describe('Partial keys in strong entities', () => {
                     ],
                 }),
             ],
-            weakIdentifyingRelationId: null,
-            weakOwnerEntityId: null,
         })
-
-        graph.entities.at(0).weak = false
-        graph.relations = []
 
         expect(strongEntitiesWithPartialKey(graph)).toBe(true)
         expect(validateGraph(graph).noStrongEntitiesWithPartialKey).toBe(false)
-    })
-
-    test('A weak entity cannot have a nested regular primary key', () => {
-        const { graph } = createWeakEntityValidationScenario({
-            weakAttributes: [
-                createCompositeAttribute({
-                    idMx: 'attr-composite',
-                    name: 'datos',
-                    children: [
-                        createPrimaryKeyAttribute({
-                            idMx: 'attr-nested-key',
-                            name: 'id',
-                        }),
-                    ],
-                }),
-            ],
-        })
-
-        expect(weakEntitiesWithPrimaryKey(graph)).toBe(true)
-        expect(validateGraph(graph).noWeakEntitiesWithPrimaryKey).toBe(false)
     })
 })
 
@@ -329,7 +301,9 @@ describe('Identifying relation presence', () => {
             validateGraph(graph).noWeakEntitiesWithoutIdentifyingRelation,
         ).toBe(false)
     })
+})
 
+describe('Identifying relation structure', () => {
     test('A valid identifying relation should pass structure diagnostics', () => {
         const { graph } = createWeakEntityValidationScenario()
 
@@ -337,7 +311,7 @@ describe('Identifying relation presence', () => {
         expect(validateGraph(graph).noInvalidIdentifyingRelations).toBe(true)
     })
 
-    test('An identifying relation must connect exactly one weak entity and one strong entity', () => {
+    test('An identifying relation must connect exactly one dependent weak entity and one owner entity', () => {
         const { graph, ownerEntity, relation } =
             createWeakEntityValidationScenario()
 
@@ -348,7 +322,9 @@ describe('Identifying relation presence', () => {
         expect(identifyingRelationsNotValid(graph)).toBe(true)
         expect(validateGraph(graph).noInvalidIdentifyingRelations).toBe(false)
     })
+})
 
+describe('Identifying relation cardinalities', () => {
     test('An identifying relation with valid identifying cardinalities should pass validation', () => {
         const { graph } = createWeakEntityValidationScenario({
             weakCardinality: '0:N',
@@ -369,7 +345,7 @@ describe('Identifying relation presence', () => {
         expect(validateGraph(graph).noInvalidIdentifyingCardinalities).toBe(true)
     })
 
-    test('An identifying relation is invalid if the strong side is not 1:1', () => {
+    test('An identifying relation is invalid if the owner side is not 1:1', () => {
         const { graph } = createWeakEntityValidationScenario({
             weakCardinality: '0:N',
             ownerCardinality: '0:1',
@@ -503,6 +479,26 @@ describe('Regular primary keys in weak entities', () => {
     test('A weak entity cannot have a regular primary key', () => {
         const { graph } = createWeakEntityValidationScenario({
             weakAttributes: [createPrimaryKeyAttribute()],
+        })
+
+        expect(weakEntitiesWithPrimaryKey(graph)).toBe(true)
+        expect(validateGraph(graph).noWeakEntitiesWithPrimaryKey).toBe(false)
+    })
+
+    test('A weak entity cannot have a nested regular primary key', () => {
+        const { graph } = createWeakEntityValidationScenario({
+            weakAttributes: [
+                createCompositeAttribute({
+                    idMx: 'attr-composite',
+                    name: 'datos',
+                    children: [
+                        createPrimaryKeyAttribute({
+                            idMx: 'attr-nested-key',
+                            name: 'id',
+                        }),
+                    ],
+                }),
+            ],
         })
 
         expect(weakEntitiesWithPrimaryKey(graph)).toBe(true)

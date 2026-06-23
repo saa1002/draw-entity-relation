@@ -95,6 +95,9 @@ export const createIdentifyingRelation = ({
     weakEntity,
     ownerEntity,
     weakCardinality = '1:N',
+    ownerCardinality = '1:1',
+    weakSideId,
+    ownerSideId,
     attributes = [],
 }) =>
     createBinaryRelation({
@@ -103,12 +106,14 @@ export const createIdentifyingRelation = ({
         isIdentifying: true,
         attributes,
         side1: createRelationSide({
+            idMx: weakSideId,
             entity: weakEntity,
             cardinality: weakCardinality,
         }),
         side2: createRelationSide({
+            idMx: ownerSideId,
             entity: ownerEntity,
-            cardinality: '1:1',
+            cardinality: ownerCardinality,
         }),
     })
 
