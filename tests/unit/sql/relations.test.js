@@ -21,6 +21,11 @@ beforeEach(() => {
     oneOneGraph = loadGraphFixture('1-1-relation.json')
 })
 
+const makeOneOneRelationMandatory = () => {
+    oneOneGraph.relations.at(0).side1.cardinality = '1:1'
+    oneOneGraph.relations.at(0).side2.cardinality = '1:1'
+}
+
 const createCompositeConnectorOneNGraph = () =>
     createDiagram({
         entities: [
@@ -49,7 +54,7 @@ const createCompositeConnectorOneNGraph = () =>
                 idMx: 'pedido',
                 name: 'Pedido',
                 keyName: 'id_pedido',
-            }),
+            })
         ],
         relations: [
             createBinaryRelation({
@@ -73,8 +78,8 @@ const createCompositeConnectorOneNGraph = () =>
         ],
     })
 
-describe("1:N relation SQL generation", () => {
-    test("should not use composite connector names in 1:N foreign key columns or constraints", () => {
+describe('1:N relation SQL generation', () => {
+    test('should not use composite connector names in 1:N foreign key columns or constraints', () => {
         const graph = createCompositeConnectorOneNGraph()
 
         const sql = generateSQL(graph)
@@ -87,14 +92,14 @@ describe("1:N relation SQL generation", () => {
             calle_Compra VARCHAR(40) NOT NULL,
             ciudad_Compra VARCHAR(40) NOT NULL, 
             FOREIGN KEY (calle_Compra, ciudad_Compra) REFERENCES Cliente
-            );
+            )
             `,
         )
 
-        expectSQLNotToContain(sql, "internal_cliente_key_connector")
-    });
+        expectSQLNotToContain(sql, 'internal_cliente_key_connector')
+    })
 
-    test("should generate a separate table for a simple multivalued attribute on a 1:N related entity", () => {
+    test('should generate a separate table for a simple multivalued attribute on a 1:N related entity', () => {
         oneNGraph.entities.at(1).attributes.push(
             createAttribute({
                 idMx: 'attr-phones',
@@ -103,7 +108,7 @@ describe("1:N relation SQL generation", () => {
             }),
         )
 
-        const sql = generateSQL(oneNGraph);
+        const sql = generateSQL(oneNGraph)
 
         expectSQLToContain(
             sql,
@@ -112,14 +117,14 @@ describe("1:N relation SQL generation", () => {
             Atributo VARCHAR(40) REFERENCES Entidad_1 ON DELETE CASCADE ON UPDATE CASCADE,
             telefono VARCHAR(40),
             PRIMARY KEY (Atributo, telefono)
-            );
+            )
             `,
-        );
+        )
 
-        expect(sql).not.toContain("telefono VARCHAR(40) PRIMARY KEY");
-    });
+        expect(sql).not.toContain('telefono VARCHAR(40) PRIMARY KEY')
+    })
 
-    test("should generate a separate table for a composite multivalued attribute on a 1:N related entity", () => {
+    test('should generate a separate table for a composite multivalued attribute on a 1:N related entity', () => {
         oneNGraph.entities.at(1).attributes.push(
             createAttribute({
                 idMx: 'attr-contact',
@@ -138,7 +143,7 @@ describe("1:N relation SQL generation", () => {
             }),
         )
 
-        const sql = generateSQL(oneNGraph);
+        const sql = generateSQL(oneNGraph)
 
         expectSQLToContain(
             sql,
@@ -148,19 +153,18 @@ describe("1:N relation SQL generation", () => {
             prefijo VARCHAR(40),
             numero VARCHAR(40),
             PRIMARY KEY (Atributo, prefijo, numero)
-            );
+            )
             `,
-        );
+        )
 
-        expect(sql).not.toContain("contacto VARCHAR(40)");
-        expect(sql).not.toContain("prefijo VARCHAR(40) PRIMARY KEY");
-    });
+        expect(sql).not.toContain('contacto VARCHAR(40)')
+        expect(sql).not.toContain('prefijo VARCHAR(40) PRIMARY KEY')
+    })
 })
 
-describe("1:1 relation SQL generation", () => {
-    test("should reference the merged table for a multivalued attribute in a mandatory 1:1 relation", () => {
-        oneOneGraph.relations.at(0).side1.cardinality = "1:1";
-        oneOneGraph.relations.at(0).side2.cardinality = "1:1";
+describe('1:1 relation SQL generation', () => {
+    test('should reference the merged table for a multivalued attribute in a mandatory 1:1 relation', () => {
+        makeOneOneRelationMandatory()
 
         oneOneGraph.entities.at(0).attributes.push(
             createAttribute({
@@ -170,7 +174,7 @@ describe("1:1 relation SQL generation", () => {
             }),
         )
 
-        const sql = generateSQL(oneOneGraph);
+        const sql = generateSQL(oneOneGraph)
 
         expectSQLToContain(
             sql,
@@ -179,16 +183,15 @@ describe("1:1 relation SQL generation", () => {
             Atributo_Relacion VARCHAR(40) REFERENCES Relacion ON DELETE CASCADE ON UPDATE CASCADE,
             telefono VARCHAR(40),
             PRIMARY KEY (Atributo_Relacion, telefono)
-            );
+            )
             `,
-        );
+        )
 
-        expect(sql).not.toContain("REFERENCES Entidad(Atributo)");
-    });
+        expect(sql).not.toContain('REFERENCES Entidad(Atributo)')
+    })
     
-    test("should reference the merged table for a composite multivalued attribute in a mandatory 1:1 relation", () => {
-        oneOneGraph.relations.at(0).side1.cardinality = "1:1";
-        oneOneGraph.relations.at(0).side2.cardinality = "1:1";
+    test('should reference the merged table for a composite multivalued attribute in a mandatory 1:1 relation', () => {
+        makeOneOneRelationMandatory()
 
         oneOneGraph.entities.at(0).attributes.push(
             createAttribute({
@@ -208,7 +211,7 @@ describe("1:1 relation SQL generation", () => {
             }),
         )
 
-        const sql = generateSQL(oneOneGraph);
+        const sql = generateSQL(oneOneGraph)
 
         expectSQLToContain(
             sql,
@@ -218,12 +221,12 @@ describe("1:1 relation SQL generation", () => {
             prefijo VARCHAR(40),
             numero VARCHAR(40),
             PRIMARY KEY (Atributo_Relacion, prefijo, numero)
-            );
+            )
             `,
-        );
+        )
 
-        expect(sql).not.toContain("REFERENCES Entidad(Atributo)");
-        expect(sql).not.toContain("prefijo_Relacion VARCHAR(40)");
-        expect(sql).not.toContain("numero_Relacion VARCHAR(40)");
-    });
+        expect(sql).not.toContain('REFERENCES Entidad(Atributo)')
+        expect(sql).not.toContain('prefijo_Relacion VARCHAR(40)')
+        expect(sql).not.toContain('numero_Relacion VARCHAR(40)')
+    })
 })

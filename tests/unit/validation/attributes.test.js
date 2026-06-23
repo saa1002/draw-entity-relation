@@ -26,7 +26,7 @@ describe('Attribute name uniqueness', () => {
         expect(diagnostics.isValid).toBe(true)
     })
 
-    test("entities can't have repeated attribute names", () => {
+    test('entities cant have repeated attribute names', () => {
         expect(repeatedAttributesInEntity(graph)).toBe(false)
 
         graph.entities.at(0).attributes.at(1).name =
@@ -36,7 +36,7 @@ describe('Attribute name uniqueness', () => {
         expect(validateGraph(graph).noRepeatedAttrNames).toBe(false)
     })
 
-    test("N:M relations can't have repeated attribute names", () => {
+    test('N:M relations cant have repeated attribute names', () => {
         expect(repeatedAttributesInEntity(graph)).toBe(false)
 
         graph.relations.at(0).attributes.at(1).name =
@@ -46,7 +46,7 @@ describe('Attribute name uniqueness', () => {
         expect(validateGraph(graph).noRepeatedAttrNames).toBe(false)
     })
 
-    test("composite attributes can't have repeated sibling attribute names", () => {
+    test('composite attributes cant have repeated sibling attribute names', () => {
         graph.entities.at(0).attributes.push(
             createAttribute({
                 idMx: 'attr-composite',
@@ -124,7 +124,7 @@ describe('N:M relation attribute constraints', () => {
         expect(diagnostics.isValid).toBe(true)
     })
 
-    test("N:M relations can't have primary key attributes", () => {
+    test('N:M relations cant have primary key attributes', () => {
         expect(nmRelationsWithPK(graph)).toBe(false)
 
         graph.relations.at(0).attributes.at(0).key = true
@@ -133,7 +133,7 @@ describe('N:M relation attribute constraints', () => {
         expect(validateGraph(graph).noNMRelationsWithPK).toBe(false)
     })
 
-    test("N:M relations can't have nested primary key attributes", () => {
+    test('N:M relations cant have nested primary key attributes', () => {
         expect(nmRelationsWithPK(graph)).toBe(false)
 
         graph.relations.at(0).attributes = [
@@ -188,7 +188,7 @@ describe('Composite attribute structure', () => {
         expect(validateGraph(graph).noEmptyCompositeAttributes).toBe(false)
     })
 
-    test("composite attributes can't contain nested composite attributes", () => {
+    test('composite attributes cant contain nested composite attributes', () => {
         graph.entities.at(0).attributes.push(
             createAttribute({
                 idMx: 'attr-address',
@@ -243,7 +243,7 @@ describe('Multivalued attribute constraints', () => {
         )
     })
 
-    test("primary key attributes can't be multivalued", () => {
+    test('primary key attributes cant be multivalued', () => {
         graph.entities.at(0).attributes.at(0).multivalued = true
 
         expect(unsupportedMultivaluedAttributes(graph)).toBe(true)
@@ -252,7 +252,7 @@ describe('Multivalued attribute constraints', () => {
         )
     })
 
-    test("partial key attributes can't be multivalued", () => {
+    test('partial key attributes cant be multivalued', () => {
         graph.entities.at(0).attributes.push(
             createAttribute({
                 idMx: 'attr-partial',
@@ -333,7 +333,7 @@ describe('Multivalued attribute constraints', () => {
         )
     })
 
-    test("nested attributes can't be multivalued yet", () => {
+    test('nested attributes cant be multivalued yet', () => {
         graph.entities.at(0).attributes.push(
             createAttribute({
                 idMx: 'attr-contact',
@@ -354,7 +354,7 @@ describe('Multivalued attribute constraints', () => {
         )
     })
 
-    test("relation attributes can't be multivalued yet", () => {
+    test('relation attributes cant be multivalued yet', () => {
         graph.relations.at(0).attributes.at(0).multivalued = true
 
         expect(unsupportedMultivaluedAttributes(graph)).toBe(true)

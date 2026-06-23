@@ -49,14 +49,14 @@ describe('Entity and N:M relation name uniqueness', () => {
         expect(diagnostics.isValid).toBe(true)
     })
 
-    test("Entities can't have repeated names", () => {
+    test('Entities cant have repeated names', () => {
         graph.entities.at(1).name = graph.entities.at(0).name
 
         expect(repeatedEntities(graph)).toBe(true)
         expect(validateGraph(graph).noRepeatedNames).toBe(false)
     })
 
-    test("N:M relations and entities can't have repeated names", () => {
+    test('N:M relations and entities cant have repeated names', () => {
         graph.relations.at(0).name = graph.entities.at(0).name
 
         expect(repeatedEntities(graph)).toBe(true)

@@ -12,8 +12,8 @@ beforeEach(() => {
     nMGraph = loadGraphFixture('n-m-relation.json')
 })
 
-describe("N:M relation SQL generation", () => {
-    test("should generate a separate table for a simple multivalued attribute on an N:M related entity", () => {
+describe('N:M relation SQL generation', () => {
+    test('should generate a separate table for a simple multivalued attribute on an N:M related entity', () => {
         nMGraph.entities.at(0).attributes.push(
             createAttribute({
                 idMx: 'attr-email',
@@ -22,7 +22,7 @@ describe("N:M relation SQL generation", () => {
             }),
         )
 
-        const sql = generateSQL(nMGraph);
+        const sql = generateSQL(nMGraph)
 
         expectSQLToContain(
             sql,
@@ -31,10 +31,10 @@ describe("N:M relation SQL generation", () => {
             Atributo VARCHAR(40) REFERENCES Entidad ON DELETE CASCADE ON UPDATE CASCADE,
             email VARCHAR(40), 
             PRIMARY KEY (Atributo, email)
-            );
+            )
             `,
-        );
+        )
 
-        expect(sql).not.toContain("email_Relacion");
-    });
+        expect(sql).not.toContain('email_Relacion')
+    })
 })
