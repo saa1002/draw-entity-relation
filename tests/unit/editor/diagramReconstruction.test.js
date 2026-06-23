@@ -1,37 +1,65 @@
 import { describe, expect, test } from 'vitest'
-
 import { reconstructDiagramGraph } from '../../../src/components/DiagramEditor/utils/sync/diagramReconstruction'
 
-describe('diagram reconstruction', () => {
+const createRecordingGraph = () => {
+    const cells = {}
+    const insertedEdges = []
+
+    const graph = {
+        insertVertex: (_, id, value, x, y, width, height, style) => {
+            const cell = {
+                id,
+                value,
+                geometry: { x, y, width, height },
+                style,
+            }
+
+            cells[id] = cell
+
+            return cell
+        },
+        insertEdge: (_, id, __, source, target, style) => {
+            const edge = {
+                id,
+                source,
+                target,
+                style,
+                geometry: {},
+            }
+
+            cells[id] = edge
+            insertedEdges.push(edge)
+
+            return edge
+        },
+        orderCells: () => {},
+        updateCellSize: () => {},
+    }
+
+    return {
+        graph,
+        cells,
+        insertedEdges,
+    }
+}
+
+const reconstructWithTestGraph = ({ graph, cells, diagram }) =>
+    reconstructDiagramGraph({
+        graph,
+        diagram,
+        accessCell: (id) => cells[id],
+        mxPoint: (x, y) => ({ x, y }),
+        createWeakEntityDecorator: () => {},
+        ensureDiscriminantUnderline: () => {},
+        ensureMultivaluedAttributeDecorator: () => {},
+        ensureIdentifyingRelationDecorator: () => {},
+        ensureIdentifyingRelationEdgeDecorator: () => {},
+        syncRepeatedParticipantRelationEdges: () => {},
+    })
+
+describe('Attribute graph reconstruction', () => {
     test('reconstructs a nested attribute connected to its parent attribute', () => {
-        const cells = {}
-        const insertedEdges = []
-
-        const graph = {
-            insertVertex: (_, id, value, x, y, width, height) => {
-                const cell = {
-                    id,
-                    value,
-                    geometry: { x, y, width, height },
-                }
-
-                cells[id] = cell
-                return cell
-            },
-            insertEdge: (_, id, __, source, target) => {
-                const edge = {
-                    id,
-                    source,
-                    target,
-                    geometry: {},
-                }
-
-                cells[id] = edge
-                insertedEdges.push(edge)
-                return edge
-            },
-            orderCells: () => {},
-        }
+        const { graph, cells, insertedEdges } = createRecordingGraph()
 
         const diagram = {
             entities: [
@@ -68,41 +96,24 @@ describe('diagram reconstruction', () => {
             relations: [],
         }
 
-        reconstructDiagramGraph({
+        reconstructWithTestGraph({
             graph,
+            cells,
             diagram,
-            accessCell: (id) => cells[id],
-            mxPoint: (x, y) => ({ x, y }),
-            createWeakEntityDecorator: () => {},
-            ensureDiscriminantUnderline: () => {},
-            ensureIdentifyingRelationDecorator: () => {},
-            ensureIdentifyingRelationEdgeDecorator: () => {},
         })
 
-        const childEdge = insertedEdges.find((edge) => edge.id === 'edge-street')
+        const childEdge = insertedEdges.find(
+            (edge) => edge.id === 'edge-street',
+        )
 
         expect(childEdge.source.id).toBe('attr-address')
         expect(childEdge.target.id).toBe('attr-street')
     })
+})
 
+describe('ISA graph reconstruction', () => {
     test('reconstructs ISA triangle vertices', () => {
-        const cells = {}
-
-        const graph = {
-            insertVertex: (_, id, value, x, y, width, height, style) => {
-                const cell = {
-                    id,
-                    value,
-                    geometry: { x, y, width, height },
-                    style,
-                }
-
-                cells[id] = cell
-                return cell
-            },
-            insertEdge: () => {},
-            orderCells: () => {},
-        }
+        const { graph, cells } = createRecordingGraph()
 
         const diagram = {
             entities: [],
@@ -120,15 +131,10 @@ describe('diagram reconstruction', () => {
             ],
         }
 
-        reconstructDiagramGraph({
+        reconstructWithTestGraph({
             graph,
+            cells,
             diagram,
-            accessCell: (id) => cells[id],
-            mxPoint: (x, y) => ({ x, y }),
-            createWeakEntityDecorator: () => {},
-            ensureDiscriminantUnderline: () => {},
-            ensureIdentifyingRelationDecorator: () => {},
-            ensureIdentifyingRelationEdgeDecorator: () => {},
         })
 
         expect(cells['isa-1']).toMatchObject({
@@ -146,48 +152,20 @@ describe('diagram reconstruction', () => {
         expect(cells['isa-1'].style).toContain('direction=south')
     })
 
-    test("reconstructs configured ISA hierarchy links", () => {
-        const cells = {};
-        const insertedEdges = [];
-
-        const graph = {
-            insertVertex: (_, id, value, x, y, width, height, style) => {
-                const cell = {
-                    id,
-                    value,
-                    geometry: { x, y, width, height },
-                    style,
-                };
-
-                cells[id] = cell;
-                return cell;
-            },
-            insertEdge: (_, id, __, source, target, style) => {
-                const edge = {
-                    id,
-                    source,
-                    target,
-                    style,
-                };
-
-                cells[id] = edge;
-                insertedEdges.push(edge);
-                return edge;
-            },
-            orderCells: () => {},
-        };
+    test('reconstructs configured ISA hierarchy links', () => {
+        const { graph, cells, insertedEdges } = createRecordingGraph()
 
         const diagram = {
             entities: [
                 {
-                    idMx: "entity-parent",
-                    name: "Persona",
+                    idMx: 'entity-parent',
+                    name: 'Persona',
                     position: { x: 100, y: 80 },
                     attributes: [],
                 },
                 {
-                    idMx: "entity-child",
-                    name: "Alumno",
+                    idMx: 'entity-child',
+                    name: 'Alumno',
                     position: { x: 100, y: 220 },
                     attributes: [],
                 },
@@ -195,48 +173,42 @@ describe('diagram reconstruction', () => {
             relations: [],
             isas: [
                 {
-                    idMx: "isa-1",
+                    idMx: 'isa-1',
                     position: { x: 110, y: 150 },
                     generalization: {
-                        edgeId: "edge-parent",
-                        entity: { idMx: "entity-parent" },
+                        edgeId: 'edge-parent',
+                        entity: { idMx: 'entity-parent' },
                     },
                     specializations: [
                         {
-                            edgeId: "edge-child",
-                            entity: { idMx: "entity-child" },
+                            edgeId: 'edge-child',
+                            entity: { idMx: 'entity-child' },
                         },
                     ],
                 },
             ],
-        };
+        }
 
-        reconstructDiagramGraph({
+        reconstructWithTestGraph({
             graph,
+            cells,
             diagram,
-            accessCell: (id) => cells[id],
-            mxPoint: (x, y) => ({ x, y }),
-            createWeakEntityDecorator: () => {},
-            ensureDiscriminantUnderline: () => {},
-            ensureMultivaluedAttributeDecorator: () => {},
-            ensureIdentifyingRelationDecorator: () => {},
-            ensureIdentifyingRelationEdgeDecorator: () => {},
-        });
+        })
 
-        expect(insertedEdges).toHaveLength(2);
+        expect(insertedEdges).toHaveLength(2)
 
-        expect(cells["edge-parent"]).toMatchObject({
-            id: "edge-parent",
-            source: cells["isa-1"],
-            target: cells["entity-parent"],
-        });
+        expect(cells['edge-parent']).toMatchObject({
+            id: 'edge-parent',
+            source: cells['isa-1'],
+            target: cells['entity-parent'],
+        })
 
-        expect(cells["edge-child"]).toMatchObject({
-            id: "edge-child",
-            source: cells["isa-1"],
-            target: cells["entity-child"],
-        });
+        expect(cells['edge-child']).toMatchObject({
+            id: 'edge-child',
+            source: cells['isa-1'],
+            target: cells['entity-child'],
+        })
 
-        expect(cells["edge-parent"].style).toContain("endArrow=none");
-    });
+        expect(cells['edge-parent'].style).toContain('endArrow=none')
+    })
 })

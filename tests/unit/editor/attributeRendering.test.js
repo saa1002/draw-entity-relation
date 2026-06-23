@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import {
     COMPOSITE_ATTRIBUTE_CONNECTOR_SIZE,
     createAttributeRenderingHelpers,
@@ -8,7 +7,7 @@ import {
     getAttributeStyleString,
     getDiscriminantUnderlineId,
     getMultivaluedAttributeDecoratorId,
-} from "../../../src/components/DiagramEditor/utils/rendering/attributeRendering";
+} from '../../../src/components/DiagramEditor/utils/rendering/attributeRendering'
 
 const createCell = (
     id,
@@ -34,9 +33,11 @@ const createHelpers = (cells, graphOverrides = {}) => {
             getModel: () => model,
             insertVertex: (_parent, id, value, x, y, width, height, style) => {
                 const cell = createCell(id, { x, y, width, height })
+
                 cell.value = value
                 cell.style = style
                 cells[id] = cell
+
                 return cell
             },
             insertEdge: (_parent, id, value, source, target, style) => {
@@ -84,7 +85,7 @@ const createHelpers = (cells, graphOverrides = {}) => {
     })
 }
 
-describe('attribute rendering helpers', () => {
+describe('Attribute cell collection', () => {
     test('returns multivalued decorator cells with attribute cells', () => {
         const decoratorId = getMultivaluedAttributeDecoratorId('attr-phones')
         const cells = {
@@ -110,44 +111,39 @@ describe('attribute rendering helpers', () => {
         ])
     })
 
-    test('creates a multivalued decorator when syncing visual representation', () => {
-        const decoratorId = getMultivaluedAttributeDecoratorId('attr-phones')
+    test('returns cells from nested attribute trees', () => {
         const cells = {
-            'attr-phones': createCell('attr-phones', {
-                x: 100,
-                y: 120,
-                width: 90,
-                height: 40,
-            }),
+            'attr-address': createCell('attr-address'),
+            'edge-address': createCell('edge-address'),
+            'attr-street': createCell('attr-street'),
+            'edge-street': createCell('edge-street'),
         }
 
         const helpers = createHelpers(cells)
 
-        helpers.syncAttributeVisualRepresentation({
-            idMx: 'attr-phones',
-            name: 'phones',
-            multivalued: true,
-        })
-
-        expect(cells['attr-phones'].geometry).toMatchObject({
-            x: 110,
-            y: 123,
-            width: 70,
-            height: 34,
-        })
-
-        expect(cells[decoratorId]).toMatchObject({
-            id: decoratorId,
-            geometry: {
-                x: 114,
-                y: 127,
-                width: 62,
-                height: 26,
+        const result = helpers.getAttributesCells([
+            {
+                idMx: 'attr-address',
+                cell: ['attr-address', 'edge-address'],
+                children: [
+                    {
+                        idMx: 'attr-street',
+                        cell: ['attr-street', 'edge-street'],
+                    },
+                ],
             },
-            style: 'multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0',
-        })
-    })
+        ])
 
+        expect(result.map((cell) => cell.id)).toEqual([
+            'attr-address',
+            'edge-address',
+            'attr-street',
+            'edge-street',
+        ])
+    })
+})
+
+describe('Attribute position synchronization', () => {
     test('syncs multivalued decorator positions from the attribute cell', () => {
         const decoratorId = getMultivaluedAttributeDecoratorId('attr-phones')
         const ownerCell = createCell('entity-1', {
@@ -188,36 +184,6 @@ describe('attribute rendering helpers', () => {
             width: 72,
             height: 32,
         })
-    })
-    test('returns cells from nested attribute trees', () => {
-        const cells = {
-            'attr-address': createCell('attr-address'),
-            'edge-address': createCell('edge-address'),
-            'attr-street': createCell('attr-street'),
-            'edge-street': createCell('edge-street'),
-        }
-
-        const helpers = createHelpers(cells)
-
-        const result = helpers.getAttributesCells([
-            {
-                idMx: 'attr-address',
-                cell: ['attr-address', 'edge-address'],
-                children: [
-                    {
-                        idMx: 'attr-street',
-                        cell: ['attr-street', 'edge-street'],
-                    },
-                ],
-            },
-        ])
-
-        expect(result.map((cell) => cell.id)).toEqual([
-            'attr-address',
-            'edge-address',
-            'attr-street',
-            'edge-street',
-        ])
     })
 
     test('syncs nested attribute positions from the immediate parent cell', () => {
@@ -263,7 +229,9 @@ describe('attribute rendering helpers', () => {
         expect(cells['attr-street'].geometry.x).toBe(240)
         expect(cells['attr-street'].geometry.y).toBe(130)
     })
+})
 
+describe('Attribute key and discriminant rendering', () => {
     test('propagates primary key rendering to composite attribute leaves', () => {
         const cells = {
             'attr-code': createCell('attr-code'),
@@ -300,6 +268,7 @@ describe('attribute rendering helpers', () => {
             'attr-code': createCell('attr-code'),
             'attr-series': createCell('attr-series'),
         }
+
         cells['attr-series'].style = 'shape=ellipse;keyAttrStyle'
 
         const helpers = createHelpers(cells)
@@ -320,6 +289,65 @@ describe('attribute rendering helpers', () => {
         expect(cells['attr-series'].style).not.toContain('keyAttrStyle')
     })
 
+    test('renders composite discriminant attributes on every visible child', () => {
+        const rootUnderlineId = getDiscriminantUnderlineId('attr-code')
+        const firstChildUnderlineId = getDiscriminantUnderlineId('attr-series')
+        const secondChildUnderlineId = getDiscriminantUnderlineId('attr-number')
+
+        const cells = {
+            'attr-code': createCell('attr-code', {
+                x: 100,
+                y: 120,
+                width: 90,
+                height: 40,
+            }),
+            'attr-series': createCell('attr-series', {
+                x: 220,
+                y: 100,
+                width: 90,
+                height: 40,
+            }),
+            'attr-number': createCell('attr-number', {
+                x: 220,
+                y: 160,
+                width: 90,
+                height: 40,
+            }),
+        }
+
+        const helpers = createHelpers(cells)
+
+        helpers.syncAttributeVisualRepresentation({
+            idMx: 'attr-code',
+            name: 'code',
+            partialKey: true,
+            children: [
+                {
+                    idMx: 'attr-series',
+                    name: 'series',
+                },
+                {
+                    idMx: 'attr-number',
+                    name: 'number',
+                },
+            ],
+        })
+
+        expect(cells[rootUnderlineId]).toBeUndefined()
+
+        expect(cells[firstChildUnderlineId]).toMatchObject({
+            id: firstChildUnderlineId,
+            style: expect.stringContaining('dashed=1'),
+        })
+
+        expect(cells[secondChildUnderlineId]).toMatchObject({
+            id: secondChildUnderlineId,
+            style: expect.stringContaining('dashed=1'),
+        })
+    })
+})
+
+describe('Attribute display and dimensions', () => {
     test('composite attributes should render as branch connectors without labels', () => {
         const attribute = {
             idMx: 'attr-address',
@@ -345,9 +373,7 @@ describe('attribute rendering helpers', () => {
         })
 
         expect(getAttributeStyleString(attribute)).toContain('fontSize=0')
-        expect(getAttributeStyleString(attribute)).not.toContain(
-            'keyAttrStyle',
-        )
+        expect(getAttributeStyleString(attribute)).not.toContain('keyAttrStyle')
     })
 
     test('simple attributes should keep their visible label and normal dimensions', () => {
@@ -402,14 +428,55 @@ describe('attribute rendering helpers', () => {
         })
         expect(cells['attr-address'].style).toContain('fontSize=0')
     })
+})
+
+describe('Multivalued attribute rendering', () => {
+    test('creates a multivalued decorator when syncing visual representation', () => {
+        const decoratorId = getMultivaluedAttributeDecoratorId('attr-phones')
+        const cells = {
+            'attr-phones': createCell('attr-phones', {
+                x: 100,
+                y: 120,
+                width: 90,
+                height: 40,
+            }),
+        }
+
+        const helpers = createHelpers(cells)
+
+        helpers.syncAttributeVisualRepresentation({
+            idMx: 'attr-phones',
+            name: 'phones',
+            multivalued: true,
+        })
+
+        expect(cells['attr-phones'].geometry).toMatchObject({
+            x: 110,
+            y: 123,
+            width: 70,
+            height: 34,
+        })
+
+        expect(cells[decoratorId]).toMatchObject({
+            id: decoratorId,
+            geometry: {
+                x: 114,
+                y: 127,
+                width: 62,
+                height: 26,
+            },
+            style: 'multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0',
+        })
+    })
 
     test('renders composite multivalued attributes on every visible child', () => {
-        const firstChildDecoratorId =
-            getMultivaluedAttributeDecoratorId('attr-contact-label');
         const rootDecoratorId =
-            getMultivaluedAttributeDecoratorId('attr-contact');
+            getMultivaluedAttributeDecoratorId('attr-contact')
+        const firstChildDecoratorId = getMultivaluedAttributeDecoratorId(
+            'attr-contact-label',
+        )
         const secondChildDecoratorId =
-            getMultivaluedAttributeDecoratorId('attr-number');
+            getMultivaluedAttributeDecoratorId('attr-number')
 
         const cells = {
             'attr-contact': createCell('attr-contact', {
@@ -430,9 +497,9 @@ describe('attribute rendering helpers', () => {
                 width: 90,
                 height: 40,
             }),
-        };
+        }
 
-        const helpers = createHelpers(cells);
+        const helpers = createHelpers(cells)
 
         helpers.syncAttributeVisualRepresentation({
             idMx: 'attr-contact',
@@ -448,77 +515,18 @@ describe('attribute rendering helpers', () => {
                     name: 'number',
                 },
             ],
-        });
+        })
 
-        expect(cells[rootDecoratorId]).toBeUndefined();
+        expect(cells[rootDecoratorId]).toBeUndefined()
 
         expect(cells[firstChildDecoratorId]).toMatchObject({
             id: firstChildDecoratorId,
             style: 'multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0',
-        });
+        })
 
         expect(cells[secondChildDecoratorId]).toMatchObject({
             id: secondChildDecoratorId,
             style: 'multivaluedAttributeDecoratorStyle;shape=ellipse;perimeter=ellipsePerimeter;pointerEvents=0',
-        });
-    });
-
-    test("renders composite discriminant attributes on every visible child", () => {
-        const rootUnderlineId = getDiscriminantUnderlineId("attr-code")
-        const firstChildUnderlineId =
-            getDiscriminantUnderlineId("attr-series")
-        const secondChildUnderlineId =
-            getDiscriminantUnderlineId("attr-number")
-
-        const cells = {
-            "attr-code": createCell("attr-code", {
-                x: 100,
-                y: 120,
-                width: 90,
-                height: 40,
-            }),
-            "attr-series": createCell("attr-series", {
-                x: 220,
-                y: 100,
-                width: 90,
-                height: 40,
-            }),
-            "attr-number": createCell("attr-number", {
-                x: 220,
-                y: 160,
-                width: 90,
-                height: 40,
-            }),
-        }
-
-        const helpers = createHelpers(cells)
-
-        helpers.syncAttributeVisualRepresentation({
-            idMx: "attr-code",
-            name: "code",
-            partialKey: true,
-            children: [
-                {
-                    idMx: "attr-series",
-                    name: "series",
-                },
-                {
-                    idMx: "attr-number",
-                    name: "number",
-                },
-            ],
-        })
-
-        expect(cells[rootUnderlineId]).toBeUndefined()
-
-        expect(cells[firstChildUnderlineId]).toMatchObject({
-            id: firstChildUnderlineId,
-            style: expect.stringContaining("dashed=1"),
-        })
-
-        expect(cells[secondChildUnderlineId]).toMatchObject({
-            id: secondChildUnderlineId,
-            style: expect.stringContaining("dashed=1"),
         })
     })
 })
