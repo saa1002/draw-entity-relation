@@ -52,17 +52,80 @@ export const createWeakEntity = ({
     attributes,
 })
 
+export const createRelationSide = ({
+    idMx,
+    entity,
+    entityId,
+    cardinality = '1:1',
+    role,
+    cell,
+    edgeId,
+}) => ({
+    ...(idMx ? { idMx } : {}),
+    cardinality,
+    ...(role !== undefined ? { role } : {}),
+    ...(cell !== undefined ? { cell } : {}),
+    ...(edgeId !== undefined ? { edgeId } : {}),
+    entity: getEntityReference(entity ?? entityId),
+})
+
+export const createBinaryRelation = ({
+    idMx,
+    name,
+    side1,
+    side2,
+    attributes = [],
+    canHoldAttributes = false,
+    isIdentifying = false,
+}) => ({
+    idMx,
+    name,
+    canHoldAttributes,
+    isIdentifying,
+    attributes,
+    side1,
+    side2,
+})
+
+export const createIdentifyingRelation = ({
+    idMx,
+    name,
+    weakEntity,
+    ownerEntity,
+    weakCardinality = '1:N',
+    attributes = [],
+}) =>
+    createBinaryRelation({
+        idMx,
+        name,
+        isIdentifying: true,
+        attributes,
+        side1: createRelationSide({
+            entity: weakEntity,
+            cardinality: weakCardinality,
+        }),
+        side2: createRelationSide({
+            entity: ownerEntity,
+            cardinality: '1:1',
+        }),
+    })
+
 export const createTernarySide = ({
     idMx,
     entity,
     cardinality = '0:N',
     role,
-}) => ({
-    idMx,
-    cardinality,
-    ...(role ? { role } : {}),
-    entity: getEntityReference(entity),
-})
+    cell,
+    edgeId,
+}) =>
+    createRelationSide({
+        idMx,
+        entity,
+        cardinality,
+        role,
+        cell,
+        edgeId,
+    })
 
 export const createTernaryRelation = ({
     idMx,

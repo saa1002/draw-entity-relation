@@ -3,7 +3,9 @@ import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     createAttribute,
+    createBinaryRelation,
     createDiagram,
+    createRelationSide,
     createStrongEntity,
 } from '../../helpers/diagramBuilders'
 import { generateSQL } from '../../../src/services/sql'
@@ -50,31 +52,24 @@ const createCompositeConnectorOneNGraph = () =>
             }),
         ],
         relations: [
-            {
+            createBinaryRelation({
                 idMx: 'relation-compra',
                 name: 'Compra',
-                canHoldAttributes: false,
-                isIdentifying: false,
-                attributes: [],
-                side1: {
+                side1: createRelationSide({
                     idMx: 'side-cliente',
                     cardinality: '1:1',
                     cell: 'side-cell-cliente',
                     edgeId: 'edge-cliente',
-                    entity: {
-                        idMx: 'cliente',
-                    },
-                },
-                side2: {
+                    entity: 'cliente',
+                }),
+                side2: createRelationSide({
                     idMx: 'side-pedido',
                     cardinality: '0:N',
                     cell: 'side-cell-pedido',
                     edgeId: 'edge-pedido',
-                    entity: {
-                        idMx: 'pedido',
-                    },
-                },
-            },
+                    entity: 'pedido',
+                }),
+            })
         ],
     })
 

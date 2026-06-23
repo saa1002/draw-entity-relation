@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
+import { createRelationSide } from '../../helpers/diagramBuilders'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import { RELATION_ARITIES } from '../../../src/domain/er/relations'
 import {
@@ -13,22 +14,6 @@ import {
 } from '../../../src/domain/er/validation'
 
 let graph
-
-const createRelationSide = ({
-    idMx,
-    entityId,
-    cardinality = '1:1',
-    role = '',
-}) => ({
-    idMx,
-    cardinality,
-    role,
-    cell: idMx,
-    edgeId: '',
-    entity: {
-        idMx: entityId,
-    },
-})
 
 const configureTernaryRelation = (
     relation,
@@ -50,18 +35,24 @@ const configureTernaryRelation = (
         entityId: side1EntityId,
         cardinality: side1Cardinality,
         role: side1Role,
+        cell: '23',
+        edgeId: '',
     })
     relation.side2 = createRelationSide({
         idMx: '24',
         entityId: side2EntityId,
         cardinality: side2Cardinality,
         role: side2Role,
+        cell: '24',
+        edgeId: '',
     })
     relation.side3 = createRelationSide({
         idMx: '25',
         entityId: side3EntityId,
         cardinality: side3Cardinality,
         role: side3Role,
+        cell: '25',
+        edgeId: '',
     })
     relation.canHoldAttributes = false
     relation.isIdentifying = false

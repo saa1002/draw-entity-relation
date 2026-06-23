@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import {
     createAttribute,
+    createBinaryRelation,
     createDiagram,
+    createIdentifyingRelation,
+    createRelationSide,
     createStrongEntity,
     createWeakEntity,
 } from '../../helpers/diagramBuilders'
@@ -10,30 +13,6 @@ import { generateSQL } from '../../../src/services/sql'
 
 const { expectSQLToContain, expectSQLNotToContain } =
     buildSQLAssertions(expect)
-
-const getEntityId = (entity) =>
-    typeof entity === 'string' ? entity : entity.idMx
-
-const createIdentifyingRelation = ({
-    idMx,
-    name,
-    weakEntity,
-    ownerEntity,
-    weakCardinality = '1:N',
-}) => ({
-    idMx,
-    name,
-    isIdentifying: true,
-    attributes: [],
-    side1: {
-        cardinality: weakCardinality,
-        entity: { idMx: getEntityId(weakEntity) },
-    },
-    side2: {
-        cardinality: '1:1',
-        entity: { idMx: getEntityId(ownerEntity) },
-    },
-})
 
 function createPedidoLineaPedidoGraph(lineaPedidoAttributes = []) {
     const pedido = createStrongEntity({
@@ -62,6 +41,26 @@ function createPedidoLineaPedidoGraph(lineaPedidoAttributes = []) {
         ],
     })
 }
+
+const createEntidad2ReflexiveRelation = ({
+    idMx,
+    side1Cardinality,
+    side2Cardinality,
+    attributes = [],
+}) =>
+    createBinaryRelation({
+        idMx,
+        name: 'Reflex',
+        attributes,
+        side1: createRelationSide({
+            entity: 'entity-2',
+            cardinality: side1Cardinality,
+        }),
+        side2: createRelationSide({
+            entity: 'entity-2',
+            cardinality: side2Cardinality,
+        }),
+    })
 
 function createCascadedWeakEntitiesGraph(extraRelations = []) {
     const strongEntity = createStrongEntity({
@@ -249,20 +248,11 @@ describe('Weak entity SQL generation', () => {
     })
 
     test('a weak entity reflexive 1:N relation should generate a composite self-referencing foreign key', () => {
-        const reflexiveRelation = {
+        const reflexiveRelation = createEntidad2ReflexiveRelation({
             idMx: 'relation-reflexive-1n',
-            name: 'Reflex',
-            isIdentifying: false,
-            attributes: [],
-            side1: {
-                cardinality: '1:1',
-                entity: { idMx: 'entity-2' },
-            },
-            side2: {
-                cardinality: '0:N',
-                entity: { idMx: 'entity-2' },
-            },
-        }
+            side1Cardinality: '1:1',
+            side2Cardinality: '0:N',
+        })
 
         const graph = createCascadedWeakEntitiesGraph([reflexiveRelation])
 
@@ -287,20 +277,11 @@ describe('Weak entity SQL generation', () => {
     })
 
     test('a weak entity reflexive 1:1 relation should generate a composite unique self-reference', () => {
-        const reflexiveRelation = {
+        const reflexiveRelation = createEntidad2ReflexiveRelation({
             idMx: 'relation-reflexive-11',
-            name: 'Reflex',
-            isIdentifying: false,
-            attributes: [],
-            side1: {
-                cardinality: '0:1',
-                entity: { idMx: 'entity-2' },
-            },
-            side2: {
-                cardinality: '0:1',
-                entity: { idMx: 'entity-2' },
-            },
-        }
+            side1Cardinality: '0:1',
+            side2Cardinality: '0:1',
+        })
 
         const graph = createCascadedWeakEntitiesGraph([reflexiveRelation])
 
@@ -329,25 +310,17 @@ describe('Weak entity SQL generation', () => {
     })
 
     test('a weak entity reflexive N:M relation should generate two composite foreign keys', () => {
-        const reflexiveRelation = {
+        const reflexiveRelation = createEntidad2ReflexiveRelation({
             idMx: 'relation-reflexive-nm',
-            name: 'Reflex',
-            isIdentifying: false,
+            side1Cardinality: '0:N',
+            side2Cardinality: '0:N',
             attributes: [
                 createAttribute({
                     idMx: 'relation-attr-0',
                     name: 'Atributo',
                 }),
             ],
-            side1: {
-                cardinality: '0:N',
-                entity: { idMx: 'entity-2' },
-            },
-            side2: {
-                cardinality: '0:N',
-                entity: { idMx: 'entity-2' },
-            },
-        }
+        })
 
         const graph = createCascadedWeakEntitiesGraph([reflexiveRelation])
 
