@@ -34,11 +34,13 @@ Por este motivo, cualquier ampliación del editor debe tener en cuenta varios as
 
 \section{Alcance del trabajo}
 
-El alcance de este Trabajo Fin de Grado se centra en la evolución de un editor web de diagramas Entidad-Relación ya existente. El trabajo incluye el análisis del sistema heredado, la revisión de su funcionamiento interno, la ampliación progresiva de sus capacidades y la documentación del proceso seguido.
+El alcance de este Trabajo Fin de Grado se centra en la evolución de un editor web de diagramas Entidad-Relación ya existente. El proyecto no parte de una aplicación desarrollada desde cero, sino de una herramienta heredada que ya ofrecía una base funcional para la creación de diagramas, su validación y la generación de SQL.
 
-Dentro de este alcance se consideran tanto los cambios realizados en el editor como la revisión de las reglas de validación, la transformación hacia el modelo relacional y la generación de SQL cuando corresponde. Se incorporan nuevos elementos del modelo Entidad-Relación, como entidades débiles, atributos compuestos y multivaluados, relaciones ternarias y un soporte inicial para jerarquías ISA. También se incluyen mejoras de usabilidad, soporte básico de idioma, generación de estructuras de ejemplo, acciones de ayuda al usuario, refinamientos en la selección múltiple y ajustes en la generación de SQL.
+A partir de ese punto, el trabajo realizado incluye el análisis del sistema previo, la estabilización de partes relevantes del editor y la ampliación controlada de sus capacidades. El eje principal del desarrollo ha sido mantener la coherencia entre lo que el usuario diseña en el lienzo, la representación interna del diagrama, las validaciones aplicadas, la transformación al modelo relacional y la generación de SQL.
 
-No se pretende construir una herramienta profesional completa de diseño de bases de datos ni cubrir todas las variantes posibles del modelo Entidad-Relación. Algunas funcionalidades avanzadas, como las agregaciones, las variantes completas de jerarquías ISA, la herencia múltiple real o la persistencia remota con usuarios, quedan fuera del alcance implementado y se consideran posibles líneas de trabajo futuro.
+Dentro del alcance implementado se incluyen mejoras en el modelo interno, en la validación, en la transformación relacional y en la salida SQL, así como la incorporación de nuevos elementos del modelo Entidad-Relación soportados por la aplicación. También se han añadido mejoras de interacción y usabilidad orientadas a facilitar el trabajo con el editor, como la selección múltiple, la ayuda integrada, opciones de importación y exportación, y ajustes visuales de la interfaz.
+
+No se pretende construir una herramienta profesional completa de diseño de bases de datos ni cubrir todas las variantes posibles del modelo Entidad-Relación. Quedan fuera del alcance implementado funcionalidades avanzadas como las agregaciones, la cobertura completa de jerarquías ISA, la herencia múltiple real, la gestión de usuarios, la persistencia remota o la configuración detallada de tipos de datos SQL. Estas limitaciones se consideran decisiones de alcance del proyecto y posibles líneas de trabajo futuro.
 
 \section{Estructura de la memoria}
 
@@ -46,7 +48,7 @@ La memoria se organiza en varios capítulos que presentan de forma progresiva el
 
 \begin{itemize}
 \item \textbf{Introducción}: presenta el contexto general del trabajo, la motivación, el punto de partida, el problema abordado y el alcance del proyecto.
-\item \textbf{Objetivos del proyecto}: recoge los objetivos principales del TFG y delimita las metas perseguidas durante su desarrollo.
+\item \textbf{Objetivos del proyecto}: recoge el objetivo general del TFG y los objetivos específicos que han guiado el desarrollo.
 \item \textbf{Conceptos teóricos}: introduce los conceptos del modelo Entidad-Relación y del modelo relacional necesarios para comprender el resto del documento.
 \item \textbf{Técnicas y herramientas}: describe las principales tecnologías y herramientas utilizadas durante el desarrollo del proyecto.
 \item \textbf{Aspectos relevantes del desarrollo}: explica las decisiones, cambios y problemas más importantes abordados durante la evolución del editor.
@@ -54,15 +56,21 @@ La memoria se organiza en varios capítulos que presentan de forma progresiva el
 \item \textbf{Conclusiones y líneas de trabajo futuras}: resume los resultados obtenidos y plantea posibles mejoras o ampliaciones posteriores.
 \end{itemize}
 
-\section{Estructura de los anexos}
+\section{Documentos adjuntos}
 
-Los anexos complementan la memoria principal con información más detallada sobre la planificación, los requisitos, el diseño y el uso del sistema. Su estructura es la siguiente:
+Junto con esta memoria se entregan varios documentos y recursos asociados al Trabajo Fin de Grado. Estos materiales complementan la explicación del proyecto y permiten revisar tanto el resultado obtenido como los elementos necesarios para su ejecución y evaluación.
 
 \begin{itemize}
-\item \textbf{Plan de proyecto software}: recoge la planificación del trabajo, la evolución seguida y los aspectos de viabilidad asociados al proyecto.
-\item \textbf{Especificación de requisitos}: describe los requisitos funcionales y no funcionales considerados durante el desarrollo.
-\item \textbf{Especificación de diseño}: presenta la organización interna del sistema, el modelo de datos y las principales decisiones de diseño.
-\item \textbf{Documentación técnica de programación}: incluye información sobre la estructura del proyecto, instalación, ejecución y pruebas.
-\item \textbf{Documentación de usuario}: explica el uso de la aplicación desde el punto de vista del usuario final.
-\item \textbf{Anexo de sostenibilización curricular}: recoge una reflexión sobre la relación del trabajo con aspectos de sostenibilidad.
+\item \textbf{Memoria del proyecto}: documento principal del TFG, en el que se presenta el contexto, los objetivos, la base teórica, el desarrollo realizado y las conclusiones obtenidas.
+
+\item \textbf{Anexos}: documento complementario que recoge información más detallada sobre la planificación, los requisitos, el diseño, la documentación de usuario y otros aspectos asociados al proyecto.
+
+\item \textbf{Aplicación web desplegada}: versión funcional de UBU E-R App publicada en Vercel, accesible desde el navegador para facilitar su revisión sin necesidad de instalar el proyecto en local. Acceso: \href{https://draw-entity-relation-opal.vercel.app/}{aplicación desplegada en Vercel}.
+
+\item \textbf{Repositorio Git del proyecto}: repositorio que contiene el código fuente de la aplicación, la evolución del desarrollo y los recursos necesarios para su instalación y ejecución. Acceso: \href{https://github.com/saa1002/draw-entity-relation}{repositorio del proyecto}.
+
+\item \textbf{Instrucciones de instalación y ejecución}: indicaciones incluidas en el repositorio para preparar el entorno local, instalar dependencias, ejecutar la aplicación y lanzar las comprobaciones disponibles.
+
+\item \textbf{Ayuda integrada en la aplicación}: información accesible desde la propia interfaz del editor para orientar al usuario en el uso básico de la herramienta y en algunas operaciones relevantes.
 \end{itemize}
+
