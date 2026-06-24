@@ -2,11 +2,8 @@ import { expect } from '@playwright/test';
 
 import {
     expectSavedEntityToExist,
-    expectSavedRelationToExist,
     expectSavedIsaToExist,
-    getSavedEntity,
-    getSavedRelation,
-    getSavedAttribute,
+    expectSavedRelationToExist,
 } from './diagramState';
 
 export {
@@ -25,11 +22,13 @@ export {
     getSavedRelation,
 } from './diagramState';
 
-export async function enableMxGraphDebug(page) {
-    await page.addInitScript(() => {
-        window.__PW__ = true;
-    });
-}
+export {
+    clickCompositeAttributeConnector,
+    dragCompositeAttributeRootEdge,
+    enableMxGraphDebug,
+    selectAttributeByName,
+    selectAttributesByName,
+} from './canvasGraph';
 
 export async function deselectCanvas(page) {
     await page.locator('svg').click({ position: { x: 20, y: 20 } });
@@ -81,89 +80,20 @@ export async function addIsa(page, position = { x: 360, y: 300 }) {
 
 export async function selectEntity(page, entityName) {
     await page
-        .locator("svg text")
+        .locator('svg text')
         .filter({ hasText: new RegExp(`^${entityName}$`) })
         .click();
 }
 
 export async function selectRelation(page, relationName) {
     await page
-        .locator("svg text")
+        .locator('svg text')
         .filter({ hasText: new RegExp(`^${relationName}$`) })
         .click();
 }
 
 export async function selectIsa(page, isaIndex = 0) {
     await page.getByText('ISA', { exact: true }).nth(isaIndex).click();
-}
-
-export async function selectAttributeByName(page, ownerName, attributeName) {
-    await expect
-        .poll(async () => {
-            const attribute = await getSavedAttribute(
-                page,
-                ownerName,
-                attributeName,
-            );
-
-            return attribute?.idMx ?? null;
-        })
-        .not.toBeNull();
-
-    const attribute = await getSavedAttribute(
-        page,
-        ownerName,
-        attributeName,
-    );
-
-    await page.waitForFunction((attributeId) => {
-        const graph = window.__DEBUG_GRAPH__;
-        return Boolean(graph?.getModel?.()?.getCell?.(attributeId));
-    }, attribute.idMx);
-
-    await page.evaluate((attributeId) => {
-        const graph = window.__DEBUG_GRAPH__;
-        const cell = graph.getModel().getCell(attributeId);
-
-        graph.setSelectionCell(cell);
-    }, attribute.idMx);
-}
-
-export async function selectAttributesByName(page, ownerName, attributeNames) {
-    await expect
-        .poll(async () => {
-            const attributes = await Promise.all(
-                attributeNames.map((attributeName) =>
-                    getSavedAttribute(page, ownerName, attributeName),
-                ),
-            );
-
-            return attributes.every((attribute) => Boolean(attribute?.idMx));
-        })
-        .toBe(true);
-
-    const attributes = await Promise.all(
-        attributeNames.map((attributeName) =>
-            getSavedAttribute(page, ownerName, attributeName),
-        ),
-    );
-    const attributeIds = attributes.map((attribute) => attribute.idMx);
-
-    await page.waitForFunction((ids) => {
-        const graph = window.__DEBUG_GRAPH__;
-        return ids.every((attributeId) =>
-            Boolean(graph?.getModel?.()?.getCell?.(attributeId)),
-        );
-    }, attributeIds);
-
-    await page.evaluate((ids) => {
-        const graph = window.__DEBUG_GRAPH__;
-        const cells = ids
-            .map((attributeId) => graph.getModel().getCell(attributeId))
-            .filter(Boolean);
-
-        graph.setSelectionCells(cells);
-    }, attributeIds);
 }
 
 export async function renameElement(page, currentName, newName) {
@@ -442,105 +372,46 @@ export async function configureIsaHierarchy(
     ).toBeVisible();
 }
 
-export async function dragCompositeAttributeRootEdge(
+export async function generateBasicStructure(
     page,
-    ownerName,
-    attributeName,
-    deltaX,
-    deltaY,
+    { templateName = 'Relación N:M básica', mode = 'replace' } = {},
 ) {
-    const entity = await getSavedEntity(page, ownerName);
-    const relation = await getSavedRelation(page, ownerName);
-    const owner = entity ?? relation;
+    await page.getByRole('button', { name: 'Generar estructura' }).click();
 
-    const attribute = owner?.attributes?.find(
-        (candidate) =>
-            candidate.name === attributeName &&
-            Array.isArray(candidate.children) &&
-            candidate.children.length > 0,
-    );
-    const edgeId = attribute?.cell?.[1];
+    const dialog = page.getByRole('dialog');
 
-    await expect(edgeId).toBeTruthy();
+    await expect(
+        dialog.getByText('Generar estructura básica', { exact: true }),
+    ).toBeVisible();
 
-    const startPoint = await page.evaluate((rootEdgeId) => {
-        const graph = window.__DEBUG_GRAPH__;
-        const edge = graph?.getModel?.()?.getCell?.(rootEdgeId);
+    await expect(dialog.locator('#generate-structure-mode')).toBeVisible();
 
-        if (!graph || !edge) {
-            return null;
-        }
+    if (templateName !== 'Relación N:M básica') {
+        await dialog.locator('#generate-structure-template').click();
 
-        const state = graph.view.getState(edge);
-        const points = state?.absolutePoints?.filter(Boolean) ?? [];
+        const optionsList = page.getByRole('listbox');
+        await optionsList
+            .getByRole('option', { name: templateName, exact: true })
+            .click();
+        await expect(optionsList).toBeHidden();
+    }
 
-        if (points.length < 2) {
-            return null;
-        }
+    if (mode === 'merge') {
+        await dialog.locator('#generate-structure-mode').click();
 
-        const firstPoint = points.at(0);
-        const lastPoint = points.at(-1);
-        const containerBounds = graph.container.getBoundingClientRect();
+        const optionsList = page.getByRole('listbox');
+        await optionsList
+            .getByRole('option', {
+                name: 'Combinar con el diagrama actual',
+                exact: true,
+            })
+            .click();
+        await expect(optionsList).toBeHidden();
+    }
 
-        return {
-            x: containerBounds.left + (firstPoint.x + lastPoint.x) / 2,
-            y: containerBounds.top + (firstPoint.y + lastPoint.y) / 2,
-        };
-    }, edgeId);
+    await dialog.getByRole('button', { name: 'Generar estructura' }).click();
 
-    await expect(startPoint).not.toBeNull();
-
-    await page.mouse.move(startPoint.x, startPoint.y);
-    await page.mouse.down();
-    await page.mouse.move(startPoint.x + deltaX, startPoint.y + deltaY, {
-        steps: 8,
-    });
-    await page.mouse.up();
+    await expect(
+        page.getByText(`Estructura generada: ${templateName}.`).last(),
+    ).toBeVisible();
 }
-
-export async function clickCompositeAttributeConnector(
-    page,
-    ownerName,
-    attributeName,
-) {
-    const entity = await getSavedEntity(page, ownerName);
-    const relation = await getSavedRelation(page, ownerName);
-    const owner = entity ?? relation;
-
-    const attribute = owner?.attributes?.find(
-        (candidate) =>
-            candidate.name === attributeName &&
-            Array.isArray(candidate.children) &&
-            candidate.children.length > 0,
-    );
-
-    await expect(attribute?.idMx).toBeTruthy();
-
-    const centerPoint = await page.evaluate((attributeId) => {
-        const graph = window.__DEBUG_GRAPH__;
-        const cell = graph?.getModel?.()?.getCell?.(attributeId);
-
-        if (!graph || !cell) {
-            return null;
-        }
-
-        const state = graph.view.getState(cell);
-        const bounds = state ?? cell.geometry;
-
-        if (!bounds) {
-            return null;
-        }
-
-        const containerBounds = graph.container.getBoundingClientRect();
-
-        return {
-            x: containerBounds.left + bounds.x + bounds.width / 2,
-            y: containerBounds.top + bounds.y + bounds.height / 2,
-        };
-    }, attribute.idMx);
-
-    await expect(centerPoint).not.toBeNull();
-
-    await page.mouse.click(centerPoint.x, centerPoint.y);
-}
-

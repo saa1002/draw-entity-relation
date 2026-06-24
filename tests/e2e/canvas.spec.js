@@ -7,56 +7,13 @@ import {
     addRelation,
     enableMxGraphDebug,
     expectSavedDiagramState,
+    generateBasicStructure,
     getSavedDiagram,
     renameElement,
     selectEntity,
     selectIsa,
     selectRelation,
-} from '../helpers/canvas';;
-
-const generateBasicStructure = async (
-    page,
-    { templateName = 'Relación N:M básica', mode = 'replace' } = {},
-) => {
-    await page.getByRole('button', { name: 'Generar estructura' }).click();
-
-    const dialog = page.getByRole('dialog');
-
-    await expect(
-        dialog.getByText('Generar estructura básica', { exact: true }),
-    ).toBeVisible();
-
-    await expect(dialog.locator('#generate-structure-mode')).toBeVisible();
-
-    if (templateName !== 'Relación N:M básica') {
-        await dialog.locator('#generate-structure-template').click();
-
-        const optionsList = page.getByRole('listbox');
-        await optionsList
-            .getByRole('option', { name: templateName, exact: true })
-            .click();
-        await expect(optionsList).toBeHidden();
-    }
-
-    if (mode === 'merge') {
-        await dialog.locator('#generate-structure-mode').click();
-
-        const optionsList = page.getByRole('listbox');
-        await optionsList
-            .getByRole('option', {
-                name: 'Combinar con el diagrama actual',
-                exact: true,
-            })
-            .click();
-        await expect(optionsList).toBeHidden();
-    }
-
-    await dialog.getByRole('button', { name: 'Generar estructura' }).click();
-
-    await expect(
-        page.getByText(`Estructura generada: ${templateName}.`).last(),
-    ).toBeVisible();
-};
+} from '../helpers/canvas';
 
 test('mxGraph transaction level stays balanced (updateLevel === 0)', async ({ page }) => {
     await page.addInitScript(() => {
