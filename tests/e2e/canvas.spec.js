@@ -56,17 +56,17 @@ test('shows onboarding message only while the canvas is empty', async ({ page })
 test('shows tooltips for draggable ER elements', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.locator('img[src="images/rectangle.png"]')).toHaveAttribute(
+    await expect(page.locator("img[src='images/rectangle.png']")).toHaveAttribute(
         'title',
         'Arrastra para añadir una entidad al diagrama',
     );
 
-    await expect(page.locator('img[src="images/rhombus.png"]')).toHaveAttribute(
+    await expect(page.locator("img[src='images/rhombus.png']")).toHaveAttribute(
         'title',
         'Arrastra para añadir una relación al diagrama',
     );
 
-    await expect(page.locator('img[src="images/triangle.png"]')).toHaveAttribute(
+    await expect(page.locator("img[src='images/triangle.png']")).toHaveAttribute(
         'title',
         'Arrastra para añadir una ISA al diagrama',
     );
@@ -634,41 +634,41 @@ test('allows choosing each basic generated structure template', async ({
     }
 });
 
-test("allows switching the interface language to English", async ({ page }) => {
-    await page.goto("/");
+test('allows switching the interface language to English', async ({ page }) => {
+    await page.goto('/');
 
     await expect(
-        page.locator(".sidebar-section-title", { hasText: /^Idioma$/ }),
+        page.locator('.sidebar-section-title', { hasText: /^Idioma$/ }),
     ).toBeVisible();
 
     await expect(
-        page.getByText("Añade una entidad para comenzar", { exact: true }),
+        page.getByText('Añade una entidad para comenzar', { exact: true }),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "English" }).click();
+    await page.getByRole('button', { name: 'English' }).click();
 
     await expect(
-        page.locator(".sidebar-section-title", { hasText: /^Language$/ }),
+        page.locator('.sidebar-section-title', { hasText: /^Language$/ }),
     ).toBeVisible();
 
     await expect(
-        page.getByText("Add an entity to get started", { exact: true }),
+        page.getByText('Add an entity to get started', { exact: true }),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Generate SQL" }).click();
+    await page.getByRole('button', { name: 'Generate SQL' }).click();
 
     await expect(
         page.getByText(
-            "The SQL script could not be generated because of the following errors:",
+            'The SQL script could not be generated because of the following errors:',
             { exact: true },
         ),
     ).toBeVisible();
 
     await expect(
-        page.getByText("The diagram is empty.", { exact: true }),
+        page.getByText('The diagram is empty.', { exact: true }),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Close" }).click();
+    await page.getByRole('button', { name: 'Close' }).click();
 });
 
 test('generated structure replace mode replaces the current diagram', async ({
@@ -848,15 +848,15 @@ test('generated ISA structure can be merged into a valid existing diagram', asyn
     ).toBeEnabled();
 });
 
-test("delete multiple selected diagram elements with the delete action", async ({
+test('delete multiple selected diagram elements with the delete action', async ({
     page,
 }) => {
     await enableMxGraphDebug(page);
-    await page.goto("/");
+    await page.goto('/');
 
-    await addEntity(page, "Entidad", { x: 180, y: 180 });
-    await addEntity(page, "Entidad 1", { x: 420, y: 180 });
-    await addRelation(page, "Relación", { x: 300, y: 320 });
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 420, y: 180 });
+    await addRelation(page, 'Relación', { x: 300, y: 320 });
 
     const diagram = await getSavedDiagram(page);
     const selectedCellIds = [
@@ -866,7 +866,7 @@ test("delete multiple selected diagram elements with the delete action", async (
 
     await selectGraphCellsByIds(page, selectedCellIds);
 
-    await page.getByRole("button", { name: "Borrar" }).click();
+    await page.getByRole('button', { name: 'Borrar' }).click();
 
     await expectSavedDiagramState(
         page,

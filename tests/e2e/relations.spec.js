@@ -14,6 +14,7 @@ import {
     expectSavedDiagramState,
     expectSavedRelationAttributeToMatch,
     expectSavedRelationToMatch,
+    getGraphCellValue,
     getSavedRelation,
     openRelationCardinalitiesDialog,
     openRelationConfigDialog,
@@ -23,7 +24,6 @@ import {
     selectRelationArity,
     selectRelationCardinality,
     selectRelationSide,
-    getGraphCellValue,
 } from '../helpers/canvas';
 
 test('reconfigure relationship: Accept disabled/enabled in both configurations', async ({ page }) => {

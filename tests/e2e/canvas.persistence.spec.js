@@ -282,37 +282,30 @@ test('export/import round-trip preserves diagram structure', async ({ page }) =>
 
     await expect(page.locator('.mxgraph-drawing-container')).toBeVisible();
 
-    // Sanity check: the seeded diagram is rendered
     await expect(page.getByText('Cliente', { exact: true })).toBeVisible();
     await expect(page.getByText('Pedido', { exact: true })).toBeVisible();
     await expect(page.getByText('Realiza', { exact: true })).toBeVisible();
     await expect(page.getByText('1:N', { exact: true })).toHaveCount(1);
     await expect(page.getByText('1:1', { exact: true })).toHaveCount(1);
 
-    // First export
     const exportedBefore = await exportCurrentDiagram(page);
 
-    // Reset the canvas to ensure the following import really reconstructs the diagram
     await resetDiagram(page);
 
     await expect(page.getByText('Cliente', { exact: true })).toHaveCount(0);
     await expect(page.getByText('Pedido', { exact: true })).toHaveCount(0);
     await expect(page.getByText('Realiza', { exact: true })).toHaveCount(0);
 
-    // Import the exported diagram
     await importDiagram(page, exportedBefore);
 
-    // The imported diagram should be visible again
     await expect(page.getByText('Cliente', { exact: true })).toBeVisible();
     await expect(page.getByText('Pedido', { exact: true })).toBeVisible();
     await expect(page.getByText('Realiza', { exact: true })).toBeVisible();
     await expect(page.getByText('1:N', { exact: true })).toHaveCount(1);
     await expect(page.getByText('1:1', { exact: true })).toHaveCount(1);
 
-    // Second export after the round-trip
     const exportedAfter = await exportCurrentDiagram(page);
 
-    // The export/import/export cycle should preserve the persisted structure
     expect(exportedAfter).toEqual(exportedBefore);
 });
 
