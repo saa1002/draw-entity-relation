@@ -12,6 +12,30 @@ export async function enableMxGraphDebug(page) {
     });
 }
 
+export async function clearGraphSelection(page) {
+    await page.evaluate(() => {
+        window.__DEBUG_GRAPH__?.clearSelection?.();
+    });
+}
+
+export async function selectGraphCellsByIds(page, cellIds) {
+    await page.evaluate((ids) => {
+        const graph = window.__DEBUG_GRAPH__;
+        const cells = ids
+            .map((cellId) => graph.getModel().getCell(cellId))
+            .filter(Boolean);
+
+        graph.setSelectionCells(cells);
+    }, cellIds);
+}
+
+export async function getGraphCellValue(page, cellId) {
+    return page.evaluate((id) => {
+        const graph = window.__DEBUG_GRAPH__;
+        return graph.getModel().getCell(id)?.value;
+    }, cellId);
+}
+
 export async function selectAttributeByName(page, ownerName, attributeName) {
     await expect
         .poll(async () => {

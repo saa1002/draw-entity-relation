@@ -23,11 +23,14 @@ export {
 } from './diagramState';
 
 export {
+    clearGraphSelection,
     clickCompositeAttributeConnector,
     dragCompositeAttributeRootEdge,
     enableMxGraphDebug,
+    getGraphCellValue,
     selectAttributeByName,
     selectAttributesByName,
+    selectGraphCellsByIds,
 } from './canvasGraph';
 
 export async function deselectCanvas(page) {

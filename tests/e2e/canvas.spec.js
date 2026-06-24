@@ -13,6 +13,7 @@ import {
     selectEntity,
     selectIsa,
     selectRelation,
+    selectGraphCellsByIds,
 } from '../helpers/canvas';
 
 test('mxGraph transaction level stays balanced (updateLevel === 0)', async ({ page }) => {
@@ -863,14 +864,7 @@ test("delete multiple selected diagram elements with the delete action", async (
         ...diagram.relations.map((relation) => relation.idMx),
     ];
 
-    await page.evaluate((cellIds) => {
-        const graph = window.__DEBUG_GRAPH__;
-        const cells = cellIds
-            .map((cellId) => graph.getModel().getCell(cellId))
-            .filter(Boolean);
-
-        graph.setSelectionCells(cells);
-    }, selectedCellIds);
+    await selectGraphCellsByIds(page, selectedCellIds);
 
     await page.getByRole("button", { name: "Borrar" }).click();
 

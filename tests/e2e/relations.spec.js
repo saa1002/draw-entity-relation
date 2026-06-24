@@ -21,6 +21,7 @@ import {
     selectRelationArity,
     selectRelationCardinality,
     selectRelationSide,
+    getGraphCellValue,
 } from '../helpers/canvas';
 
 test('reconfigure relationship: Accept disabled/enabled in both configurations', async ({ page }) => {
@@ -486,24 +487,11 @@ test('display role labels on ternary relationship edges together with cardinalit
 
     const relation = await getSavedRelation(page, 'Relación');
 
-    const sideLabelValues = await page.evaluate((relationData) => {
-        const graph = window.__DEBUG_GRAPH__;
-
-        return {
-            side1: graph
-                .getModel()
-                .getCell(relationData.side1.cell)
-                .value,
-            side2: graph
-                .getModel()
-                .getCell(relationData.side2.cell)
-                .value,
-            side3: graph
-                .getModel()
-                .getCell(relationData.side3.cell)
-                .value,
-        };
-    }, relation);
+    const sideLabelValues = {
+        side1: await getGraphCellValue(page, relation.side1.cell),
+        side2: await getGraphCellValue(page, relation.side2.cell),
+        side3: await getGraphCellValue(page, relation.side3.cell),
+    };
 
     expect(sideLabelValues).toEqual({
         side1: 'tenista local\nN',

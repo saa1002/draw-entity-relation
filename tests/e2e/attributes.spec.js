@@ -14,6 +14,7 @@ import {
     renameElement,
     clickCompositeAttributeConnector,
     dragCompositeAttributeRootEdge,
+    clearGraphSelection,
 } from '../helpers/canvas';
 
 import { exportCurrentSqlScript, seedSavedDiagram } from '../helpers/persistence';
@@ -1053,9 +1054,7 @@ test.describe('composite attribute interactions', () => {
 
         await renameElement(page, 'Atributo', 'calle');
 
-        await page.evaluate(() => {
-            window.__DEBUG_GRAPH__?.clearSelection?.();
-        });
+        await clearGraphSelection(page);
 
         await expect(
             page.getByRole('button', { name: 'Añadir subatributo hermano' }),
