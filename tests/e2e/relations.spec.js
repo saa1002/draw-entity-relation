@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+import { openExportJsonDialog } from '../helpers/persistence';
+
 import {
     addAttributeToSelectedElement,
     addEntity,
@@ -244,13 +246,13 @@ test('configure cardinalities for a ternary relationship', async ({ page }) => {
         arity: 3,
         canHoldAttributes: true,
         side1: {
-            cardinality: "0:N",
+            cardinality: '0:N',
         },
         side2: {
-            cardinality: "0:1",
+            cardinality: '0:1',
         },
         side3: {
-            cardinality: "0:N",
+            cardinality: '0:N',
         },
     });
 });
@@ -439,15 +441,11 @@ test('allow role-disambiguated repeated participants in a ternary relationship',
         },
     });
 
-    await page.getByRole('button', { name: 'Exportar JSON' }).click();
-
-    const dialog = page.getByRole('dialog');
+    const dialog = await openExportJsonDialog(page);
 
     await expect(
-        dialog.getByText('Exportar diagrama en JSON'),
-    ).toBeVisible();
-
-    await expect(dialog.getByRole('button', { name: 'Exportar JSON' })).toBeEnabled();
+        dialog.getByRole('button', { name: 'Exportar JSON' }),
+    ).toBeEnabled();
 });
 
 test('display role labels on ternary relationship edges together with cardinalities', async ({
@@ -556,21 +554,20 @@ test('block export when a ternary relationship repeats participating entities wi
         '0:N',
     );
 
-    await page.getByRole('button', { name: 'Exportar JSON' }).click();
-
-    const dialog = page.getByRole('dialog');
-
-    await expect(
-        dialog.getByText('Exportar diagrama en JSON'),
-    ).toBeVisible();
+    const dialog = await openExportJsonDialog(page);
 
     await expect(dialog.getByText('Relaciones', { exact: true })).toBeVisible();
 
     await expect(
-        dialog.getByText('"Relación": repite la entidad "Entidad" sin roles distintos.'),
+        dialog.getByText(
+            '"Relación": repite la entidad "Entidad" sin roles distintos.',
+        ),
     ).toBeVisible();
 
-    await expect(dialog.getByRole('button', { name: 'Exportar JSON' })).toBeDisabled();
+    await expect(
+        dialog.getByRole('button', { name: 'Exportar JSON' }),
+    ).toBeDisabled();
+
     await expect(dialog.getByRole('button', { name: 'Cerrar' })).toBeVisible();
 });
 

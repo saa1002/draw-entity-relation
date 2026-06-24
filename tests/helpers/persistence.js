@@ -125,15 +125,22 @@ export async function resetDiagram(page) {
     await dialog.getByRole('button', { name: 'Reiniciar' }).click();
 }
 
-export async function exportCurrentDiagram(page) {
-    const previousExportsCount = await prepareSavedFileCapture(page);
-
+export async function openExportJsonDialog(page) {
     await page.getByRole('button', { name: 'Exportar JSON' }).click();
 
     const dialog = page.getByRole('dialog');
+
     await expect(
         dialog.getByText('Exportar diagrama en JSON'),
     ).toBeVisible();
+
+    return dialog;
+}
+
+export async function exportCurrentDiagram(page) {
+    const previousExportsCount = await prepareSavedFileCapture(page);
+
+    const dialog = await openExportJsonDialog(page);
 
     await dialog.getByRole('button', { name: 'Exportar JSON' }).click();
 
