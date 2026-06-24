@@ -185,3 +185,64 @@ export async function exportCurrentSqlScript(page) {
 
     return savedFile.content;
 }
+
+export const createImportEntity = ({
+    idMx,
+    name,
+    x,
+    y,
+    attributeId = `${idMx}-id`,
+    attributeName = 'id',
+}) => ({
+    idMx,
+    name,
+    position: { x, y },
+    weak: false,
+    ownerEntityId: null,
+    identifyingRelationId: null,
+    attributes: [
+        {
+            idMx: attributeId,
+            name: attributeName,
+            position: { x: x + 120, y },
+            key: true,
+            partialKey: false,
+            cell: [attributeId, `${attributeId}-edge`],
+            offsetX: 120,
+            offsetY: 0,
+        },
+    ],
+});
+
+export const createBinaryImportRelation = ({
+    idMx,
+    name,
+    x,
+    y,
+    side1EntityId,
+    side2EntityId,
+}) => ({
+    idMx,
+    name,
+    position: { x, y },
+    arity: 2,
+    canHoldAttributes: false,
+    isIdentifying: false,
+    attributes: [],
+    side1: {
+        idMx: `${idMx}-side-1`,
+        cardinality: '1:N',
+        role: '',
+        cell: `${idMx}-side-1-cardinality`,
+        edgeId: `${idMx}-side-1-edge`,
+        entity: { idMx: side1EntityId },
+    },
+    side2: {
+        idMx: `${idMx}-side-2`,
+        cardinality: '1:1',
+        role: '',
+        cell: `${idMx}-side-2-cardinality`,
+        edgeId: `${idMx}-side-2-edge`,
+        entity: { idMx: side2EntityId },
+    },
+});
