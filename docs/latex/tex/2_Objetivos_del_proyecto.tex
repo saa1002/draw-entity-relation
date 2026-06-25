@@ -21,22 +21,13 @@ A partir del objetivo general anterior, se plantean los siguientes objetivos esp
 
 \item Incorporar soporte para elementos adicionales del modelo Entidad-Relación, como entidades débiles, dependencias por identificación, atributos compuestos, atributos multivaluados, relaciones ternarias con roles y un soporte inicial para jerarquías ISA.
 
-\item Mantener la coherencia entre la parte visual del editor, las reglas de validación y la transformación al modelo relacional, de forma que los elementos soportados puedan traducirse de manera razonable a tablas, columnas, claves primarias y claves foráneas.
+\item Mantener la coherencia entre la parte visual del editor, las reglas de validación, la transformación al modelo relacional y la generación de SQL, de forma que los elementos soportados puedan traducirse de manera razonable a tablas, columnas, claves primarias y claves foráneas.
 
-\item Revisar la generación de SQL a partir del modelo construido, de modo que el resultado sea coherente con las decisiones de transformación aplicadas, reduzca el uso de sentencias \texttt{ALTER TABLE} cuando las dependencias entre tablas puedan resolverse mediante el orden de creación y simplifique la representación de claves foráneas cuando sea posible.
+\item Mejorar la validación del diagrama y la comunicación de errores al usuario, haciendo que los mensajes sean más claros y, cuando sea posible, vinculados a los elementos concretos relacionados con cada problema.
 
-\item Mejorar la validación del diagrama y la comunicación de errores al usuario, haciendo que los mensajes sean más claros y, cuando sea posible, indicando los elementos concretos relacionados con cada problema.
-
-\item Incorporar mejoras de usabilidad en el editor que faciliten el trabajo del usuario, como una organización más clara de la interfaz, acciones contextuales más comprensibles, diálogos de confirmación más explícitos, textos de ayuda en operaciones complejas, soporte para selección múltiple y ventanas de ayuda e información de la aplicación.
-
-\item Añadir un soporte básico de idioma para la interfaz, permitiendo alternar entre español e inglés sin modificar el contenido creado por el usuario dentro del diagrama.
-
-\item Facilitar la documentación y reutilización de los diagramas mediante opciones de exportación e importación, incluyendo el intercambio en formato JSON, la exportación visual del diagrama y acciones de ajuste de vista sobre el contenido del lienzo.
-
-\item Facilitar la creación de estructuras Entidad-Relación básicas de ejemplo, de forma que el usuario pueda generar rápidamente diagramas iniciales para probar o explorar el funcionamiento de la herramienta.
+\item Incorporar mejoras de usabilidad y apoyo a la edición, incluyendo una organización más clara de la interfaz, acciones contextuales más comprensibles, selección múltiple, ayuda integrada, soporte básico de idioma y operaciones de importación, exportación y generación de estructuras de ejemplo.
 
 \item Comprobar el comportamiento de la aplicación mediante pruebas automatizadas cuando proceda y mediante revisión manual en aquellos casos que requieran validación funcional o visual.
 
 \item Documentar el trabajo realizado, tanto desde el punto de vista del desarrollo como desde el uso de la aplicación y la evolución seguida durante el proyecto.
-
 \end{itemize}

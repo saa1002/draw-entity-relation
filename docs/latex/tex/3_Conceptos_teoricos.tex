@@ -76,11 +76,9 @@ Como se aprecia en la Figura \ref{fig:er_isa}, una jerarquía ISA separa la enti
 
 \subsection{Agregaciones}
 
-Las agregaciones permiten tratar una interrelación como un elemento de nivel superior dentro del modelo Entidad-Relación \cite{tema6}. Esto resulta útil cuando una relación entre entidades debe participar, a su vez, en otra relación con nuevos elementos del dominio.
+Las agregaciones permiten tratar una interrelación como un elemento de nivel superior dentro del modelo Entidad-Relación, de forma que pueda participar en otra relación con nuevos elementos del dominio \cite{tema6}. Su incorporación a un editor visual requiere decisiones específicas sobre representación gráfica, validación, persistencia y transformación al modelo relacional.
 
-Este tipo de construcción añade complejidad al modelo, porque no solo es necesario representar entidades e interrelaciones simples, sino también una estructura formada por varios elementos que actúa como una unidad dentro del diagrama. Por ello, su incorporación a una herramienta visual requiere decisiones específicas sobre representación gráfica, validación, persistencia y transformación al modelo relacional.
-
-En este trabajo las agregaciones se consideran como parte del contexto teórico del modelo Entidad-Relación, pero no se incorporan al editor desarrollado. Su implementación se deja como una posible línea de trabajo futura.
+En este trabajo las agregaciones se consideran únicamente como parte del contexto teórico del modelo, pero no forman parte del alcance implementado. Su soporte se deja como una posible línea de trabajo futura.
 
 \section{Transformación al modelo relacional}
 
@@ -98,7 +96,7 @@ La Figura \ref{fig:isa_transformacion_relacional} recoge la estrategia aplicada 
 
 \imagen{isa_transformacion_relacional}{Transformación relacional de una jerarquía ISA mediante tabla de generalización y tabla por especialización.}{0.65}
 
-Esta fase es importante en el contexto del proyecto porque conecta el diseño visual realizado por el usuario con una estructura relacional que la aplicación puede utilizar después para generar SQL.
+Esta fase es especialmente importante en el contexto del proyecto porque actúa como puente entre el diagrama visual diseñado por el usuario y la salida SQL generada por la aplicación.
 
 \section{Generación de SQL}
 
@@ -108,15 +106,14 @@ Una vez que un diagrama Entidad-Relación se ha transformado en un modelo relaci
 
 En el editor desarrollado, la generación de SQL se entiende como una fase posterior al diseño y a la validación del diagrama. Por tanto, el resultado generado depende de que el modelo interno conserve correctamente la información necesaria sobre entidades, atributos, claves, interrelaciones y jerarquías ISA. De esta forma, el SQL no se genera únicamente a partir de la parte visual del diagrama, sino a partir de la interpretación interna que la aplicación mantiene de él.
 
-En la herramienta, esta generación se realiza intentando mantener un resultado legible, evitando detalles innecesarios cuando la restricción puede expresarse de forma más simple, por ejemplo al referenciar la clave primaria completa de una tabla mediante una clave foránea.
+En la herramienta, esta generación se realiza intentando mantener un resultado legible y coherente con el modelo relacional obtenido. Por ejemplo, cuando una clave foránea referencia la clave primaria completa de otra tabla, la salida puede expresarse de forma compacta sin repetir información que ya queda definida en la tabla referenciada.
 
 El SQL generado debe entenderse como una traducción razonable del modelo diseñado, adecuada para los objetivos del proyecto. No pretende sustituir el trabajo completo de diseño físico de una base de datos real, donde podrían decidirse tipos de datos concretos, índices, restricciones adicionales u optimizaciones específicas.
 
 \section{Alcance teórico aplicado en el proyecto}
 
-El modelo Entidad-Relación incluye más posibilidades de las que se han incorporado en la herramienta. Por ello, el editor se centra en aquellos elementos que resultan más relevantes para el contexto del proyecto: entidades, atributos, relaciones binarias y ternarias, entidades débiles, atributos compuestos y multivaluados, y un soporte inicial para jerarquías ISA.
+El modelo Entidad-Relación incluye más posibilidades de las que se han incorporado en la herramienta. Por ello, este capítulo se ha centrado en los conceptos que resultan necesarios para entender la evolución realizada: entidades, atributos, relaciones binarias y ternarias, entidades débiles, atributos compuestos y multivaluados, transformación al modelo relacional, generación de SQL y un soporte inicial para jerarquías ISA.
 
 En el caso de las jerarquías ISA, el alcance aplicado se limita a una generalización con una o varias especializaciones, junto con la herencia de clave hacia las tablas especializadas. No se incluyen variantes más avanzadas como totalidad o parcialidad, especializaciones solapadas o exclusivas, discriminantes ni herencia múltiple real.
 
-Las agregaciones se han tenido en cuenta como concepto teórico, pero no forman parte del alcance implementado. Esta delimitación permite ajustar el desarrollo al objetivo principal del trabajo: evolucionar el editor heredado manteniendo la coherencia entre el diagrama visual, el modelo interno, la validación y la generación de SQL.
-
+Las agregaciones se han tenido en cuenta como concepto teórico, pero no forman parte del alcance implementado. Esta delimitación permite ajustar el desarrollo al objetivo principal del trabajo: evolucionar el editor heredado manteniendo la coherencia entre el diagrama visual, el modelo interno, la validación, la transformación relacional y la generación de SQL.

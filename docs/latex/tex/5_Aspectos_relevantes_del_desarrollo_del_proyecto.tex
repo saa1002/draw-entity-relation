@@ -2,7 +2,7 @@
 
 \section{Planteamiento y organización del desarrollo}
 
-El desarrollo de este trabajo no comenzó desde una aplicación vacía, sino a partir de un editor de diagramas Entidad-Relación que ya existía y que tenía una parte funcional implementada. Antes de añadir nuevas funcionalidades, fue necesario entender cómo estaba construido el sistema, qué partes podían aprovecharse y qué aspectos convenía revisar para poder seguir ampliándolo con cierta seguridad.
+El desarrollo de este trabajo no comenzó desde una aplicación vacía, sino a partir de un editor de diagramas Entidad-Relación que ya existía y que tenía una parte funcional implementada. Antes de añadir nuevas funcionalidades, fue necesario entender cómo estaba construido el sistema, qué partes podían aprovecharse y qué aspectos convenía revisar para poder seguir ampliándolo con mayor seguridad.
 
 Una de las ideas principales del proyecto ha sido mantener la coherencia entre las distintas partes del editor. No basta con que un elemento se dibuje correctamente en el lienzo, sino que también debe quedar representado de forma adecuada en el modelo interno de la aplicación. Ese mismo modelo es el que después se utiliza para validar el diagrama, transformarlo al modelo relacional y generar el script SQL correspondiente.
 
@@ -12,15 +12,11 @@ En este capítulo se recogen los aspectos más relevantes de ese proceso. No se 
 
 \subsection{Organización del trabajo}
 
-El desarrollo del proyecto se organizó de forma incremental, utilizando el control de versiones como apoyo principal para separar y documentar los cambios realizados. En lugar de introducir todas las modificaciones directamente sobre la rama principal, se trabajó mediante ramas específicas para cada bloque de trabajo, lo que permitió revisar los cambios con más seguridad antes de integrarlos.
+El desarrollo se organizó de forma incremental, utilizando ramas, commits, issues y milestones de GitHub para separar las tareas y mantener trazabilidad entre los problemas detectados, las soluciones aplicadas y las comprobaciones posteriores.
 
-Las tareas se agruparon en milestones e issues de GitHub. Esta organización resultó útil para dividir el trabajo en objetivos más pequeños y manejables. Cada issue representaba una mejora, corrección o tarea de análisis concreta, y permitía mantener cierta trazabilidad entre el problema detectado, la solución aplicada y las pruebas realizadas posteriormente.
+Esta organización resultó especialmente útil al trabajar sobre una aplicación heredada, donde un cambio podía afectar simultáneamente a la interfaz, el modelo interno, la persistencia, la validación o la generación de SQL. Por ello, se intentó que cada bloque de trabajo pudiera revisarse antes de continuar con nuevas ampliaciones.
 
-El uso de commits separados también fue importante durante el desarrollo. Al tratarse de una aplicación heredada, muchas modificaciones afectaban a varias partes del sistema al mismo tiempo: la interfaz, el modelo interno, la validación, la persistencia o la generación de SQL. Por ello, se intentó que cada commit correspondiera a una unidad de trabajo concreta, facilitando así la revisión de los cambios y la detección de posibles regresiones.
-
-Además, algunas decisiones de alcance se fueron ajustando a partir de la revisión del tutor. Esto fue especialmente relevante en las fases finales, donde se decidió mantener un soporte inicial y controlado para las jerarquías ISA y aplazar funcionalidades más complejas, como las agregaciones o la herencia múltiple real. De esta forma, el desarrollo no se basó únicamente en añadir funcionalidades, sino también en decidir qué casos debían quedar dentro o fuera del alcance del trabajo.
-
-En conjunto, esta forma de organización permitió avanzar de manera progresiva, comprobando cada bloque antes de continuar con el siguiente. Esta metodología fue especialmente útil en un editor visual, donde un cambio aparentemente pequeño puede afectar al modelo interno, a la reconstrucción del diagrama o a la salida SQL generada.
+Además, algunas decisiones de alcance se ajustaron durante el desarrollo a partir de la revisión del tutor. Esto fue especialmente relevante en las fases finales, donde se decidió mantener un soporte inicial y controlado para las jerarquías ISA y aplazar funcionalidades más complejas, como las agregaciones o la herencia múltiple real.
 
 \section{Análisis y estabilización del sistema heredado}
 
@@ -40,8 +36,6 @@ La revisión del sistema heredado también permitió detectar algunos puntos del
 
 Una vez comprendido el funcionamiento general del sistema heredado, el siguiente paso fue estabilizar algunas partes del núcleo del editor antes de incorporar nuevas funcionalidades. Esta fase fue importante porque el editor no solo debía permitir dibujar elementos en el lienzo, sino mantener una relación coherente entre esos elementos gráficos y la información almacenada internamente.
 
-En el estado inicial del proyecto ya existía una base funcional, pero también se detectaron algunos puntos que podían generar problemas al ampliar el modelo soportado. Algunos comportamientos dependían de convenciones internas, como la forma de relacionar ciertos elementos del grafo con los datos del modelo, o de supuestos que podían dejar de cumplirse al introducir nuevos tipos de entidades, atributos o relaciones.
-
 Por ello, una parte del trabajo se centró en reducir esas dependencias implícitas y hacer más explícitas algunas asociaciones internas. En particular, se revisó la forma en la que los elementos del modelo se vinculaban con las celdas de mxGraph, así como el modo en que se mantenían las referencias necesarias para reconstruir el diagrama tras una recarga o una importación.
 
 También se revisó la persistencia de la información del diagrama. En una herramienta de este tipo, guardar y recuperar correctamente el estado del editor es fundamental, ya que el usuario puede crear un modelo, modificarlo, exportarlo o volver a cargarlo más adelante. Si la información persistida no coincide con el estado real del lienzo, pueden aparecer errores en fases posteriores, especialmente en la validación o en la generación de SQL.
@@ -60,7 +54,7 @@ La Figura \ref{fig:modelo_interno_editor} resume la relación entre el lienzo vi
 
 \imagen{modelo_interno_editor}{Relación entre el lienzo del editor, el modelo interno y las operaciones principales de la aplicación.}{0.75}
 
-Por tanto, cualquier ampliación visual del editor debía ir acompañada de una ampliación coherente de esta estructura.
+Por tanto, las ampliaciones del editor debían reflejarse también en esta estructura interna.
 
 \subsection{Evolución de la estructura interna}
 
@@ -85,8 +79,6 @@ En las fases finales se amplió además el flujo de importación para permitir d
 Esta parte fue especialmente relevante porque cada ampliación del modelo debía ser compatible con la persistencia. Si se añade un nuevo elemento al editor, como una relación ternaria o una jerarquía ISA, no basta con mostrarlo correctamente en pantalla: también debe poder guardarse, exportarse, importarse y reconstruirse de forma coherente.
 
 De esta manera, la persistencia actúa como un punto de unión entre varias partes del sistema. El modelo interno no solo sirve para validar y generar SQL, sino también para mantener la continuidad del trabajo del usuario y permitir que los diagramas puedan moverse entre sesiones o entre distintos entornos.
-
-En conjunto, esta evolución permitió que las nuevas funcionalidades pudieran conservarse entre sesiones y utilizarse después en la validación, la transformación relacional y la generación de SQL.
 
 \section{Ampliación de los elementos Entidad-Relación soportados}
 
@@ -127,8 +119,6 @@ El editor permite crear un elemento ISA y configurarlo indicando una entidad gen
 Una decisión importante fue limitar la funcionalidad a jerarquías ISA sencillas. Cada ISA debe tener una única generalización y una o varias especializaciones. No se incorporaron restricciones de totalidad o parcialidad, ni especializaciones solapadas o exclusivas, ni discriminantes, ni herencia múltiple real. Estas variantes se dejaron fuera para mantener una implementación coherente con el alcance del trabajo.
 
 También se decidió que las especializaciones no tengan clave primaria propia, ya que heredan la clave de la generalización. Sin embargo, sí se permite que una especialización no tenga atributos propios, porque puede seguir siendo útil dentro del modelo si participa en relaciones con otras entidades.
-
-Estas ampliaciones se realizaron de forma progresiva, procurando que cada nuevo elemento quedara integrado en el funcionamiento general del editor y no solo en su representación visual.
 
 \section{Validación, transformación relacional y generación de SQL}
 
@@ -180,13 +170,11 @@ En el proyecto se decidió separar la transformación relacional de la generaci�
 
 El script generado incluye las sentencias necesarias para crear las tablas obtenidas a partir del modelo relacional. En cada tabla se definen sus columnas, los tipos de datos utilizados, las claves primarias y las restricciones que correspondan. Además, cuando existen relaciones entre tablas, se generan también las claves foráneas necesarias para mantener la relación entre ellas.
 
-Las claves foráneas se generan intentando aprovechar el propio orden de creación de las tablas. Cuando las dependencias entre tablas pueden resolverse de forma directa, la restricción de clave foránea se incluye dentro de la sentencia \texttt{CREATE TABLE} correspondiente. De esta manera, el SQL generado resulta más compacto y más cercano a la estructura relacional obtenida.
+Durante la revisión del generador se buscó producir un script más claro y legible. Para ello, las claves foráneas se incluyen dentro de las sentencias \texttt{CREATE TABLE} cuando las dependencias entre tablas pueden resolverse mediante el orden de creación. Las sentencias \texttt{ALTER TABLE} se mantienen como mecanismo de respaldo para los casos en los que aparecen dependencias cíclicas reales.
 
-Sin embargo, existen casos en los que las tablas presentan dependencias cíclicas. En esas situaciones no siempre es posible declarar todas las claves foráneas durante la creación inicial de las tablas, ya que alguna de ellas puede depender de una tabla que todavía no ha sido creada. Para estos casos se mantiene el uso de sentencias \texttt{ALTER TABLE} como mecanismo de respaldo. Así, el generador intenta producir un script más simple cuando el modelo lo permite, pero conserva una solución válida para escenarios con ciclos reales de dependencias.
+También se simplificó la representación de algunas claves foráneas cuando estas referencian la clave primaria completa de la tabla destino, evitando repetir información que ya queda definida en dicha tabla. Esta decisión no modifica la estructura relacional obtenida, sino la forma en la que se expresa el script final.
 
-Además, se revisó la forma de representar las claves foráneas en el script final. Cuando una clave foránea referencia la clave primaria completa de la tabla destino, el generador puede utilizar una forma más compacta, referenciando directamente la tabla. También se evitaron nombres explícitos innecesarios para las restricciones de clave foránea, manteniendo una sintaxis más simple y legible sin modificar la estructura relacional obtenida previamente.
-
-También se realiza una normalización de los identificadores utilizados en el SQL. Esta normalización ayuda a evitar problemas con nombres que puedan contener espacios, acentos u otros caracteres poco adecuados para identificadores de base de datos. Además, cuando se detectan posibles repeticiones de nombres dentro de una misma tabla, se ajustan para evitar conflictos en el esquema resultante.
+Asimismo, se realiza una normalización de los identificadores utilizados en el SQL. Esta normalización ayuda a evitar problemas con nombres que puedan contener espacios, acentos u otros caracteres poco adecuados para identificadores de base de datos. Además, cuando se detectan posibles repeticiones de nombres dentro de una misma tabla, se ajustan para evitar conflictos en el esquema resultante.
 
 En el caso de las jerarquías ISA, el SQL generado refleja la estrategia relacional adoptada. La tabla correspondiente a la generalización se crea como una tabla ordinaria. Las tablas de especialización incluyen la clave heredada de la generalización, que se declara como clave primaria y también como clave foránea hacia la tabla general. Con ello se mantiene la relación entre la entidad general y sus especializaciones dentro del esquema SQL.
 
@@ -200,11 +188,11 @@ La Figura \ref{fig:sql_generado} muestra un ejemplo de script SQL generado por l
 
 \section{Refinamientos de usabilidad del editor}
 
-Además de ampliar los elementos del modelo soportados por el editor, durante la fase final del trabajo se incorporaron varias mejoras orientadas a facilitar el uso de la herramienta. Estas mejoras no modifican la notación Entidad-Relación utilizada ni cambian la semántica del modelo, pero sí hacen que la interacción con el editor sea más clara, guiada y menos propensa a errores.
+Además de ampliar los elementos del modelo soportados por el editor, durante la fase final del trabajo se incorporaron varias mejoras orientadas a facilitar el uso de la herramienta. Estas mejoras no modifican la notación Entidad-Relación utilizada ni cambian la semántica del modelo, pero hacen que la interacción con el editor sea más clara, guiada y menos propensa a errores.
 
 \subsection{Organización de la interfaz y acciones contextuales}
 
-Una de las primeras mejoras consistió en revisar la organización general de la interfaz. La barra lateral se reorganizó en secciones visuales para separar mejor las acciones de creación, las operaciones sobre el diagrama y las opciones de importación, exportación o generación. También se ajustó su presentación para mantener una anchura estable y evitar que los controles cambiasen de posición de forma innecesaria.
+Una de las mejoras consistió en revisar la organización general de la interfaz. La barra lateral se reorganizó en secciones visuales para separar mejor las acciones de creación, las operaciones sobre el diagrama y las opciones de importación, exportación o generación. También se ajustó su presentación para mantener una anchura estable y evitar desplazamientos innecesarios de los controles.
 
 Con esta reorganización se buscó que el usuario pudiera localizar las acciones principales de forma más rápida. Además, las acciones disponibles se presentan de forma más clara en función del elemento seleccionado. Por ejemplo, al seleccionar una entidad, una relación o un atributo, la interfaz muestra un encabezado contextual que ayuda a identificar sobre qué tipo de elemento se está trabajando.
 
@@ -212,52 +200,29 @@ La Figura \ref{fig:acciones_contextuales_editor} muestra un ejemplo de las accio
 
 \imagen{acciones_contextuales_editor}{Acciones contextuales mostradas por el editor al seleccionar un elemento del diagrama.}{0.82}
 
-También se añadieron pequeños textos de ayuda en zonas concretas del editor. Cuando no hay ningún elemento seleccionado, la aplicación muestra una guía breve que orienta al usuario sobre el uso de las acciones contextuales. Del mismo modo, los elementos arrastrables disponen de textos explicativos para indicar qué representa cada uno dentro de la notación E/R.
-
-También se refinó el comportamiento de la selección múltiple. El rectángulo utilizado para seleccionar varios elementos se hizo visible para que el usuario pueda identificar claramente el área seleccionada. Además, cuando existen varios elementos seleccionados, la barra lateral evita mostrar acciones contextuales propias de una única entidad, atributo, relación o ISA. En ese caso se mantienen únicamente acciones aplicables al conjunto seleccionado, como el desplazamiento en el lienzo o el borrado conjunto. De esta forma se evita que la interfaz muestre opciones asociadas al primer elemento detectado cuando realmente el usuario está trabajando con una selección múltiple.
-
+También se añadieron pequeños textos de ayuda en zonas concretas del editor y se refinó el comportamiento de la selección múltiple. El rectángulo de selección se hizo visible y, cuando existen varios elementos seleccionados, la barra lateral evita mostrar acciones propias de un único elemento. En ese caso se mantienen únicamente acciones aplicables al conjunto seleccionado, como el desplazamiento en el lienzo o el borrado conjunto.
 
 \subsection{Mejora de validaciones, diálogos y mensajes de ayuda}
 
-Otro bloque importante de trabajo fue la revisión de los mensajes de validación y de los diálogos de confirmación. Antes de generar SQL y en determinadas operaciones del editor, la aplicación valida la estructura del modelo. En esta fase se mejoró la forma de presentar los errores detectados, agrupándolos de manera más clara y mostrando, cuando es posible, el elemento concreto relacionado con el problema.
+Otro bloque de trabajo fue la revisión de los mensajes de validación y de los diálogos de confirmación. Antes de generar SQL y en determinadas operaciones del editor, la aplicación valida la estructura del modelo. En esta fase se mejoró la forma de presentar los errores detectados, agrupándolos de manera más clara y mostrando, cuando es posible, el elemento concreto relacionado con el problema.
 
 Esta mejora resulta útil porque el usuario no solo recibe una indicación genérica de que el diagrama no es válido, sino que puede identificar con mayor facilidad qué parte debe corregir. De esta forma, la validación funciona también como una ayuda durante el proceso de modelado.
 
-Además, se revisaron los textos de confirmación de acciones sensibles, como generar SQL, importar un diagrama JSON o reiniciar el lienzo. El objetivo fue hacer más explícitas las consecuencias de cada acción, especialmente en los casos en los que se puede sobrescribir o eliminar información existente.
+Además, se revisaron los textos de confirmación de acciones sensibles, como generar SQL, importar un diagrama JSON o reiniciar el lienzo. También se añadieron textos breves de ayuda en los diálogos relacionados con jerarquías ISA y con roles en relaciones ternarias. Los diálogos más complejos pueden moverse por la pantalla, evitando que oculten de forma permanente la parte del diagrama que el usuario necesita consultar.
 
-También se ajustaron algunos diálogos de configuración para facilitar su comprensión. En particular, se añadieron textos breves de ayuda en los diálogos relacionados con jerarquías ISA y con roles en relaciones ternarias. Asimismo, los diálogos más complejos pueden moverse por la pantalla, evitando que oculten de forma permanente la parte del diagrama que el usuario necesita consultar mientras configura el elemento.
+\subsection{Operaciones globales sobre el diagrama}
 
-\subsection{Soporte básico de idioma}
+También se revisaron varias acciones que afectan al diagrama completo. Además de la importación y exportación en JSON, se añadió la posibilidad de exportar la representación visual del diagrama como imagen en formato PNG o SVG. Esta exportación se limita al aspecto visual del modelo y no modifica el JSON, la persistencia interna ni el SQL generado.
 
-Durante esta fase se añadió un soporte básico de idioma para la interfaz. El idioma por defecto de la aplicación es el español, pero el usuario puede cambiar a inglés mediante un selector visible en la propia interfaz. La elección se conserva en el almacenamiento local del navegador, de forma que se mantiene entre sesiones.
+Se incorporó además una acción explícita para comprobar el diagrama sin generar SQL. De esta forma, el usuario puede revisar el estado del modelo directamente: si el diagrama es válido recibe una notificación de éxito, y si contiene errores se muestra el diálogo de validación agrupado.
 
-Este soporte no pretende ser una internacionalización completa de la aplicación, sino una mejora práctica de accesibilidad y usabilidad. Se tradujeron los textos visibles principales de la interfaz, incluyendo acciones, botones, diálogos, mensajes de validación y notificaciones. Sin embargo, no se traduce el contenido creado por el usuario, como los nombres de entidades, relaciones o atributos, ya que forman parte del modelo diseñado y deben mantenerse exactamente como fueron introducidos.
-
-\subsection{Generación de estructuras de ejemplo}
-
-Otra funcionalidad incorporada fue la opción de generar estructuras básicas de ejemplo. Esta acción permite crear rápidamente algunos patrones habituales del modelo Entidad-Relación, como relaciones binarias con distintas cardinalidades, relaciones ternarias, entidades débiles o jerarquías ISA sencillas.
-
-El objetivo de esta funcionalidad es facilitar tanto las pruebas como la exploración de la herramienta. En lugar de obligar al usuario a construir manualmente una estructura desde cero para comprobar una funcionalidad concreta, el editor puede generar una base inicial utilizando los nombres por defecto de la aplicación.
-
-Para mantener el comportamiento controlado, la generación de estructuras permite elegir entre reemplazar el diagrama actual o combinar la estructura generada con el contenido existente. En el modo de reemplazo se mantiene el flujo más simple, útil para crear diagramas desde cero o para probar una estructura concreta. En el modo de combinación, la estructura generada se inserta en el diagrama actual mediante la misma lógica común utilizada en la importación combinada: se remapean identificadores internos, se actualizan referencias entre elementos, se renombran conflictos de nombres y se desplaza visualmente el bloque insertado para reducir solapamientos.
+Otra mejora fue la generación de estructuras básicas de ejemplo, como relaciones binarias, relaciones ternarias, entidades débiles o jerarquías ISA sencillas. Esta funcionalidad sirve como apoyo para probar la herramienta y crear modelos base, pero no pretende actuar como un sistema avanzado de plantillas ni realizar fusiones semánticas entre elementos equivalentes.
 
 La Figura \ref{fig:generacion_estructuras} muestra la generación de una estructura básica de ejemplo, utilizada como apoyo para crear rápidamente patrones habituales del modelo Entidad-Relación.
 
 \imagen{generacion_estructuras}{Generación de una estructura básica de ejemplo en el editor.}{0.82}
 
-Esta funcionalidad se plantea como una ayuda práctica para crear modelos base y revisar el comportamiento del editor. No pretende ser un sistema avanzado de plantillas semánticas ni fusionar elementos equivalentes del dominio, sino ofrecer una forma sencilla y controlada de añadir estructuras habituales al diagrama.
-
-\subsection{Ajustes en exportación, validación y vista del diagrama}
-
-Finalmente, se revisaron varios detalles relacionados con las acciones globales del diagrama. Además de la exportación e importación en JSON, se añadió la posibilidad de exportar la representación visual del diagrama como imagen en formato PNG o SVG. Esta exportación se limita al aspecto visual del modelo y no modifica el JSON, la persistencia interna ni el SQL generado.
-
-También se incorporó una acción explícita para comprobar el diagrama sin generar SQL. Hasta ese momento, la validación aparecía principalmente como paso previo a otras operaciones. Con el nuevo botón de comprobación, el usuario puede revisar el estado del modelo de forma directa: si el diagrama es válido recibe una notificación de éxito, y si contiene errores se muestra el diálogo de validación agrupado.
-
-Otra mejora añadida fue la opción de ajustar la vista al contenido del diagrama. Esta acción centra y adapta la visualización al modelo actual sin modificar las coordenadas reales de los elementos ni alterar el modelo persistido. Resulta útil cuando el diagrama crece, cuando se importa contenido o cuando se combinan estructuras generadas con un diagrama ya existente.
-
-Además, se realizaron pequeños ajustes de interfaz para mejorar la comodidad de uso: la barra lateral pasó a ser desplazable verticalmente cuando las acciones no caben en pantalla y el selector de idioma se simplificó mediante botones compactos ES/EN. Estas mejoras no cambian la notación académica del modelo Entidad-Relación, pero ayudan a que la herramienta resulte más clara durante la edición.
-
-En la fase final también se incorporaron acciones de ayuda e información de la aplicación. La ventana de ayuda reúne indicaciones básicas de uso, mientras que la ventana ``Acerca de'' contextualiza el proyecto, indica las tecnologías utilizadas y reconoce el trabajo original del que parte la aplicación. Además, se añadió una identificación visual asociada a la Universidad de Burgos y se revisó el nombre mostrado por la herramienta.
+Por último, se añadieron mejoras de apoyo a la edición, como el ajuste de vista al contenido del diagrama, la ayuda integrada, la ventana de información del proyecto y un soporte básico de idioma español/inglés para los textos principales de la interfaz. Estas mejoras no cambian la notación académica del modelo Entidad-Relación, pero ayudan a que la herramienta resulte más clara durante la edición.
 
 \section{Pruebas y revisión manual}
 
@@ -273,13 +238,9 @@ Por eso, la revisión manual también tuvo un papel importante. Se comprobaron d
 
 En las fases finales se prestó especial atención a los casos relacionados con las jerarquías ISA, las mejoras de usabilidad y la generación de SQL. En el caso de ISA, se revisó que las especializaciones heredasen correctamente la clave de la generalización, que se rechazasen configuraciones no soportadas y que el SQL generado mantuviera la relación entre las tablas de generalización y especialización. También se comprobaron mejoras de interfaz como los mensajes de validación agrupados, los diálogos de confirmación, el selector de idioma y la generación de estructuras básicas de ejemplo.
 
-La generación de SQL también requirió pruebas específicas después de modificar el tratamiento de las claves foráneas. Se revisaron casos en los que las dependencias entre tablas podían resolverse mediante el orden de creación, evitando sentencias \texttt{ALTER TABLE}, y casos con dependencias cíclicas reales, donde dicho mecanismo debía mantenerse como respaldo.
-
-Además, se revisó la forma de representar las claves foráneas en el script final. Cuando una clave foránea referencia la clave primaria completa de la tabla destino, el generador puede utilizar una forma más compacta, referenciando directamente la tabla. También se evitaron nombres explícitos innecesarios para las restricciones de clave foránea, manteniendo una sintaxis más simple y legible sin modificar la estructura relacional obtenida previamente.
-
 Esta combinación de pruebas automáticas y revisión manual permitió avanzar con más seguridad durante la ampliación del editor. Las pruebas ayudaron a controlar casos concretos y evitar regresiones, mientras que la revisión manual permitió comprobar el comportamiento global de la herramienta desde el punto de vista del usuario.
 
-En cualquier caso, las pruebas no deben entenderse como una garantía absoluta de ausencia de errores. Su función dentro del proyecto fue apoyar el desarrollo y aportar confianza sobre los comportamientos principales, especialmente en las partes más sensibles del sistema. Las funcionalidades relacionadas con la transformación del modelo, la validación y la generación de SQL requieren tanto pruebas concretas como una revisión del resultado obtenido en distintos escenarios.
+En cualquier caso, las pruebas no deben entenderse como una garantía absoluta de ausencia de errores. Su función dentro del proyecto fue apoyar el desarrollo y aportar confianza sobre los comportamientos principales, combinando comprobaciones automáticas con revisión manual en los escenarios más sensibles.
 
 \section{Dificultades y decisiones técnicas relevantes}
 
@@ -295,24 +256,10 @@ Otra dificultad relevante apareció en la generación de SQL. En una primera apr
 
 En las mejoras de usabilidad también fue necesario equilibrar utilidad y complejidad. Algunas mejoras, como reorganizar la barra lateral, añadir mensajes de ayuda o mejorar los diálogos de confirmación, tenían un riesgo bajo y aportaban claridad al editor. En cambio, otras posibilidades, como fusionar diagramas de forma semántica o copiar y pegar fragmentos completos del diagrama, podían introducir conflictos de identificadores, nombres repetidos o referencias internas rotas.
 
-Por este motivo, la importación de JSON y la generación de estructuras se resolvieron mediante una combinación controlada. El usuario puede elegir entre reemplazar el diagrama actual o insertar el nuevo contenido en el diagrama existente. En el segundo caso, la aplicación remapea identificadores internos, actualiza referencias, renombra conflictos de nombres y desplaza visualmente el bloque insertado. Esta solución evita una fusión semántica compleja, pero permite combinar contenido de forma práctica y coherente con el alcance del proyecto.
+Por este motivo, la importación combinada de JSON y la inserción de estructuras de ejemplo se plantearon de forma controlada. El usuario puede elegir entre reemplazar el diagrama actual o insertar nuevo contenido en el diagrama existente. En el segundo caso, la aplicación remapea identificadores internos, actualiza referencias, resuelve conflictos de nombres mediante renombrado y desplaza visualmente el bloque insertado.
+
+Esta solución no intenta realizar una fusión semántica avanzada entre diagramas, pero permite combinar contenido de forma práctica y coherente con el alcance del proyecto.
 
 El soporte de idioma también se planteó con un alcance limitado. Se añadió traducción para los textos principales de la interfaz en español e inglés, pero no se intentó convertir la aplicación en un sistema de internacionalización completo. Esta decisión permitió mejorar la accesibilidad de la herramienta sin modificar la semántica del modelo ni alterar el contenido creado por el usuario.
 
 En conjunto, las principales decisiones técnicas del proyecto estuvieron condicionadas por la necesidad de mantener la coherencia entre interfaz, modelo interno, validación, persistencia y generación SQL. En lugar de añadir funcionalidades de forma aislada, se priorizó que cada ampliación quedara integrada en el flujo completo de la aplicación.
-
-\section{Consideraciones finales del desarrollo}
-
-El desarrollo del proyecto se ha basado en una evolución progresiva del editor heredado. En lugar de sustituir por completo la aplicación inicial, se ha partido de su funcionamiento existente y se han ido introduciendo cambios orientados a hacerla más coherente, más fácil de ampliar y más ajustada al modelo Entidad-Relación estudiado.
-
-Uno de los aspectos más importantes del trabajo ha sido mantener la conexión entre las distintas partes de la herramienta. Cada ampliación realizada en la interfaz debía reflejarse también en el modelo interno, en las validaciones y, cuando correspondiera, en la transformación relacional y la generación de SQL. Esta forma de trabajar ayudó a evitar que las nuevas funcionalidades quedaran aisladas o funcionaran solo a nivel visual.
-
-A lo largo del desarrollo se incorporaron distintos elementos del modelo Entidad-Relación, como entidades débiles, atributos compuestos y multivaluados, relaciones ternarias con roles y un soporte inicial para jerarquías ISA. Además, se revisó el proceso de validación y generación de SQL para que la salida producida fuera más coherente con el diagrama creado por el usuario.
-
-En la fase final también se dedicó trabajo a mejorar la experiencia de uso del editor. Estas mejoras no cambian la notación académica empleada, pero facilitan la construcción y revisión de diagramas. Entre ellas se encuentran la reorganización de la interfaz, la mejora de los mensajes de validación, la acción explícita para comprobar el diagrama, los textos de ayuda, los diálogos más claros y el soporte básico de idioma.
-
-También se añadieron acciones prácticas para trabajar con el diagrama completo, como la generación de estructuras de ejemplo, la importación y generación combinada de contenido, la exportación visual en PNG y SVG, y la posibilidad de ajustar la vista al contenido del diagrama.
-
-Este criterio se aplicó especialmente al soporte de jerarquías ISA y a las agregaciones. En el caso de ISA, se implementó una versión inicial centrada en la herencia de clave desde la generalización hacia las especializaciones. En cambio, las agregaciones se dejaron fuera del alcance implementado, ya que requieren un tratamiento específico que afectaría a varias partes del sistema.
-
-En conjunto, el desarrollo permitió evolucionar una aplicación ya funcional hacia una herramienta más completa y más cómoda de utilizar, con un soporte más amplio para distintos elementos del modelo Entidad-Relación y con una relación más clara entre el diseño visual del usuario y el resultado relacional generado por la aplicación.

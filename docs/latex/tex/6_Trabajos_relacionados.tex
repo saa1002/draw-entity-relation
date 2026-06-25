@@ -1,16 +1,14 @@
 \capitulo{6}{Trabajos relacionados}
 
-En este capítulo se presentan algunas herramientas relacionadas con el modelado de diagramas y el diseño de bases de datos. La comparación no pretende valorar estas alternativas de forma absoluta, ya que muchas de ellas son herramientas más maduras y con objetivos más amplios que los de este Trabajo Fin de Grado. El objetivo es situar el proyecto desarrollado dentro de un conjunto de soluciones existentes y señalar sus diferencias principales.
+En este capítulo se presentan algunas herramientas relacionadas con el modelado de diagramas y el diseño de bases de datos. La comparación no pretende valorar estas alternativas de forma absoluta, ya que muchas de ellas son más maduras y tienen objetivos más amplios que los de este Trabajo Fin de Grado. El objetivo es situar el proyecto desarrollado dentro de un conjunto de soluciones existentes y señalar sus diferencias principales.
 
-Entre las herramientas generales de diagramación se encuentran diagrams.net, también conocida como draw.io, y Excalidraw \cite{drawio,excalidraw}. En el ámbito más cercano al modelado de bases de datos aparecen herramientas como ERDPlus y dbdiagram.io \cite{erdplus,dbdiagram}.
+Entre las herramientas consideradas se encuentran diagrams.net, también conocida como draw.io, Excalidraw, ERDPlus y dbdiagram.io \cite{drawio,excalidraw,erdplus,dbdiagram}. Las dos primeras se orientan a la diagramación general, mientras que las dos últimas están más relacionadas con el modelado de bases de datos.
 
 \section{Herramientas generales de diagramación}
 
 \subsection{diagrams.net / draw.io}
 
-Draw.io, actualmente conocido también como diagrams.net, es una aplicación web que permite crear diagramas de muchos tipos. Entre ellos se encuentran diagramas de flujo, diagramas UML, esquemas de red y diagramas relacionados con bases de datos.
-
-Su principal ventaja es la flexibilidad. Permite dibujar prácticamente cualquier estructura utilizando formas, conectores y plantillas. Por ello, puede utilizarse para representar diagramas Entidad-Relación de forma visual. Sin embargo, su enfoque es generalista: los elementos dibujados no tienen necesariamente una semántica interna propia de un modelo E/R académico.
+Draw.io, actualmente conocido también como diagrams.net, es una aplicación web que permite crear diagramas de muchos tipos. Su principal ventaja es la flexibilidad, ya que permite dibujar estructuras muy variadas mediante formas, conectores y plantillas. Por ello, puede utilizarse para representar diagramas Entidad-Relación de forma visual. Sin embargo, su enfoque es generalista: los elementos dibujados no tienen necesariamente una semántica interna propia de un modelo E/R académico.
 
 Esto marca una diferencia importante respecto al proyecto desarrollado. En el editor de este trabajo, los elementos del diagrama no se tratan solo como figuras, sino como entidades, atributos, relaciones o jerarquías ISA que forman parte de un modelo interno. Ese modelo se utiliza posteriormente para validar el diagrama, transformarlo al modelo relacional y generar SQL.
 
@@ -42,13 +40,11 @@ Frente a este tipo de herramientas, el editor desarrollado da más importancia a
 
 \section{Comparativa frente a alternativas}
 
-La comparación entre herramientas debe entenderse teniendo en cuenta el objetivo concreto de este trabajo. Draw.io y Excalidraw son herramientas muy flexibles para dibujar diagramas, pero no están centradas en validar un modelo Entidad-Relación ni en generar una salida SQL a partir de la semántica del diagrama. ERDPlus se aproxima más al enfoque académico de modelado de bases de datos, mientras que dbdiagram.io se orienta más a la definición textual de estructuras relacionales.
+La comparación entre herramientas debe entenderse teniendo en cuenta el objetivo concreto de este trabajo. Draw.io y Excalidraw son herramientas flexibles para dibujar diagramas, pero no están centradas en validar un modelo Entidad-Relación ni en generar SQL a partir de la semántica del diagrama. ERDPlus se aproxima más al enfoque académico de modelado de bases de datos, mientras que dbdiagram.io se orienta a la definición textual de estructuras relacionales.
 
-El proyecto desarrollado se sitúa en un punto intermedio. No pretende competir con herramientas generales de diagramación ni con plataformas profesionales de diseño de bases de datos. Su objetivo es evolucionar un editor web académico de diagramas Entidad-Relación, manteniendo una correspondencia entre la representación visual, el modelo interno, la validación y la generación de SQL.
+El proyecto desarrollado no pretende competir con herramientas generales de diagramación ni con plataformas profesionales de diseño de bases de datos. Su objetivo es evolucionar un editor web académico de diagramas Entidad-Relación, manteniendo una correspondencia entre la representación visual, el modelo interno, la validación, la transformación relacional y la generación de SQL.
 
-La principal diferencia del proyecto no está en ofrecer más funcionalidades que el resto de alternativas, sino en su enfoque concreto. La herramienta desarrollada está pensada para trabajar con diagramas Entidad-Relación dentro de un contexto académico, manteniendo la coherencia entre el diagrama creado por el usuario y la estructura interna que permite validarlo, guardarlo, transformarlo y generar SQL.
-
-La Tabla \ref{tab:comparativa_herramientas} resume las diferencias principales entre algunas herramientas relacionadas y la aplicación desarrollada, atendiendo especialmente a su enfoque, su relación con el modelado de bases de datos y el tipo de soporte que ofrecen.
+La Tabla \ref{tab:comparativa_herramientas} resume las diferencias principales entre algunas herramientas relacionadas y la aplicación desarrollada.
 
 \begin{table}[p]
     \centering
