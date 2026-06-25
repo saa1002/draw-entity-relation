@@ -27,49 +27,37 @@ Aunque la aplicación ofrece ayuda contextual y mensajes de validación, es reco
 
 \section{Instalación}
 
-La aplicación puede utilizarse desde una versión desplegada en línea mediante Vercel. En ese caso, no es necesario realizar ninguna instalación local, ya que basta con acceder desde el navegador web.
+La forma principal de utilizar UBU E-R App es mediante la versión desplegada en Vercel. En este caso no es necesario instalar nada en el equipo del usuario, ya que la aplicación se ejecuta directamente desde el navegador web:
 
-% TODO: Añadir aquí el enlace definitivo de despliegue en Vercel.
+\begin{center}
+\href{https://draw-entity-relation-opal.vercel.app/}{Aplicación web desplegada en Vercel}
+\end{center}
 
-No obstante, también es posible ejecutar el proyecto en un entorno local. Esta opción resulta útil para revisar el código, realizar pruebas o continuar el desarrollo de la aplicación. Para ello, es necesario disponer previamente de Node.js y npm instalados en el equipo.
+Para utilizar esta versión basta con abrir el enlace anterior en un navegador actualizado. La aplicación no requiere autenticación, registro de usuario ni configuración previa. El trabajo realizado se conserva en el almacenamiento local del navegador y también puede guardarse mediante la exportación del diagrama en formato JSON.
 
-En primer lugar, se debe clonar el repositorio del proyecto:
+De forma alternativa, el proyecto puede ejecutarse localmente. Esta opción está orientada principalmente a revisión técnica, pruebas o continuación del desarrollo, por lo que se describe con más detalle en el manual del programador. De manera resumida, se requiere tener instalados Node.js y npm, clonar el repositorio, instalar las dependencias y arrancar el servidor de desarrollo:
 
 \begin{verbatim}
 git clone <url-del-repositorio>
-\end{verbatim}
-
-Después, se accede al directorio del proyecto:
-
-\begin{verbatim}
 cd <directorio-del-proyecto>
-\end{verbatim}
-
-A continuación, se instalan las dependencias:
-
-\begin{verbatim}
 npm install
-\end{verbatim}
-
-Una vez instaladas, la aplicación puede ejecutarse en modo desarrollo mediante:
-
-\begin{verbatim}
 npm start
 \end{verbatim}
 
-Tras arrancar el servidor de desarrollo, la aplicación estará disponible normalmente en la dirección local indicada por la propia terminal, habitualmente:
+Tras ejecutar estos comandos, la aplicación estará disponible normalmente en la dirección local indicada por la terminal, habitualmente:
 
 \begin{verbatim}
 http://localhost:3000
 \end{verbatim}
 
-También es posible generar una versión preparada para producción mediante:
+También puede generarse una versión preparada para producción mediante:
 
 \begin{verbatim}
 npm run build
 \end{verbatim}
 
-Este último comando crea una versión optimizada de la aplicación en la carpeta de construcción correspondiente, pensada principalmente para despliegue o revisión técnica.
+Esta ejecución local no es necesaria para el uso habitual de la aplicación, pero permite revisar el funcionamiento del proyecto fuera del despliegue en Vercel.
+
 
 \section{Manual del usuario}
 
@@ -131,6 +119,25 @@ Una forma habitual de comenzar un diagrama es crear una entidad fuerte y añadir
 
 A partir de estos elementos básicos, el usuario puede ir completando el diagrama mediante relaciones entre entidades, atributos asociados a entidades o relaciones, entidades débiles cuando sea necesario y estructuras ISA en los casos soportados por la aplicación.
 
+\subsection{Generación de estructuras básicas}
+
+Además de crear los elementos de forma manual, la aplicación permite generar estructuras básicas de ejemplo. Esta funcionalidad sirve como apoyo para comenzar rápidamente un diagrama sencillo, probar el comportamiento del editor o revisar cómo se representan determinadas combinaciones de elementos.
+
+Para generar una estructura básica, el usuario debe seguir estos pasos:
+
+\begin{enumerate}
+\item Seleccionar la acción de generación de estructuras en el panel lateral.
+\item Elegir el tipo de estructura que se desea insertar.
+\item Indicar si la estructura debe reemplazar el diagrama actual o combinarse con el contenido existente.
+\item Confirmar la operación.
+\end{enumerate}
+
+\imagen{generacion_estructuras}{Generación de estructuras básicas en el editor.}
+
+La opción de reemplazar resulta adecuada cuando se quiere empezar desde una estructura limpia. En cambio, la opción de combinar permite añadir la estructura generada al diagrama que ya se está editando. En este último caso, el usuario debe revisar visualmente el resultado para comprobar que la combinación mantiene el sentido del modelo.
+
+Esta funcionalidad no sustituye al modelado manual del diagrama, sino que actúa como una ayuda para crear ejemplos, realizar pruebas o acelerar la construcción inicial de un modelo sencillo.
+
 \subsection{Edición mediante acciones contextuales}
 
 La edición de los elementos del diagrama se realiza principalmente mediante la selección directa sobre el lienzo. Al seleccionar una entidad, atributo, relación u otro elemento, el panel lateral muestra las acciones disponibles para ese tipo de elemento. De esta forma, la aplicación evita mostrar todas las operaciones al mismo tiempo y adapta la interfaz al contexto de trabajo.
@@ -162,6 +169,59 @@ La aplicación permite trabajar con cardinalidades habituales del modelo E/R, co
 En las relaciones que admiten atributos propios, el usuario puede añadir dichos atributos desde las acciones contextuales de la relación. Esta opción resulta especialmente útil en relaciones muchos a muchos, cuando la relación no solo conecta entidades, sino que también tiene información propia que debe conservarse en el modelo relacional.
 
 Cuando una relación todavía no ha sido configurada correctamente, la aplicación puede mostrar mensajes de validación o impedir determinadas operaciones hasta que la información necesaria esté completa. De esta forma se reduce la posibilidad de generar una estructura relacional incoherente o incompleta.
+
+\subsection{Uso de elementos avanzados}
+
+Además de entidades, atributos y relaciones binarias, UBU E-R App incorpora soporte para algunos elementos avanzados del modelo Entidad-Relación dentro del alcance definido en este TFG. Estos elementos permiten representar diagramas más completos, pero deben configurarse correctamente para que la validación, la transformación relacional y la generación SQL funcionen de forma coherente.
+
+\subsubsection{Entidades débiles}
+
+Para modelar una entidad débil, el usuario debe partir de una entidad existente y utilizar las acciones contextuales correspondientes. El flujo habitual es el siguiente:
+
+\begin{enumerate}
+\item Crear la entidad que actuará como entidad propietaria.
+\item Crear la entidad que se desea tratar como entidad débil.
+\item Marcar la entidad correspondiente como débil desde sus acciones contextuales.
+\item Configurar la relación identificadora con la entidad propietaria.
+\item Definir el discriminante de la entidad débil.
+\item Comprobar el diagrama para verificar que la dependencia está correctamente definida.
+\end{enumerate}
+
+La entidad débil se representa visualmente con una notación diferenciada y se tiene en cuenta durante la transformación relacional. Si falta la entidad propietaria, la relación identificadora o el discriminante, la validación informa del problema para que el usuario pueda corregirlo.
+
+\subsubsection{Relaciones ternarias y roles}
+
+Las relaciones ternarias permiten representar interrelaciones en las que participan tres entidades. Para utilizarlas, el usuario debe crear la relación y configurarla indicando sus participantes y cardinalidades.
+
+El flujo habitual es el siguiente:
+
+\begin{enumerate}
+\item Crear las entidades que participarán en la relación.
+\item Crear una relación ternaria en el lienzo.
+\item Abrir la configuración de la relación desde las acciones contextuales.
+\item Seleccionar los tres participantes.
+\item Definir las cardinalidades correspondientes.
+\item Añadir roles cuando una entidad participe más de una vez o cuando sea necesario aclarar el significado de cada participación.
+\end{enumerate}
+
+Los roles ayudan a distinguir participaciones que podrían resultar ambiguas, especialmente en relaciones donde una misma entidad interviene en más de un papel. Esta información se conserva en el modelo interno y se utiliza durante la validación y la transformación posterior.
+
+\subsubsection{Jerarquías ISA}
+
+La aplicación permite representar jerarquías ISA sencillas, formadas por una entidad general y una o varias especializaciones. Este soporte es inicial y controlado, por lo que no incluye discriminantes ISA, herencia múltiple real ni restricciones de totalidad, parcialidad, solapamiento o exclusividad.
+
+El flujo habitual es el siguiente:
+
+\begin{enumerate}
+\item Crear la entidad que actuará como generalización.
+\item Crear una o varias entidades especializadas.
+\item Insertar el elemento ISA en el lienzo.
+\item Configurar la entidad general y sus especializaciones mediante las acciones disponibles.
+\item Comprobar el diagrama para detectar configuraciones incompletas o no soportadas.
+\end{enumerate}
+
+En la transformación relacional soportada por la aplicación, la clave de la entidad general se hereda en las especializaciones. Por ello, las entidades especializadas no deben definir una clave propia independiente. Si se intenta modelar una configuración fuera del alcance implementado, la validación informa del problema.
+
 
 \subsection{Validación del diagrama y generación de SQL}
 

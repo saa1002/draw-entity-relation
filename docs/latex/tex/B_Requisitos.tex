@@ -8,7 +8,7 @@ Durante el trabajo se han incorporado nuevas funcionalidades del modelo Entidad-
 
 \section{Objetivos generales}
 
-Los objetivos generales del proyecto se pueden resumir en los siguientes puntos:
+Desde el punto de vista de la especificación de requisitos, la aplicación debe conservar las funcionalidades principales del editor heredado y añadir las ampliaciones desarrolladas en este TFG de forma coherente con el modelo interno, la validación, la transformación relacional y la generación SQL. Los objetivos generales del sistema se resumen en los siguientes puntos:
 
 \begin{itemize}
 \tightlist
@@ -24,11 +24,9 @@ Los objetivos generales del proyecto se pueden resumir en los siguientes puntos:
 \item Mejorar la usabilidad del editor sin alterar la notación académica del modelo E-R, incorporando acciones contextuales, selección múltiple visible y secciones de ayuda e información del proyecto.
 \end{itemize}
 
-\newpage
-
 \section{Catálogo de requisitos}
 
-En este apartado se definirán los requisitos funcionales y no funcionales del proyecto.
+En este apartado se enumeran los requisitos funcionales y no funcionales que describen el comportamiento esperado de UBU E-R App tras la evolución realizada en este TFG. Los requisitos combinan funcionalidades heredadas que se mantienen como parte del editor, ampliaciones incorporadas durante el desarrollo y restricciones de alcance necesarias para no atribuir al sistema capacidades que todavía no implementa.
 
 \subsection{Requisitos funcionales}
 
@@ -40,7 +38,7 @@ En este apartado se definirán los requisitos funcionales y no funcionales del p
 \item \textbf{RF4 - Modelar relaciones ternarias y roles:} La aplicación debe permitir representar relaciones de grado tres y distinguir roles de participación cuando sean necesarios.
 \item \textbf{RF5 - Modelar entidades débiles:} La aplicación debe permitir representar entidades débiles, relaciones identificadoras y discriminantes.
 \item \textbf{RF6 - Modelar jerarquías ISA sencillas:} La aplicación debe permitir representar una generalización con una o varias especializaciones.
-\item \textbf{RF7 - Controlar el alcance de ISA:} La aplicación debe acotar el soporte de ISA al caso implementado. En particular, no debe tratar especializaciones con clave propia, herencia múltiple real, discriminantes ISA ni restricciones de totalidad, parcialidad, solapamiento o exclusividad.
+\item \textbf{RF7 - Acotar el soporte de jerarquías ISA:} La aplicación debe limitar el tratamiento de ISA al caso implementado. En particular, no debe tratar especializaciones con clave propia, herencia múltiple real, discriminantes ISA ni restricciones de totalidad, parcialidad, solapamiento o exclusividad.
 \item \textbf{RF8 - Mantener el modelo interno:} La aplicación debe mantener una estructura interna coherente con el contenido representado en el lienzo.
 \item \textbf{RF9 - Persistir diagramas localmente:} La aplicación debe conservar el diagrama en el almacenamiento local del navegador.
 \item \textbf{RF10 - Exportar e importar JSON:} La aplicación debe permitir exportar diagramas a JSON e importar diagramas desde archivos JSON válidos.
@@ -51,12 +49,9 @@ En este apartado se definirán los requisitos funcionales y no funcionales del p
 \item \textbf{RF15 - Exportar imagen del diagrama:} La aplicación debe permitir exportar la representación visual del diagrama en formato PNG y SVG.
 \item \textbf{RF16 - Ofrecer acciones de apoyo:} La aplicación debe incluir acciones como comprobar el diagrama, ajustar la vista, cambiar el idioma de la interfaz, consultar ayuda, visualizar información del proyecto y reiniciar el lienzo previa confirmación.
 \item \textbf{RF17 - Gestionar selección múltiple y acciones contextuales:} La aplicación debe permitir seleccionar varios elementos de forma visible, mover o eliminar una selección múltiple y evitar mostrar acciones individuales cuando hay varios elementos seleccionados.
-
 \end{itemize}
 
 El soporte de ISA se considera inicial y controlado: se contempla una única generalización con una o varias especializaciones, con clave heredada desde la generalización, pero quedan fuera del alcance la totalidad o parcialidad, el solapamiento o exclusividad, los discriminantes ISA y la herencia múltiple real. Las agregaciones no forman parte de los requisitos implementados en esta versión.
-
-\newpage
 
 \subsection{Requisitos no funcionales}
 
@@ -71,8 +66,6 @@ El soporte de ISA se considera inicial y controlado: se contempla una única gen
 \item \textbf{RNF7 - Contexto académico:} La herramienta debe servir como apoyo práctico para el aprendizaje y uso del modelo Entidad-Relación y su transformación relacional.
 \end{itemize}
 
-\clearpage
-
 \section{Especificación de requisitos}
 
 Los requisitos funcionales se agrupan en varios bloques. El primero corresponde a la edición visual del diagrama, que incluye la creación y modificación de entidades, atributos y relaciones. El segundo bloque recoge los elementos avanzados del modelo E-R soportados por la aplicación, como entidades débiles, atributos compuestos y multivaluados, relaciones ternarias, roles y jerarquías ISA sencillas.
@@ -84,6 +77,21 @@ La validación del diagrama permite comprobar si el modelo contiene errores ante
 La transformación relacional y la generación de SQL constituyen la salida principal del sistema. A partir del diagrama validado, la aplicación obtiene una representación basada en tablas, columnas, claves primarias y claves foráneas, y posteriormente genera el script SQL correspondiente.
 
 Finalmente, la aplicación incorpora varias funcionalidades de apoyo a la edición: generación de estructuras básicas, importación y generación combinada de contenido, exportación visual en PNG y SVG, ajuste de la vista, soporte básico de idioma, selección múltiple visible, acciones contextuales, secciones de ayuda e información del proyecto y reinicio controlado del lienzo.
+
+\subsection{Actores}
+
+El sistema contempla un actor principal, denominado usuario del editor. Este actor representa a la persona que utiliza UBU E-R App para crear, revisar, validar, importar, exportar o transformar diagramas Entidad-Relación. En el contexto académico del proyecto, este usuario puede corresponderse con un estudiante, un docente o cualquier persona que necesite modelar un esquema E-R y obtener una representación relacional o SQL a partir de él.
+
+\subsection{Diagrama de casos de uso}
+
+La figura~\ref{fig:diagrama_casos_uso} resume los principales casos de uso identificados para UBU E-R App. Se ha considerado un único actor principal, el usuario del editor, ya que la aplicación no incorpora autenticación, perfiles diferenciados ni backend propio. Los casos de uso se agrupan en edición del modelo E-R, validación y generación, persistencia e intercambio, y acciones de apoyo a la edición.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{img/diagrama_casos_uso.png}
+\caption{Diagrama de casos de uso de UBU E-R App.}
+\label{fig:diagrama_casos_uso}
+\end{figure}
 
 \subsection{Casos de uso}
 
@@ -306,7 +314,6 @@ Las tablas siguientes describen los principales casos de uso del sistema a nivel
 \textbf{Importancia} & Alta \\
 \bottomrule
 \end{tabularx}
-
 \caption{CU-8 Validar explícitamente el diagrama.}
 \end{table}
 
@@ -476,5 +483,3 @@ Las tablas siguientes describen los principales casos de uso del sistema a nivel
 \end{tabularx}
 \caption{CU-14 Utilizar acciones de apoyo de la interfaz.}
 \end{table}
-
-

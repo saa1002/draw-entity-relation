@@ -2,7 +2,7 @@
 
 \section{Introducción}
 
-En este anexo se describe el diseño general de la aplicación desarrollada durante el proyecto. El objetivo no es recoger todos los detalles internos del código, sino explicar cómo se organiza el editor y cómo se relacionan sus partes principales.
+En este anexo se describe el diseño general de la aplicación resultante de la evolución realizada durante el proyecto. El objetivo no es recoger todos los detalles internos del código, sino explicar cómo se organiza el editor y cómo se relacionan sus partes principales.
 
 La aplicación parte de un proyecto heredado, por lo que el diseño final es el resultado de comprender una base existente y adaptarla progresivamente. El trabajo no consistió únicamente en añadir elementos visuales al lienzo, sino en mantener la coherencia entre la representación gráfica, el modelo interno, la validación, la transformación relacional y la generación de SQL.
 
@@ -54,6 +54,43 @@ La Figura \ref{fig:flujo_persistencia_intercambio} resume el papel del modelo in
 
 \imagen{flujo_persistencia_intercambio}{Flujo de persistencia local e intercambio de diagramas mediante JSON.}
 
+\section{Diseño arquitectónico}
+
+El diseño arquitectónico describe la organización general de la aplicación y la separación entre sus bloques principales. La herramienta se desarrolla como una aplicación web en la que la interfaz y la lógica principal se ejecutan en el cliente.
+
+\subsection{Arquitectura general}
+
+La aplicación está construida alrededor de un editor visual que permite manipular diagramas Entidad-Relación. La parte gráfica se apoya en un lienzo de edición, mientras que la lógica de la aplicación trabaja con el modelo interno del diagrama.
+
+La separación entre vista y modelo es una de las decisiones más importantes del diseño, aunque en la práctica existe una dependencia entre el lienzo gráfico y el modelo interno durante la sincronización de elementos. La vista permite que el usuario interactúe con el diagrama, pero las operaciones principales intentan apoyarse en una representación estructurada del modelo. Gracias a ello, el sistema puede validar, persistir, importar, exportar y transformar diagramas sin depender únicamente de la representación visual.
+
+La Figura \ref{fig:arquitectura_general_aplicacion} resume la organización general de la aplicación, separando la interfaz visual, el modelo interno y los procesos que trabajan sobre dicho modelo.
+
+\imagen{arquitectura_general_aplicacion}{Arquitectura general de la aplicación.}
+
+\subsection{Organización por módulos}
+
+A nivel funcional, pueden distinguirse varios bloques dentro de la aplicación. El primero corresponde a la interfaz de usuario, encargada de mostrar el lienzo, los paneles de acciones, las acciones contextuales, los diálogos, los mensajes de validación y las secciones de ayuda e información del proyecto.
+
+El segundo bloque corresponde al modelo interno del diagrama. Este bloque representa la información lógica creada por el usuario y sirve como base para el resto de operaciones. Sobre este modelo trabajan los procesos de validación, persistencia, transformación relacional y generación de SQL.
+
+El tercer bloque está formado por las operaciones de entrada y salida. Aquí se incluyen la persistencia local, la exportación e importación de JSON, la generación de estructuras básicas y la exportación visual del diagrama en PNG y SVG.
+
+Por último, la aplicación cuenta con módulos relacionados con la validación y transformación. Estos módulos comprueban que el diagrama sea coherente dentro del alcance implementado y generan una representación relacional que posteriormente se convierte en SQL.
+
+En la versión final, esta separación se refleja en módulos como el editor visual del diagrama, los módulos de dominio del modelo E-R, las reglas de validación, la transformación al modelo relacional, la generación del SQL y los servicios de entrada y salida. Esta división permite diferenciar entre la interacción del usuario con el lienzo y las operaciones que interpretan el diagrama desde el punto de vista lógico.
+
+
+\subsection{Mantenibilidad y extensibilidad}
+
+El diseño final busca que las nuevas funcionalidades del editor no dependan únicamente de la representación gráfica del lienzo. Por ello, las reglas del dominio, la validación, la transformación relacional y la generación de SQL se apoyan en módulos diferenciados que trabajan sobre el modelo interno del diagrama.
+
+Esta organización facilita la evolución posterior de la aplicación, ya que nuevas reglas de validación o nuevos casos de transformación pueden incorporarse sin convertir la interfaz visual en el único punto de decisión del sistema. Aun así, al tratarse de una aplicación heredada basada en mxGraph, sigue existiendo una dependencia práctica entre la representación visual y el modelo interno durante la sincronización de elementos.
+
+Las pruebas automáticas y la revisión manual se utilizan como mecanismos de apoyo para comprobar que los cambios introducidos no rompen la coherencia entre el lienzo, el modelo interno, la validación, la transformación relacional y la salida SQL. No obstante, el detalle de instalación, ejecución y pruebas del proyecto se reserva para el manual del programador.
+
+
+
 \section{Diseño procedimental}
 
 El diseño procedimental describe los principales flujos de funcionamiento de la aplicación. Estos flujos muestran cómo las acciones del usuario se convierten en cambios del modelo interno y cómo ese modelo se valida y transforma para generar resultados.
@@ -96,38 +133,19 @@ La Figura \ref{fig:flujo_validacion_sql} resume este proceso: el modelo interno 
 
 Además del flujo principal de edición, la aplicación incluye operaciones para importar diagramas JSON y generar estructuras básicas. En ambos casos, el usuario puede reemplazar el diagrama actual o combinar el nuevo contenido con el existente.
 
-Cuando se combina contenido, la aplicación debe evitar conflictos directos de identificadores y reducir posibles conflictos de nombres. Para ello, el proceso de inserción debe remapear referencias internas y desplazar visualmente los elementos añadidos, de forma que el resultado sea más claro para el usuario.
+Cuando se combina contenido, la aplicación debe evitar conflictos directos de identificadores y mantener la coherencia de las referencias internas. Además, los elementos añadidos se insertan de forma controlada para facilitar su revisión visual dentro del lienzo.
 
-Estas operaciones se diseñan como ayudas a la edición, no como mecanismos de fusión semántica avanzada. Por tanto, la aplicación no intenta interpretar si dos entidades representan el mismo concepto, sino insertar el contenido de forma controlada.
+Estas operaciones se diseñan como ayudas a la edición, no como mecanismos de fusión semántica avanzada. Por tanto, la aplicación no intenta interpretar si dos entidades representan el mismo concepto, sino insertar el contenido de forma controlada para que el usuario pueda revisarlo y ajustarlo posteriormente.
 
-\section{Diseño arquitectónico}
+\section{Diseño de interfaces}
 
-El diseño arquitectónico describe la organización general de la aplicación y la separación entre sus bloques principales. La herramienta se desarrolla como una aplicación web en la que la interfaz y la lógica principal se ejecutan en el cliente.
+El diseño de la interfaz se centra en facilitar la edición de diagramas Entidad-Relación dentro de un lienzo web. La aplicación no se plantea como una herramienta de dibujo genérica, sino como un editor orientado a elementos concretos del modelo E-R. Por ello, las acciones disponibles dependen del tipo de elemento seleccionado y del contexto del diagrama.
 
-\subsection{Arquitectura general}
+La interfaz se organiza alrededor del lienzo principal, donde el usuario crea y manipula entidades, atributos, relaciones, entidades débiles, relaciones ternarias y jerarquías ISA sencillas. Junto al lienzo se ofrecen acciones generales, como validar el diagrama, generar SQL, importar o exportar JSON, exportar la imagen del diagrama, ajustar la vista, generar estructuras básicas y reiniciar el contenido previa confirmación.
 
-La aplicación está construida alrededor de un editor visual que permite manipular diagramas Entidad-Relación. La parte gráfica se apoya en un lienzo de edición, mientras que la lógica de la aplicación trabaja con el modelo interno del diagrama.
+Una decisión relevante del diseño de interfaz es el uso de acciones contextuales. Cuando el usuario selecciona un único elemento, la aplicación muestra acciones específicas para ese tipo de elemento, como añadir atributos, configurar relaciones, marcar una entidad como débil o trabajar con una jerarquía ISA. En cambio, cuando existe una selección múltiple, se ocultan las acciones individuales y se priorizan operaciones aplicables al conjunto, como mover o eliminar los elementos seleccionados.
 
-La separación entre vista y modelo es una de las decisiones más importantes del diseño, aunque en la práctica existe una dependencia entre el lienzo gráfico y el modelo interno durante la sincronización de elementos. La vista permite que el usuario interactúe con el diagrama, pero las operaciones principales intentan apoyarse en una representación estructurada del modelo. Gracias a ello, el sistema puede validar, persistir, importar, exportar y transformar diagramas sin depender únicamente de la representación visual.
+También se incorporan elementos de apoyo al usuario, como la ayuda integrada, la información del proyecto y el cambio de idioma de la interfaz. Estas funcionalidades no modifican la semántica del modelo E-R, pero mejoran la comprensión del editor y facilitan su uso en un contexto académico.
 
-La Figura \ref{fig:arquitectura_general_aplicacion} resume la organización general de la aplicación, separando la interfaz visual, el modelo interno y los procesos que trabajan sobre dicho modelo.
+El diseño visual mantiene la notación propia del modelo Entidad-Relación: entidades, relaciones, atributos, atributos clave, atributos compuestos, atributos multivaluados, entidades débiles, relaciones identificadoras e ISA se representan mediante convenciones gráficas diferenciadas. De esta forma, la interfaz busca que el usuario pueda reconocer los elementos del diagrama sin que las mejoras de usabilidad alteren su significado académico.
 
-\imagen{arquitectura_general_aplicacion}{Arquitectura general de la aplicación.}
-
-\subsection{Organización por módulos}
-
-A nivel funcional, pueden distinguirse varios bloques dentro de la aplicación. El primero corresponde a la interfaz de usuario, encargada de mostrar el lienzo, los paneles de acciones, las acciones contextuales, los diálogos, los mensajes de validación y las secciones de ayuda e información del proyecto.
-
-El segundo bloque corresponde al modelo interno del diagrama. Este bloque representa la información lógica creada por el usuario y sirve como base para el resto de operaciones. Sobre este modelo trabajan los procesos de validación, persistencia, transformación relacional y generación de SQL.
-
-El tercer bloque está formado por las operaciones de entrada y salida. Aquí se incluyen la persistencia local, la exportación e importación de JSON, la generación de estructuras básicas y la exportación visual del diagrama en PNG y SVG.
-
-Por último, la aplicación cuenta con módulos relacionados con la validación y transformación. Estos módulos comprueban que el diagrama sea coherente dentro del alcance implementado y generan una representación relacional que posteriormente se convierte en SQL.
-
-\subsection{Pruebas y revisión}
-
-El diseño del proyecto también tiene en cuenta la necesidad de revisar el comportamiento de la aplicación. Para ello se utilizan pruebas automáticas y comprobaciones manuales sobre casos representativos.
-
-Las pruebas automáticas ayudan a detectar regresiones en funcionalidades concretas, especialmente en aquellas relacionadas con la validación, la transformación relacional, la generación de SQL y la persistencia. La revisión manual complementa estas pruebas, ya que permite comprobar aspectos visuales y de interacción que son difíciles de cubrir completamente mediante tests.
-
-En conjunto, la arquitectura del sistema busca mantener una separación razonable entre la interfaz, el modelo interno y los procesos de validación y transformación. Esta organización facilita que el editor pueda seguir ampliándose en el futuro sin que cada nueva funcionalidad dependa exclusivamente de la representación gráfica.
