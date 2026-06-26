@@ -34,7 +34,6 @@ import {
     canRelationTypeHoldAttributes,
     clearIdentifyingRelationDomainSemantics,
     clearPrimaryKeyAttributesInTree,
-    composeDiagramData,
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
     convertSimpleAttributeToCompositeAttribute,
@@ -90,8 +89,8 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import { SUPPORTED_LANGUAGES } from "../../i18n/translations";
 import { generateSQL } from "../../services/sql";
 import { useDiagramHistory } from "./hooks/useDiagramHistory";
+import { useDiagramPersistence } from "./hooks/useDiagramPersistence";
 import {
-    clearGraphCanvas,
     connectIsaGraphLinks,
     connectRelationGraphSides,
     fitGraphToDiagram,
@@ -120,13 +119,10 @@ import {
 import {
     DIAGRAM_IMAGE_EXPORT_FORMATS,
     SAVE_FILE_RESULT,
-    clearDiagramLocalStorage,
     exportDiagramImageToFile,
     exportDiagramToJsonFile,
     exportSqlScriptToFile,
-    loadDiagramFromLocalStorage,
     readDiagramJsonFile,
-    saveDiagramToLocalStorage,
 } from "./utils/persistence/filePersistence";
 import { createAttributeRenderingHelpers } from "./utils/rendering/attributeRendering";
 import {
@@ -145,8 +141,6 @@ import {
     getEntityMultivaluedAttributeSelectionData,
     getSimpleEntityAttributesGroupingSelectionData,
 } from "./utils/selection/attributeSelection";
-import { syncDiagramDataFromGraph } from "./utils/sync/diagramGraphSync";
-import { reconstructDiagramGraph } from "./utils/sync/diagramReconstruction";
 import {
     VALIDATION_SECTION_TITLE_KEYS,
     getValidationDialogMessages,
@@ -463,10 +457,6 @@ export default function DiagramEditor(props) {
     const getSelectedIsaData = () =>
         findIsaById(diagramRef.current, selected?.id) ?? null;
 
-    const saveToLocalStorage = () => {
-        saveDiagramToLocalStorage(diagramRef.current);
-    };
-
     const showSaveFileResultToast = (result) => {
         if (result === SAVE_FILE_RESULT.SAVED) {
             toast.success(t("feedback.fileSaved"));
@@ -633,83 +623,36 @@ export default function DiagramEditor(props) {
         changedAttributes.forEach(syncAttributeVisualRepresentation);
     };
 
-    const recreateGraphFromDiagram = (diagramData) => {
-        if (!diagramData) return;
-
-        diagramRef.current = diagramData;
-        updateEmptyCanvasState(diagramRef.current);
-
-        reconstructDiagramGraph({
-            graph,
-            diagram: diagramRef.current,
-            accessCell,
-            mxPoint,
-            createWeakEntityDecorator,
-            ensureDiscriminantUnderline,
-            ensureMultivaluedAttributeDecorator,
-            ensureIdentifyingRelationDecorator,
-            ensureIdentifyingRelationEdgeDecorator,
-            syncRepeatedParticipantRelationEdges,
-        });
-    };
-
-    const composeDiagramWithCurrent = ({ incomingDiagram, mode }) =>
-        composeDiagramData({
-            currentDiagram: diagramRef.current,
-            importedDiagram: incomingDiagram,
-            mode,
-        });
-
-    const applyDiagramData = (diagramData) => {
-        clearGraphCanvas(graph);
-        recreateGraphFromDiagram(diagramData);
-
+    const clearEditorSelection = () => {
         if (typeof graph?.clearSelection === "function") {
             graph.clearSelection();
         }
 
         setSelected(null);
         setSelectionVersion((prevVersion) => prevVersion + 1);
-
-        saveToLocalStorage();
-        recordCurrentDiagramInHistory();
     };
 
-    const recreateGraphFromLocalStorage = () => {
-        const savedData = loadDiagramFromLocalStorage();
-
-        recreateGraphFromDiagram(savedData);
-    };
-
-    const syncAndPersistDiagramData = ({ recordHistory = true } = {}) => {
-        syncDiagramDataFromGraph({
-            diagram: diagramRef.current,
-            graph,
-            accessCell,
-            updateAttributePosition,
-        });
-
-        saveToLocalStorage();
-        updateEmptyCanvasState();
-
-        if (recordHistory) {
-            recordCurrentDiagramInHistory();
-        }
-    };
-
-    const applyHistoryDiagramData = (diagramData) => {
-        clearGraphCanvas(graph);
-        recreateGraphFromDiagram(diagramData);
-
-        if (typeof graph.clearSelection === "function") {
-            graph.clearSelection();
-        }
-
-        setSelected(null);
-        setSelectionVersion((prevVersion) => prevVersion + 1);
-
-        saveToLocalStorage();
-    };
+    const {
+        composeDiagramWithCurrent,
+        applyDiagramData: applyDiagramDataWithoutHistory,
+        recreateGraphFromLocalStorage,
+        syncAndPersistDiagramData: syncAndPersistDiagramDataWithoutHistory,
+        applyHistoryDiagramData,
+        resetCanvas: resetCanvasWithoutHistory,
+    } = useDiagramPersistence({
+        graph,
+        diagramRef,
+        accessCell,
+        mxPoint,
+        updateEmptyCanvasState,
+        createWeakEntityDecorator,
+        ensureDiscriminantUnderline,
+        ensureMultivaluedAttributeDecorator,
+        ensureIdentifyingRelationDecorator,
+        ensureIdentifyingRelationEdgeDecorator,
+        syncRepeatedParticipantRelationEdges,
+        clearEditorSelection,
+    });
 
     const {
         canUndo,
@@ -723,6 +666,32 @@ export default function DiagramEditor(props) {
         canApplySnapshot: () => Boolean(graph),
         applyDiagramSnapshotData: applyHistoryDiagramData,
     });
+
+    const applyDiagramData = (diagramData) => {
+        const diagramApplied = applyDiagramDataWithoutHistory(diagramData);
+
+        if (diagramApplied) {
+            recordCurrentDiagramInHistory();
+        }
+    };
+
+    const syncAndPersistDiagramData = ({ recordHistory = true } = {}) => {
+        const diagramSynced = syncAndPersistDiagramDataWithoutHistory();
+
+        if (recordHistory && diagramSynced) {
+            recordCurrentDiagramInHistory();
+        }
+    };
+
+    const resetCanvas = ({ recordHistory = false } = {}) => {
+        const canvasReset = resetCanvasWithoutHistory({
+            persist: recordHistory,
+        });
+
+        if (recordHistory && canvasReset) {
+            recordCurrentDiagramInHistory();
+        }
+    };
 
     const shouldIgnoreEditorKeyboardShortcut = (event) => {
         if (
@@ -3902,30 +3871,6 @@ export default function DiagramEditor(props) {
                 </Dialog>
             </>
         );
-    };
-
-    const resetCanvas = ({ recordHistory = false } = {}) => {
-        diagramRef.current = {
-            entities: [],
-            relations: [],
-            isas: [],
-        };
-
-        clearDiagramLocalStorage();
-        clearGraphCanvas(graph);
-        updateEmptyCanvasState();
-
-        if (typeof graph?.clearSelection === "function") {
-            graph.clearSelection();
-        }
-
-        setSelected(null);
-        setSelectionVersion((prevVersion) => prevVersion + 1);
-
-        if (recordHistory) {
-            saveToLocalStorage();
-            recordCurrentDiagramInHistory();
-        }
     };
 
     const ResetCanvasButton = () => {
