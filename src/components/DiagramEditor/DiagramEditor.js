@@ -28,14 +28,11 @@ import {
     TERNARY_RELATION_CARDINALITIES,
     canRelationHoldAttributes,
     canRelationTypeHoldAttributes,
-    clearPrimaryKeyAttributesInTree,
-    createEmptyIsaLink,
     createEmptyRelationSide,
     createExampleDiagramStructure,
     findAttributeTreeOwnerById,
     findEntityById,
     findEntityIndexById,
-    findIsaById,
     findIsaIndexById,
     findRelationById,
     findRelationIndexById,
@@ -50,7 +47,6 @@ import {
     isBinaryRelation,
     isEntityIsaSpecialization,
     isIdentifyingRelation,
-    isIsaConfigured,
     isMultivaluedAttribute,
     isPrimaryKeyAttribute,
     isRelationAttributeOwner,
@@ -71,12 +67,11 @@ import { generateSQL } from "../../services/sql";
 import { useAttributeActions } from "./hooks/useAttributeActions";
 import { useDiagramHistory } from "./hooks/useDiagramHistory";
 import { useDiagramPersistence } from "./hooks/useDiagramPersistence";
+import { useIsaActions } from "./hooks/useIsaActions";
 import { useRelationActions } from "./hooks/useRelationActions";
 import {
-    connectIsaGraphLinks,
     connectRelationGraphSides,
     fitGraphToDiagram,
-    getConfiguredIsaGraphCells,
     getConfiguredRelationGraphCells,
     installCellGeometrySyncHandlers,
     removeEntityGraphCells,
@@ -375,9 +370,6 @@ export default function DiagramEditor(props) {
         return graph.model.cells[idMx];
     }
 
-    const getSelectedIsaData = () =>
-        findIsaById(diagramRef.current, selected?.id) ?? null;
-
     const showSaveFileResultToast = (result) => {
         if (result === SAVE_FILE_RESULT.SAVED) {
             toast.success(t("feedback.fileSaved"));
@@ -447,21 +439,6 @@ export default function DiagramEditor(props) {
         mxGeometry,
         updateAttributePosition,
     });
-
-    const removeIsaConfiguration = (isa) => {
-        if (!isa) return;
-
-        removeExistingGraphCells(
-            graph,
-            getConfiguredIsaGraphCells({
-                isa,
-                accessCell,
-            }),
-        );
-
-        isa.generalization = createEmptyIsaLink();
-        isa.specializations = [];
-    };
 
     const clearEditorSelection = () => {
         if (typeof graph?.clearSelection === "function") {
@@ -666,6 +643,20 @@ export default function DiagramEditor(props) {
         refreshGraph,
         syncAndPersistDiagramData,
         setRefreshDiagram,
+    });
+
+    const {
+        getSelectedIsaData,
+        removeIsaConfiguration,
+        configureIsaHierarchy,
+    } = useIsaActions({
+        graph,
+        selected,
+        diagramRef,
+        accessCell,
+        t,
+        syncAttributeVisualRepresentation,
+        syncAndPersistDiagramData,
     });
 
     const {
@@ -1726,67 +1717,14 @@ export default function DiagramEditor(props) {
         };
 
         const handleAccept = () => {
-            const isa = getSelectedIsaData();
-
-            if (!isa || !generalizationId || specializationIds.length === 0) {
-                return;
-            }
-
-            if (specializationIds.includes(generalizationId)) {
-                toast.error(
-                    t("feedback.isaGeneralizationCannotAlsoBeSpecialization"),
-                );
-                return;
-            }
-
-            if (isIsaConfigured(isa)) {
-                removeExistingGraphCells(
-                    graph,
-                    getConfiguredIsaGraphCells({
-                        isa,
-                        accessCell,
-                    }),
-                );
-            }
-
-            isa.generalization = createEmptyIsaLink({
-                entityId: generalizationId,
+            const configured = configureIsaHierarchy({
+                generalizationId,
+                specializationIds,
             });
 
-            isa.specializations = specializationIds.map((entityId) =>
-                createEmptyIsaLink({
-                    entityId,
-                }),
-            );
-
-            specializationIds.forEach((entityId) => {
-                const specializationEntity = findEntityById(
-                    diagramRef.current,
-                    entityId,
-                );
-                const changedAttributes = clearPrimaryKeyAttributesInTree(
-                    specializationEntity?.attributes,
-                );
-
-                changedAttributes.forEach(syncAttributeVisualRepresentation);
-            });
-
-            const connectedEdges = connectIsaGraphLinks({
-                graph,
-                isaCell: selected,
-                isa,
-                generalizationEntityCell: accessCell(generalizationId),
-                specializationEntityCells: specializationIds.map(accessCell),
-            });
-
-            if (!connectedEdges) {
-                toast.error(t("feedback.isaHierarchyConfigurationFailed"));
-                return;
+            if (configured) {
+                setOpen(false);
             }
-
-            syncAndPersistDiagramData();
-            setOpen(false);
-            toast.success(t("feedback.isaHierarchyConfigured"));
         };
 
         const acceptDisabled =
