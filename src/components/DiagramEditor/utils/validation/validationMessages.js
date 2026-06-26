@@ -728,7 +728,7 @@ const getValidationDetailMessages = (
                         ...getIsaSpecializationEntityIds(isa),
                     ]
                         .filter(Boolean)
-                        .some((entityId) => !getEntityById(diagram, entityId)),
+                        .some((entityId) => !findEntityById(diagram, entityId)),
                 )
                 .map(({ index }) =>
                     t("validation.detail.brokenIsaEntityReference", {
@@ -802,7 +802,7 @@ const getValidationDetailMessages = (
             );
 
             return [...specializationIds]
-                .map((entityId) => getEntityById(diagram, entityId))
+                .map((entityId) => findEntityById(diagram, entityId))
                 .filter(Boolean)
                 .filter((entity) => hasPrimaryKeyAttribute(entity.attributes))
                 .map((entity) =>

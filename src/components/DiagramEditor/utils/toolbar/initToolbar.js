@@ -21,20 +21,15 @@ const {
 } = MxGraph();
 
 export default function initToolbar(graph, diagramRef, tbContainer) {
-    // Creates new toolbar without event processing
     const toolbar = new mxToolbar(tbContainer);
     toolbar.enabled = false;
 
-    // Workaround for Internet Explorer ignoring certain styles
     if (mxClient.IS_QUIRKS) {
         document.body.style.overflow = "hidden";
         new mxDivResizer(tbContainer);
     }
 
-    // Enables new connections in the graph
     graph.setConnectable(true);
-
-    // Allow multiple edges between two vertices
     graph.setMultigraph(false);
 
     const addVertex = (
@@ -43,8 +38,8 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
         h,
         style,
         value = null,
-        addEntityToDiagram = null,
-        addRelationToDiagram = null,
+        addEntityToDiagram = false,
+        addRelationToDiagram = false,
         addIsaToDiagram = false,
         tooltip = "",
     ) => {
@@ -84,21 +79,21 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
         entityDims.height,
         getEntityStyleString(),
         "Entidad",
-        true, //addEntityToDiagram
-        false, //addRelationToDiagram
+        true,
         false,
-        "Arrastra para añadir una entidad al diagrama", //tooltip
+        false,
+        "Arrastra para añadir una entidad al diagrama",
     );
     addVertex(
         "images/rhombus.png",
         relationDims.width,
         relationDims.height,
-        getRelationStyleString({ isIdentifying: false }),
+        getRelationStyleString(),
         "Relación",
-        false, //addEntityToDiagram
-        true, //addRelationToDiagram
         false,
-        "Arrastra para añadir una relación al diagrama", //tooltip
+        true,
+        false,
+        "Arrastra para añadir una relación al diagrama",
     );
     addVertex(
         "images/triangle.png",
@@ -109,6 +104,6 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
         false,
         false,
         true,
-        "Arrastra para añadir una ISA al diagrama", //tooltip
+        "Arrastra para añadir una ISA al diagrama",
     );
 }

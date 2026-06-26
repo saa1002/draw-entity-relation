@@ -16,6 +16,18 @@ const DEFAULT_PRIMARY_KEY_ATTRIBUTE_NAME = "id";
 const DEFAULT_PRIMARY_KEY_ATTRIBUTE_OFFSET_X = 120;
 const DEFAULT_PRIMARY_KEY_ATTRIBUTE_OFFSET_Y = -40;
 
+const generateUniqueName = (baseName, existingItems = []) => {
+    let counter = 0;
+    let uniqueName = baseName;
+
+    while (existingItems.some((item) => item.name === uniqueName)) {
+        counter++;
+        uniqueName = `${baseName} ${counter}`;
+    }
+
+    return uniqueName;
+};
+
 const createDefaultPrimaryKeyAttributeForEntity = (graph, entityCell) => {
     if (!graph || !entityCell?.geometry) {
         return null;
@@ -74,44 +86,22 @@ export default function addToolbarItem(
     prototype,
     image,
     diagramRef,
-    addEntityToDiagram,
-    addRelationToDiagram,
+    addEntityToDiagram = false,
+    addRelationToDiagram = false,
     addIsaToDiagram = false,
     tooltip = "",
 ) {
-    // Function that is executed when the image is dropped on
-    // the graph. The cell argument points to the cell under
-    // the mousepointer if there is one.
-    const funct = (graph, evt, cell, x, y) => {
+    const insertToolbarVertex = (graph, _evt, _cell, x, y) => {
         graph.stopEditing(false);
 
         const vertex = graph.getModel().cloneCell(prototype);
 
-        // Function to generate a unique name
-        const generateUniqueName = (baseName, existingItems) => {
-            let counter = 0;
-            let uniqueName = baseName;
-
-            const nameExists = (name) => {
-                return existingItems.some((item) => item.name === name);
-            };
-
-            while (nameExists(uniqueName)) {
-                counter++;
-                uniqueName = `${baseName} ${counter}`;
-            }
-
-            return uniqueName;
-        };
-
-        // Retrieve existing entities and relations
         const existingEntities = diagramRef.current.entities || [];
         const existingRelations = diagramRef.current.relations || [];
         const existingIsas = diagramRef.current.isas || [];
 
-        // Determine the base name and existing items array based on the flags
-        let baseName;
-        let existingItems;
+        let baseName = String(vertex.value ?? "").trim() || "Elemento";
+        let existingItems = [];
 
         if (addEntityToDiagram) {
             baseName = "Entidad";
@@ -122,15 +112,10 @@ export default function addToolbarItem(
         } else if (addIsaToDiagram) {
             baseName = ISA_CELL_LABEL;
             existingItems = existingIsas;
-        } else {
-            baseName = "Test";
-            existingItems = [];
         }
 
-        // Generate a unique name
         const uniqueName = generateUniqueName(baseName, existingItems);
 
-        // Set the vertex value to the unique name
         vertex.value = uniqueName;
 
         if (addEntityToDiagram) {
@@ -203,7 +188,7 @@ export default function addToolbarItem(
     // Creates the image which is used as the drag icon (preview)
     const img = toolbar.addMode(null, image, function (evt, cell) {
         const pt = this.graph.getPointForEvent(evt);
-        funct(graph, evt, cell, pt.x, pt.y);
+        insertToolbarVertex(graph, evt, cell, pt.x, pt.y);
     });
 
     if (tooltip) {
@@ -212,22 +197,15 @@ export default function addToolbarItem(
         img.setAttribute("aria-label", tooltip);
     }
 
-    // Disables dragging if element is disabled. This is a workaround
-    // for wrong event order in IE. Following is a dummy listener that
-    // is invoked as the last listener in IE.
-    mxEvent.addListener(img, "mousedown", (evt) => {
-        // do nothing
-    });
+    mxEvent.addListener(img, "mousedown", () => undefined);
 
-    // This listener is always called first before any other listener
-    // in all browsers.
     mxEvent.addListener(img, "mousedown", (evt) => {
         if (!img.enabled) {
             mxEvent.consume(evt);
         }
     });
 
-    mxUtils.makeDraggable(img, graph, funct);
+    mxUtils.makeDraggable(img, graph, insertToolbarVertex);
 
     return img;
 }
