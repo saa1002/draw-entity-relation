@@ -1,5 +1,5 @@
 import { isMultivaluedAttribute } from "../er/attributes";
-import { findEntityById } from "../er/entities";
+import { findEntityById, isWeakEntity } from "../er/entities";
 import {
     getIsaGeneralizationEntityId,
     getIsaSpecializationEntityIds,
@@ -9,6 +9,7 @@ import {
     getRelationSideCardinality,
     getRelationSideKeys,
     getRelationSideRole,
+    isIdentifyingRelation,
     isSelfRelation,
     isTernaryRelation,
 } from "../er/relations";
@@ -16,7 +17,7 @@ import {
     projectAttributeTreeToColumns,
     projectMultivaluedAttributeToColumns,
 } from "./attributeProjection";
-import { getEntityPrimaryKeyColumnReferences } from "./entityKeyColumns";
+import { getEntityPrimaryKeyColumnReferences as getEntityPrimaryKeyColumns } from "./entityKeyColumns";
 import { normalizeIdentifier } from "./naming";
 
 // This function takes the graph and prepares the relations
@@ -48,6 +49,10 @@ export function filterTables(graph) {
         return type;
     }
 
+    function getRelationSideEntity(side) {
+        return findEntityById(graph, side?.entity?.idMx);
+    }
+
     function processRelation(relation) {
         if (isTernaryRelation(relation)) {
             const table = {
@@ -59,7 +64,7 @@ export function filterTables(graph) {
             getRelationSideKeys(relation).forEach((sideKey) => {
                 const side = relation[sideKey];
                 table[sideKey] = {
-                    entity: entities.find((e) => e.idMx === side.entity.idMx),
+                    entity: getRelationSideEntity(side),
                     cardinality: getRelationSideCardinality(side),
                     role: getRelationSideRole(side),
                 };
@@ -83,11 +88,11 @@ export function filterTables(graph) {
             name: relation.name,
             type: cardinalityType,
             side1: {
-                entity: entities.find((e) => e.idMx === side1.entity.idMx),
+                entity: getRelationSideEntity(side1),
                 cardinality: side1Cardinality,
             },
             side2: {
-                entity: entities.find((e) => e.idMx === side2.entity.idMx),
+                entity: getRelationSideEntity(side2),
                 cardinality: side2Cardinality,
             },
             attributes: [...relation.attributes],
@@ -102,7 +107,7 @@ export function filterTables(graph) {
 
     // Process relations first
     for (const relation of graph.relations) {
-        if (relation.isIdentifying) {
+        if (isIdentifyingRelation(relation)) {
             continue;
         }
 
@@ -118,8 +123,6 @@ export function filterTables(graph) {
 
     return tables;
 }
-
-const getEntityPrimaryKeyColumns = getEntityPrimaryKeyColumnReferences;
 
 function buildEntityAttributes(entity) {
     return projectAttributeTreeToColumns(entity.attributes).map((attr) => ({
@@ -594,11 +597,9 @@ export function processTernaryRelation(relation, graph) {
 
 function applyWeakEntitySemantics(tableMap, graph) {
     for (const entity of graph.entities) {
-        if (!entity.weak) continue;
+        if (!isWeakEntity(entity)) continue;
 
-        const ownerEntity = graph.entities.find(
-            (candidate) => candidate.idMx === entity.ownerEntityId,
-        );
+        const ownerEntity = findEntityById(graph, entity.ownerEntityId);
 
         if (!ownerEntity) continue;
 

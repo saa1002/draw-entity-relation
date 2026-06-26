@@ -1,3 +1,4 @@
+import { findEntityById, isWeakEntity } from "../er/entities";
 import {
     getIsaGeneralizationEntityId,
     getIsaSpecializationEntityIds,
@@ -14,9 +15,6 @@ const buildCycleError = (entity) =>
         `Cannot resolve primary key columns for weak entity "${entity.name}" because the identifying ownership chain contains a cycle.`,
     );
 
-const getEntityById = (graph, entityId) =>
-    graph?.entities?.find((candidate) => candidate.idMx === entityId) ?? null;
-
 const getIsaGeneralizationForSpecialization = (graph, specializationId) => {
     const isa = graph?.isas?.find((candidate) =>
         getIsaSpecializationEntityIds(candidate).includes(specializationId),
@@ -26,7 +24,7 @@ const getIsaGeneralizationForSpecialization = (graph, specializationId) => {
         return null;
     }
 
-    return getEntityById(graph, getIsaGeneralizationEntityId(isa));
+    return findEntityById(graph, getIsaGeneralizationEntityId(isa));
 };
 
 const buildIsaCycleError = (entity) =>
@@ -81,7 +79,7 @@ export const getEntityPrimaryKeyColumnReferences = (
     const cycleHandling =
         options.cycleHandling ?? PRIMARY_KEY_CYCLE_HANDLING.THROW;
 
-    if (!entity.weak) {
+    if (!isWeakEntity(entity)) {
         const isaGeneralization = getIsaGeneralizationForSpecialization(
             graph,
             entity.idMx,
@@ -120,7 +118,7 @@ export const getEntityPrimaryKeyColumnReferences = (
     const nextVisitedEntityIds = new Set(visitedEntityIds);
     nextVisitedEntityIds.add(entity.idMx);
 
-    const ownerEntity = getEntityById(graph, entity.ownerEntityId);
+    const ownerEntity = findEntityById(graph, entity.ownerEntityId);
     const ownerKeyColumns = getEntityPrimaryKeyColumnReferences(
         ownerEntity,
         graph,

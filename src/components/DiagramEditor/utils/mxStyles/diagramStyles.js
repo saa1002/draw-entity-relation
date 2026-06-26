@@ -93,7 +93,7 @@ export const getEntityStyleString = () =>
         "overflow=hidden",
     ].join(";");
 
-export const getRelationStyleString = (relation) => {
+export const getRelationStyleString = () => {
     const baseStyle = [
         "shape=rhombus",
         "perimeter=rhombusPerimeter",
@@ -113,7 +113,7 @@ export const getRelationStyleString = (relation) => {
         "overflow=hidden",
     ].join(";");
 
-    return relation?.isIdentifying ? `${baseStyle};strokeWidth=1` : baseStyle;
+    return baseStyle;
 };
 
 export const getCardinalityStyleString = () =>

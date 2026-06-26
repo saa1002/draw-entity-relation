@@ -1,3 +1,16 @@
+import {
+    canRelationHoldAttributes,
+    findEntityById,
+    getIsaGeneralizationEntityId,
+    getIsaSpecializationEntityIds,
+    getRelationSideCardinality,
+    getRelationSides,
+    isEntityIsaSpecialization,
+    isIdentifyingRelation,
+    isRelationConfigured,
+    isTernaryRelation,
+    isWeakEntity,
+} from "../../../../domain/er";
 import { DEFAULT_LANGUAGE, translate } from "../../../../i18n/translations";
 
 const translateInDefaultLanguage = (key, values = {}) =>
@@ -339,55 +352,11 @@ const getAttributeOwnerDetails = (diagram, predicate, t) => {
     return details;
 };
 
-const getIsaSpecializationIds = (isa) =>
-    (Array.isArray(isa?.specializations) ? isa.specializations : [])
-        .map((specialization) => specialization?.entity?.idMx ?? "")
-        .filter(Boolean);
-
-const getIsaGeneralizationId = (isa) => isa?.generalization?.entity?.idMx ?? "";
-
-const getEntityById = (diagram, entityId) =>
-    getEntities(diagram).find((entity) => entity.idMx === entityId) ?? null;
-
 const getEntityNameById = (diagram, entityId, t = translateInDefaultLanguage) =>
     getName(
-        getEntityById(diagram, entityId),
+        findEntityById(diagram, entityId),
         t("validation.fallback.entityMissing"),
     );
-
-const isEntityIsaSpecialization = (diagram, entityId) =>
-    getIsas(diagram).some((isa) =>
-        getIsaSpecializationIds(isa).includes(entityId),
-    );
-
-const getRelationSideKeys = (relation) =>
-    relation?.arity === 3 ? ["side1", "side2", "side3"] : ["side1", "side2"];
-
-const getRelationSides = (relation) =>
-    getRelationSideKeys(relation).map((sideKey) => relation?.[sideKey] ?? {});
-
-const isRelationConfigured = (relation) =>
-    getRelationSides(relation).every(
-        (side) => !!side?.entity?.idMx && !!side?.idMx,
-    );
-
-const isTernaryRelation = (relation) => relation?.arity === 3;
-
-const getCardinalityParts = (cardinality) => {
-    const [minimum = "", maximum = ""] = String(cardinality ?? "").split(":");
-
-    return { minimum, maximum };
-};
-
-const canRelationHoldAttributes = (relation) => {
-    if (isTernaryRelation(relation)) {
-        return true;
-    }
-
-    return getRelationSides(relation).every((side) =>
-        String(side?.cardinality ?? "").endsWith(":N"),
-    );
-};
 
 const getRepeatedDiagramNames = (diagram) => {
     const repeatedNames = new Set();
@@ -545,7 +514,7 @@ const getValidationDetailMessages = (
 
         case "noEntitiesWithoutPK":
             return getEntities(diagram)
-                .filter((entity) => !entity.weak)
+                .filter((entity) => !isWeakEntity(entity))
                 .filter(
                     (entity) =>
                         !isEntityIsaSpecialization(diagram, entity.idMx),
@@ -577,7 +546,7 @@ const getValidationDetailMessages = (
 
         case "noWeakEntitiesWithPrimaryKey":
             return getEntities(diagram)
-                .filter((entity) => entity.weak)
+                .filter(isWeakEntity)
                 .filter((entity) => hasPrimaryKeyAttribute(entity.attributes))
                 .map((entity) =>
                     t("validation.detail.weakEntityWithPrimaryKey", {
@@ -587,7 +556,7 @@ const getValidationDetailMessages = (
 
         case "noWeakEntitiesWithoutPartialKey":
             return getEntities(diagram)
-                .filter((entity) => entity.weak)
+                .filter(isWeakEntity)
                 .filter((entity) => !hasPartialKeyAttribute(entity.attributes))
                 .map((entity) =>
                     t("validation.detail.weakEntityWithoutPartialKey", {
@@ -597,7 +566,7 @@ const getValidationDetailMessages = (
 
         case "noWeakEntitiesWithMoreThanOnePartialKey":
             return getEntities(diagram)
-                .filter((entity) => entity.weak)
+                .filter(isWeakEntity)
                 .map((entity) => ({
                     entity,
                     keys: getPartialKeyAttributes(entity.attributes, t),
@@ -612,7 +581,7 @@ const getValidationDetailMessages = (
 
         case "noStrongEntitiesWithPartialKey":
             return getEntities(diagram)
-                .filter((entity) => !entity.weak)
+                .filter((entity) => !isWeakEntity(entity))
                 .filter((entity) => hasPartialKeyAttribute(entity.attributes))
                 .map((entity) =>
                     t("validation.detail.strongEntityWithPartialKey", {
@@ -622,7 +591,7 @@ const getValidationDetailMessages = (
 
         case "noWeakEntitiesWithoutIdentifyingRelation":
             return getEntities(diagram)
-                .filter((entity) => entity.weak)
+                .filter(isWeakEntity)
                 .filter((entity) => !entity.identifyingRelationId)
                 .map((entity) =>
                     t(
@@ -654,7 +623,7 @@ const getValidationDetailMessages = (
 
         case "noNMRelationsWithPK":
             return getRelations(diagram)
-                .filter((relation) => relation.canHoldAttributes)
+                .filter(canRelationHoldAttributes)
                 .filter((relation) =>
                     hasPrimaryKeyAttribute(relation.attributes),
                 )
@@ -670,7 +639,7 @@ const getValidationDetailMessages = (
                     getRelationSides(relation).some((side) => {
                         const entityId = side?.entity?.idMx ?? "";
 
-                        return entityId && !getEntityById(diagram, entityId);
+                        return entityId && !findEntityById(diagram, entityId);
                     }),
                 )
                 .map((relation) =>
@@ -687,7 +656,7 @@ const getValidationDetailMessages = (
                 .filter(
                     (relation) =>
                         isTernaryRelation(relation) &&
-                        relation.isIdentifying === true,
+                        isIdentifyingRelation(relation),
                 )
                 .map((relation) =>
                     t("validation.detail.identifyingTernaryRelation", {
@@ -702,8 +671,7 @@ const getValidationDetailMessages = (
                 .filter((relation) =>
                     getRelationSides(relation).some(
                         (side) =>
-                            getCardinalityParts(side?.cardinality).minimum ===
-                            "1",
+                            getRelationSideCardinality(side).minimum === "1",
                     ),
                 )
                 .map((relation) =>
@@ -736,8 +704,8 @@ const getValidationDetailMessages = (
                 .map((isa, index) => ({ isa, index }))
                 .filter(
                     ({ isa }) =>
-                        !getIsaGeneralizationId(isa) ||
-                        getIsaSpecializationIds(isa).length === 0 ||
+                        !getIsaGeneralizationEntityId(isa) ||
+                        getIsaSpecializationEntityIds(isa).length === 0 ||
                         !isa?.generalization?.edgeId ||
                         !(isa.specializations ?? []).every(
                             (specialization) =>
@@ -756,8 +724,8 @@ const getValidationDetailMessages = (
                 .map((isa, index) => ({ isa, index }))
                 .filter(({ isa }) =>
                     [
-                        getIsaGeneralizationId(isa),
-                        ...getIsaSpecializationIds(isa),
+                        getIsaGeneralizationEntityId(isa),
+                        ...getIsaSpecializationEntityIds(isa),
                     ]
                         .filter(Boolean)
                         .some((entityId) => !getEntityById(diagram, entityId)),
@@ -773,7 +741,7 @@ const getValidationDetailMessages = (
                 .map((isa, index) => ({
                     isa,
                     index,
-                    specializationIds: getIsaSpecializationIds(isa),
+                    specializationIds: getIsaSpecializationEntityIds(isa),
                 }))
                 .filter(
                     ({ specializationIds }) =>
@@ -790,8 +758,8 @@ const getValidationDetailMessages = (
             return getIsas(diagram)
                 .map((isa, index) => ({ isa, index }))
                 .filter(({ isa }) =>
-                    getIsaSpecializationIds(isa).includes(
-                        getIsaGeneralizationId(isa),
+                    getIsaSpecializationEntityIds(isa).includes(
+                        getIsaGeneralizationEntityId(isa),
                     ),
                 )
                 .map(({ isa, index }) =>
@@ -800,7 +768,7 @@ const getValidationDetailMessages = (
                         entity: quote(
                             getEntityNameById(
                                 diagram,
-                                getIsaGeneralizationId(isa),
+                                getIsaGeneralizationEntityId(isa),
                                 t,
                             ),
                         ),
@@ -811,10 +779,12 @@ const getValidationDetailMessages = (
             const specializationCountById = {};
 
             getIsas(diagram).forEach((isa) => {
-                new Set(getIsaSpecializationIds(isa)).forEach((entityId) => {
-                    specializationCountById[entityId] =
-                        (specializationCountById[entityId] ?? 0) + 1;
-                });
+                new Set(getIsaSpecializationEntityIds(isa)).forEach(
+                    (entityId) => {
+                        specializationCountById[entityId] =
+                            (specializationCountById[entityId] ?? 0) + 1;
+                    },
+                );
             });
 
             return Object.entries(specializationCountById)
@@ -828,7 +798,7 @@ const getValidationDetailMessages = (
 
         case "noIsaSpecializationsWithPrimaryKey": {
             const specializationIds = new Set(
-                getIsas(diagram).flatMap(getIsaSpecializationIds),
+                getIsas(diagram).flatMap(getIsaSpecializationEntityIds),
             );
 
             return [...specializationIds]
