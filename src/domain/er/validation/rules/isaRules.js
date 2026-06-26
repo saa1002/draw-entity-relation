@@ -8,11 +8,6 @@ import {
 
 const getIsas = (graph) => (Array.isArray(graph?.isas) ? graph.isas : []);
 
-export const isEntityIsaSpecialization = (graph, entityId) =>
-    getIsas(graph).some((isa) =>
-        getIsaSpecializationEntityIds(isa).includes(entityId),
-    );
-
 export function isaHierarchiesUnconnected(graph) {
     return getIsas(graph).some((isa) => !isIsaConfigured(isa));
 }

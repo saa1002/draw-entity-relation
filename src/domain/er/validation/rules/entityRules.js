@@ -3,7 +3,7 @@ import {
     hasPrimaryKeyAttributeInTree,
 } from "../../attributes";
 import { isWeakEntity } from "../../entities";
-import { isEntityIsaSpecialization } from "./isaRules";
+import { isEntityIsaSpecialization } from "../../isa";
 
 export function repeatedEntities(graph) {
     const entityNames = new Set();

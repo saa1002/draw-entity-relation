@@ -33,6 +33,12 @@ export const getIsaSpecializationEntityIds = (isa) =>
         .map((specialization) => specialization?.entity?.idMx ?? "")
         .filter(Boolean);
 
+export const isEntityIsaSpecialization = (diagram, entityId) =>
+    !!entityId &&
+    getIsas(diagram).some((isa) =>
+        getIsaSpecializationEntityIds(isa).includes(entityId),
+    );
+
 export const getIsaEntityIds = (isa) =>
     [
         getIsaGeneralizationEntityId(isa),
