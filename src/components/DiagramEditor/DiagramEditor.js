@@ -26,10 +26,8 @@ import {
     POSSIBLE_CARDINALITIES,
     RELATION_ARITIES,
     TERNARY_RELATION_CARDINALITIES,
-    applyIdentifyingRelationCardinalities,
     canRelationHoldAttributes,
     canRelationTypeHoldAttributes,
-    clearIdentifyingRelationDomainSemantics,
     clearPrimaryKeyAttributesInTree,
     createEmptyIsaLink,
     createEmptyRelationSide,
@@ -41,7 +39,6 @@ import {
     findIsaIndexById,
     findRelationById,
     findRelationIndexById,
-    getCascadedWeakConversionCandidate,
     getGenerateStructureTemplateById,
     getRelationArity,
     getRelationCardinalityDisplayValue,
@@ -62,9 +59,7 @@ import {
     isTernaryRelation,
     isWeakEntity,
     isaInvolvesEntity,
-    relationHasBothEntitySides,
     relationInvolvesEntity,
-    removeAllAttributesFromOwner,
     removeAttributeFromOwnerTreeByIdWithPromotion,
     resetRelationSides,
     updateAttributePosition,
@@ -76,6 +71,7 @@ import { generateSQL } from "../../services/sql";
 import { useAttributeActions } from "./hooks/useAttributeActions";
 import { useDiagramHistory } from "./hooks/useDiagramHistory";
 import { useDiagramPersistence } from "./hooks/useDiagramPersistence";
+import { useRelationActions } from "./hooks/useRelationActions";
 import {
     connectIsaGraphLinks,
     connectRelationGraphSides,
@@ -379,9 +375,6 @@ export default function DiagramEditor(props) {
         return graph.model.cells[idMx];
     }
 
-    const getSelectedRelationData = () =>
-        findRelationById(diagramRef.current, selected?.id) ?? null;
-
     const getSelectedIsaData = () =>
         findIsaById(diagramRef.current, selected?.id) ?? null;
 
@@ -454,67 +447,6 @@ export default function DiagramEditor(props) {
         mxGeometry,
         updateAttributePosition,
     });
-
-    const clearIdentifyingRelationSemantics = (relationId) => {
-        const { relation } = clearIdentifyingRelationDomainSemantics(
-            diagramRef.current,
-            relationId,
-        );
-
-        if (!relation) return;
-
-        removeIdentifyingRelationDecorator(relation.idMx);
-        removeIdentifyingRelationEdgeDecorator(relation.idMx);
-
-        const relationCell = accessCell(relation.idMx);
-
-        if (relationCell) {
-            graph
-                .getModel()
-                .setStyle(relationCell, getRelationStyleString(relation));
-        }
-    };
-
-    const syncRelationCardinalityLabels = (relationData) => {
-        if (!relationData) return;
-
-        getRelationSideKeys(relationData).forEach((sideKey) => {
-            const sideLabel = accessCell(relationData?.[sideKey]?.cell);
-
-            if (sideLabel) {
-                graph.model.setValue(
-                    sideLabel,
-                    getRelationSideLabelDisplayValue(relationData, sideKey),
-                );
-                graph.updateCellSize(sideLabel);
-            }
-        });
-    };
-
-    const removeRelationAttributes = (relationData) => {
-        if (!relationData) return;
-
-        const removedAttributes = removeAllAttributesFromOwner(relationData);
-
-        removeAttributesCells(removedAttributes);
-
-        relationData.canHoldAttributes = false;
-    };
-
-    const removeRelationConfiguration = (relation) => {
-        if (!relation) return;
-
-        clearIdentifyingRelationSemantics(relation.idMx);
-
-        removeRelationConfigurationGraphCells({
-            graph,
-            relation,
-            accessCell,
-            getAttributesCells,
-        });
-
-        resetRelationSides(relation);
-    };
 
     const removeIsaConfiguration = (isa) => {
         if (!isa) return;
@@ -711,11 +643,36 @@ export default function DiagramEditor(props) {
     };
 
     const {
+        getSelectedRelationData,
+        clearIdentifyingRelationSemantics,
+        syncRelationCardinalityLabels,
+        removeRelationAttributes,
+        removeRelationConfiguration,
+        toggleIdentifyingRelation,
+    } = useRelationActions({
+        graph,
+        selected,
+        diagramRef,
+        accessCell,
+        t,
+        getAttributesCells,
+        removeAttributesCells,
+        removeIdentifyingRelationDecorator,
+        removeIdentifyingRelationEdgeDecorator,
+        ensureIdentifyingRelationDecorator,
+        ensureIdentifyingRelationEdgeDecorator,
+        ensureWeakEntityDecorator,
+        syncAttributeVisualRepresentation,
+        refreshGraph,
+        syncAndPersistDiagramData,
+        setRefreshDiagram,
+    });
+
+    const {
         getSelectedEntityData,
         getSelectedEntityAttributeKeyData,
         getSelectedEntityMultivaluedAttributeData,
         getSelectedSimpleEntityAttributesForGrouping,
-        convertEntityPrimaryKeyToPartialKey,
         addAttribute,
         canAddChildAttributeToSelectedAttribute,
         groupSelectedSimpleAttributesIntoComposite,
@@ -749,99 +706,6 @@ export default function DiagramEditor(props) {
         setEntityWithAttributesHidden,
         clearIdentifyingRelationSemantics,
     });
-
-    const toggleIdentifyingRelation = () => {
-        if (!selected) return;
-        if (isIdentifyingRelationDecoratorCell(selected)) return;
-        if (!isRelationShapeCell(selected)) return;
-
-        const relation = getSelectedRelationData();
-        if (!relation) return;
-
-        let { weakEntity, strongEntity: ownerEntity } =
-            getWeakAndStrongSidesForRelation(diagramRef.current, relation);
-
-        if (!isIdentifyingRelation(relation)) {
-            if (!relationHasBothEntitySides(relation)) {
-                toast.error(t("feedback.configureBothRelationSidesFirst"));
-                return;
-            }
-
-            if (!weakEntity || !ownerEntity) {
-                const conversionCandidate = getCascadedWeakConversionCandidate(
-                    diagramRef.current,
-                    relation,
-                );
-
-                if (!conversionCandidate) {
-                    toast.error(
-                        t("feedback.identifyingRelationRequiresWeakAndOwner"),
-                    );
-                    return;
-                }
-
-                weakEntity = conversionCandidate.weakEntity;
-                ownerEntity = conversionCandidate.ownerEntity;
-                weakEntity.weak = true;
-                convertEntityPrimaryKeyToPartialKey(weakEntity);
-
-                const weakEntityCell = accessCell(weakEntity.idMx);
-                if (weakEntityCell) {
-                    ensureWeakEntityDecorator(weakEntityCell, weakEntity);
-                }
-            }
-
-            if (
-                weakEntity.identifyingRelationId &&
-                weakEntity.identifyingRelationId !== relation.idMx
-            ) {
-                clearIdentifyingRelationSemantics(
-                    weakEntity.identifyingRelationId,
-                );
-            }
-
-            relation.isIdentifying = true;
-            weakEntity.identifyingRelationId = relation.idMx;
-            weakEntity.ownerEntityId = ownerEntity.idMx;
-
-            const identifyingCardinalitiesApplied =
-                applyIdentifyingRelationCardinalities(
-                    diagramRef.current,
-                    relation,
-                );
-
-            if (!identifyingCardinalitiesApplied) {
-                relation.isIdentifying = false;
-                weakEntity.identifyingRelationId = null;
-                weakEntity.ownerEntityId = null;
-
-                toast.error(t("feedback.identifyingCardinalitiesFailed"));
-                return;
-            }
-
-            removeRelationAttributes(relation);
-            syncRelationCardinalityLabels(relation);
-
-            ensureIdentifyingRelationDecorator(selected, relation);
-            ensureIdentifyingRelationEdgeDecorator(selected, relation);
-
-            toast.success(t("feedback.relationMarkedIdentifying"));
-        } else {
-            clearIdentifyingRelationSemantics(relation.idMx);
-            toast.success(t("feedback.identifyingRelationUnmarked"));
-        }
-
-        const relationCell = accessCell(relation.idMx);
-        if (relationCell) {
-            graph
-                .getModel()
-                .setStyle(relationCell, getRelationStyleString(relation));
-        }
-
-        refreshGraph();
-        syncAndPersistDiagramData();
-        setRefreshDiagram((prevState) => !prevState);
-    };
 
     React.useEffect(() => {
         if (!graph) return;
