@@ -32,10 +32,7 @@ import {
     createExampleDiagramStructure,
     findAttributeTreeOwnerById,
     findEntityById,
-    findEntityIndexById,
-    findIsaIndexById,
     findRelationById,
-    findRelationIndexById,
     getGenerateStructureTemplateById,
     getRelationArity,
     getRelationCardinalityDisplayValue,
@@ -48,15 +45,10 @@ import {
     isEntityIsaSpecialization,
     isIdentifyingRelation,
     isMultivaluedAttribute,
-    isPrimaryKeyAttribute,
-    isRelationAttributeOwner,
     isRelationConfigured,
     isSelfRelation,
     isTernaryRelation,
     isWeakEntity,
-    isaInvolvesEntity,
-    relationInvolvesEntity,
-    removeAttributeFromOwnerTreeByIdWithPromotion,
     resetRelationSides,
     updateAttributePosition,
     validateGraph,
@@ -65,6 +57,7 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import { SUPPORTED_LANGUAGES } from "../../i18n/translations";
 import { generateSQL } from "../../services/sql";
 import { useAttributeActions } from "./hooks/useAttributeActions";
+import { useDeletionActions } from "./hooks/useDeletionActions";
 import { useDiagramHistory } from "./hooks/useDiagramHistory";
 import { useDiagramPersistence } from "./hooks/useDiagramPersistence";
 import { useIsaActions } from "./hooks/useIsaActions";
@@ -74,11 +67,8 @@ import {
     fitGraphToDiagram,
     getConfiguredRelationGraphCells,
     installCellGeometrySyncHandlers,
-    removeEntityGraphCells,
     removeExistingGraphCells,
-    removeIsaGraphCells,
     removeRelationConfigurationGraphCells,
-    removeRelationGraphCells,
 } from "./utils/graph/graphCanvas";
 import { installGraphInteractionOverrides } from "./utils/graph/graphInteractionOverrides";
 import { installGraphLabelEditingHandler } from "./utils/graph/graphLabelEditing";
@@ -696,6 +686,28 @@ export default function DiagramEditor(props) {
         setRefreshDiagram,
         setEntityWithAttributesHidden,
         clearIdentifyingRelationSemantics,
+    });
+
+    const {
+        canDeleteSelectedAttribute,
+        deleteSelectedDiagramElement,
+        deleteSelectedDiagramElements,
+    } = useDeletionActions({
+        graph,
+        selected,
+        diagramRef,
+        accessCell,
+        getAttributesCells,
+        getWeakEntityDecoratorId,
+        removeAttributesCells,
+        reparentAttributeCellToCurrentOwner,
+        syncAttributeVisualRepresentation,
+        clearIdentifyingRelationSemantics,
+        removeRelationConfiguration,
+        removeIsaConfiguration,
+        refreshGraph,
+        syncAndPersistDiagramData,
+        clearEditorSelection,
     });
 
     React.useEffect(() => {
@@ -2124,303 +2136,6 @@ export default function DiagramEditor(props) {
         }
     };
 
-    const getSelectedDiagramCells = () => {
-        const selectionCells =
-            typeof graph?.getSelectionCells === "function"
-                ? graph.getSelectionCells()
-                : [];
-
-        const cells =
-            selectionCells.length > 1
-                ? selectionCells
-                : [...selectionCells, selected].filter(Boolean);
-
-        return Array.from(
-            new Map(
-                cells
-                    .filter(Boolean)
-                    .filter((cell) => typeof cell.id === "string")
-                    .map((cell) => [cell.id, cell]),
-            ).values(),
-        );
-    };
-
-    const deleteEntityCell = (cell, { syncAfterDelete = true } = {}) => {
-        const isEntity =
-            isEntityShapeCell(cell) && !isWeakEntityDecoratorCell(cell);
-
-        if (!isEntity) {
-            return false;
-        }
-
-        const entityIndex = findEntityIndexById(diagramRef.current, cell.id);
-
-        if (entityIndex === -1) {
-            if (syncAfterDelete) {
-                syncAndPersistDiagramData();
-            }
-
-            return false;
-        }
-
-        const entity = diagramRef.current.entities[entityIndex];
-
-        diagramRef.current.entities.splice(entityIndex, 1);
-
-        removeEntityGraphCells({
-            graph,
-            entity,
-            accessCell,
-            getAttributesCells,
-            getWeakEntityDecoratorId,
-            isWeakEntity,
-        });
-
-        diagramRef.current.relations
-            .filter((relation) => relationInvolvesEntity(relation, entity.idMx))
-            .forEach(removeRelationConfiguration);
-
-        (diagramRef.current.isas ?? [])
-            .filter((isa) => isaInvolvesEntity(isa, entity.idMx))
-            .forEach(removeIsaConfiguration);
-
-        if (syncAfterDelete) {
-            syncAndPersistDiagramData();
-        }
-
-        return true;
-    };
-
-    const deleteSelectedEntity = () => deleteEntityCell(selected);
-
-    const deleteAttributeCell = (cell, { syncAfterDelete = true } = {}) => {
-        if (!isAttributeShapeCell(cell)) {
-            return false;
-        }
-
-        const attributeOwner = findAttributeTreeOwnerById(
-            diagramRef.current,
-            cell.id,
-        );
-
-        if (!attributeOwner) {
-            return false;
-        }
-
-        const isKey = isPrimaryKeyAttribute(attributeOwner?.attribute);
-        const isFromRelation = isRelationAttributeOwner(attributeOwner);
-        const canDeleteAttribute = isFromRelation || !isKey;
-
-        if (!canDeleteAttribute) {
-            return false;
-        }
-
-        const { owner } = attributeOwner;
-        const parentAttribute = attributeOwner.parent;
-
-        const {
-            removedAttribute,
-            removedCompositeAttribute,
-            promotedAttribute,
-        } = removeAttributeFromOwnerTreeByIdWithPromotion(owner, cell.id);
-
-        if (!removedAttribute) {
-            return false;
-        }
-
-        removeAttributesCells(
-            [removedAttribute, removedCompositeAttribute].filter(Boolean),
-        );
-
-        reparentAttributeCellToCurrentOwner({
-            attribute: promotedAttribute,
-            attributeOwner: promotedAttribute
-                ? findAttributeTreeOwnerById(
-                      diagramRef.current,
-                      promotedAttribute.idMx,
-                  )
-                : null,
-        });
-
-        if (!promotedAttribute && parentAttribute) {
-            syncAttributeVisualRepresentation(parentAttribute);
-        }
-
-        if (syncAfterDelete) {
-            refreshGraph();
-            syncAndPersistDiagramData();
-        }
-
-        return true;
-    };
-
-    const deleteSelectedAttribute = () => deleteAttributeCell(selected);
-
-    const deleteRelationCell = (cell, { syncAfterDelete = true } = {}) => {
-        if (!isRelationShapeCell(cell)) {
-            return false;
-        }
-
-        const relationIndex = findRelationIndexById(
-            diagramRef.current,
-            cell.id,
-        );
-
-        if (relationIndex === -1) {
-            if (syncAfterDelete) {
-                syncAndPersistDiagramData();
-            }
-
-            return false;
-        }
-
-        const relation = diagramRef.current.relations[relationIndex];
-
-        clearIdentifyingRelationSemantics(relation.idMx);
-
-        diagramRef.current.relations.splice(relationIndex, 1);
-
-        removeRelationGraphCells({
-            graph,
-            relation,
-            accessCell,
-            getAttributesCells,
-        });
-
-        if (syncAfterDelete) {
-            syncAndPersistDiagramData();
-        }
-
-        return true;
-    };
-
-    const deleteSelectedRelation = () => deleteRelationCell(selected);
-
-    const deleteIsaCell = (cell, { syncAfterDelete = true } = {}) => {
-        if (!isIsaShapeCell(cell)) {
-            return false;
-        }
-
-        const isaIndex = findIsaIndexById(diagramRef.current, cell.id);
-
-        if (isaIndex === -1) {
-            if (syncAfterDelete) {
-                syncAndPersistDiagramData();
-            }
-
-            return false;
-        }
-
-        const isa = diagramRef.current.isas[isaIndex];
-
-        diagramRef.current.isas.splice(isaIndex, 1);
-
-        removeIsaGraphCells({
-            graph,
-            isa,
-            accessCell,
-        });
-
-        if (syncAfterDelete) {
-            syncAndPersistDiagramData();
-        }
-
-        return true;
-    };
-
-    const deleteSelectedIsa = () => deleteIsaCell(selected);
-
-    const deleteDiagramElementCell = (
-        cell,
-        { syncAfterDelete = true } = {},
-    ) => {
-        if (!cell) {
-            return false;
-        }
-
-        if (isEntityShapeCell(cell) && !isWeakEntityDecoratorCell(cell)) {
-            return deleteEntityCell(cell, { syncAfterDelete });
-        }
-
-        if (isRelationShapeCell(cell)) {
-            return deleteRelationCell(cell, { syncAfterDelete });
-        }
-
-        if (isAttributeShapeCell(cell)) {
-            return deleteAttributeCell(cell, { syncAfterDelete });
-        }
-
-        if (isIsaShapeCell(cell)) {
-            return deleteIsaCell(cell, { syncAfterDelete });
-        }
-
-        return false;
-    };
-
-    const getCellDeletionPriority = (cell) => {
-        if (isRelationShapeCell(cell)) return 1;
-        if (isIsaShapeCell(cell)) return 2;
-
-        if (isEntityShapeCell(cell) && !isWeakEntityDecoratorCell(cell)) {
-            return 3;
-        }
-
-        if (isAttributeShapeCell(cell)) return 4;
-
-        return 5;
-    };
-
-    const deleteSelectedDiagramElements = () => {
-        if (!graph) {
-            return false;
-        }
-
-        const cells = getSelectedDiagramCells()
-            .filter((cell) => getCellDeletionPriority(cell) < 5)
-            .sort(
-                (cellA, cellB) =>
-                    getCellDeletionPriority(cellA) -
-                    getCellDeletionPriority(cellB),
-            );
-
-        if (cells.length <= 1) {
-            return deleteSelectedDiagramElement();
-        }
-
-        let deleted = false;
-
-        cells.forEach((cell) => {
-            deleted =
-                deleteDiagramElementCell(cell, {
-                    syncAfterDelete: false,
-                }) || deleted;
-        });
-
-        if (!deleted) {
-            return false;
-        }
-
-        if (typeof graph.clearSelection === "function") {
-            graph.clearSelection();
-        }
-
-        setSelected(null);
-        setSelectionVersion((prevVersion) => prevVersion + 1);
-
-        refreshGraph();
-        syncAndPersistDiagramData();
-
-        return true;
-    };
-
-    const deleteSelectedDiagramElement = () => {
-        if (!selected) {
-            return false;
-        }
-
-        return deleteDiagramElementCell(selected);
-    };
-
     const DeleteEntityButton = () => {
         const isEntity =
             isEntityShapeCell(selected) && !isWeakEntityDecoratorCell(selected);
@@ -2442,24 +2157,7 @@ export default function DiagramEditor(props) {
     const DeleteAttributeButton = () => {
         const isAttribute = isAttributeShapeCell(selected);
 
-        if (!isAttribute) {
-            return;
-        }
-
-        const selectedAttributeOwner = findAttributeTreeOwnerById(
-            diagramRef.current,
-            selected?.id,
-        );
-
-        if (!selectedAttributeOwner) {
-            return;
-        }
-
-        const isKey = isPrimaryKeyAttribute(selectedAttributeOwner?.attribute);
-        const isFromRelation = isRelationAttributeOwner(selectedAttributeOwner);
-        const canDeleteAttribute = isFromRelation || !isKey;
-
-        if (!canDeleteAttribute) {
+        if (!isAttribute || !canDeleteSelectedAttribute()) {
             return;
         }
 
