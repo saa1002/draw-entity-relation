@@ -403,9 +403,6 @@ const createIsaStructure = () =>
                 idMx: "template-isa-entity-2",
                 name: "Entidad 1",
                 position: { x: 150, y: 360 },
-                weak: false,
-                ownerEntityId: null,
-                identifyingRelationId: null,
                 attributes: [
                     createAttribute({
                         idMx: "template-isa-entity-2-attribute-1",
@@ -419,9 +416,6 @@ const createIsaStructure = () =>
                 idMx: "template-isa-entity-3",
                 name: "Entidad 2",
                 position: { x: 585, y: 360 },
-                weak: false,
-                ownerEntityId: null,
-                identifyingRelationId: null,
                 attributes: [
                     createAttribute({
                         idMx: "template-isa-entity-3-attribute-1",

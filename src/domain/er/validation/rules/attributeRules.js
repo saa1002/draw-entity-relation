@@ -36,13 +36,7 @@ const getValidAttributeOwnerCollections = (graph) => [
 const someAttributeOwnerMatches = (graph, predicate) =>
     getValidAttributeOwnerCollections(graph).some(predicate);
 
-// This function checks for repeated attributes in an entity,
-// relations N:M (these are the ones that have a key `canHoldAttributes`
-// set to true) are also treated as entities.
-// Returns true if there are repeated attribute names in any entity
-// false if there are no repetitions.
-// NOTE: Every entity should be treated differently; there can be repeated
-// attributes in different entities.
+// Repeated attribute names are checked independently inside each attribute owner.
 export function repeatedAttributesInEntity(graph) {
     return someAttributeOwnerMatches(
         graph,

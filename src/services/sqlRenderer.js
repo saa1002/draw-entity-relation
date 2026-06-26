@@ -1,9 +1,6 @@
 import { normalizeIdentifier } from "../domain/relational/naming";
 
-const getSQLType = (attribute) => {
-    // Assuming all attributes are of type VARCHAR for simplicity
-    return "VARCHAR(40)";
-};
+const getSQLType = () => "VARCHAR(40)";
 
 const getTableName = (table) => normalizeIdentifier(table.name);
 
@@ -168,9 +165,7 @@ const createTableSQL = (table, inlineForeignKeyGroups = []) => {
 
     const columns = table.attributes
         .map((attr) => {
-            let columnDef = `${normalizeIdentifier(attr.name)} ${getSQLType(
-                attr,
-            )}`;
+            let columnDef = `${normalizeIdentifier(attr.name)} ${getSQLType()}`;
 
             if (primaryKeyColumns.length === 1 && attr.key) {
                 columnDef += " PRIMARY KEY";

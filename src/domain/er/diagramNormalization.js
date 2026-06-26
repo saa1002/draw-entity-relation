@@ -13,6 +13,18 @@ const normalizeAttributeCell = (cell, fallbackId = "") => {
     return [fallbackId, null];
 };
 
+const normalizeAttributeChildren = (attribute, normalizeChild) => {
+    if (!Object.prototype.hasOwnProperty.call(attribute, "children")) {
+        return {};
+    }
+
+    return {
+        children: Array.isArray(attribute.children)
+            ? attribute.children.map(normalizeChild)
+            : [],
+    };
+};
+
 const normalizeAttributeBase = (normalizeChild, attribute = {}) => ({
     ...attribute,
     idMx: attribute.idMx ?? "",
@@ -114,15 +126,3 @@ export const normalizeDiagramData = (diagramData = {}) => ({
         ? diagramData.isas.map(normalizeIsa)
         : [],
 });
-
-const normalizeAttributeChildren = (attribute, normalizeChild) => {
-    if (!Object.prototype.hasOwnProperty.call(attribute, "children")) {
-        return {};
-    }
-
-    return {
-        children: Array.isArray(attribute.children)
-            ? attribute.children.map(normalizeChild)
-            : [],
-    };
-};
