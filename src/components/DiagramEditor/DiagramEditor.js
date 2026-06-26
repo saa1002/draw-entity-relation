@@ -19,7 +19,6 @@ import { default as MxGraph } from "mxgraph";
 import toast, { Toaster } from "react-hot-toast";
 import { APP_VERSION, BUILD_COMMIT, BUILD_DATE } from "../../buildInfo";
 import {
-    ATTRIBUTE_OWNER_TYPES,
     DIAGRAM_COMPOSITION_MODES,
     GENERATE_STRUCTURE_TEMPLATES,
     IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY,
@@ -27,18 +26,11 @@ import {
     POSSIBLE_CARDINALITIES,
     RELATION_ARITIES,
     TERNARY_RELATION_CARDINALITIES,
-    addAttributeToOwner,
-    addChildAttributeToAttribute,
     applyIdentifyingRelationCardinalities,
     canRelationHoldAttributes,
     canRelationTypeHoldAttributes,
     clearIdentifyingRelationDomainSemantics,
     clearPrimaryKeyAttributesInTree,
-    convertPartialKeyToPrimaryKey,
-    convertPrimaryKeyToPartialKey,
-    convertSimpleAttributeToCompositeAttribute,
-    convertSubattributeToSimpleAttributeById,
-    createAttribute,
     createEmptyIsaLink,
     createEmptyRelationSide,
     createExampleDiagramStructure,
@@ -49,11 +41,8 @@ import {
     findIsaIndexById,
     findRelationById,
     findRelationIndexById,
-    generateUniqueAttributeName,
     getCascadedWeakConversionCandidate,
-    getDefaultAttributeSemantics,
     getGenerateStructureTemplateById,
-    getLastAttribute,
     getRelationArity,
     getRelationCardinalityDisplayValue,
     getRelationSideDisplayName,
@@ -61,10 +50,8 @@ import {
     getRelationSideLabelDisplayValue,
     getWeakAndStrongSidesForRelation,
     getWeakSideOfIdentifyingRelation,
-    groupRootAttributesIntoCompositeAttribute,
     isBinaryRelation,
     isEntityIsaSpecialization,
-    isFirstAttributeForOwner,
     isIdentifyingRelation,
     isIsaConfigured,
     isMultivaluedAttribute,
@@ -80,14 +67,13 @@ import {
     removeAllAttributesFromOwner,
     removeAttributeFromOwnerTreeByIdWithPromotion,
     resetRelationSides,
-    toggleExclusivePartialKeyAttributeInTree,
-    toggleExclusivePrimaryKeyAttributeInTree,
     updateAttributePosition,
     validateGraph,
 } from "../../domain/er";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { SUPPORTED_LANGUAGES } from "../../i18n/translations";
 import { generateSQL } from "../../services/sql";
+import { useAttributeActions } from "./hooks/useAttributeActions";
 import { useDiagramHistory } from "./hooks/useDiagramHistory";
 import { useDiagramPersistence } from "./hooks/useDiagramPersistence";
 import {
@@ -133,14 +119,6 @@ import {
     createRelationRenderingHelpers,
     isIdentifyingRelationDecoratorCell,
 } from "./utils/rendering/relationRendering";
-import {
-    canAddChildAttributeToSelection,
-    canConvertSelectedSubattributeToSimple,
-    getCompositeAttributeSelectionTarget,
-    getEntityAttributeKeySelectionData,
-    getEntityMultivaluedAttributeSelectionData,
-    getSimpleEntityAttributesGroupingSelectionData,
-} from "./utils/selection/attributeSelection";
 import {
     VALIDATION_SECTION_TITLE_KEYS,
     getValidationDialogMessages,
@@ -401,56 +379,6 @@ export default function DiagramEditor(props) {
         return graph.model.cells[idMx];
     }
 
-    const getSelectedEntityData = () =>
-        findEntityById(diagramRef.current, selected?.id);
-
-    const getSelectedEntityAttributeKeyData = () =>
-        getEntityAttributeKeySelectionData({
-            diagram: diagramRef.current,
-            selectedCell: selected,
-        });
-
-    const getSelectedEntityMultivaluedAttributeData = () =>
-        getEntityMultivaluedAttributeSelectionData({
-            diagram: diagramRef.current,
-            selectedCell: selected,
-        });
-
-    const getSelectedSimpleEntityAttributesForGrouping = () =>
-        getSimpleEntityAttributesGroupingSelectionData({
-            diagram: diagramRef.current,
-            selectionCells:
-                typeof graph?.getSelectionCells === "function"
-                    ? graph.getSelectionCells()
-                    : [],
-        });
-
-    const getCompositeAttributeNameFromUser = (owner) => {
-        const defaultName = generateUniqueAttributeName(
-            owner?.attributes,
-            "Atributo compuesto",
-        );
-
-        const compositeName = window.prompt(
-            t("feedback.compositeAttributePrompt"),
-            defaultName,
-        );
-
-        return compositeName?.trim() ?? "";
-    };
-
-    const hasSiblingAttributeWithName = ({
-        owner,
-        name,
-        ignoredAttributeIds = [],
-    }) => {
-        const ignoredIds = new Set(ignoredAttributeIds);
-
-        return (owner?.attributes ?? []).some(
-            (attribute) =>
-                !ignoredIds.has(attribute.idMx) && attribute.name === name,
-        );
-    };
     const getSelectedRelationData = () =>
         findRelationById(diagramRef.current, selected?.id) ?? null;
 
@@ -601,26 +529,6 @@ export default function DiagramEditor(props) {
 
         isa.generalization = createEmptyIsaLink();
         isa.specializations = [];
-    };
-
-    const getAttributeDataById = (attributeId) =>
-        findAttributeTreeOwnerById(diagramRef.current, attributeId)
-            ?.attribute ?? null;
-
-    const convertEntityPrimaryKeyToPartialKey = (entity) => {
-        const changedAttributes = convertPrimaryKeyToPartialKey(
-            entity?.attributes,
-        );
-
-        changedAttributes.forEach(syncAttributeVisualRepresentation);
-    };
-
-    const convertEntityPartialKeyToPrimaryKey = (entity) => {
-        const changedAttributes = convertPartialKeyToPrimaryKey(
-            entity?.attributes,
-        );
-
-        changedAttributes.forEach(syncAttributeVisualRepresentation);
     };
 
     const clearEditorSelection = () => {
@@ -802,532 +710,45 @@ export default function DiagramEditor(props) {
         view.refresh();
     };
 
-    React.useEffect(() => {
-        if (!graph) return;
-
-        const cleanupCellGeometrySyncHandlers = installCellGeometrySyncHandlers(
-            {
-                graph,
-                mxEvent,
-                getSelectedCell: () => selected,
-                getDiagram: () => diagramRef.current,
-                accessCell,
-                isEntityShapeCell,
-                isRelationShapeCell,
-                isAttributeShapeCell,
-                isWeakEntityDecoratorCell,
-                isIdentifyingRelationDecoratorCell,
-                findEntityById,
-                findRelationById,
-                findAttributeTreeOwnerById,
-                isWeakEntity,
-                isSelfRelation,
-                isIdentifyingRelation,
-                canRelationHoldAttributes,
-                updateAttributePosition,
-                syncOwnerAttributePositions,
-                syncAttributeChildrenPositions,
-                syncAttributeVisualRepresentation,
-                syncWeakEntityDecorator,
-                syncSelfRelationEdges,
-                syncRepeatedParticipantRelationEdges,
-                syncIdentifyingRelationDecorator,
-                syncIdentifyingRelationEdgeDecorator,
-                syncMultivaluedAttributeDecorator,
-                syncDiscriminantUnderline,
-                refreshGraph,
-                syncAndPersistDiagramData,
-            },
-        );
-
-        syncAndPersistDiagramData();
-
-        return cleanupCellGeometrySyncHandlers;
-    }, [graph, selected, refreshDiagram]);
-
-    const pushCellsBack = (moveBack) => () => {
-        graph.orderCells(moveBack);
-    };
-
-    const addAttribute = () => {
-        let selectedDiag;
-        let isRelation = false;
-        if (
-            isEntityShapeCell(selected) &&
-            !isWeakEntityDecoratorCell(selected)
-        ) {
-            selectedDiag = findEntityById(diagramRef.current, selected.id);
-        } else if (isRelationShapeCell(selected)) {
-            selectedDiag = findRelationById(diagramRef.current, selected.id);
-            isRelation = true;
-        }
-
-        if (!selectedDiag) return;
-
-        const ownerType = isRelation
-            ? ATTRIBUTE_OWNER_TYPES.RELATION
-            : ATTRIBUTE_OWNER_TYPES.ENTITY;
-
-        const semantics = getDefaultAttributeSemantics({
-            ownerType,
-            isFirstAttribute: isFirstAttributeForOwner(selectedDiag),
-            isWeakEntityOwner: !isRelation && isWeakEntity(selectedDiag),
-            isIsaSpecializationOwner:
-                !isRelation &&
-                isEntityIsaSpecialization(
-                    diagramRef.current,
-                    selectedDiag.idMx,
-                ),
-        });
-
-        const source = selected;
-
-        let offsetX = 120;
-        let offsetY = -40;
-
-        const lastAttribute = getLastAttribute(selectedDiag.attributes);
-
-        if (lastAttribute) {
-            const lastAttrCell = graph.getModel().getCell(lastAttribute.idMx);
-
-            if (lastAttrCell?.geometry) {
-                offsetX = lastAttrCell.geometry.x - source.geometry.x;
-                offsetY = lastAttrCell.geometry.y - source.geometry.y + 20;
-            }
-        }
-
-        const uniqueAttributeName = generateUniqueAttributeName(
-            selectedDiag.attributes,
-        );
-
-        const { target, edge } = createAttributeGraphCells({
-            name: uniqueAttributeName,
-            source,
-            offsetX,
-            offsetY,
-            semantics,
-        });
-
-        if (!isRelation && isWeakEntity(selectedDiag)) {
-            syncWeakEntityDecorator(selected);
-        }
-
-        addAttributeToOwner(
-            selectedDiag,
-            createAttribute({
-                idMx: target.id,
-                name: target.value,
-                position: {
-                    x: target.geometry.x,
-                    y: target.geometry.y,
-                },
-                key: semantics.key,
-                partialKey: semantics.partialKey,
-                cell: [target.id, edge.id],
-                offsetX: target.geometry.x - selected.geometry.x,
-                offsetY: target.geometry.y - selected.geometry.y,
-            }),
-        );
-
-        syncAndPersistDiagramData();
-        toast.success(t("feedback.attributeInserted"));
-    };
-
-    const getSelectedCompositeAttributeTarget = (attributeOwner) =>
-        getCompositeAttributeSelectionTarget(attributeOwner);
-
-    const canAddChildAttributeToSelectedAttribute = (attributeOwner) =>
-        canAddChildAttributeToSelection(attributeOwner);
-
-    const createSiblingSubattribute = ({
-        parentAttribute,
-        source,
-        childAttributes,
-        offsetX,
-        offsetY,
-        name = generateUniqueAttributeName(childAttributes),
-    }) => {
-        const semantics = {
-            key: false,
-            partialKey: false,
-        };
-
-        const { target, edge } = createAttributeGraphCells({
-            name,
-            source,
-            offsetX,
-            offsetY,
-            semantics,
-        });
-
-        const childAttribute = createAttribute({
-            idMx: target.id,
-            name: target.value,
-            position: {
-                x: target.geometry.x,
-                y: target.geometry.y,
-            },
-            key: false,
-            partialKey: false,
-            cell: [target.id, edge.id],
-            offsetX,
-            offsetY,
-        });
-
-        addChildAttributeToAttribute(parentAttribute, childAttribute);
-
-        return childAttribute;
-    };
-
-    const groupSelectedSimpleAttributesIntoComposite = () => {
-        const selectionData = getSelectedSimpleEntityAttributesForGrouping();
-
-        if (!selectionData) {
-            toast.error(t("feedback.selectSimpleAttributesSameEntity"));
-            return;
-        }
-
-        const { owner, attributeOwners } = selectionData;
-        const childAttributes = attributeOwners.map(
-            (attributeOwner) => attributeOwner.attribute,
-        );
-        const childAttributeIds = childAttributes.map(
-            (attribute) => attribute.idMx,
-        );
-        const compositeName = getCompositeAttributeNameFromUser(owner);
-
-        if (!compositeName) {
-            toast.error(t("feedback.compositeAttributeNeedsName"));
-            return;
-        }
-
-        if (
-            hasSiblingAttributeWithName({
-                owner,
-                name: compositeName,
-                ignoredAttributeIds: childAttributeIds,
-            })
-        ) {
-            toast.error(t("feedback.attributeNameAlreadyExists"));
-            return;
-        }
-
-        const ownerCell = accessCell(owner.idMx);
-
-        if (!ownerCell?.geometry) return;
-
-        const childAttributeCells = childAttributes
-            .map((attribute) => accessCell(attribute.idMx))
-            .filter((cell) => cell?.geometry);
-
-        if (childAttributeCells.length !== childAttributes.length) {
-            toast.error(t("feedback.selectedAttributesNotFound"));
-            return;
-        }
-
-        const averageChildX =
-            childAttributeCells.reduce(
-                (sum, cell) => sum + cell.geometry.x,
-                0,
-            ) / childAttributeCells.length;
-
-        const averageChildY =
-            childAttributeCells.reduce(
-                (sum, cell) => sum + cell.geometry.y,
-                0,
-            ) / childAttributeCells.length;
-
-        const offsetX = averageChildX - ownerCell.geometry.x;
-        const offsetY = averageChildY - ownerCell.geometry.y;
-
-        const createdCompositeCells = createAttributeGraphCells({
-            name: compositeName,
-            source: ownerCell,
-            offsetX,
-            offsetY,
-            semantics: {
-                key: false,
-                partialKey: false,
-            },
-        });
-
-        if (!createdCompositeCells) return;
-
-        const { target, edge } = createdCompositeCells;
-
-        const compositeAttribute = createAttribute({
-            idMx: target.id,
-            name: compositeName,
-            position: {
-                x: target.geometry.x,
-                y: target.geometry.y,
-            },
-            key: false,
-            partialKey: false,
-            cell: [target.id, edge.id],
-            offsetX,
-            offsetY,
-        });
-
-        childAttributes.forEach(removeAttributeConnectionEdges);
-
-        const groupingResult = groupRootAttributesIntoCompositeAttribute({
-            owner,
-            attributeIds: childAttributeIds,
-            compositeAttribute,
-        });
-
-        if (!groupingResult.compositeAttribute) {
-            removeAttributesCells([compositeAttribute]);
-            toast.error(t("feedback.attributesCouldNotBeGrouped"));
-            return;
-        }
-
-        childAttributes.forEach((attribute) => {
-            reparentAttributeCellToCurrentOwner({
-                attribute,
-                attributeOwner: findAttributeTreeOwnerById(
-                    diagramRef.current,
-                    attribute.idMx,
-                ),
-            });
-        });
-
-        syncAttributeVisualRepresentation(compositeAttribute);
-
-        graph.setSelectionCell(target);
-        refreshGraph();
-        syncAndPersistDiagramData();
-        setRefreshDiagram((prevState) => !prevState);
-
-        toast.success(t("feedback.attributesGrouped"));
-    };
-
-    const addChildAttribute = () => {
-        if (!isAttributeShapeCell(selected)) return;
-
-        const attributeOwner = findAttributeTreeOwnerById(
-            diagramRef.current,
-            selected.id,
-        );
-
-        if (!attributeOwner) return;
-
-        if (!canAddChildAttributeToSelectedAttribute(attributeOwner)) {
-            toast.error(t("feedback.cannotConvertMultivaluedToComposite"));
-            return;
-        }
-
-        const { compositeAttribute } =
-            getSelectedCompositeAttributeTarget(attributeOwner);
-
-        const source = accessCell(compositeAttribute.idMx);
-
-        if (!source) return;
-
-        if (
-            attributeOwner.depth === 0 &&
-            !compositeAttribute.children &&
-            !isMultivaluedAttribute(compositeAttribute)
-        ) {
-            const originalAttributeName = compositeAttribute.name;
-            const { target, edge } = createAttributeGraphCells({
-                name: originalAttributeName,
-                source,
-                offsetX: 120,
-                offsetY: -40,
-                semantics: {
-                    key: false,
-                    partialKey: false,
-                },
-            });
-
-            const originalLeaf = createAttribute({
-                idMx: target.id,
-                name: target.value,
-                position: {
-                    x: target.geometry.x,
-                    y: target.geometry.y,
-                },
-                key: false,
-                partialKey: false,
-                cell: [target.id, edge.id],
-                offsetX: 120,
-                offsetY: -40,
-            });
-
-            convertSimpleAttributeToCompositeAttribute(
-                compositeAttribute,
-                originalLeaf,
-            );
-        }
-
-        const childAttributes = compositeAttribute.children ?? [];
-
-        let offsetX = 120;
-        let offsetY = 40;
-
-        const lastChildAttribute = getLastAttribute(childAttributes);
-
-        if (lastChildAttribute) {
-            const lastChildCell = graph
-                .getModel()
-                .getCell(lastChildAttribute.idMx);
-
-            if (lastChildCell?.geometry) {
-                offsetX = lastChildCell.geometry.x - source.geometry.x;
-                offsetY = lastChildCell.geometry.y - source.geometry.y + 40;
-            }
-        }
-
-        createSiblingSubattribute({
-            parentAttribute: compositeAttribute,
-            source,
-            childAttributes,
-            offsetX,
-            offsetY,
-        });
-
-        syncAttributeVisualRepresentation(compositeAttribute);
-
-        syncAndPersistDiagramData();
-        toast.success(t("feedback.siblingSubattributeInserted"));
-    };
-
-    const setAttributesVisibility = (isRelationNM, visible) => {
-        const selectedOwner = !isRelationNM
-            ? findEntityById(diagramRef.current, selected.id)
-            : findRelationById(diagramRef.current, selected.id);
-
-        if (!selectedOwner) return;
-
-        setOwnerAttributesVisible(selectedOwner, visible);
-
-        setEntityWithAttributesHidden((currentAttributesHidden) => ({
-            ...(currentAttributesHidden ?? {}),
-            [selected.id]: !visible,
-        }));
-
-        refreshGraph();
-    };
-
-    const hideAttributes = (isRelationNM) => {
-        setAttributesVisibility(isRelationNM, false);
-    };
-
-    const showAttributes = (isRelationNM) => {
-        setAttributesVisibility(isRelationNM, true);
-    };
-
-    const toggleAttrKey = () => {
-        const selectedEntityAttribute = getSelectedEntityAttributeKeyData();
-        if (!selectedEntityAttribute) return;
-
-        const { entity, attribute, selectedAttribute } =
-            selectedEntityAttribute;
-
-        if (isMultivaluedAttribute(attribute)) {
-            toast.error(t("feedback.keyCannotBeMultivalued"));
-            return;
-        }
-
-        if (isWeakEntity(entity)) {
-            toast.error(t("feedback.weakEntityCannotHavePrimaryKey"));
-            return;
-        }
-
-        if (isEntityIsaSpecialization(diagramRef.current, entity.idMx)) {
-            toast.error(t("feedback.isaSpecializationCannotHavePrimaryKey"));
-            return;
-        }
-
-        const result = toggleExclusivePrimaryKeyAttributeInTree(
-            entity.attributes,
-            selectedAttribute.idMx,
-        );
-
-        if (!result.updated) return;
-
-        result.changedAttributes.forEach(syncAttributeVisualRepresentation);
-
-        refreshGraph();
-        syncAndPersistDiagramData();
-        setRefreshDiagram((prevState) => !prevState);
-
-        toast.success(
-            result.enabled
-                ? t("feedback.attributeMarkedAsKey")
-                : t("feedback.attributeKeyRemoved"),
-        );
-    };
-
-    const toggleWeakEntity = () => {
-        if (!selected) return;
-        if (!isEntityShapeCell(selected)) return;
-        if (isWeakEntityDecoratorCell(selected)) return;
-
-        const entity = getSelectedEntityData();
-        if (!entity) return;
-
-        const shouldBecomeWeak = !isWeakEntity(entity);
-
-        entity.weak = shouldBecomeWeak;
-
-        if (shouldBecomeWeak) {
-            convertEntityPrimaryKeyToPartialKey(entity);
-            ensureWeakEntityDecorator(selected, entity);
-            toast.success(t("feedback.entityMarkedWeak"));
-        } else {
-            clearIdentifyingRelationSemantics(entity.identifyingRelationId);
-            convertEntityPartialKeyToPrimaryKey(entity);
-            removeWeakEntityDecorator(entity.idMx);
-            toast.success(t("feedback.entityMarkedStrong"));
-        }
-
-        refreshGraph();
-        syncAndPersistDiagramData();
-        setRefreshDiagram((prevState) => !prevState);
-    };
-
-    const togglePartialKey = () => {
-        if (!selected) return;
-        if (!isAttributeShapeCell(selected)) return;
-
-        const selectedEntityAttribute = getSelectedEntityAttributeKeyData();
-        if (!selectedEntityAttribute) return;
-
-        const { entity, attribute, selectedAttribute } =
-            selectedEntityAttribute;
-
-        if (!isWeakEntity(entity)) {
-            toast.error(t("feedback.onlyWeakEntitiesCanHaveDiscriminant"));
-            return;
-        }
-
-        if (isMultivaluedAttribute(attribute)) {
-            toast.error(t("feedback.discriminantCannotBeMultivalued"));
-            return;
-        }
-
-        const result = toggleExclusivePartialKeyAttributeInTree(
-            entity.attributes,
-            selectedAttribute.idMx,
-        );
-
-        if (!result.updated) return;
-
-        result.changedAttributes.forEach(syncAttributeVisualRepresentation);
-
-        refreshGraph();
-        syncAndPersistDiagramData();
-        setRefreshDiagram((prevState) => !prevState);
-
-        toast.success(
-            result.enabled
-                ? t("feedback.attributeMarkedAsDiscriminant")
-                : t("feedback.discriminantRemoved"),
-        );
-    };
+    const {
+        getSelectedEntityData,
+        getSelectedEntityAttributeKeyData,
+        getSelectedEntityMultivaluedAttributeData,
+        getSelectedSimpleEntityAttributesForGrouping,
+        convertEntityPrimaryKeyToPartialKey,
+        addAttribute,
+        canAddChildAttributeToSelectedAttribute,
+        groupSelectedSimpleAttributesIntoComposite,
+        addChildAttribute,
+        hideAttributes,
+        showAttributes,
+        toggleAttrKey,
+        toggleWeakEntity,
+        togglePartialKey,
+        toggleMultivaluedAttribute,
+        canConvertSelectedSubattributeToSimpleAttribute,
+        convertSelectedSubattributeToSimpleAttribute,
+    } = useAttributeActions({
+        graph,
+        selected,
+        diagramRef,
+        accessCell,
+        t,
+        createAttributeGraphCells,
+        syncWeakEntityDecorator,
+        ensureWeakEntityDecorator,
+        removeWeakEntityDecorator,
+        syncAttributeVisualRepresentation,
+        removeAttributeConnectionEdges,
+        reparentAttributeCellToCurrentOwner,
+        removeAttributesCells,
+        setOwnerAttributesVisible,
+        refreshGraph,
+        syncAndPersistDiagramData,
+        setRefreshDiagram,
+        setEntityWithAttributesHidden,
+        clearIdentifyingRelationSemantics,
+    });
 
     const toggleIdentifyingRelation = () => {
         if (!selected) return;
@@ -1422,43 +843,51 @@ export default function DiagramEditor(props) {
         setRefreshDiagram((prevState) => !prevState);
     };
 
-    const toggleMultivaluedAttribute = () => {
-        const selectedEntityAttribute =
-            getSelectedEntityMultivaluedAttributeData();
+    React.useEffect(() => {
+        if (!graph) return;
 
-        if (!selectedEntityAttribute) return;
-
-        const { attribute } = selectedEntityAttribute;
-
-        if (attribute.key) {
-            toast.error(t("feedback.keyCannotBeMultivalued"));
-            return;
-        }
-
-        if (attribute.partialKey) {
-            toast.error(t("feedback.discriminantCannotBeMultivalued"));
-            return;
-        }
-
-        const shouldBecomeMultivalued = !isMultivaluedAttribute(attribute);
-
-        if (shouldBecomeMultivalued) {
-            attribute.multivalued = true;
-        } else {
-            attribute.multivalued = undefined;
-        }
-
-        syncAttributeVisualRepresentation(attribute);
-
-        refreshGraph();
-        syncAndPersistDiagramData();
-        setRefreshDiagram((prevState) => !prevState);
-
-        toast.success(
-            shouldBecomeMultivalued
-                ? t("feedback.attributeMarkedMultivalued")
-                : t("feedback.attributeMultivaluedRemoved"),
+        const cleanupCellGeometrySyncHandlers = installCellGeometrySyncHandlers(
+            {
+                graph,
+                mxEvent,
+                getSelectedCell: () => selected,
+                getDiagram: () => diagramRef.current,
+                accessCell,
+                isEntityShapeCell,
+                isRelationShapeCell,
+                isAttributeShapeCell,
+                isWeakEntityDecoratorCell,
+                isIdentifyingRelationDecoratorCell,
+                findEntityById,
+                findRelationById,
+                findAttributeTreeOwnerById,
+                isWeakEntity,
+                isSelfRelation,
+                isIdentifyingRelation,
+                canRelationHoldAttributes,
+                updateAttributePosition,
+                syncOwnerAttributePositions,
+                syncAttributeChildrenPositions,
+                syncAttributeVisualRepresentation,
+                syncWeakEntityDecorator,
+                syncSelfRelationEdges,
+                syncRepeatedParticipantRelationEdges,
+                syncIdentifyingRelationDecorator,
+                syncIdentifyingRelationEdgeDecorator,
+                syncMultivaluedAttributeDecorator,
+                syncDiscriminantUnderline,
+                refreshGraph,
+                syncAndPersistDiagramData,
+            },
         );
+
+        syncAndPersistDiagramData();
+
+        return cleanupCellGeometrySyncHandlers;
+    }, [graph, selected, refreshDiagram]);
+
+    const pushCellsBack = (moveBack) => () => {
+        graph.orderCells(moveBack);
     };
 
     const MoveBackAndFrontButtons = () =>
@@ -2891,50 +2320,6 @@ export default function DiagramEditor(props) {
                 </>
             );
         }
-    };
-    const canConvertSelectedSubattributeToSimpleAttribute = (attributeOwner) =>
-        canConvertSelectedSubattributeToSimple(attributeOwner);
-
-    const convertSelectedSubattributeToSimpleAttribute = () => {
-        if (!isAttributeShapeCell(selected)) return;
-
-        const attributeOwner = findAttributeTreeOwnerById(
-            diagramRef.current,
-            selected.id,
-        );
-
-        if (!canConvertSelectedSubattributeToSimpleAttribute(attributeOwner)) {
-            return;
-        }
-
-        const { owner } = attributeOwner;
-
-        const { convertedAttributes, removedCompositeAttribute } =
-            convertSubattributeToSimpleAttributeById(owner, selected.id);
-
-        if (convertedAttributes.length === 0) return;
-
-        convertedAttributes.forEach(removeAttributeConnectionEdges);
-
-        removeAttributesCells([removedCompositeAttribute].filter(Boolean));
-
-        convertedAttributes.forEach((attribute) => {
-            reparentAttributeCellToCurrentOwner({
-                attribute,
-                attributeOwner: findAttributeTreeOwnerById(
-                    diagramRef.current,
-                    attribute.idMx,
-                ),
-            });
-        });
-
-        syncAndPersistDiagramData();
-
-        toast.success(
-            convertedAttributes.length > 1
-                ? t("feedback.subattributesConvertedToSimple")
-                : t("feedback.subattributeConvertedToSimple"),
-        );
     };
 
     const getSelectedDiagramCells = () => {
