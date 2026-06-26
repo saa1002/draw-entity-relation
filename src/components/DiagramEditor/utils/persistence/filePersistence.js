@@ -33,7 +33,7 @@ const getExportTimestamp = () => {
 const buildExportFileName = (baseName, extension) =>
     `${baseName}-${getExportTimestamp()}.${extension}`;
 
-export const saveFileWithPicker = async ({
+const saveFileWithPicker = async ({
     content,
     fileName,
     mimeType,
@@ -228,7 +228,7 @@ const convertSvgExportToPngBlob = ({ content, width, height }) =>
         image.src = objectUrl;
     });
 
-export const exportDiagramToSvgImageFile = async (graph) => {
+const exportDiagramToSvgImageFile = async (graph) => {
     const svgExport = createDiagramSvgExport(graph);
 
     if (!svgExport) {
@@ -250,7 +250,7 @@ export const exportDiagramToSvgImageFile = async (graph) => {
     });
 };
 
-export const exportDiagramToPngImageFile = async (graph) => {
+const exportDiagramToPngImageFile = async (graph) => {
     const svgExport = createDiagramSvgExport(graph);
 
     if (!svgExport) {
@@ -273,7 +273,7 @@ export const exportDiagramToPngImageFile = async (graph) => {
                 },
             ],
         });
-    } catch (error) {
+    } catch {
         return SAVE_FILE_RESULT.ERROR;
     }
 };
@@ -286,7 +286,7 @@ export const exportDiagramImageToFile = (graph, format) => {
     return exportDiagramToPngImageFile(graph);
 };
 
-export const readFileAsText = (file) =>
+const readFileAsText = (file) =>
     new Promise((resolve, reject) => {
         const reader = new FileReader();
 
@@ -324,7 +324,7 @@ export const loadDiagramFromLocalStorage = () => {
 
     try {
         return normalizeDiagramData(JSON.parse(savedDiagram));
-    } catch (error) {
+    } catch {
         clearDiagramLocalStorage();
         return null;
     }

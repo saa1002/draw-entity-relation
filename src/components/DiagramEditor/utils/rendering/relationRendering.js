@@ -17,10 +17,10 @@ const IDENTIFYING_RELATION_EDGE_PARALLEL_GAP = 5;
 
 const REPEATED_PARTICIPANT_EDGE_GAP = 55;
 
-export const getIdentifyingRelationDecoratorId = (relationId) =>
+const getIdentifyingRelationDecoratorId = (relationId) =>
     buildDecoratorCellId(relationId, IDENTIFYING_RELATION_DECORATOR_SUFFIX);
 
-export const getIdentifyingRelationEdgeDecoratorId = (relationId) =>
+const getIdentifyingRelationEdgeDecoratorId = (relationId) =>
     buildDecoratorCellId(
         relationId,
         IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX,

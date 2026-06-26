@@ -40,7 +40,7 @@ export const applyBoundsToCellGeometry = (cell, bounds) => {
     return true;
 };
 
-export const disablePointerEventsForCell = (graph, cell) => {
+const disablePointerEventsForCell = (graph, cell) => {
     const state = graph?.view?.getState?.(cell);
 
     const nodes = [state?.shape?.node, state?.text?.node].filter(Boolean);

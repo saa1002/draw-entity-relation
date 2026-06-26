@@ -24,7 +24,7 @@ const readInitialLanguage = () => {
         return isSupportedLanguage(storedLanguage)
             ? storedLanguage
             : DEFAULT_LANGUAGE;
-    } catch (error) {
+    } catch {
         return DEFAULT_LANGUAGE;
     }
 };
@@ -44,7 +44,7 @@ export const LanguageProvider = ({ children }) => {
                 LANGUAGE_STORAGE_KEY,
                 normalizedLanguage,
             );
-        } catch (error) {
+        } catch {
             // The language selector should keep working even if localStorage fails.
         }
     }, []);
