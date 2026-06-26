@@ -34,59 +34,14 @@ import {
     VALIDATION_SECTION_TITLE_KEYS,
     getValidationDialogMessages,
 } from "../utils/validation/validationMessages";
-
-const SidebarSection = ({ title, children }) => {
-    const visibleChildren = React.Children.toArray(children).filter(Boolean);
-
-    if (visibleChildren.length === 0) {
-        return null;
-    }
-
-    return (
-        <div className="sidebar-section">
-            <p className="sidebar-section-title">{title}</p>
-            <div className="sidebar-section-content">{visibleChildren}</div>
-        </div>
-    );
-};
-
-const renderSidebarAction = (action) => {
-    if (!action) {
-        return null;
-    }
-
-    return <div>{action}</div>;
-};
+import {
+    SidebarActionButton,
+    SidebarSection,
+    renderSidebarAction,
+} from "./DiagramEditorPanelControls";
 
 const getActionTooltip = (label, shortcut) =>
     shortcut ? `${label} (${shortcut})` : label;
-
-const SidebarActionButton = ({
-    children,
-    className = "",
-    tooltip,
-    ariaLabel,
-    ...props
-}) => {
-    const title =
-        tooltip ?? (typeof children === "string" ? children : undefined);
-
-    const buttonClassName = ["button-toolbar-action", className]
-        .filter(Boolean)
-        .join(" ");
-
-    return (
-        <button
-            type="button"
-            {...props}
-            className={buttonClassName}
-            title={title}
-            aria-label={ariaLabel}
-        >
-            {children}
-        </button>
-    );
-};
 
 const SidebarActionIcon = ({ children }) => (
     <span className="button-toolbar-action-icon" aria-hidden="true">
@@ -120,8 +75,7 @@ export function DiagramEditorGlobalActions({
     t,
     diagramRef,
     isDiagramEmpty,
-    setSelected,
-    setSelectionVersion,
+    clearEditorSelection,
     setRefreshDiagram,
     canUndo,
     canRedo,
@@ -462,13 +416,7 @@ export function DiagramEditorGlobalActions({
                 return;
             }
 
-            if (typeof graph?.clearSelection === "function") {
-                graph.clearSelection();
-            }
-
-            setSelected(null);
-            setSelectionVersion((prevVersion) => prevVersion + 1);
-
+            clearEditorSelection();
             setOpen(false);
 
             const result = await exportDiagramImageToFile(

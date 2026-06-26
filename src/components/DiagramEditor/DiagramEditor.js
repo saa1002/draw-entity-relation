@@ -45,7 +45,7 @@ import {
 
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 
-export default function DiagramEditor(props) {
+export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
     const { language, setLanguage, t } = useLanguage();
 
     const BUILD_LABEL = t("app.buildLabel", {
@@ -86,8 +86,8 @@ export default function DiagramEditor(props) {
 
     const onSelected = React.useCallback(
         (evt) => {
-            if (props.onSelected) {
-                props.onSelected(evt);
+            if (onSelectedProp) {
+                onSelectedProp(evt);
             }
 
             const selectedCells =
@@ -99,11 +99,15 @@ export default function DiagramEditor(props) {
             setSelected(selectedCells.length === 1 ? selectedCells[0] : null);
             setSelectionVersion((prevVersion) => prevVersion + 1);
         },
-        [props, graph],
+        [onSelectedProp, graph],
     );
 
     function accessCell(idMx) {
-        return graph.model.cells[idMx];
+        if (!idMx || !graph?.model?.cells) {
+            return null;
+        }
+
+        return graph.model.cells[idMx] ?? null;
     }
 
     const {
@@ -157,14 +161,14 @@ export default function DiagramEditor(props) {
         updateAttributePosition,
     });
 
-    const clearEditorSelection = () => {
+    const clearEditorSelection = React.useCallback(() => {
         if (typeof graph?.clearSelection === "function") {
             graph.clearSelection();
         }
 
         setSelected(null);
         setSelectionVersion((prevVersion) => prevVersion + 1);
-    };
+    }, [graph]);
 
     const {
         composeDiagramWithCurrent,
@@ -547,8 +551,7 @@ export default function DiagramEditor(props) {
                     t={t}
                     diagramRef={diagramRef}
                     isDiagramEmpty={isDiagramEmpty}
-                    setSelected={setSelected}
-                    setSelectionVersion={setSelectionVersion}
+                    clearEditorSelection={clearEditorSelection}
                     setRefreshDiagram={setRefreshDiagram}
                     canUndo={canUndo}
                     canRedo={canRedo}
@@ -563,7 +566,6 @@ export default function DiagramEditor(props) {
                     graph={graph}
                     selected={selected}
                     selectionSize={selectionSize}
-                    selectionVersion={selectionVersion}
                     entityWithAttributesHidden={entityWithAttributesHidden}
                     setEntityWithAttributesHidden={
                         setEntityWithAttributesHidden

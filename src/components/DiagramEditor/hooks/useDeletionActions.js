@@ -339,7 +339,6 @@ export function useDeletionActions({
 
     return {
         canDeleteSelectedAttribute,
-        deleteSelectedDiagramElement,
         deleteSelectedDiagramElements,
     };
 }

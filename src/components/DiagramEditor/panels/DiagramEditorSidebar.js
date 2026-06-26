@@ -55,56 +55,11 @@ import {
 } from "../utils/mxStyles/diagramStyles";
 import { isWeakEntityDecoratorCell } from "../utils/rendering/entityRendering";
 import { isIdentifyingRelationDecoratorCell } from "../utils/rendering/relationRendering";
-
-const SidebarSection = ({ title, children }) => {
-    const visibleChildren = React.Children.toArray(children).filter(Boolean);
-
-    if (visibleChildren.length === 0) {
-        return null;
-    }
-
-    return (
-        <div className="sidebar-section">
-            <p className="sidebar-section-title">{title}</p>
-            <div className="sidebar-section-content">{visibleChildren}</div>
-        </div>
-    );
-};
-
-const renderSidebarAction = (action) => {
-    if (!action) {
-        return null;
-    }
-
-    return <div>{action}</div>;
-};
-
-const SidebarActionButton = ({
-    children,
-    className = "",
-    tooltip,
-    ariaLabel,
-    ...props
-}) => {
-    const title =
-        tooltip ?? (typeof children === "string" ? children : undefined);
-
-    const buttonClassName = ["button-toolbar-action", className]
-        .filter(Boolean)
-        .join(" ");
-
-    return (
-        <button
-            type="button"
-            {...props}
-            className={buttonClassName}
-            title={title}
-            aria-label={ariaLabel}
-        >
-            {children}
-        </button>
-    );
-};
+import {
+    SidebarActionButton,
+    SidebarSection,
+    renderSidebarAction,
+} from "./DiagramEditorPanelControls";
 
 const DRAGGABLE_DIALOG_TITLE_CLASS = "draggable-dialog-title";
 
@@ -196,7 +151,6 @@ export function DiagramEditorSidebar({
     graph,
     selected,
     selectionSize,
-    selectionVersion,
     entityWithAttributesHidden,
     setEntityWithAttributesHidden,
     diagramRef,
@@ -331,8 +285,6 @@ export function DiagramEditorSidebar({
     };
 
     const GroupSelectedAttributesButton = () => {
-        void selectionVersion;
-
         if (!getSelectedSimpleEntityAttributesForGrouping()) {
             return;
         }
