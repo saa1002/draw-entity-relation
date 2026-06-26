@@ -3,7 +3,6 @@ import { findEntityById } from "../../entities";
 import {
     POSSIBLE_CARDINALITIES,
     canRelationTypeHoldAttributes,
-    getRelationEntityIds,
     getRelationSideCardinality,
     getRelationSideRole,
     getRelationSides,

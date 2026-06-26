@@ -1,4 +1,5 @@
 import { default as MxGraph } from "mxgraph";
+import { ISA_CELL_LABEL } from "../../../../domain/er/isa";
 import {
     getEntityDimensions,
     getEntityStyleString,
@@ -104,7 +105,7 @@ export default function initToolbar(graph, diagramRef, tbContainer) {
         isaDims.width,
         isaDims.height,
         getIsaStyleString(),
-        "ISA",
+        ISA_CELL_LABEL,
         false,
         false,
         true,

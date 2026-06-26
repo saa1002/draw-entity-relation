@@ -1,6 +1,6 @@
 import { default as MxGraph } from "mxgraph";
 import { createAttribute } from "../../../../domain/er/attributes";
-import { createIsaData } from "../../../../domain/er/isa";
+import { ISA_CELL_LABEL, createIsaData } from "../../../../domain/er/isa";
 import { createRelationData } from "../../../../domain/er/relations";
 import {
     getAttributeDimensions,
@@ -120,7 +120,7 @@ export default function addToolbarItem(
             baseName = "Relación";
             existingItems = existingRelations;
         } else if (addIsaToDiagram) {
-            baseName = "ISA";
+            baseName = ISA_CELL_LABEL;
             existingItems = existingIsas;
         } else {
             baseName = "Test";

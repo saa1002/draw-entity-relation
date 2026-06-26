@@ -1,4 +1,5 @@
 import {
+    ISA_CELL_LABEL,
     getAttributeChildren,
     getRelationSideKeys,
     getRelationSideLabelDisplayValue,
@@ -218,7 +219,7 @@ export const reconstructDiagramGraph = ({
         graph.insertVertex(
             null,
             isa.idMx,
-            "ISA",
+            ISA_CELL_LABEL,
             isa.position.x,
             isa.position.y,
             width,
