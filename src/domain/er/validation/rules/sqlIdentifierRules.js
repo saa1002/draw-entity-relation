@@ -5,7 +5,10 @@ import {
 import { getEntityPrimaryKeyColumnNamesIgnoringCycles } from "../../../relational/entityKeyColumns";
 import { normalizeIdentifier } from "../../../relational/naming";
 import { isMultivaluedAttribute } from "../../attributes";
-import { findMandatoryOneToOneMergeRelationForEntity } from "../../relations";
+import {
+    canRelationHoldAttributes,
+    findMandatoryOneToOneMergeRelationForEntity,
+} from "../../relations";
 
 function getMultivaluedAuxiliaryOwnerColumnNames(entity, graph) {
     const ownerColumnNames = getEntityPrimaryKeyColumnNamesIgnoringCycles(
@@ -142,7 +145,7 @@ export function sqlIdentifierCollisions(graph) {
 
     for (const relation of graph.relations) {
         if (
-            relation.canHoldAttributes &&
+            canRelationHoldAttributes(relation) &&
             hasNormalizedAttributeCollision(relation.attributes || [])
         ) {
             return true;

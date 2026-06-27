@@ -3,9 +3,12 @@ import {
     hasPartialKeyAttributeInTree,
     hasPrimaryKeyAttributeInTree,
 } from "../../attributes";
+import { isWeakEntity } from "../../entities";
 import {
     IDENTIFYING_RELATION_STRONG_SIDE_CARDINALITY,
     IDENTIFYING_RELATION_WEAK_SIDE_CARDINALITIES,
+    findRelationById,
+    isIdentifyingRelation,
     relationInvolvesEntity,
 } from "../../relations";
 import {
@@ -15,7 +18,7 @@ import {
 
 export function weakEntitiesWithoutPartialKey(graph) {
     for (const entity of graph.entities) {
-        if (!entity.weak) continue;
+        if (!isWeakEntity(entity)) continue;
 
         if (!hasPartialKeyAttributeInTree(entity.attributes)) {
             return true;
@@ -27,7 +30,7 @@ export function weakEntitiesWithoutPartialKey(graph) {
 
 export function weakEntitiesWithMoreThanOnePartialKey(graph) {
     for (const entity of graph.entities) {
-        if (!entity.weak) continue;
+        if (!isWeakEntity(entity)) continue;
 
         if (getPartialKeyAttributesInTree(entity.attributes).length > 1) {
             return true;
@@ -39,7 +42,7 @@ export function weakEntitiesWithMoreThanOnePartialKey(graph) {
 
 export function weakEntitiesWithPrimaryKey(graph) {
     for (const entity of graph.entities) {
-        if (!entity.weak) continue;
+        if (!isWeakEntity(entity)) continue;
 
         if (hasPrimaryKeyAttributeInTree(entity.attributes)) {
             return true;
@@ -51,7 +54,7 @@ export function weakEntitiesWithPrimaryKey(graph) {
 
 export function strongEntitiesWithPartialKey(graph) {
     for (const entity of graph.entities) {
-        if (entity.weak) continue;
+        if (isWeakEntity(entity)) continue;
 
         if (hasPartialKeyAttributeInTree(entity.attributes)) {
             return true;
@@ -63,17 +66,15 @@ export function strongEntitiesWithPartialKey(graph) {
 
 export function weakEntitiesWithoutIdentifyingRelation(graph) {
     for (const entity of graph.entities) {
-        if (!entity.weak) continue;
+        if (!isWeakEntity(entity)) continue;
 
         if (!entity.identifyingRelationId) {
             return true;
         }
 
-        const relation = graph.relations.find(
-            (relation) => relation.idMx === entity.identifyingRelationId,
-        );
+        const relation = findRelationById(graph, entity.identifyingRelationId);
 
-        if (!relation || relation.isIdentifying !== true) {
+        if (!isIdentifyingRelation(relation)) {
             return true;
         }
     }
@@ -83,7 +84,7 @@ export function weakEntitiesWithoutIdentifyingRelation(graph) {
 
 export function identifyingRelationsNotValid(graph) {
     for (const relation of graph.relations) {
-        if (!relation.isIdentifying) continue;
+        if (!isIdentifyingRelation(relation)) continue;
 
         // An identifying relationship must have exactly one dependent weak
         // entity and one different owner entity. The owner may be either
@@ -98,7 +99,7 @@ export function identifyingRelationsNotValid(graph) {
 
 export function identifyingRelationCardinalitiesNotValid(graph) {
     for (const relation of graph.relations) {
-        if (!relation.isIdentifying) continue;
+        if (!isIdentifyingRelation(relation)) continue;
 
         const dependency = getIdentifyingDependency(graph, relation);
 
@@ -124,17 +125,15 @@ export function identifyingRelationCardinalitiesNotValid(graph) {
 
 export function inconsistentWeakEntityOwnership(graph) {
     for (const entity of graph.entities) {
-        if (!entity.weak) continue;
+        if (!isWeakEntity(entity)) continue;
 
         if (!entity.identifyingRelationId) {
             continue;
         }
 
-        const relation = graph.relations.find(
-            (rel) => rel.idMx === entity.identifyingRelationId,
-        );
+        const relation = findRelationById(graph, entity.identifyingRelationId);
 
-        if (!relation || relation.isIdentifying !== true) {
+        if (!isIdentifyingRelation(relation)) {
             return true;
         }
 
@@ -175,7 +174,7 @@ export function multipleIdentifyingRelationsPerWeakEntity(graph) {
     const dependencyCountByWeakEntityId = new Map();
 
     for (const relation of graph.relations) {
-        if (!relation.isIdentifying) continue;
+        if (!isIdentifyingRelation(relation)) continue;
 
         const dependency = getIdentifyingDependency(graph, relation);
         if (!dependency) continue;

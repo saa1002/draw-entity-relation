@@ -1,3 +1,66 @@
 \capitulo{6}{Trabajos relacionados}
 
-Este apartado sería parecido a un estado del arte de una tesis o tesina. En un trabajo final grado no parece obligada su presencia, aunque se puede dejar a juicio del tutor el incluir un pequeño resumen comentado de los trabajos y proyectos ya realizados en el campo del proyecto en curso. 
+En este capítulo se presentan algunas herramientas relacionadas con el modelado de diagramas y el diseño de bases de datos. La comparación no pretende valorar estas alternativas de forma absoluta, ya que muchas de ellas son más maduras y tienen objetivos más amplios que los de este Trabajo Fin de Grado. El objetivo es situar el proyecto desarrollado dentro de un conjunto de soluciones existentes y señalar sus diferencias principales.
+
+Entre las herramientas consideradas se encuentran diagrams.net, también conocida como draw.io, Excalidraw, ERDPlus y dbdiagram.io \cite{drawio,excalidraw,erdplus,dbdiagram}. Las dos primeras se orientan a la diagramación general, mientras que las dos últimas están más relacionadas con el modelado de bases de datos.
+
+\section{Herramientas generales de diagramación}
+
+\subsection{diagrams.net / draw.io}
+
+Draw.io, actualmente conocido también como diagrams.net, es una aplicación web que permite crear diagramas de muchos tipos. Su principal ventaja es la flexibilidad, ya que permite dibujar estructuras muy variadas mediante formas, conectores y plantillas. Por ello, puede utilizarse para representar diagramas Entidad-Relación de forma visual. Sin embargo, su enfoque es generalista: los elementos dibujados no tienen necesariamente una semántica interna propia de un modelo E/R académico.
+
+Esto marca una diferencia importante respecto al proyecto desarrollado. En el editor de este trabajo, los elementos del diagrama no se tratan solo como figuras, sino como entidades, atributos, relaciones o jerarquías ISA que forman parte de un modelo interno. Ese modelo se utiliza posteriormente para validar el diagrama, transformarlo al modelo relacional y generar SQL.
+
+\subsection{Excalidraw}
+
+Excalidraw es una herramienta web de dibujo y diagramación con una estética similar a un boceto hecho a mano. Permite crear esquemas de forma rápida y colaborativa, por lo que resulta útil para representar ideas iniciales, diagramas informales o explicaciones visuales.
+
+Su principal interés está en la facilidad de uso y en la libertad para dibujar cualquier tipo de esquema. No obstante, al igual que otras herramientas generales de diagramación, no está orientada específicamente a interpretar los elementos de un diagrama Entidad-Relación ni a aplicar reglas de validación propias de este modelo.
+
+Por tanto, Excalidraw puede ser útil para realizar bocetos o explicar un diseño de manera informal, pero no cubre el objetivo principal de este proyecto: mantener una relación entre el diagrama visual, el modelo interno, la validación y la generación de SQL.
+
+\section{Herramientas orientadas al modelado de bases de datos}
+
+\subsection{ERDPlus}
+
+ERDPlus es una herramienta web orientada al ámbito académico que permite trabajar con diagramas Entidad-Relación, esquemas relacionales y generación de SQL. Por este motivo, es una de las alternativas más cercanas al enfoque de este proyecto.
+
+La diferencia principal es que este Trabajo Fin de Grado no consiste en crear una herramienta desde cero con todas esas funcionalidades, sino en evolucionar una aplicación heredada concreta. El trabajo se ha centrado en comprender el sistema existente, ampliar el soporte de elementos del modelo E/R, mejorar la validación, mantener la persistencia y ajustar la generación de SQL.
+
+Además, el proyecto desarrollado mantiene una notación visual concreta y un alcance controlado, incorporando elementos como entidades débiles, atributos compuestos y multivaluados, relaciones ternarias y un soporte inicial para jerarquías ISA.
+
+\subsection{dbdiagram.io}
+
+dbdiagram.io representa un enfoque diferente. En lugar de centrarse principalmente en la construcción visual mediante arrastrar y configurar elementos, permite definir estructuras de base de datos mediante una sintaxis textual. A partir de esa descripción se genera el diagrama correspondiente.
+
+Este enfoque puede resultar muy útil para usuarios con un perfil más técnico o acostumbrados a trabajar directamente con estructuras de tablas. Sin embargo, se aleja del objetivo principal de este proyecto, que consiste en trabajar desde una representación conceptual visual del modelo Entidad-Relación y transformarla después hacia el modelo relacional.
+
+Frente a este tipo de herramientas, el editor desarrollado da más importancia al proceso de modelado visual y a la relación entre los elementos gráficos del diagrama y su significado dentro del modelo interno.
+
+\section{Comparativa frente a alternativas}
+
+La comparación entre herramientas debe entenderse teniendo en cuenta el objetivo concreto de este trabajo. Draw.io y Excalidraw son herramientas flexibles para dibujar diagramas, pero no están centradas en validar un modelo Entidad-Relación ni en generar SQL a partir de la semántica del diagrama. ERDPlus se aproxima más al enfoque académico de modelado de bases de datos, mientras que dbdiagram.io se orienta a la definición textual de estructuras relacionales.
+
+El proyecto desarrollado no pretende competir con herramientas generales de diagramación ni con plataformas profesionales de diseño de bases de datos. Su objetivo es evolucionar un editor web académico de diagramas Entidad-Relación, manteniendo una correspondencia entre la representación visual, el modelo interno, la validación, la transformación relacional y la generación de SQL.
+
+La Tabla \ref{tab:comparativa_herramientas} resume las diferencias principales entre algunas herramientas relacionadas y la aplicación desarrollada.
+
+\begin{table}[p]
+    \centering
+    \small
+    \caption{Comparativa general entre herramientas relacionadas y la aplicación desarrollada.}
+    \label{tab:comparativa_herramientas}
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabularx}{\textwidth}{p{0.17\textwidth} p{0.18\textwidth} p{0.23\textwidth} X}
+        \toprule
+        \textbf{Herramienta} & \textbf{Enfoque principal} & \textbf{Relación con bases de datos} & \textbf{Diferencia respecto a la aplicación desarrollada} \\
+        \midrule
+        diagrams.net / draw.io & Diagramación general & Permite dibujar diagramas E/R dentro de un conjunto amplio de diagramas. & Es una herramienta más generalista; no se centra en validar semánticamente un modelo E/R académico ni en transformarlo de forma guiada a SQL. \\
+        Excalidraw & Pizarra colaborativa y dibujo libre & Puede utilizarse para bocetar modelos, pero no está orientada específicamente a bases de datos. & Prioriza la libertad de dibujo frente a una estructura interna validable del modelo. \\
+        ERDPlus & Modelado de bases de datos & Permite crear diagramas E/R, esquemas relacionales y generar SQL. & Es una herramienta más especializada; la aplicación desarrollada se centra en evolucionar un editor académico heredado e incorporar soporte controlado para los elementos tratados en el proyecto. \\
+        dbdiagram.io & Diseño mediante texto & Usa DBML para definir estructuras de base de datos y generar diagramas. & Parte de una sintaxis textual, mientras que la aplicación desarrollada prioriza la edición visual directa del diagrama E/R. \\
+        Aplicación desarrollada & Editor académico E/R web & Representa diagramas E/R, los valida y genera SQL a partir del modelo interno. & Su interés está en la coherencia entre editor visual, modelo interno, validación, transformación relacional y alcance académico definido. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}

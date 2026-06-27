@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
+import { createAttribute } from '../../helpers/diagramBuilders'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import {
     filterTables,
@@ -24,8 +25,8 @@ beforeEach(() => {
     oneOneGraph = loadGraphFixture('1-1-relation.json')
 })
 
-describe("1:N relation extraction", () => {
-    test("should extract a nullable foreign key when the 1 side is optional", () => {
+describe('1:N relation extraction', () => {
+    test('should extract a nullable foreign key when the 1 side is optional', () => {
         const tables = extract1NTables()
         const sourceTable = tables.at(0)
         const targetTable = tables.at(1)
@@ -34,13 +35,13 @@ describe("1:N relation extraction", () => {
         expect(tables.length).toBe(2)
         expect(sourceTable.attributes.length).toBe(1)
         expect(targetTable.attributes.length).toBe(2)
-        expect(targetTable.attributes.at(0).name).toBe("Atributo")
-        expect(foreignKey.name).toBe("Atributo_Relación")
+        expect(targetTable.attributes.at(0).name).toBe('Atributo')
+        expect(foreignKey.name).toBe('Atributo_Relación')
         expect(foreignKey.notnull).toBe(false)
     })
 
-    test("should extract a non-null foreign key when the 1 side is mandatory", () => {
-        oneNGraph.relations.at(0).side1.cardinality = "1:1"
+    test('should extract a non-null foreign key when the 1 side is mandatory', () => {
+        oneNGraph.relations.at(0).side1.cardinality = '1:1'
 
         const tables = extract1NTables()
         const sourceTable = tables.at(0)
@@ -50,88 +51,79 @@ describe("1:N relation extraction", () => {
         expect(tables.length).toBe(2)
         expect(sourceTable.attributes.length).toBe(1)
         expect(targetTable.attributes.length).toBe(2)
-        expect(targetTable.attributes.at(0).name).toBe("Atributo")
-        expect(foreignKey.name).toBe("Atributo_Relación")
+        expect(targetTable.attributes.at(0).name).toBe('Atributo')
+        expect(foreignKey.name).toBe('Atributo_Relación')
         expect(foreignKey.notnull).toBe(true)
     })
 
-    test("should project composite attributes in related entity tables", () => {
-        oneNGraph.entities.at(1).attributes.push({
-            idMx: "7",
-            name: "direccion",
-            key: false,
-            partialKey: false,
-            children: [
-                {
-                    idMx: "8",
-                    name: "calle",
-                    key: false,
-                    partialKey: false,
-                },
-                {
-                    idMx: "9",
-                    name: "ciudad",
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        });
-
-        const tables = extract1NTables();
-        const targetTable = tables.at(1);
-
-        expect(targetTable.attributes.map((attr) => attr.name)).toEqual([
-            "Atributo",
-            "calle",
-            "ciudad",
-            "Atributo_Relación",
-        ]);
-        expect(
-            targetTable.attributes.some((attr) => attr.name === "direccion"),
-        ).toBe(false);
-    });
-
-    test("should copy all leaf columns from a composite primary key in a 1:N relation", () => {
-        oneNGraph.entities.at(0).attributes = [
-            {
-                idMx: "3",
-                name: "codigo",
-                key: true,
-                partialKey: false,
+    test('should project composite attributes in related entity tables', () => {
+        oneNGraph.entities.at(1).attributes.push(
+            createAttribute({
+                idMx: '7',
+                name: 'direccion',
                 children: [
-                    {
-                        idMx: "7",
-                        name: "serie",
-                        key: false,
-                        partialKey: false,
-                    },
-                    {
-                        idMx: "8",
-                        name: "numero",
-                        key: false,
-                        partialKey: false,
-                    },
+                    createAttribute({
+                        idMx: '8',
+                        name: 'calle',
+                    }),
+                    createAttribute({
+                        idMx: '9',
+                        name: 'ciudad',
+                    }),
                 ],
-            },
-        ];
+            }),
+        )
 
-        const tables = extract1NTables();
-        const targetTable = tables.at(1);
+        const tables = extract1NTables()
+        const targetTable = tables.at(1)
 
         expect(targetTable.attributes.map((attr) => attr.name)).toEqual([
-            "Atributo",
-            "serie_Relación",
-            "numero_Relación",
-        ]);
+            'Atributo',
+            'calle',
+            'ciudad',
+            'Atributo_Relación',
+        ])
+        expect(
+            targetTable.attributes.some((attr) => attr.name === 'direccion'),
+        ).toBe(false)
+    })
+
+    test('should copy all leaf columns from a composite primary key in a 1:N relation', () => {
+        oneNGraph.entities.at(0).attributes = [
+            createAttribute({
+                idMx: '3',
+                name: 'codigo',
+                key: true,
+                children: [
+                    createAttribute({
+                        idMx: '7',
+                        name: 'serie',
+                    }),
+                    createAttribute({
+                        idMx: '8',
+                        name: 'numero',
+                    }),
+                ],
+            }),
+        ]
+
+        const tables = extract1NTables()
+        const targetTable = tables.at(1)
+
+        expect(targetTable.attributes.map((attr) => attr.name)).toEqual([
+            'Atributo',
+            'serie_Relación',
+            'numero_Relación',
+        ])
 
         expect(
             targetTable.attributes.slice(1).map((attr) => attr.foreign_key_column),
-        ).toEqual(["serie", "numero"]);
-    });
+        ).toEqual(['serie', 'numero'])
+    })
 })
-describe("1:1 relation extraction", () => {
-    test("should extract a unique non-null foreign key for a 0:1-1:1 relation", () => {
-        oneOneGraph.relations.at(0).side1.cardinality = "0:1"
+describe('1:1 relation extraction', () => {
+    test('should extract a unique non-null foreign key for a 0:1-1:1 relation', () => {
+        oneOneGraph.relations.at(0).side1.cardinality = '0:1'
 
         const tables = extract11Tables()
         const sourceTable = tables.at(0)
@@ -141,15 +133,15 @@ describe("1:1 relation extraction", () => {
         expect(tables.length).toBe(2)
         expect(sourceTable.attributes.length).toBe(1)
         expect(targetTable.attributes.length).toBe(2)
-        expect(sourceTable.attributes.at(0).name).toBe("Atributo")
-        expect(foreignKey.name).toBe("Atributo_Relación")
+        expect(sourceTable.attributes.at(0).name).toBe('Atributo')
+        expect(foreignKey.name).toBe('Atributo_Relación')
         expect(foreignKey.notnull).toBe(true)
         expect(foreignKey.unique).toBe(true)
     })
 
-    test("should extract a unique nullable foreign key for a 0:1-0:1 relation", () => {
-        oneOneGraph.relations.at(0).side1.cardinality = "0:1"
-        oneOneGraph.relations.at(0).side2.cardinality = "0:1"
+    test('should extract a unique nullable foreign key for a 0:1-0:1 relation', () => {
+        oneOneGraph.relations.at(0).side1.cardinality = '0:1'
+        oneOneGraph.relations.at(0).side2.cardinality = '0:1'
 
         const tables = extract11Tables()
         const sourceTable = tables.at(0)
@@ -159,64 +151,60 @@ describe("1:1 relation extraction", () => {
         expect(tables.length).toBe(2)
         expect(sourceTable.attributes.length).toBe(1)
         expect(targetTable.attributes.length).toBe(2)
-        expect(sourceTable.attributes.at(0).name).toBe("Atributo")
-        expect(foreignKey.name).toBe("Atributo_Relación")
+        expect(sourceTable.attributes.at(0).name).toBe('Atributo')
+        expect(foreignKey.name).toBe('Atributo_Relación')
         expect(foreignKey.notnull).toBe(false)
         expect(foreignKey.unique).toBe(true)
     })
 
-    test("should merge both entities into a single table for a mandatory 1:1 relation", () => {
-        oneOneGraph.relations.at(0).side1.cardinality = "1:1"
-        oneOneGraph.relations.at(0).side2.cardinality = "1:1"
+    test('should merge both entities into a single table for a mandatory 1:1 relation', () => {
+        oneOneGraph.relations.at(0).side1.cardinality = '1:1'
+        oneOneGraph.relations.at(0).side2.cardinality = '1:1'
 
         const tables = extract11Tables()
         const mergedTable = tables.at(0)
 
         expect(tables.length).toBe(1)
-        expect(mergedTable.name).toBe("Relación")
+        expect(mergedTable.name).toBe('Relación')
         expect(mergedTable.attributes.length).toBe(2)
 
-        expect(mergedTable.attributes.at(0).name).toBe("Atributo_Relación")
+        expect(mergedTable.attributes.at(0).name).toBe('Atributo_Relación')
         expect(mergedTable.attributes.at(0).key).toBe(true)
 
-        expect(mergedTable.attributes.at(1).name).toBe("Atributo_Relación")
+        expect(mergedTable.attributes.at(1).name).toBe('Atributo_Relación')
         expect(mergedTable.attributes.at(1).notnull).toBe(true)
         expect(mergedTable.attributes.at(1).unique).toBe(true)
     })
     
-    test("should project composite attributes when a mandatory 1:1 relation merges both entities", () => {
-        oneOneGraph.entities.at(0).attributes.push({
-            idMx: "7",
-            name: "nombre",
-            key: false,
-            partialKey: false,
-            children: [
-                {
-                    idMx: "8",
-                    name: "primero",
-                    key: false,
-                    partialKey: false,
-                },
-                {
-                    idMx: "9",
-                    name: "segundo",
-                    key: false,
-                    partialKey: false,
-                },
-            ],
-        });
+    test('should project composite attributes when a mandatory 1:1 relation merges both entities', () => {
+        oneOneGraph.entities.at(0).attributes.push(
+            createAttribute({
+                idMx: '7',
+                name: 'nombre',
+                children: [
+                    createAttribute({
+                        idMx: '8',
+                        name: 'primero',
+                    }),
+                    createAttribute({
+                        idMx: '9',
+                        name: 'segundo',
+                    }),
+                ],
+            }),
+        )
 
-        const tables = extract11Tables();
-        const mergedTable = tables.at(0);
+        const tables = extract11Tables()
+        const mergedTable = tables.at(0)
 
         expect(mergedTable.attributes.map((attr) => attr.name)).toContain(
-            "primero_Relación",
-        );
+            'primero_Relación',
+        )
         expect(mergedTable.attributes.map((attr) => attr.name)).toContain(
-            "segundo_Relación",
-        );
+            'segundo_Relación',
+        )
         expect(mergedTable.attributes.map((attr) => attr.name)).not.toContain(
-            "nombre_Relación",
-        );
-    });
+            'nombre_Relación',
+        )
+    })
 })

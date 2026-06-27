@@ -1,12 +1,14 @@
 import { describe, expect, test } from 'vitest'
-
 import { syncDiagramDataFromGraph } from '../../../src/components/DiagramEditor/utils/sync/diagramGraphSync'
 import { updateAttributePosition } from '../../../src/domain/er'
 
 const createVertex = (id, value, x, y) => ({
     id,
     value,
-    geometry: { x, y },
+    geometry: {
+        x,
+        y,
+    },
 })
 
 const createEdge = (id, source, target) => ({
@@ -15,18 +17,34 @@ const createEdge = (id, source, target) => ({
     target,
 })
 
-describe('diagram graph sync', () => {
-    test('syncs nested attributes using their immediate parent as offset reference', () => {
-        const cells = {}
+const getCellEdges = (cells, cell) =>
+    Object.values(cells).filter(
+        (candidate) => candidate.source === cell || candidate.target === cell,
+    )
 
-        cells['entity-1'] = createVertex('entity-1', 'Persona', 100, 100)
-        cells['attr-address'] = createVertex(
-            'attr-address',
-            'direccion',
-            220,
-            120,
-        )
-        cells['attr-street'] = createVertex('attr-street', 'calle', 300, 150)
+const syncDiagramWithCells = ({ diagram, cells }) =>
+    syncDiagramDataFromGraph({
+        diagram,
+        graph: {
+            model: { cells },
+            getEdges: (cell) => getCellEdges(cells, cell),
+        },
+        accessCell: (id) => cells[id],
+        updateAttributePosition,
+    })
+
+describe('Attribute graph synchronization', () => {
+    test('syncs nested attributes using their immediate parent as offset reference', () => {
+        const cells = {
+            'entity-1': createVertex('entity-1', 'Persona', 100, 100),
+            'attr-address': createVertex(
+                'attr-address',
+                'direccion',
+                220,
+                120,
+            ),
+            'attr-street': createVertex('attr-street', 'calle', 300, 150),
+        }
 
         cells['edge-address'] = createEdge(
             'edge-address',
@@ -71,20 +89,7 @@ describe('diagram graph sync', () => {
             relations: [],
         }
 
-        syncDiagramDataFromGraph({
-            diagram,
-            graph: {
-                model: { cells },
-                getEdges: (cell) =>
-                    Object.values(cells).filter(
-                        (candidate) =>
-                            candidate.source === cell ||
-                            candidate.target === cell,
-                    ),
-            },
-            accessCell: (id) => cells[id],
-            updateAttributePosition,
-        })
+        syncDiagramWithCells({ diagram, cells })
 
         const address = diagram.entities[0].attributes[0]
         const street = address.children[0]
@@ -98,5 +103,33 @@ describe('diagram graph sync', () => {
         expect(street.position).toEqual({ x: 300, y: 150 })
         expect(street.offsetX).toBe(80)
         expect(street.offsetY).toBe(30)
+    })
+})
+
+describe('ISA graph synchronization', () => {
+    test('syncs ISA position from graph', () => {
+        const cells = {
+            'isa-1': createVertex('isa-1', 'ISA', 240, 180),
+        }
+
+        const diagram = {
+            entities: [],
+            relations: [],
+            isas: [
+                {
+                    idMx: 'isa-1',
+                    position: { x: 0, y: 0 },
+                    generalization: {
+                        edgeId: '',
+                        entity: { idMx: '' },
+                    },
+                    specializations: [],
+                },
+            ],
+        }
+
+        syncDiagramWithCells({ diagram, cells })
+
+        expect(diagram.isas[0].position).toEqual({ x: 240, y: 180 })
     })
 })

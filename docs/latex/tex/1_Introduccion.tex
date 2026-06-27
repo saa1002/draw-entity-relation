@@ -2,17 +2,21 @@
 
 \section{Contexto del proyecto}
 
-Cuando se diseña una base de datos, antes de crear tablas o escribir sentencias SQL, es necesario entender qué información se quiere representar y cómo se relacionan sus distintos elementos. Para ello se utilizan modelos conceptuales que permiten trabajar el diseño antes de pasar a una implementación concreta.
+Cuando se diseña una base de datos, antes de crear tablas o escribir sentencias SQL, es necesario representar de forma conceptual la información del dominio y las relaciones existentes entre sus elementos. El modelo Entidad-Relación permite realizar esta representación mediante entidades, atributos e interrelaciones, facilitando el análisis previo al paso al modelo relacional.
 
-Uno de los modelos más utilizados para esta tarea es el modelo Entidad-Relación. Mediante entidades, atributos e interrelaciones, este modelo permite representar de forma gráfica la estructura principal de un dominio. Esta representación ayuda a comprender mejor el problema y a comunicar las decisiones tomadas durante las primeras fases del diseño.
+Este Trabajo Fin de Grado se sitúa en ese contexto, pero no aborda el desarrollo de una herramienta desde cero. El proyecto se centra en la evolución de UBU E-R App, anteriormente denominada Draw E-R App, una aplicación web para la creación de diagramas Entidad-Relación desarrollada con React y mxGraph. La aplicación heredada ya ofrecía una base funcional, pero requería análisis, estabilización y ampliación para mejorar la coherencia entre el diagrama editado en el lienzo, el modelo interno, las validaciones, la transformación relacional y la generación de SQL.
 
-Este Trabajo Fin de Grado se sitúa en ese contexto: el uso de herramientas visuales para crear y revisar diagramas Entidad-Relación. En concreto, se trabaja sobre la evolución de una aplicación web orientada al modelado de este tipo de diagramas.
+La Figura \ref{fig:editor_general} muestra una vista general del editor, donde se aprecia el lienzo de trabajo, el panel de acciones y la representación visual de un diagrama Entidad-Relación sencillo.
+
+\imagen{editor_general}{Vista general del editor web con un diagrama Entidad-Relación cargado.}{0.85}
 
 \section{Motivación}
 
 Aunque existen distintas herramientas para crear diagramas, muchas de ellas están pensadas como editores gráficos generales y no siempre encajan bien con el trabajo específico sobre diagramas Entidad-Relación. En estos diagramas no solo importa dibujar elementos, sino que también debe mantenerse una relación clara entre lo que se muestra en pantalla y el significado que tiene dentro del modelo.
 
-La motivación de este trabajo surge de continuar una aplicación web ya existente para el modelado de diagramas Entidad-Relación. En lugar de comenzar desde cero, el proyecto permite trabajar sobre una base previa, analizar sus limitaciones y evolucionarla poco a poco, manteniendo una herramienta accesible desde el navegador y orientada principalmente a un uso académico.
+La motivación de este trabajo no fue sustituir a esas herramientas generales de diagramación, sino continuar una aplicación académica ya existente para el modelado de diagramas Entidad-Relación. En lugar de comenzar desde cero, el proyecto permite trabajar sobre una base previa, analizar sus limitaciones y evolucionarla poco a poco, manteniendo una herramienta accesible desde el navegador y orientada principalmente a un uso académico.
+
+Además, el proyecto permite relacionar dos aspectos importantes del diseño de bases de datos: la representación conceptual mediante diagramas y su posterior transformación hacia un esquema relacional. Por ello, el trabajo no se centra únicamente en la edición gráfica, sino también en la coherencia entre el diagrama construido, las validaciones aplicadas y la salida SQL generada.
 
 \section{Punto de partida}
 
@@ -20,41 +24,53 @@ El proyecto parte de una aplicación web previa orientada al modelado de diagram
 
 A partir de ese punto, este Trabajo Fin de Grado se centra en analizar el funcionamiento interno del editor y continuar su evolución. Esto implica trabajar sobre código ya existente, comprender decisiones de diseño heredadas y ampliar el soporte del sistema sin perder la relación entre la representación visual del diagrama y el modelo interno que maneja la aplicación.
 
+Por tanto, el trabajo realizado no consistió en construir el editor desde cero, sino en comprender su funcionamiento interno, detectar limitaciones y evolucionarlo de forma incremental.
+
 \section{Problema abordado}
 
 El principal problema abordado en este trabajo es la evolución de un editor de diagramas Entidad-Relación ya existente. En una herramienta de este tipo no basta con representar elementos en pantalla, ya que cada entidad, atributo o relación debe tener también un significado dentro del modelo interno de la aplicación.
 
-Por este motivo, cualquier ampliación del editor debe tener en cuenta varios aspectos al mismo tiempo: la parte visual del diagrama, los datos que se almacenan internamente, las reglas de validación y la transformación posterior hacia el modelo relacional. El trabajo se centra en avanzar en esa evolución de forma controlada, revisando el comportamiento del sistema y evitando separar la parte gráfica de la parte conceptual.
+Por este motivo, cualquier ampliación del editor debe tener en cuenta varios aspectos al mismo tiempo: el lienzo visual, los datos que se almacenan internamente, las reglas de validación, la transformación posterior al modelo relacional y la generación del script SQL. El trabajo se centra en avanzar en esa evolución de forma controlada, revisando el comportamiento del sistema y evitando separar la parte gráfica de la parte conceptual.
 
 \section{Alcance del trabajo}
 
-El alcance de este Trabajo Fin de Grado se centra en la evolución de un editor web de diagramas Entidad-Relación ya existente. El trabajo incluye el análisis del sistema heredado, la revisión de su funcionamiento interno, la ampliación progresiva de sus capacidades y la documentación del proceso seguido.
+El alcance de este Trabajo Fin de Grado se centra en la evolución de un editor web de diagramas Entidad-Relación ya existente. El proyecto no parte de una aplicación desarrollada desde cero, sino de una herramienta heredada que ya ofrecía una base funcional para la creación de diagramas, su validación y la generación de SQL.
 
-Dentro de este alcance se consideran tanto los cambios realizados en el editor como la revisión de las reglas de validación, la transformación hacia el modelo relacional y la generación de SQL cuando corresponde. No se pretende construir una herramienta profesional completa de diseño de bases de datos ni cubrir todas las variantes posibles del modelo Entidad-Relación, sino avanzar sobre una base previa y dejar el proyecto en un estado más completo, coherente y documentado.
+A partir de ese punto, el trabajo realizado incluye el análisis del sistema previo, la estabilización de partes relevantes del editor y la ampliación controlada de sus capacidades. El eje principal del desarrollo ha sido mantener la coherencia entre lo que el usuario diseña en el lienzo, la representación interna del diagrama, las validaciones aplicadas, la transformación al modelo relacional y la generación de SQL.
+
+Dentro del alcance implementado se incluyen mejoras en la representación interna del diagrama, en las reglas de validación, en la transformación al modelo relacional y en la generación del script SQL, así como la incorporación de nuevos elementos del modelo Entidad-Relación soportados por la aplicación. También se han añadido mejoras de interacción y usabilidad orientadas a facilitar el trabajo con el editor, como la selección múltiple, la ayuda integrada, opciones de importación y exportación, y ajustes visuales de la interfaz.
+
+No se pretende construir una herramienta profesional completa de diseño de bases de datos ni cubrir todas las variantes posibles del modelo Entidad-Relación. Quedan fuera del alcance implementado funcionalidades avanzadas como las agregaciones, la cobertura completa de jerarquías ISA, la herencia múltiple real, la gestión de usuarios, la persistencia remota o la configuración detallada de tipos de datos SQL. Estas limitaciones se consideran decisiones de alcance del proyecto y posibles líneas de trabajo futuro.
 
 \section{Estructura de la memoria}
 
 La memoria se organiza en varios capítulos que presentan de forma progresiva el contexto del proyecto, los objetivos perseguidos, la base teórica necesaria y el trabajo realizado durante la evolución del editor. La estructura seguida es la siguiente:
 
 \begin{itemize}
-    \item \textbf{Introducción}: presenta el contexto general del trabajo, la motivación, el punto de partida, el problema abordado y el alcance del proyecto.
-    \item \textbf{Objetivos del proyecto}: recoge los objetivos principales del TFG y delimita las metas perseguidas durante su desarrollo.
-    \item \textbf{Conceptos teóricos}: introduce los conceptos del modelo Entidad-Relación y del modelo relacional necesarios para comprender el resto del documento.
-    \item \textbf{Técnicas y herramientas}: describe las principales tecnologías y herramientas utilizadas durante el desarrollo del proyecto.
-    \item \textbf{Aspectos relevantes del desarrollo}: explica las decisiones, cambios y problemas más importantes abordados durante la evolución del editor.
-    \item \textbf{Trabajos relacionados}: presenta otras herramientas o enfoques relacionados con la creación de diagramas y el modelado de bases de datos.
-    \item \textbf{Conclusiones y líneas de trabajo futuras}: resume los resultados obtenidos y plantea posibles mejoras o ampliaciones posteriores.
+\item \textbf{Introducción}: presenta el contexto general del trabajo, la motivación, el punto de partida, el problema abordado y el alcance del proyecto.
+\item \textbf{Objetivos del proyecto}: recoge el objetivo general del TFG y los objetivos específicos que han guiado el desarrollo.
+\item \textbf{Conceptos teóricos}: introduce los conceptos del modelo Entidad-Relación y del modelo relacional necesarios para comprender el resto del documento.
+\item \textbf{Técnicas y herramientas}: describe las principales tecnologías y herramientas utilizadas durante el desarrollo del proyecto.
+\item \textbf{Aspectos relevantes del desarrollo}: explica las decisiones, cambios y problemas más importantes abordados durante la evolución del editor.
+\item \textbf{Trabajos relacionados}: presenta otras herramientas o enfoques relacionados con la creación de diagramas y el modelado de bases de datos.
+\item \textbf{Conclusiones y líneas de trabajo futuras}: resume los resultados obtenidos y plantea posibles mejoras o ampliaciones posteriores.
 \end{itemize}
 
-\section{Estructura de los anexos}
+\section{Documentos adjuntos}
 
-Los anexos complementan la memoria principal con información más detallada sobre la planificación, los requisitos, el diseño y el uso del sistema. Su estructura es la siguiente:
+Junto con esta memoria se entregan varios documentos y recursos asociados al Trabajo Fin de Grado. Estos materiales complementan la explicación del proyecto y permiten revisar tanto el resultado obtenido como los elementos necesarios para su ejecución y evaluación.
 
 \begin{itemize}
-    \item \textbf{Plan de proyecto software}: recoge la planificación del trabajo, la evolución seguida y los aspectos de viabilidad asociados al proyecto.
-    \item \textbf{Especificación de requisitos}: describe los requisitos funcionales y no funcionales considerados durante el desarrollo.
-    \item \textbf{Especificación de diseño}: presenta la organización interna del sistema, el modelo de datos y las principales decisiones de diseño.
-    \item \textbf{Documentación técnica de programación}: incluye información sobre la estructura del proyecto, instalación, ejecución y pruebas.
-    \item \textbf{Documentación de usuario}: explica el uso de la aplicación desde el punto de vista del usuario final.
-    \item \textbf{Anexo de sostenibilización curricular}: recoge una reflexión sobre la relación del trabajo con aspectos de sostenibilidad.
+\item \textbf{Memoria del proyecto}: documento principal del TFG, en el que se presenta el contexto, los objetivos, la base teórica, el desarrollo realizado y las conclusiones obtenidas.
+
+\item \textbf{Anexos}: documento complementario que recoge información más detallada sobre la planificación, los requisitos, el diseño, la documentación de usuario y otros aspectos asociados al proyecto.
+
+\item \textbf{Aplicación web desplegada}: versión funcional de UBU E-R App publicada en Vercel, accesible desde el navegador para facilitar su revisión sin necesidad de instalar el proyecto en local. Acceso: \href{https://draw-entity-relation-opal.vercel.app/}{aplicación desplegada en Vercel}.
+
+\item \textbf{Repositorio Git del proyecto}: repositorio que contiene el código fuente de la aplicación, la evolución del desarrollo y los recursos necesarios para su instalación y ejecución. Acceso: \href{https://github.com/saa1002/draw-entity-relation}{repositorio del proyecto}.
+
+\item \textbf{Instrucciones de instalación y ejecución}: indicaciones incluidas en el repositorio para preparar el entorno local, instalar dependencias, ejecutar la aplicación y lanzar las comprobaciones disponibles.
+
+\item \textbf{Ayuda integrada en la aplicación}: información accesible desde la propia interfaz del editor para orientar al usuario en el uso básico de la herramienta y en algunas operaciones relevantes.
 \end{itemize}
+

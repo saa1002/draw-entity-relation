@@ -13,7 +13,10 @@ import {
 } from '../helpers/canvas';
 
 import {
+    createBinaryImportRelation,
+    createImportEntity,
     exportCurrentDiagram,
+    exportCurrentDiagramImage,
     importDiagram,
     resetDiagram,
     seedSavedDiagram,
@@ -279,37 +282,30 @@ test('export/import round-trip preserves diagram structure', async ({ page }) =>
 
     await expect(page.locator('.mxgraph-drawing-container')).toBeVisible();
 
-    // Sanity check: the seeded diagram is rendered
     await expect(page.getByText('Cliente', { exact: true })).toBeVisible();
     await expect(page.getByText('Pedido', { exact: true })).toBeVisible();
     await expect(page.getByText('Realiza', { exact: true })).toBeVisible();
     await expect(page.getByText('1:N', { exact: true })).toHaveCount(1);
     await expect(page.getByText('1:1', { exact: true })).toHaveCount(1);
 
-    // First export
     const exportedBefore = await exportCurrentDiagram(page);
 
-    // Reset the canvas to ensure the following import really reconstructs the diagram
     await resetDiagram(page);
 
     await expect(page.getByText('Cliente', { exact: true })).toHaveCount(0);
     await expect(page.getByText('Pedido', { exact: true })).toHaveCount(0);
     await expect(page.getByText('Realiza', { exact: true })).toHaveCount(0);
 
-    // Import the exported diagram
     await importDiagram(page, exportedBefore);
 
-    // The imported diagram should be visible again
     await expect(page.getByText('Cliente', { exact: true })).toBeVisible();
     await expect(page.getByText('Pedido', { exact: true })).toBeVisible();
     await expect(page.getByText('Realiza', { exact: true })).toBeVisible();
     await expect(page.getByText('1:N', { exact: true })).toHaveCount(1);
     await expect(page.getByText('1:1', { exact: true })).toHaveCount(1);
 
-    // Second export after the round-trip
     const exportedAfter = await exportCurrentDiagram(page);
 
-    // The export/import/export cycle should preserve the persisted structure
     expect(exportedAfter).toEqual(exportedBefore);
 });
 
@@ -554,4 +550,215 @@ test('export/import round-trip preserves nested attribute trees', async ({ page 
     const exportedAfter = await exportCurrentDiagram(page);
 
     expect(exportedAfter).toEqual(exportedBefore);
+});
+
+test('JSON import replace mode replaces the current diagram', async ({ page }) => {
+    const currentDiagram = {
+        entities: [
+            createImportEntity({
+                idMx: 'current-entity',
+                name: 'Actual',
+                x: 100,
+                y: 100,
+            }),
+        ],
+        relations: [],
+        isas: [],
+    };
+
+    const importedDiagram = {
+        entities: [
+            createImportEntity({
+                idMx: 'imported-entity',
+                name: 'Importada',
+                x: 300,
+                y: 100,
+            }),
+        ],
+        relations: [],
+        isas: [],
+    };
+
+    await seedSavedDiagram(page, currentDiagram);
+
+    await page.goto('/');
+
+    await expect(page.getByText('Actual', { exact: true })).toBeVisible();
+
+    await importDiagram(page, importedDiagram);
+
+    await expect(page.getByText('Actual', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Importada', { exact: true })).toBeVisible();
+
+    await expectSavedDiagramState(
+        page,
+        (diagram) => ({
+            entityNames: diagram.entities.map((entity) => entity.name),
+            relationCount: diagram.relations.length,
+            isaCount: diagram.isas.length,
+        }),
+        {
+            entityNames: ['Importada'],
+            relationCount: 0,
+            isaCount: 0,
+        },
+    );
+});
+
+test('JSON import merge mode keeps current diagram and renames conflicts', async ({ page }) => {
+    const currentDiagram = {
+        entities: [
+            createImportEntity({
+                idMx: 'current-client',
+                name: 'Cliente',
+                x: 100,
+                y: 100,
+            }),
+            createImportEntity({
+                idMx: 'current-order',
+                name: 'Pedido',
+                x: 500,
+                y: 100,
+            }),
+        ],
+        relations: [
+            createBinaryImportRelation({
+                idMx: 'current-relation',
+                name: 'Realiza',
+                x: 300,
+                y: 100,
+                side1EntityId: 'current-client',
+                side2EntityId: 'current-order',
+            }),
+        ],
+        isas: [],
+    };
+
+    const importedDiagram = {
+        entities: [
+            createImportEntity({
+                idMx: 'imported-client',
+                name: 'Cliente',
+                x: 100,
+                y: 300,
+            }),
+            createImportEntity({
+                idMx: 'imported-order',
+                name: 'Pedido',
+                x: 500,
+                y: 300,
+            }),
+        ],
+        relations: [
+            createBinaryImportRelation({
+                idMx: 'imported-relation',
+                name: 'Realiza',
+                x: 300,
+                y: 300,
+                side1EntityId: 'imported-client',
+                side2EntityId: 'imported-order',
+            }),
+        ],
+        isas: [],
+    };
+
+    await seedSavedDiagram(page, currentDiagram);
+
+    await page.goto('/');
+
+    await importDiagram(page, importedDiagram, { mode: 'merge' });
+
+    await expect(page.getByText('Cliente', { exact: true })).toBeVisible();
+    await expect(page.getByText('Pedido', { exact: true })).toBeVisible();
+    await expect(page.getByText('Realiza', { exact: true })).toBeVisible();
+
+    await expect(page.getByText('Cliente (1)', { exact: true })).toBeVisible();
+    await expect(page.getByText('Pedido (1)', { exact: true })).toBeVisible();
+    await expect(page.getByText('Realiza (1)', { exact: true })).toBeVisible();
+
+    await expectSavedDiagramState(
+        page,
+        (diagram) => {
+            const importedClient = diagram.entities.find(
+                (entity) => entity.name === 'Cliente (1)',
+            );
+            const importedOrder = diagram.entities.find(
+                (entity) => entity.name === 'Pedido (1)',
+            );
+            const importedRelation = diagram.relations.find(
+                (relation) => relation.name === 'Realiza (1)',
+            );
+
+            return {
+                entityNames: diagram.entities.map((entity) => entity.name),
+                relationNames: diagram.relations.map(
+                    (relation) => relation.name,
+                ),
+                importedIdsWereRemapped:
+                    importedClient?.idMx !== 'imported-client' &&
+                    importedOrder?.idMx !== 'imported-order' &&
+                    importedRelation?.idMx !== 'imported-relation',
+                importedRelationTargetsWereRemapped:
+                    importedRelation?.side1?.entity?.idMx ===
+                        importedClient?.idMx &&
+                    importedRelation?.side2?.entity?.idMx ===
+                        importedOrder?.idMx,
+                importedDiagramWasShifted:
+                    importedClient?.position?.x >
+                    diagram.entities.find((entity) => entity.name === 'Cliente')
+                        ?.position?.x,
+            };
+        },
+        {
+            entityNames: ['Cliente', 'Pedido', 'Cliente (1)', 'Pedido (1)'],
+            relationNames: ['Realiza', 'Realiza (1)'],
+            importedIdsWereRemapped: true,
+            importedRelationTargetsWereRemapped: true,
+            importedDiagramWasShifted: true,
+        },
+    );
+
+    const exportedAfterMerge = await exportCurrentDiagram(page);
+
+    expect(exportedAfterMerge.entities.map((entity) => entity.name)).toEqual([
+        'Cliente',
+        'Pedido',
+        'Cliente (1)',
+        'Pedido (1)',
+    ]);
+
+    expect(exportedAfterMerge.relations.map((relation) => relation.name)).toEqual([
+        'Realiza',
+        'Realiza (1)',
+    ]);
+});
+
+test('export current diagram as SVG image', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 260, y: 180 });
+
+    const exportedFile = await exportCurrentDiagramImage(page, 'SVG');
+
+    expect(exportedFile.fileName).toMatch(
+        /^diagrama-er-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.svg$/,
+    );
+    expect(exportedFile.mimeType).toBe('image/svg+xml;charset=utf-8');
+    expect(exportedFile.content).toContain('<svg');
+    expect(exportedFile.content).toContain('viewBox');
+    expect(exportedFile.content).toContain('Entidad');
+});
+
+test('export current diagram as PNG image', async ({ page }) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 260, y: 180 });
+
+    const exportedFile = await exportCurrentDiagramImage(page, 'PNG');
+
+    expect(exportedFile.fileName).toMatch(
+        /^diagrama-er-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.png$/,
+    );
+    expect(exportedFile.mimeType).toBe('image/png');
+    expect(exportedFile.size).toBeGreaterThan(0);
 });

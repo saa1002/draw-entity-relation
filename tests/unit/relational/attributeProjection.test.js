@@ -1,21 +1,19 @@
 import { describe, expect, test } from 'vitest'
+import { createAttribute } from '../../helpers/diagramBuilders'
 import { projectAttributeTreeToColumns } from '../../../src/domain/relational/attributeProjection'
 
 describe('Attribute relational projection', () => {
     test('flat attributes should preserve their current relational projection', () => {
         const attributes = [
-            {
+            createAttribute({
                 idMx: 'attr-1',
                 name: 'id_cliente',
                 key: true,
-                partialKey: false,
-            },
-            {
+            }),
+            createAttribute({
                 idMx: 'attr-2',
                 name: 'nombre',
-                key: false,
-                partialKey: false,
-            },
+            })
         ]
 
         expect(projectAttributeTreeToColumns(attributes)).toEqual([
@@ -34,20 +32,20 @@ describe('Attribute relational projection', () => {
 
     test('composite attributes should project only their leaf attributes', () => {
         const attributes = [
-            {
+            createAttribute({
                 idMx: 'attr-1',
                 name: 'direccion',
                 children: [
-                    {
+                    createAttribute({
                         idMx: 'attr-2',
                         name: 'calle',
-                    },
-                    {
+                    }),
+                    createAttribute({
                         idMx: 'attr-3',
                         name: 'ciudad',
-                    },
+                    }),
                 ],
-            },
+            })
         ]
 
         expect(projectAttributeTreeToColumns(attributes)).toEqual([
@@ -66,22 +64,22 @@ describe('Attribute relational projection', () => {
 
     test('nested composite attributes should project the leaf attribute name', () => {
         const attributes = [
-            {
+            createAttribute({
                 idMx: 'attr-1',
                 name: 'contacto',
                 children: [
-                    {
+                    createAttribute({
                         idMx: 'attr-2',
                         name: 'direccion',
                         children: [
-                            {
+                            createAttribute({
                                 idMx: 'attr-3',
                                 name: 'ciudad',
-                            },
+                            })
                         ],
-                    },
+                    })
                 ],
-            },
+            }),
         ]
 
         expect(projectAttributeTreeToColumns(attributes)).toEqual([
@@ -95,22 +93,21 @@ describe('Attribute relational projection', () => {
 
     test('a composite key should project all of its leaf attributes as key columns', () => {
         const attributes = [
-            {
+            createAttribute({
                 idMx: 'attr-1',
                 name: 'documento',
                 key: true,
-                partialKey: false,
                 children: [
-                    {
+                    createAttribute({
                         idMx: 'attr-2',
                         name: 'tipo',
-                    },
-                    {
+                    }),
+                    createAttribute({
                         idMx: 'attr-3',
                         name: 'numero',
-                    },
-                ],
-            },
+                    })
+                ]
+            })
         ]
 
         expect(projectAttributeTreeToColumns(attributes)).toEqual([
@@ -129,22 +126,21 @@ describe('Attribute relational projection', () => {
 
     test('a composite partial key should project all of its leaf attributes as partial key columns', () => {
         const attributes = [
-            {
+            createAttribute({
                 idMx: 'attr-1',
                 name: 'codigo',
-                key: false,
                 partialKey: true,
                 children: [
-                    {
+                    createAttribute({
                         idMx: 'attr-2',
                         name: 'serie',
-                    },
-                    {
+                    }),
+                    createAttribute({
                         idMx: 'attr-3',
                         name: 'numero',
-                    },
+                    }),
                 ],
-            },
+            })
         ]
 
         expect(projectAttributeTreeToColumns(attributes)).toEqual([
@@ -160,21 +156,19 @@ describe('Attribute relational projection', () => {
             },
         ])
     })
+    
     test('simple multivalued attributes should not project as regular columns', () => {
         const attributes = [
-            {
+            createAttribute({
                 idMx: 'attr-1',
                 name: 'id_cliente',
                 key: true,
-                partialKey: false,
-            },
-            {
+            }),
+            createAttribute({
                 idMx: 'attr-2',
                 name: 'telefono',
-                key: false,
-                partialKey: false,
                 multivalued: true,
-            },
+            }),
         ]
 
         expect(projectAttributeTreeToColumns(attributes)).toEqual([
@@ -188,33 +182,26 @@ describe('Attribute relational projection', () => {
     
     test('composite multivalued attribute leaves should not project as regular columns', () => {
         const attributes = [
-            {
+            createAttribute({
                 idMx: 'attr-1',
                 name: 'id_cliente',
                 key: true,
-                partialKey: false,
-            },
-            {
+            }),
+            createAttribute({
                 idMx: 'attr-2',
-                name: 'telefonos',
-                key: false,
-                partialKey: false,
+                name: 'telefono',
                 multivalued: true,
                 children: [
-                    {
+                    createAttribute({
                         idMx: 'attr-3',
                         name: 'prefijo',
-                        key: false,
-                        partialKey: false,
-                    },
-                    {
+                    }),
+                    createAttribute({
                         idMx: 'attr-4',
                         name: 'numero',
-                        key: false,
-                        partialKey: false,
-                    },
+                    }),
                 ],
-            },
+            })
         ]
 
         expect(projectAttributeTreeToColumns(attributes)).toEqual([

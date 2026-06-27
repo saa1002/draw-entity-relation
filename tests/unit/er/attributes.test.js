@@ -1,59 +1,61 @@
 import { describe, expect, test } from 'vitest'
 import {
     addChildAttributeToAttribute,
+    ATTRIBUTE_OWNER_TYPES,
+    clearPrimaryKeyAttributesInTree,
     convertPartialKeyToPrimaryKey,
     convertPrimaryKeyToPartialKey,
-    toggleExclusivePartialKeyAttributeInTree,
     convertSimpleAttributeToCompositeAttribute,
     convertSubattributeToSimpleAttributeById,
-    groupRootAttributesIntoCompositeAttribute,
     createAttribute,
-    isCompositeMultivaluedAttribute,
-    isMultivaluedAttribute,
     findAttributeInTreeById,
     findAttributeNodeInTreeById,
     findAttributeTreeOwnerById,
-    getPartialKeyAttributesInTree,
-    getPrimaryKeyAttributesInTree,
-    hasPartialKeyAttributeInTree,
-    hasPrimaryKeyAttributeInTree,
-    ATTRIBUTE_OWNER_TYPES,
     flattenAttributeTree,
     getAttributeChildren,
-    getLeafAttributes,
-    isCompositeAttribute,
-    isLeafAttribute,
-    removeAttributeFromOwnerTreeById,
-    removeAttributeFromOwnerTreeByIdWithPromotion,
-    walkAttributeTree,
     getAttributesInTreeMatching,
+    getDefaultAttributeSemantics,
+    getLeafAttributes,
+    getPartialKeyAttributesInTree,
+    getPrimaryKeyAttributesInTree,
+    groupRootAttributesIntoCompositeAttribute,
     hasEmptyCompositeAttributeInTree,
     hasMultivaluedAttributeInTree,
+    hasPartialKeyAttributeInTree,
+    hasPrimaryKeyAttributeInTree,
     hasRepeatedSiblingAttributeNamesInTree,
-    toggleExclusivePrimaryKeyAttributeInTree,
+    isCompositeAttribute,
+    isCompositeMultivaluedAttribute,
+    isLeafAttribute,
+    isMultivaluedAttribute,
+    removeAttributeFromOwnerTreeById,
+    removeAttributeFromOwnerTreeByIdWithPromotion,
     someAttributeInTree,
+    toggleExclusivePartialKeyAttributeInTree,
+    toggleExclusivePrimaryKeyAttributeInTree,
+    walkAttributeTree,
 } from '../../../src/domain/er/attributes'
 
-describe("Hierarchical attribute helpers", () => {
-    test("flat attributes should be treated as leaf attributes", () => {
+describe('Attribute tree traversal and lookup', () => {
+    test('flat attributes should be treated as leaf attributes', () => {
         const attributes = [
-            { idMx: "attr-1", name: "name" },
-            { idMx: "attr-2", name: "surname" },
+            { idMx: 'attr-1', name: 'name' },
+            { idMx: 'attr-2', name: 'surname' },
         ]
 
         expect(getLeafAttributes(attributes)).toEqual(attributes)
         expect(isLeafAttribute(attributes[0])).toBe(true)
         expect(isCompositeAttribute(attributes[0])).toBe(false)
-        expect(attributes[0]).not.toHaveProperty("children")
+        expect(attributes[0]).not.toHaveProperty('children')
     })
 
-    test("attributes with children should be treated as composite attributes", () => {
+    test('attributes with children should be treated as composite attributes', () => {
         const attribute = {
-            idMx: "attr-1",
-            name: "address",
+            idMx: 'attr-1',
+            name: 'address',
             children: [
-                { idMx: "attr-2", name: "street" },
-                { idMx: "attr-3", name: "city" },
+                { idMx: 'attr-2', name: 'street' },
+                { idMx: 'attr-3', name: 'city' },
             ],
         }
 
@@ -62,75 +64,69 @@ describe("Hierarchical attribute helpers", () => {
         expect(isLeafAttribute(attribute)).toBe(false)
     })
 
-    test("flattenAttributeTree should preserve depth-first traversal order", () => {
+    test('flattenAttributeTree should preserve depth-first traversal order', () => {
         const attributes = [
             {
-                idMx: "attr-1",
-                name: "address",
+                idMx: 'attr-1',
+                name: 'address',
                 children: [
-                    { idMx: "attr-2", name: "street" },
-                    { idMx: "attr-3", name: "city" },
+                    { idMx: 'attr-2', name: 'street' },
+                    { idMx: 'attr-3', name: 'city' },
                 ],
             },
-            { idMx: "attr-4", name: "email" },
+            { idMx: 'attr-4', name: 'email' },
         ]
 
         expect(flattenAttributeTree(attributes).map((attribute) => attribute.idMx))
-            .toEqual(["attr-1", "attr-2", "attr-3", "attr-4"])
+            .toEqual(['attr-1', 'attr-2', 'attr-3', 'attr-4'])
     })
 
-    test("getLeafAttributes should return only leaf attributes from nested trees", () => {
+    test('getLeafAttributes should return only leaf attributes from nested trees', () => {
         const attributes = [
             {
-                idMx: "attr-1",
-                name: "address",
+                idMx: 'attr-1',
+                name: 'address',
                 children: [
-                    { idMx: "attr-2", name: "street" },
+                    { idMx: 'attr-2', name: 'street' },
                     {
-                        idMx: "attr-3",
-                        name: "location",
-                        children: [
-                            { idMx: "attr-4", name: "city" },
-                        ],
+                        idMx: 'attr-3',
+                        name: 'location',
+                        children: [{ idMx: 'attr-4', name: 'city' }],
                     },
                 ],
             },
-            { idMx: "attr-5", name: "email" },
+            { idMx: 'attr-5', name: 'email' },
         ]
 
         expect(getLeafAttributes(attributes).map((attribute) => attribute.idMx))
-            .toEqual(["attr-2", "attr-4", "attr-5"])
+            .toEqual(['attr-2', 'attr-4', 'attr-5'])
     })
 
-    test("findAttributeInTreeById should find nested attributes", () => {
+    test('findAttributeInTreeById should find nested attributes', () => {
         const attributes = [
             {
-                idMx: "attr-1",
-                name: "address",
-                children: [
-                    { idMx: "attr-2", name: "street" },
-                ],
+                idMx: 'attr-1',
+                name: 'address',
+                children: [{ idMx: 'attr-2', name: 'street' }],
             },
         ]
 
-        expect(findAttributeInTreeById(attributes, "attr-2")).toEqual(
+        expect(findAttributeInTreeById(attributes, 'attr-2')).toEqual(
             attributes[0].children[0],
         )
-        expect(findAttributeInTreeById(attributes, "missing")).toBe(null)
+        expect(findAttributeInTreeById(attributes, 'missing')).toBe(null)
     })
 
-    test("walkAttributeTree should expose parent, depth, sibling index and ancestors", () => {
+    test('walkAttributeTree should expose parent, depth, sibling index and ancestors', () => {
         const attributes = [
             {
-                idMx: "attr-1",
-                name: "address",
+                idMx: 'attr-1',
+                name: 'address',
                 children: [
                     {
-                        idMx: "attr-2",
-                        name: "location",
-                        children: [
-                            { idMx: "attr-3", name: "city" },
-                        ],
+                        idMx: 'attr-2',
+                        name: 'location',
+                        children: [{ idMx: 'attr-3', name: 'city' }],
                     },
                 ],
             },
@@ -150,41 +146,39 @@ describe("Hierarchical attribute helpers", () => {
 
         expect(visited).toEqual([
             {
-                idMx: "attr-1",
+                idMx: 'attr-1',
                 parentId: null,
                 depth: 0,
                 index: 0,
                 ancestorIds: [],
             },
             {
-                idMx: "attr-2",
-                parentId: "attr-1",
+                idMx: 'attr-2',
+                parentId: 'attr-1',
                 depth: 1,
                 index: 0,
-                ancestorIds: ["attr-1"],
+                ancestorIds: ['attr-1'],
             },
             {
-                idMx: "attr-3",
-                parentId: "attr-2",
+                idMx: 'attr-3',
+                parentId: 'attr-2',
                 depth: 2,
                 index: 0,
-                ancestorIds: ["attr-1", "attr-2"],
+                ancestorIds: ['attr-1', 'attr-2'],
             },
         ])
     })
 
-    test("findAttributeNodeInTreeById should return nested attribute context", () => {
+    test('findAttributeNodeInTreeById should return nested attribute context', () => {
         const attributes = [
             {
-                idMx: "attr-1",
-                name: "address",
-                children: [
-                    { idMx: "attr-2", name: "street" },
-                ],
+                idMx: 'attr-1',
+                name: 'address',
+                children: [{ idMx: 'attr-2', name: 'street' }],
             },
         ]
 
-        expect(findAttributeNodeInTreeById(attributes, "attr-2")).toMatchObject({
+        expect(findAttributeNodeInTreeById(attributes, 'attr-2')).toMatchObject({
             attribute: attributes[0].children[0],
             parent: attributes[0],
             depth: 1,
@@ -192,17 +186,15 @@ describe("Hierarchical attribute helpers", () => {
         })
     })
 
-    test("findAttributeTreeOwnerById should return owner and nested attribute context", () => {
+    test('findAttributeTreeOwnerById should return owner and nested attribute context', () => {
         const diagram = {
             entities: [
                 {
-                    idMx: "entity-1",
+                    idMx: 'entity-1',
                     attributes: [
                         {
-                            idMx: "attr-1",
-                            children: [
-                                { idMx: "attr-2" },
-                            ],
+                            idMx: 'attr-1',
+                            children: [{ idMx: 'attr-2' }],
                         },
                     ],
                 },
@@ -210,7 +202,7 @@ describe("Hierarchical attribute helpers", () => {
             relations: [],
         }
 
-        expect(findAttributeTreeOwnerById(diagram, "attr-2")).toMatchObject({
+        expect(findAttributeTreeOwnerById(diagram, 'attr-2')).toMatchObject({
             owner: diagram.entities[0],
             ownerType: ATTRIBUTE_OWNER_TYPES.ENTITY,
             attribute: diagram.entities[0].attributes[0].children[0],
@@ -219,155 +211,239 @@ describe("Hierarchical attribute helpers", () => {
             index: 0,
         })
     })
-    test("multivalued attribute helpers should detect multiplicity independently from composition", () => {
+})
+
+describe('Attribute tree predicates', () => {
+    test('multivalued attribute helpers should detect multiplicity independently from composition', () => {
         const simpleMultivaluedAttribute = {
-            idMx: "attr-1",
-            name: "phone",
+            idMx: 'attr-1',
+            name: 'phone',
             multivalued: true,
         }
 
         const compositeMultivaluedAttribute = {
-            idMx: "attr-2",
-            name: "address",
+            idMx: 'attr-2',
+            name: 'address',
             multivalued: true,
-            children: [
-                { idMx: "attr-3", name: "street" },
-            ],
+            children: [{ idMx: 'attr-3', name: 'street' }],
         }
 
         expect(isMultivaluedAttribute(simpleMultivaluedAttribute)).toBe(true)
         expect(isCompositeMultivaluedAttribute(simpleMultivaluedAttribute)).toBe(false)
-
         expect(isMultivaluedAttribute(compositeMultivaluedAttribute)).toBe(true)
         expect(isCompositeMultivaluedAttribute(compositeMultivaluedAttribute)).toBe(true)
     })
-    test("removeAttributeFromOwnerTreeById should remove nested attributes", () => {
+
+    test('key helpers should inspect nested attribute trees', () => {
+        const attributes = [
+            {
+                idMx: 'attr-1',
+                name: 'codigo',
+                key: true,
+                children: [
+                    { idMx: 'attr-2', name: 'serie' },
+                    { idMx: 'attr-3', name: 'numero' },
+                ],
+            },
+            {
+                idMx: 'attr-4',
+                name: 'periodo',
+                children: [
+                    {
+                        idMx: 'attr-5',
+                        name: 'fecha',
+                        partialKey: true,
+                    },
+                ],
+            },
+        ]
+
+        expect(hasPrimaryKeyAttributeInTree(attributes)).toBe(true)
+        expect(hasPartialKeyAttributeInTree(attributes)).toBe(true)
+        expect(
+            getPrimaryKeyAttributesInTree(attributes).map(
+                (attribute) => attribute.idMx,
+            ),
+        ).toEqual(['attr-1'])
+        expect(
+            getPartialKeyAttributesInTree(attributes).map(
+                (attribute) => attribute.idMx,
+            ),
+        ).toEqual(['attr-5'])
+    })
+
+    test('predicate helpers should inspect nested attribute trees', () => {
+        const attributes = [
+            {
+                idMx: 'attr-address',
+                name: 'direccion',
+                children: [
+                    {
+                        idMx: 'attr-street',
+                        name: 'calle',
+                    },
+                ],
+            },
+            {
+                idMx: 'attr-billing-address',
+                name: 'direccion_facturacion',
+                children: [
+                    {
+                        idMx: 'attr-billing-street',
+                        name: 'calle',
+                        multivalued: true,
+                    },
+                    {
+                        idMx: 'attr-billing-city',
+                        name: 'ciudad',
+                        children: [],
+                    },
+                ],
+            },
+        ]
+
+        expect(
+            getAttributesInTreeMatching(
+                attributes,
+                (attribute) => attribute.name === 'calle',
+            ).map((attribute) => attribute.idMx),
+        ).toEqual(['attr-street', 'attr-billing-street'])
+
+        expect(
+            someAttributeInTree(
+                attributes,
+                (attribute) => attribute.idMx === 'attr-billing-city',
+            ),
+        ).toBe(true)
+
+        expect(hasMultivaluedAttributeInTree(attributes)).toBe(true)
+        expect(hasEmptyCompositeAttributeInTree(attributes)).toBe(true)
+        expect(hasRepeatedSiblingAttributeNamesInTree(attributes)).toBe(false)
+
+        attributes[1].children.push({
+            idMx: 'attr-billing-street-copy',
+            name: 'calle',
+        })
+
+        expect(hasRepeatedSiblingAttributeNamesInTree(attributes)).toBe(true)
+    })
+})
+
+describe('Attribute creation and default semantics', () => {
+    test('createAttribute should preserve an enabled multivalued flag', () => {
+        const attribute = createAttribute({
+            idMx: 'attr-1',
+            name: 'phone',
+            position: { x: 10, y: 20 },
+            multivalued: true,
+            cell: ['attr-1', 'edge-1'],
+        })
+
+        expect(attribute).toMatchObject({
+            idMx: 'attr-1',
+            name: 'phone',
+            position: { x: 10, y: 20 },
+            key: false,
+            partialKey: false,
+            multivalued: true,
+            cell: ['attr-1', 'edge-1'],
+            offsetX: 0,
+            offsetY: 0,
+        })
+    })
+
+    test('createAttribute should omit disabled multivalued flags for compatibility', () => {
+        const attribute = createAttribute({
+            idMx: 'attr-1',
+            name: 'name',
+        })
+
+        expect(attribute).not.toHaveProperty('multivalued')
+        expect(isMultivaluedAttribute(attribute)).toBe(false)
+    })
+
+    test('marks the first attribute of a regular entity as primary key', () => {
+        expect(
+            getDefaultAttributeSemantics({
+                ownerType: ATTRIBUTE_OWNER_TYPES.ENTITY,
+                isFirstAttribute: true,
+            }),
+        ).toEqual({
+            key: true,
+            partialKey: false,
+        })
+    })
+
+    test('does not mark the first own attribute of an ISA specialization as primary key', () => {
+        expect(
+            getDefaultAttributeSemantics({
+                ownerType: ATTRIBUTE_OWNER_TYPES.ENTITY,
+                isFirstAttribute: true,
+                isIsaSpecializationOwner: true,
+            }),
+        ).toEqual({
+            key: false,
+            partialKey: false,
+        })
+    })
+
+    test('keeps relation attributes without key semantics', () => {
+        expect(
+            getDefaultAttributeSemantics({
+                ownerType: ATTRIBUTE_OWNER_TYPES.RELATION,
+                isFirstAttribute: true,
+            }),
+        ).toEqual({
+            key: false,
+            partialKey: false,
+        })
+    })
+})
+
+describe('Attribute tree removal', () => {
+    test('removeAttributeFromOwnerTreeById should remove nested attributes', () => {
         const owner = {
             attributes: [
                 {
-                    idMx: "attr-1",
-                    name: "address",
+                    idMx: 'attr-1',
+                    name: 'address',
                     children: [
-                        { idMx: "attr-2", name: "street" },
-                        { idMx: "attr-3", name: "city" },
+                        { idMx: 'attr-2', name: 'street' },
+                        { idMx: 'attr-3', name: 'city' },
                     ],
                 },
-                { idMx: "attr-4", name: "email" },
+                { idMx: 'attr-4', name: 'email' },
             ],
         }
 
         const removedAttribute = removeAttributeFromOwnerTreeById(
             owner,
-            "attr-2",
+            'attr-2',
         )
 
-        expect(removedAttribute).toEqual({ idMx: "attr-2", name: "street" })
+        expect(removedAttribute).toEqual({ idMx: 'attr-2', name: 'street' })
         expect(owner.attributes.map((attribute) => attribute.idMx))
-            .toEqual(["attr-3", "attr-4"])
+            .toEqual(['attr-3', 'attr-4'])
         expect(owner.attributes[0]).toEqual({
-            idMx: "attr-3",
-            name: "city",
+            idMx: 'attr-3',
+            name: 'city',
             key: false,
             partialKey: false,
             offsetX: 0,
             offsetY: 0,
         })
     })
-    
-    test("addChildAttributeToAttribute should initialize children and append the child", () => {
-        const parentAttribute = { idMx: "attr-1", name: "address" }
-        const childAttribute = { idMx: "attr-2", name: "street" }
 
-        const addedAttribute = addChildAttributeToAttribute(
-            parentAttribute,
-            childAttribute,
-        )
-
-        expect(addedAttribute).toBe(childAttribute)
-        expect(parentAttribute.children).toEqual([childAttribute])
-    })
-
-    test("convertSimpleAttributeToCompositeAttribute should keep the original attribute as the composite connector", () => {
-        const attribute = {
-            idMx: "attr-1",
-            name: "direccion",
-            key: true,
-            partialKey: false,
-        };
-        const firstChildAttribute = {
-            idMx: "attr-2",
-            name: "direccion",
-            key: false,
-            partialKey: false,
-        };
-
-        const convertedAttribute = convertSimpleAttributeToCompositeAttribute(
-            attribute,
-            firstChildAttribute,
-        );
-
-        expect(convertedAttribute).toBe(firstChildAttribute);
-        expect(attribute).toEqual({
-            idMx: "attr-1",
-            name: "direccion",
-            key: true,
-            partialKey: false,
-            children: [firstChildAttribute],
-        });
-    }); 
-
-    test("groupRootAttributesIntoCompositeAttribute should move selected root attributes under a new composite root", () => {
-        const owner = {
-            attributes: [
-                { idMx: "attr-id", name: "id", key: true },
-                { idMx: "attr-street", name: "calle", key: false },
-                { idMx: "attr-number", name: "numero", key: false },
-                { idMx: "attr-email", name: "email", key: false },
-            ],
-        };
-        const compositeAttribute = {
-            idMx: "attr-address",
-            name: "direccion",
-            key: false,
-            partialKey: false,
-        };
-
-        const result = groupRootAttributesIntoCompositeAttribute({
-            owner,
-            attributeIds: ["attr-street", "attr-number"],
-            compositeAttribute,
-        });
-
-        expect(result.compositeAttribute).toBe(compositeAttribute);
-        expect(result.childAttributes.map((attribute) => attribute.idMx)).toEqual([
-            "attr-street",
-            "attr-number",
-        ]);
-        expect(owner.attributes.map((attribute) => attribute.idMx)).toEqual([
-            "attr-id",
-            "attr-address",
-            "attr-email",
-        ]);
-        expect(owner.attributes[1]).toMatchObject({
-            idMx: "attr-address",
-            name: "direccion",
-            children: [
-                { idMx: "attr-street", name: "calle" },
-                { idMx: "attr-number", name: "numero" },
-            ],
-        });
-    });
-       
-    test("removeAttributeFromOwnerTreeById should delete empty children arrays", () => {
+    test('removeAttributeFromOwnerTreeById should delete empty children arrays', () => {
         const owner = {
             attributes: [
                 {
-                    idMx: "attr-1",
-                    name: "codigo",
+                    idMx: 'attr-1',
+                    name: 'codigo',
                     children: [
                         {
-                            idMx: "attr-2",
-                            name: "serie",
+                            idMx: 'attr-2',
+                            name: 'serie',
                         },
                     ],
                 },
@@ -376,83 +452,51 @@ describe("Hierarchical attribute helpers", () => {
 
         const removedAttribute = removeAttributeFromOwnerTreeById(
             owner,
-            "attr-2",
+            'attr-2',
         )
 
         expect(removedAttribute).toEqual({
-            idMx: "attr-2",
-            name: "serie",
+            idMx: 'attr-2',
+            name: 'serie',
         })
-
         expect(owner.attributes[0]).toEqual({
-            idMx: "attr-1",
-            name: "codigo",
-        })
-    })
-    test("createAttribute should preserve an enabled multivalued flag", () => {
-        const attribute = createAttribute({
-            idMx: "attr-1",
-            name: "phone",
-            position: { x: 10, y: 20 },
-            multivalued: true,
-            cell: ["attr-1", "edge-1"],
-        })
-
-        expect(attribute).toMatchObject({
-            idMx: "attr-1",
-            name: "phone",
-            position: { x: 10, y: 20 },
-            key: false,
-            partialKey: false,
-            multivalued: true,
-            cell: ["attr-1", "edge-1"],
-            offsetX: 0,
-            offsetY: 0,
+            idMx: 'attr-1',
+            name: 'codigo',
         })
     })
 
-    test("createAttribute should omit disabled multivalued flags for compatibility", () => {
-        const attribute = createAttribute({
-            idMx: "attr-1",
-            name: "name",
-        })
-
-        expect(attribute).not.toHaveProperty("multivalued")
-        expect(isMultivaluedAttribute(attribute)).toBe(false)
-    })
-    
-    test("removeAttributeFromOwnerTreeByIdWithPromotion should report promoted attributes", () => {
+    test('removeAttributeFromOwnerTreeByIdWithPromotion should report promoted attributes', () => {
         const owner = {
             attributes: [
                 {
-                    idMx: "attr-1",
-                    name: "address",
+                    idMx: 'attr-1',
+                    name: 'address',
                     children: [
-                        { idMx: "attr-2", name: "street" },
-                        { idMx: "attr-3", name: "city" },
+                        { idMx: 'attr-2', name: 'street' },
+                        { idMx: 'attr-3', name: 'city' },
                     ],
-                    cell: ["attr-1", "edge-1"],
+                    cell: ['attr-1', 'edge-1'],
                 },
             ],
         }
 
         const result = removeAttributeFromOwnerTreeByIdWithPromotion(
             owner,
-            "attr-2",
+            'attr-2',
         )
 
         expect(result.removedAttribute).toEqual({
-            idMx: "attr-2",
-            name: "street",
+            idMx: 'attr-2',
+            name: 'street',
         })
         expect(result.removedCompositeAttribute).toEqual({
-            idMx: "attr-1",
-            name: "address",
-            cell: ["attr-1", "edge-1"],
+            idMx: 'attr-1',
+            name: 'address',
+            cell: ['attr-1', 'edge-1'],
         })
         expect(result.promotedAttribute).toEqual({
-            idMx: "attr-3",
-            name: "city",
+            idMx: 'attr-3',
+            name: 'city',
             key: false,
             partialKey: false,
             offsetX: 0,
@@ -461,179 +505,22 @@ describe("Hierarchical attribute helpers", () => {
         expect(owner.attributes).toEqual([result.promotedAttribute])
     })
 
-    test("convertSubattributeToSimpleAttributeById should detach one child when the composite keeps enough children", () => {
+    test('promoted attributes should inherit composite attribute semantics', () => {
         const owner = {
             attributes: [
                 {
-                    idMx: "attr-address",
-                    name: "address",
-                    offsetX: 10,
-                    offsetY: 20,
-                    children: [
-                        {
-                            idMx: "attr-street",
-                            name: "street",
-                            offsetX: 100,
-                            offsetY: -30,
-                        },
-                        {
-                            idMx: "attr-city",
-                            name: "city",
-                            offsetX: 100,
-                            offsetY: 10,
-                        },
-                        {
-                            idMx: "attr-zip",
-                            name: "zip",
-                            offsetX: 100,
-                            offsetY: 50,
-                        },
-                    ],
-                },
-                {
-                    idMx: "attr-email",
-                    name: "email",
-                },
-            ],
-        }
-
-        const result = convertSubattributeToSimpleAttributeById(
-            owner,
-            "attr-city",
-        )
-
-        expect(result.removedCompositeAttribute).toBe(null)
-        expect(result.convertedAttributes).toEqual([
-            {
-                idMx: "attr-city",
-                name: "city",
-                key: false,
-                partialKey: false,
-                offsetX: 110,
-                offsetY: 30,
-            },
-        ])
-
-        expect(owner.attributes.map((attribute) => attribute.idMx)).toEqual([
-            "attr-address",
-            "attr-city",
-            "attr-email",
-        ])
-
-        expect(owner.attributes[0].children.map((attribute) => attribute.idMx))
-            .toEqual(["attr-street", "attr-zip"])
-    })
-
-    test("convertSubattributeToSimpleAttributeById should remove two-child composite groups", () => {
-        const owner = {
-            attributes: [
-                {
-                    idMx: "attr-code",
-                    name: "code",
-                    key: true,
-                    partialKey: false,
-                    offsetX: 20,
-                    offsetY: 30,
-                    cell: ["attr-code", "edge-code"],
-                    children: [
-                        {
-                            idMx: "attr-series",
-                            name: "series",
-                            offsetX: 100,
-                            offsetY: -20,
-                        },
-                        {
-                            idMx: "attr-number",
-                            name: "number",
-                            offsetX: 100,
-                            offsetY: 20,
-                        },
-                    ],
-                },
-            ],
-        }
-
-        const result = convertSubattributeToSimpleAttributeById(
-            owner,
-            "attr-series",
-        )
-
-        expect(result.removedCompositeAttribute).toEqual({
-            idMx: "attr-code",
-            name: "code",
-            key: true,
-            partialKey: false,
-            offsetX: 20,
-            offsetY: 30,
-            cell: ["attr-code", "edge-code"],
-        })
-
-        expect(result.convertedAttributes).toEqual([
-            {
-                idMx: "attr-series",
-                name: "series",
-                key: true,
-                partialKey: false,
-                offsetX: 120,
-                offsetY: 10,
-            },
-            {
-                idMx: "attr-number",
-                name: "number",
-                key: true,
-                partialKey: false,
-                offsetX: 120,
-                offsetY: 50,
-            },
-        ])
-
-        expect(owner.attributes).toEqual(result.convertedAttributes)
-    })
-
-    test("convertSubattributeToSimpleAttributeById should do nothing for top-level attributes", () => {
-        const owner = {
-            attributes: [
-                {
-                    idMx: "attr-name",
-                    name: "name",
-                },
-            ],
-        }
-
-        const result = convertSubattributeToSimpleAttributeById(
-            owner,
-            "attr-name",
-        )
-
-        expect(result).toEqual({
-            convertedAttributes: [],
-            removedCompositeAttribute: null,
-        })
-
-        expect(owner.attributes).toEqual([
-            {
-                idMx: "attr-name",
-                name: "name",
-            },
-        ])
-    })
-
-    test("promoted attributes should inherit composite attribute semantics", () => {
-        const owner = {
-            attributes: [
-                {
-                    idMx: "attr-1",
-                    name: "contact",
+                    idMx: 'attr-1',
+                    name: 'contact',
                     key: true,
                     partialKey: false,
                     multivalued: true,
                     offsetX: 10,
                     offsetY: 20,
                     children: [
-                        { idMx: "attr-2", name: "prefix" },
+                        { idMx: 'attr-2', name: 'prefix' },
                         {
-                            idMx: "attr-3",
-                            name: "number",
+                            idMx: 'attr-3',
+                            name: 'number',
                             key: false,
                             partialKey: false,
                             offsetX: 30,
@@ -646,12 +533,12 @@ describe("Hierarchical attribute helpers", () => {
 
         const result = removeAttributeFromOwnerTreeByIdWithPromotion(
             owner,
-            "attr-2",
+            'attr-2',
         )
 
         expect(result.promotedAttribute).toMatchObject({
-            idMx: "attr-3",
-            name: "number",
+            idMx: 'attr-3',
+            name: 'number',
             key: true,
             partialKey: false,
             multivalued: true,
@@ -659,119 +546,264 @@ describe("Hierarchical attribute helpers", () => {
             offsetY: 60,
         })
     })
-    test("key helpers should inspect nested attribute trees", () => {
-        const attributes = [
-            {
-                idMx: "attr-1",
-                name: "codigo",
-                key: true,
-                children: [
-                    { idMx: "attr-2", name: "serie" },
-                    { idMx: "attr-3", name: "numero" },
-                ],
-            },
-            {
-                idMx: "attr-4",
-                name: "periodo",
-                children: [
-                    {
-                        idMx: "attr-5",
-                        name: "fecha",
-                        partialKey: true,
-                    },
-                ],
-            },
-        ];
-
-        expect(hasPrimaryKeyAttributeInTree(attributes)).toBe(true);
-        expect(hasPartialKeyAttributeInTree(attributes)).toBe(true);
-        expect(
-            getPrimaryKeyAttributesInTree(attributes).map(
-                (attribute) => attribute.idMx,
-            ),
-        ).toEqual(["attr-1"]);
-        expect(
-            getPartialKeyAttributesInTree(attributes).map(
-                (attribute) => attribute.idMx,
-            ),
-        ).toEqual(["attr-5"]);
-    });
-
-    test("predicate helpers should inspect nested attribute trees", () => {
-        const attributes = [
-            {
-                idMx: "attr-address",
-                name: "direccion",
-                children: [
-                    {
-                        idMx: "attr-street",
-                        name: "calle",
-                    },
-                ],
-            },
-            {
-                idMx: "attr-billing-address",
-                name: "direccion_facturacion",
-                children: [
-                    {
-                        idMx: "attr-billing-street",
-                        name: "calle",
-                        multivalued: true,
-                    },
-                    {
-                        idMx: "attr-billing-city",
-                        name: "ciudad",
-                        children: [],
-                    },
-                ],
-            },
-        ];
-
-        expect(
-            getAttributesInTreeMatching(
-                attributes,
-                (attribute) => attribute.name === "calle",
-            ).map((attribute) => attribute.idMx),
-        ).toEqual(["attr-street", "attr-billing-street"]);
-
-        expect(
-            someAttributeInTree(
-                attributes,
-                (attribute) => attribute.idMx === "attr-billing-city",
-            ),
-        ).toBe(true);
-
-        expect(hasMultivaluedAttributeInTree(attributes)).toBe(true);
-        expect(hasEmptyCompositeAttributeInTree(attributes)).toBe(true);
-        expect(hasRepeatedSiblingAttributeNamesInTree(attributes)).toBe(false);
-
-        attributes[1].children.push({
-            idMx: "attr-billing-street-copy",
-            name: "calle",
-        });
-
-        expect(hasRepeatedSiblingAttributeNamesInTree(attributes)).toBe(true);
-    }); 
 })
 
-describe("Tree attribute key semantic transitions", () => {
-    test("toggleExclusivePrimaryKeyAttributeInTree marks the root attribute when selecting a child", () => {
+describe('Attribute tree composition and conversion', () => {
+    test('addChildAttributeToAttribute should initialize children and append the child', () => {
+        const parentAttribute = { idMx: 'attr-1', name: 'address' }
+        const childAttribute = { idMx: 'attr-2', name: 'street' }
+
+        const addedAttribute = addChildAttributeToAttribute(
+            parentAttribute,
+            childAttribute,
+        )
+
+        expect(addedAttribute).toBe(childAttribute)
+        expect(parentAttribute.children).toEqual([childAttribute])
+    })
+
+    test('convertSimpleAttributeToCompositeAttribute should keep the original attribute as the composite connector', () => {
+        const attribute = {
+            idMx: 'attr-1',
+            name: 'direccion',
+            key: true,
+            partialKey: false,
+        }
+        const firstChildAttribute = {
+            idMx: 'attr-2',
+            name: 'direccion',
+            key: false,
+            partialKey: false,
+        }
+
+        const convertedAttribute = convertSimpleAttributeToCompositeAttribute(
+            attribute,
+            firstChildAttribute,
+        )
+
+        expect(convertedAttribute).toBe(firstChildAttribute)
+        expect(attribute).toEqual({
+            idMx: 'attr-1',
+            name: 'direccion',
+            key: true,
+            partialKey: false,
+            children: [firstChildAttribute],
+        })
+    })
+
+    test('groupRootAttributesIntoCompositeAttribute should move selected root attributes under a new composite root', () => {
+        const owner = {
+            attributes: [
+                { idMx: 'attr-id', name: 'id', key: true },
+                { idMx: 'attr-street', name: 'calle', key: false },
+                { idMx: 'attr-number', name: 'numero', key: false },
+                { idMx: 'attr-email', name: 'email', key: false },
+            ],
+        }
+        const compositeAttribute = {
+            idMx: 'attr-address',
+            name: 'direccion',
+            key: false,
+            partialKey: false,
+        }
+
+        const result = groupRootAttributesIntoCompositeAttribute({
+            owner,
+            attributeIds: ['attr-street', 'attr-number'],
+            compositeAttribute,
+        })
+
+        expect(result.compositeAttribute).toBe(compositeAttribute)
+        expect(result.childAttributes.map((attribute) => attribute.idMx)).toEqual([
+            'attr-street',
+            'attr-number',
+        ])
+        expect(owner.attributes.map((attribute) => attribute.idMx)).toEqual([
+            'attr-id',
+            'attr-address',
+            'attr-email',
+        ])
+        expect(owner.attributes[1]).toMatchObject({
+            idMx: 'attr-address',
+            name: 'direccion',
+            children: [
+                { idMx: 'attr-street', name: 'calle' },
+                { idMx: 'attr-number', name: 'numero' },
+            ],
+        })
+    })
+
+    test('convertSubattributeToSimpleAttributeById should detach one child when the composite keeps enough children', () => {
+        const owner = {
+            attributes: [
+                {
+                    idMx: 'attr-address',
+                    name: 'address',
+                    offsetX: 10,
+                    offsetY: 20,
+                    children: [
+                        {
+                            idMx: 'attr-street',
+                            name: 'street',
+                            offsetX: 100,
+                            offsetY: -30,
+                        },
+                        {
+                            idMx: 'attr-city',
+                            name: 'city',
+                            offsetX: 100,
+                            offsetY: 10,
+                        },
+                        {
+                            idMx: 'attr-zip',
+                            name: 'zip',
+                            offsetX: 100,
+                            offsetY: 50,
+                        },
+                    ],
+                },
+                {
+                    idMx: 'attr-email',
+                    name: 'email',
+                },
+            ],
+        }
+
+        const result = convertSubattributeToSimpleAttributeById(
+            owner,
+            'attr-city',
+        )
+
+        expect(result.removedCompositeAttribute).toBe(null)
+        expect(result.convertedAttributes).toEqual([
+            {
+                idMx: 'attr-city',
+                name: 'city',
+                key: false,
+                partialKey: false,
+                offsetX: 110,
+                offsetY: 30,
+            },
+        ])
+        expect(owner.attributes.map((attribute) => attribute.idMx)).toEqual([
+            'attr-address',
+            'attr-city',
+            'attr-email',
+        ])
+        expect(owner.attributes[0].children.map((attribute) => attribute.idMx))
+            .toEqual(['attr-street', 'attr-zip'])
+    })
+
+    test('convertSubattributeToSimpleAttributeById should remove two-child composite groups', () => {
+        const owner = {
+            attributes: [
+                {
+                    idMx: 'attr-code',
+                    name: 'code',
+                    key: true,
+                    partialKey: false,
+                    offsetX: 20,
+                    offsetY: 30,
+                    cell: ['attr-code', 'edge-code'],
+                    children: [
+                        {
+                            idMx: 'attr-series',
+                            name: 'series',
+                            offsetX: 100,
+                            offsetY: -20,
+                        },
+                        {
+                            idMx: 'attr-number',
+                            name: 'number',
+                            offsetX: 100,
+                            offsetY: 20,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        const result = convertSubattributeToSimpleAttributeById(
+            owner,
+            'attr-series',
+        )
+
+        expect(result.removedCompositeAttribute).toEqual({
+            idMx: 'attr-code',
+            name: 'code',
+            key: true,
+            partialKey: false,
+            offsetX: 20,
+            offsetY: 30,
+            cell: ['attr-code', 'edge-code'],
+        })
+        expect(result.convertedAttributes).toEqual([
+            {
+                idMx: 'attr-series',
+                name: 'series',
+                key: true,
+                partialKey: false,
+                offsetX: 120,
+                offsetY: 10,
+            },
+            {
+                idMx: 'attr-number',
+                name: 'number',
+                key: true,
+                partialKey: false,
+                offsetX: 120,
+                offsetY: 50,
+            },
+        ])
+        expect(owner.attributes).toEqual(result.convertedAttributes)
+    })
+
+    test('convertSubattributeToSimpleAttributeById should do nothing for top-level attributes', () => {
+        const owner = {
+            attributes: [
+                {
+                    idMx: 'attr-name',
+                    name: 'name',
+                },
+            ],
+        }
+
+        const result = convertSubattributeToSimpleAttributeById(
+            owner,
+            'attr-name',
+        )
+
+        expect(result).toEqual({
+            convertedAttributes: [],
+            removedCompositeAttribute: null,
+        })
+        expect(owner.attributes).toEqual([
+            {
+                idMx: 'attr-name',
+                name: 'name',
+            },
+        ])
+    })
+})
+
+describe('Attribute key semantic transitions', () => {
+    test('toggleExclusivePrimaryKeyAttributeInTree marks the root attribute when selecting a child', () => {
         const attributes = [
             {
-                idMx: "attr-id",
-                name: "id",
+                idMx: 'attr-id',
+                name: 'id',
                 key: true,
                 partialKey: false,
             },
             {
-                idMx: "attr-address",
-                name: "address",
+                idMx: 'attr-address',
+                name: 'address',
                 key: false,
                 partialKey: false,
                 children: [
                     {
-                        idMx: "attr-street",
-                        name: "street",
+                        idMx: 'attr-street',
+                        name: 'street',
                         key: false,
                         partialKey: false,
                     },
@@ -781,7 +813,7 @@ describe("Tree attribute key semantic transitions", () => {
 
         const result = toggleExclusivePrimaryKeyAttributeInTree(
             attributes,
-            "attr-street",
+            'attr-street',
         )
 
         expect(result).toMatchObject({
@@ -796,17 +828,17 @@ describe("Tree attribute key semantic transitions", () => {
         })
     })
 
-    test("toggleExclusivePartialKeyAttributeInTree marks the root attribute when selecting a child", () => {
+    test('toggleExclusivePartialKeyAttributeInTree marks the root attribute when selecting a child', () => {
         const attributes = [
             {
-                idMx: "attr-code",
-                name: "code",
+                idMx: 'attr-code',
+                name: 'code',
                 key: false,
                 partialKey: false,
                 children: [
                     {
-                        idMx: "attr-series",
-                        name: "series",
+                        idMx: 'attr-series',
+                        name: 'series',
                         key: false,
                         partialKey: false,
                     },
@@ -816,7 +848,7 @@ describe("Tree attribute key semantic transitions", () => {
 
         const result = toggleExclusivePartialKeyAttributeInTree(
             attributes,
-            "attr-series",
+            'attr-series',
         )
 
         expect(result).toMatchObject({
@@ -829,68 +861,99 @@ describe("Tree attribute key semantic transitions", () => {
             partialKey: false,
         })
     })
-})
 
-describe("Flat attribute key semantic transitions", () => {
-    test("convertPrimaryKeyToPartialKey should preserve the selected key candidate", () => {
+    test('clearPrimaryKeyAttributesInTree should remove primary key semantics from root attributes', () => {
         const attributes = [
             {
-                idMx: "attr-id",
-                name: "id",
+                idMx: 'attr-id',
+                name: 'id',
                 key: true,
                 partialKey: false,
             },
             {
-                idMx: "attr-name",
-                name: "name",
+                idMx: 'attr-address',
+                name: 'address',
+                key: false,
+                partialKey: false,
+                children: [
+                    {
+                        idMx: 'attr-street',
+                        name: 'street',
+                        key: true,
+                        partialKey: false,
+                    },
+                ],
+            },
+        ]
+
+        const changedAttributes = clearPrimaryKeyAttributesInTree(attributes)
+
+        expect(changedAttributes.map((attribute) => attribute.idMx)).toEqual([
+            'attr-id',
+            'attr-address',
+        ])
+        expect(getPrimaryKeyAttributesInTree(attributes)).toEqual([])
+    })
+
+    test('convertPrimaryKeyToPartialKey should preserve the selected key candidate', () => {
+        const attributes = [
+            {
+                idMx: 'attr-id',
+                name: 'id',
+                key: true,
+                partialKey: false,
+            },
+            {
+                idMx: 'attr-name',
+                name: 'name',
                 key: false,
                 partialKey: false,
             },
-        ];
+        ]
 
-        const changedAttributes = convertPrimaryKeyToPartialKey(attributes);
+        const changedAttributes = convertPrimaryKeyToPartialKey(attributes)
 
         expect(changedAttributes.map((attribute) => attribute.idMx)).toEqual([
-            "attr-id",
-        ]);
+            'attr-id',
+        ])
         expect(attributes[0]).toMatchObject({
             key: false,
             partialKey: true,
-        });
+        })
         expect(attributes[1]).toMatchObject({
             key: false,
             partialKey: false,
-        });
-    });
+        })
+    })
 
-    test("convertPartialKeyToPrimaryKey should preserve the selected partial key candidate", () => {
+    test('convertPartialKeyToPrimaryKey should preserve the selected partial key candidate', () => {
         const attributes = [
             {
-                idMx: "attr-code",
-                name: "code",
+                idMx: 'attr-code',
+                name: 'code',
                 key: false,
                 partialKey: true,
             },
             {
-                idMx: "attr-name",
-                name: "name",
+                idMx: 'attr-name',
+                name: 'name',
                 key: false,
                 partialKey: false,
             },
-        ];
+        ]
 
-        const changedAttributes = convertPartialKeyToPrimaryKey(attributes);
+        const changedAttributes = convertPartialKeyToPrimaryKey(attributes)
 
         expect(changedAttributes.map((attribute) => attribute.idMx)).toEqual([
-            "attr-code",
-        ]);
+            'attr-code',
+        ])
         expect(attributes[0]).toMatchObject({
             key: true,
             partialKey: false,
-        });
+        })
         expect(attributes[1]).toMatchObject({
             key: false,
             partialKey: false,
-        });
-    });
-});
+        })
+    })
+})

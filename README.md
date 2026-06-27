@@ -1,30 +1,93 @@
-# Draw Entity-Relation App
+# UBU E-R App
 
 ![Demo](assets/demo.gif)
 
-## Introduction
-Draw Entity-Relation App is a web application designed to model entity-relationship diagrams and export them as SQL scripts after validation. Built with React and using the mxGraph library for diagram creation and manipulation, this tool provides an intuitive interface for users to visually design and structure databases.
+UBU E-R App is a web application for modelling Entity-Relationship diagrams in the browser. The application allows users to create and edit E-R diagrams, validate their structure, transform them into a relational representation and generate SQL scripts from the resulting schema.
 
-## Features
-- **Interactive Diagram Modeling**: Create and manipulate entity-relationship diagrams with an intuitive drag-and-drop interface.
-- **Entity and Attribute Management**: Add entities, define attributes, and establish relationships with ease.
-- **JSON Export/Import**: Export validated diagrams to json files, ready for import and recreate.
-- **SQL Export**: Export validated diagrams to SQL scripts, ready for database implementation.
-- **Responsive UI**: Built with React and Material UI for a modern, responsive user experience.
+The project is developed with React and mxGraph. It is based on the original Draw Entity-Relation App and has been extended and stabilised as part of a Bachelor's Thesis at the University of Burgos.
 
-## Technologies Used
-- **React**: JavaScript library for building user interfaces.
-- **mxGraph**: JavaScript library for creating and manipulating diagrams.
-- **Material UI**: React components for faster and easier web development.
-### Development
-- **Vitest**: Testing framework for unit tests.
-- **Playwright**: Framework for end-to-end testing.
-- **GitHub Actions**: Continuous integration and deployment workflows.
+## Main features
 
-## How It Works
-1. **Modeling Diagrams**: Use the toolbar to drag entities and relationships onto the canvas. Customize entities by adding attributes and defining relationships between them.
-2. **Exporting SQL**: The diagram is validated and then exported to a SQL script, which can be used to create the corresponding database schema.
-3. **Exporting and importing the diagram as JSON**: The diagram is validated and then exported to a JSON file that contains the necessary structure to be able to import it and recreate it.
+* Interactive creation and editing of Entity-Relationship diagrams.
+* Support for strong entities, weak entities, attributes, binary relationships, ternary relationships and multivalued or composite attributes.
+* Initial and controlled support for ISA/generalisation-specialisation structures.
+* Diagram validation before generating relational structures or SQL scripts.
+* Transformation from the conceptual E-R model to a relational representation.
+* SQL generation with simplified foreign key rendering.
+* Export and import of diagrams in JSON format, with replace and merge modes.
+* Visual export of the canvas as PNG or SVG.
+* View adjustment tools to improve navigation in the canvas.
+* Contextual actions depending on the selected element.
+* Visible multi-selection support for moving or deleting several elements at once.
+* Help and About sections with project information and credits.
+* Spanish and English interface texts.
 
-## Continuous Integration and Deployment
-The project uses GitHub Actions for continuous integration and deployment. Each commit triggers a pipeline that runs unit and end-to-end tests, ensuring the integrity and reliability of the codebase. Successful builds are automatically deployed to Vercel for both [production](https://draw-entity-relation.vercel.app/) and preview environments.
+## Technologies
+
+* React
+* mxGraph
+* Material UI
+* Vitest
+* Playwright
+* GitHub Actions
+* Vercel
+
+## Installation
+
+Install the project dependencies with:
+
+```bash
+npm install
+```
+
+Start the development server with:
+
+```bash
+npm start
+```
+
+Create a production build with:
+
+```bash
+npm run build
+```
+
+## Testing
+
+Run the unit test suite with:
+
+```bash
+npm test
+```
+
+Run the end-to-end tests with:
+
+```bash
+npx playwright test
+```
+
+## Current scope and limitations
+
+The application focuses on the creation, validation and transformation of E-R diagrams into relational structures and SQL scripts.
+
+The support for ISA structures is initial and controlled. It covers a generalisation with one or more specialisations, inherited primary keys and the generation of one table for the generalisation and one table for each specialisation.
+
+Some advanced E-R concepts remain outside the current scope, including aggregation support, full ISA constraints such as total/partial or overlapping/disjoint specialisations, discriminants for ISA hierarchies and full multiple inheritance support.
+
+## Deployment
+
+The application is deployed on Vercel:
+
+* Production: https://draw-entity-relation.vercel.app/
+
+## Credits
+
+This project is based on the original Draw Entity-Relation App developed by Rubén Maté Iturriaga.
+
+The current version extends and stabilises that application as part of a Bachelor's Thesis at the University of Burgos.
+
+## License
+
+This project is distributed under the MIT License.
+
+Third-party dependencies keep their respective licenses.

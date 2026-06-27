@@ -4,9 +4,11 @@
 
 El proyecto se desarrolla como una aplicación web ejecutada en el navegador. Este enfoque permite que el editor pueda utilizarse sin instalar una aplicación de escritorio específica, manteniendo gran parte de la lógica dentro del propio cliente web.
 
-El entorno de desarrollo se apoya en Node.js y npm para la gestión de dependencias y la ejecución de los scripts del proyecto. A través de estos scripts se realizan tareas habituales como arrancar la aplicación en modo desarrollo, generar la versión de producción o ejecutar las pruebas definidas.
+La aplicación está desarrollada principalmente en JavaScript y se apoya en Node.js y npm para la gestión de dependencias y la ejecución de los scripts del proyecto \cite{nodejs,npm}. A través de estos scripts se realizan tareas habituales como arrancar la aplicación en modo desarrollo, generar la versión de producción o ejecutar las pruebas definidas.
 
-Este planteamiento encaja con el tipo de herramienta desarrollada, ya que el usuario interactúa directamente con una interfaz gráfica y con un área de edición visual. Por ello, gran parte del trabajo se centra en coordinar la interfaz, la representación gráfica del diagrama y el modelo interno que mantiene la aplicación.
+Durante el desarrollo se utilizó Visual Studio Code como editor principal \cite{vscode}. Esta herramienta permitió trabajar de forma cómoda con el código fuente, revisar la estructura del proyecto, utilizar integración con Git y modificar tanto los ficheros de implementación como los documentos asociados al trabajo.
+
+Este planteamiento encaja con el tipo de herramienta desarrollada, ya que el usuario interactúa con una interfaz gráfica y un área de edición visual que deben mantenerse coordinadas con el modelo interno de la aplicación.
 
 \section{Librerías principales del editor}
 
@@ -16,7 +18,9 @@ Para la representación y manipulación de los diagramas se utiliza mxGraph \cit
 
 Además, el proyecto utiliza Material UI para algunos componentes de la interfaz \cite{material-ui}. Esta librería facilita la creación de elementos visuales comunes, como botones, diálogos o controles de interacción, manteniendo una apariencia más uniforme dentro de la aplicación.
 
-En conjunto, estas librerías permiten construir un editor web en el que la interfaz, el área gráfica y las acciones del usuario trabajan de forma coordinada. En este trabajo, lo relevante no es solo el uso de estas herramientas por separado, sino la forma en la que se integran para representar diagramas Entidad-Relación de manera coherente.
+También se emplean dependencias de apoyo para aspectos concretos de la interfaz, como la visualización de notificaciones al usuario tras determinadas acciones. Estas dependencias no constituyen el núcleo del editor, pero contribuyen a mejorar la respuesta visual de la aplicación durante su uso.
+
+En conjunto, estas librerías permiten construir un editor web en el que la interfaz, el área gráfica y las acciones del usuario se integran para representar diagramas Entidad-Relación de forma coherente.
 
 \section{Herramientas de validación y pruebas}
 
@@ -26,12 +30,50 @@ Para las pruebas unitarias se utiliza Vitest \cite{vitest}. Esta herramienta per
 
 Además, el proyecto cuenta con pruebas end-to-end mediante Playwright \cite{playwright}. Estas pruebas permiten ejecutar escenarios completos sobre la aplicación en el navegador, simulando acciones del usuario y comprobando que determinados flujos siguen funcionando correctamente.
 
-Junto a las pruebas, se utiliza Biome como herramienta de formateo y análisis estático del código \cite{biome}. Su uso ayuda a mantener un estilo más uniforme y a detectar ciertos problemas antes de integrar cambios en el proyecto. También se emplea Lefthook para ejecutar comprobaciones asociadas al flujo de trabajo con Git.
+Junto a las pruebas, se utiliza Biome como herramienta de formateo y análisis estático del código \cite{biome}. Su uso ayuda a mantener un estilo más uniforme y a detectar ciertos problemas antes de integrar cambios en el proyecto. También se emplea Lefthook para ejecutar comprobaciones asociadas al flujo de trabajo con Git \cite{lefthook}.
 
-\section{Control de versiones y apoyo al desarrollo}
+\section{Control de versiones, integración y despliegue}
 
-Para el control de versiones se utiliza Git, lo que permite registrar los cambios realizados en el proyecto y trabajar de forma más ordenada durante el desarrollo \cite{git}. El uso de commits y ramas facilita separar las distintas tareas y mantener un historial del trabajo realizado.
+Para el control de versiones se utiliza Git, lo que permite registrar los cambios realizados en el proyecto y trabajar de forma más ordenada durante el desarrollo \cite{git}. El uso de commits y ramas facilita separar las distintas tareas, revisar la evolución del código y mantener un historial del trabajo realizado.
 
-El proyecto se gestiona mediante GitHub, que se utiliza como repositorio remoto y como apoyo para la organización del desarrollo \cite{github}. A través de sus herramientas se pueden documentar tareas, revisar cambios y mantener una trazabilidad básica de la evolución del editor.
+El proyecto se gestiona mediante GitHub, que se utiliza como repositorio remoto y como apoyo para la organización del desarrollo \cite{github}. A través de sus herramientas se documentan tareas, se agrupa el trabajo en issues y milestones, y se mantiene una trazabilidad básica de la evolución del editor.
 
-Además de las herramientas propias del código, durante la redacción de la memoria se utiliza Overleaf como entorno de trabajo para el proyecto LaTeX. Esto permite editar la documentación de forma progresiva y comprobar que la memoria y los anexos compilan correctamente mientras se van completando los distintos capítulos.
+También se utilizaron mecanismos de comprobación asociados al repositorio mediante GitHub Actions. En concreto, estos flujos permiten ejecutar pruebas y revisiones de calidad del código, ayudando a detectar problemas antes de integrar cambios y contribuyendo a mantener la estabilidad durante la evolución incremental de la aplicación.
+
+Además del entorno local, se utilizó Vercel para disponer de versiones desplegadas de la aplicación durante el desarrollo \cite{vercel}. Estos despliegues permitieron validar prototipos funcionales desde el navegador y facilitar la revisión de cambios sin depender siempre de una instalación local del proyecto.
+
+\section{Documentación y redacción de la memoria}
+
+Además de las herramientas relacionadas con el código, durante el proyecto se ha trabajado con documentación en LaTeX. La memoria y los anexos siguen la estructura de la plantilla del Trabajo Fin de Grado.
+
+Para la redacción se utiliza Overleaf como entorno de trabajo del proyecto LaTeX \cite{overleaf}. Esta herramienta permite editar la documentación de forma progresiva y comprobar que la memoria y los anexos compilan correctamente mientras se van completando los distintos capítulos.
+
+Esta parte documental permite justificar el proceso seguido, las decisiones tomadas, el alcance real de la implementación y las posibles líneas de continuación.
+
+La Tabla \ref{tab:herramientas_proyecto} resume el papel principal de las herramientas utilizadas durante el desarrollo y la documentación del proyecto.
+
+\begin{table}[h]
+    \centering
+    \caption{Resumen de herramientas utilizadas en el proyecto.}
+    \label{tab:herramientas_proyecto}
+    \begin{tabular}{p{0.22\textwidth} p{0.66\textwidth}}
+        \toprule
+        \textbf{Herramienta} & \textbf{Uso en el proyecto} \\
+        \midrule
+        Node.js y npm & Gestión de dependencias y ejecución de scripts del proyecto. \\
+        Visual Studio Code & Editor principal utilizado durante el desarrollo. \\
+        React & Construcción de la interfaz web mediante componentes. \\
+        mxGraph & Representación y manipulación gráfica de los diagramas. \\
+        Material UI & Componentes visuales de apoyo para la interfaz. \\
+        Vitest & Pruebas unitarias de partes concretas de la lógica. \\
+        Playwright & Pruebas end-to-end sobre la aplicación en navegador. \\
+        Biome & Formateo y análisis estático del código. \\
+        Lefthook & Ejecución de comprobaciones asociadas al flujo de trabajo con Git. \\
+        Git y GitHub & Control de versiones, organización de tareas y trazabilidad. \\
+        GitHub Actions & Ejecución automática de comprobaciones, pruebas y revisiones de calidad del código. \\
+        Vercel & Despliegue de versiones funcionales de la aplicación para validación y revisión desde el navegador. \\
+        Overleaf y LaTeX & Redacción y compilación de la memoria y los anexos. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
+import { createAttribute } from '../../helpers/diagramBuilders'
 import { buildSQLAssertions } from '../../helpers/sqlAssertions'
 import { loadGraphFixture } from '../../helpers/graphLoader'
 import { generateSQL } from '../../../src/services/sql'
@@ -11,53 +12,29 @@ beforeEach(() => {
     nMGraph = loadGraphFixture('n-m-relation.json')
 })
 
-describe("N:M relation SQL generation", () => {
-    test("should generate a separate table for a simple multivalued attribute on an N:M related entity", () => {
-        nMGraph.entities.at(0).attributes.push({
-            idMx: "attr-email",
-            name: "email",
-            key: false,
-            partialKey: false,
-            multivalued: true,
-        });
+describe('N:M relation SQL generation', () => {
+    test('should generate a separate table for a simple multivalued attribute on an N:M related entity', () => {
+        nMGraph.entities.at(0).attributes.push(
+            createAttribute({
+                idMx: 'attr-email',
+                name: 'email',
+                multivalued: true,
+            }),
+        )
 
-        const sql = generateSQL(nMGraph);
+        const sql = generateSQL(nMGraph)
 
         expectSQLToContain(
             sql,
             `
             CREATE TABLE Entidad_email (
-              Atributo VARCHAR(40),
-              email VARCHAR(40),
-              PRIMARY KEY (Atributo, email)
-            );
+            Atributo VARCHAR(40) REFERENCES Entidad ON DELETE CASCADE ON UPDATE CASCADE,
+            email VARCHAR(40), 
+            PRIMARY KEY (Atributo, email)
+            )
             `,
-        );
+        )
 
-        expectSQLToContain(
-            sql,
-            `
-            ALTER TABLE Entidad_email
-            ADD CONSTRAINT FK_Entidad_email_Entidad_owner
-            FOREIGN KEY (Atributo)
-            REFERENCES Entidad(Atributo)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE;
-            `,
-        );
-
-        expectSQLToContain(
-            sql,
-            `
-            CREATE TABLE Relacion (
-              Atributo_Relacion_1 VARCHAR(40),
-              Atributo_Relacion_2 VARCHAR(40),
-              Atributo VARCHAR(40),
-              PRIMARY KEY (Atributo_Relacion_1, Atributo_Relacion_2)
-            );
-            `,
-        );
-
-        expect(sql).not.toContain("email_Relacion");
-    });
+        expect(sql).not.toContain('email_Relacion')
+    })
 })

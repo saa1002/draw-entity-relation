@@ -2,65 +2,233 @@
 
 \section{Introducción}
 
-En este anexo se recoge la planificación general seguida durante el desarrollo del Trabajo Fin de Grado, así como una valoración inicial de su viabilidad. El proyecto se ha abordado como una evolución de una aplicación ya existente para el diseño de diagramas Entidad-Relación, por lo que la planificación no partió de un desarrollo completamente nuevo, sino de una fase previa de análisis del sistema heredado.
+En este anexo se describe la planificación seguida durante el desarrollo del Trabajo Fin de Grado, así como el estudio de viabilidad asociado. A diferencia de un proyecto iniciado desde cero, este trabajo parte de una aplicación heredada, por lo que la planificación no se centró únicamente en añadir nuevas funcionalidades, sino también en comprender el sistema existente, estabilizar su comportamiento y ampliar sus capacidades de forma controlada.
 
-El trabajo se organizó de forma incremental. En primer lugar se revisó el estado inicial del editor, se preparó el entorno de desarrollo y se analizaron los principales módulos de la aplicación. A partir de esa base, se fueron realizando tareas de estabilización, ampliación funcional, validación y redacción de la memoria.
+La planificación temporal recoge la forma en la que se organizó el trabajo, las fases principales del desarrollo y los mecanismos utilizados para realizar el seguimiento del proyecto. En este proceso se utilizaron issues y milestones de GitHub, ramas de desarrollo, revisiones con el tutor y despliegues funcionales en Vercel, que permitieron comprobar el estado de la aplicación desde el navegador sin depender de una instalación local.
 
-La planificación del proyecto no debe entenderse como una secuencia totalmente cerrada desde el inicio, sino como una organización progresiva del trabajo. Algunas decisiones se fueron ajustando a medida que se comprendía mejor el funcionamiento interno del editor y las implicaciones de incorporar nuevos elementos del modelo Entidad-Relación.
+El estudio de viabilidad analiza los costes que tendría un proyecto de estas características en un contexto profesional, así como las consideraciones legales relacionadas con las licencias de las herramientas y librerías utilizadas.
 
 \section{Planificación temporal}
 
-El desarrollo del proyecto se dividió en varias fases principales. La primera fase estuvo centrada en la preparación del entorno de trabajo y en la toma de contacto con el proyecto heredado. Durante esta etapa se revisó la estructura del repositorio, se configuró el entorno local de desarrollo y se comprobaron los comandos principales de ejecución, construcción y pruebas.
+\subsection{Metodología y organización del trabajo}
 
-Después se llevó a cabo una fase de análisis del sistema existente. En ella se estudió el funcionamiento del editor, especialmente la relación entre la representación visual gestionada con mxGraph y el modelo interno utilizado por la aplicación. Esta fase fue necesaria para comprender cómo se almacenaban las entidades, atributos y relaciones, y cómo se utilizaba esa información en la validación y en la generación de SQL.
+El desarrollo del proyecto se organizó mediante una metodología ágil basada en Scrum, adaptada al contexto de un Trabajo Fin de Grado individual. No se aplicó Scrum de forma completa, ya que no existía un equipo de desarrollo con roles diferenciados ni reuniones diarias, pero sí se utilizaron varios de sus principios: división del trabajo en bloques, definición de tareas concretas, revisión periódica de resultados y adaptación de la planificación según el avance del proyecto.
 
-Una vez comprendido el funcionamiento general del sistema, se abordó una fase de estabilización del núcleo del editor. El objetivo de esta etapa fue reducir algunas dependencias implícitas y corregir comportamientos que podían dificultar futuras ampliaciones. Esta parte del trabajo permitió disponer de una base más segura antes de incorporar nuevos elementos del modelo Entidad-Relación.
+La organización práctica del trabajo se apoyó principalmente en GitHub. Los issues se utilizaron para registrar tareas concretas de análisis, implementación, pruebas, revisión y documentación. Estos issues actuaron como backlog del proyecto y permitieron mantener trazabilidad entre los objetivos planteados y el trabajo realizado.
 
-A continuación, el desarrollo se centró en ampliar las funcionalidades soportadas por el editor. En esta fase se fueron incorporando nuevos elementos y comportamientos relacionados con el modelo Entidad-Relación, prestando atención a que cada ampliación quedara integrada no solo en la interfaz, sino también en el modelo interno, las validaciones, la transformación relacional y la generación de SQL.
+Para facilitar su clasificación, se definió un conjunto de labels en GitHub. Estas etiquetas permitieron distinguir la naturaleza de cada tarea, por ejemplo si estaba relacionada con la configuración del entorno, el despliegue, la documentación, las pruebas, el modelo Entidad-Relación, mejoras funcionales, cuestiones teóricas o elementos centrales del TFG. Entre las etiquetas utilizadas se encontraban \textit{setup}, \textit{deployment}, \textit{documentation}, \textit{testing}, \textit{er-model}, \textit{enhancement}, \textit{theory} y \textit{tfg-core}.
 
-Paralelamente al desarrollo, se realizaron pruebas automáticas y revisiones manuales del comportamiento de la aplicación. Estas comprobaciones sirvieron para revisar casos concretos y para detectar posibles incoherencias entre lo que el usuario diseña en el lienzo y lo que la aplicación procesa internamente.
+Los milestones agruparon issues relacionados y se utilizaron como sprints adaptados. Cada milestone representó un bloque de trabajo de mayor duración que un sprint Scrum convencional, centrado en una parte concreta de la evolución del editor. Esta adaptación resultó adecuada para el proyecto, ya que se trataba de un TFG individual basado en una aplicación heredada y no de un desarrollo en equipo desde cero.
 
-Finalmente, se inició la fase de redacción de la memoria y de los anexos. Esta fase se ha realizado de forma progresiva, comenzando por los capítulos cuyo contenido estaba más estabilizado y dejando pendientes de cierre aquellas partes que dependen de las últimas ampliaciones del proyecto.
+Además, se trabajó con ramas de desarrollo para separar cambios funcionales o de documentación. Los despliegues en Vercel permitieron publicar versiones funcionales de la aplicación y facilitaron su revisión desde el navegador, sin necesidad de instalar el proyecto en local.
 
-% TODO: añadir tabla resumen de fases/milestones cuando esté cerrado el desarrollo.
+En este contexto, la equivalencia entre Scrum y la organización real del TFG puede resumirse de la siguiente forma: los issues actuaron como tareas del backlog, las labels permitieron clasificar el trabajo, los milestones funcionaron como sprints adaptados, las versiones integradas y desplegadas como incrementos revisables, y las revisiones con el tutor como mecanismo de seguimiento y ajuste del trabajo.
 
-\begin{table}[h]
-    \centering
-    \begin{tabular}{p{0.25\textwidth} p{0.60\textwidth}}
-        \toprule
-        \textbf{Fase} & \textbf{Descripción} \\
-        \midrule
-        Preparación y análisis inicial & Configuración del entorno, revisión del repositorio y toma de contacto con el proyecto heredado. \\
-        Análisis del sistema heredado & Estudio de la arquitectura del editor, del modelo interno y de los módulos de validación y generación de SQL. \\
-        Estabilización del núcleo & Revisión de dependencias internas, persistencia, sincronización entre modelo y vista y configuración de relaciones. \\
-        Ampliación del modelo E/R & Incorporación progresiva de nuevos elementos del modelo Entidad-Relación y adaptación de las validaciones y transformaciones. \\
-        Pruebas y revisión manual & Comprobación de funcionalidades mediante pruebas automáticas y revisión manual de casos de uso relevantes. \\
-        Redacción y cierre & Redacción de la memoria, revisión de anexos y ajustes finales del proyecto. \\
-        \bottomrule
-    \end{tabular}
-    \caption{Resumen de las fases principales del desarrollo.}
-    \label{tab:fases-desarrollo}
-\end{table}
+\subsection{Sprints adaptados del proyecto}
+
+El desarrollo se dividió en varios sprints adaptados, correspondientes a los milestones definidos en GitHub. A diferencia de una planificación Scrum estricta, estos sprints no tuvieron una duración homogénea, sino que se ajustaron a la complejidad de cada bloque de trabajo y al avance real del proyecto.
+
+Cada sprint adaptado agrupó issues relacionados con un objetivo común. Estos issues no se limitaron a la implementación de una funcionalidad aislada, sino que también incluyeron tareas de análisis, revisión del comportamiento, validación, pruebas, documentación y ajustes derivados de las revisiones realizadas.
+
+El criterio seguido en todos los sprints fue mantener la coherencia entre el lienzo del editor, el modelo interno, las validaciones, la transformación al modelo relacional y la generación SQL. Por este motivo, estas comprobaciones se consideran transversales a cada milestone y no fases independientes del proyecto.
+
+En las figuras incluidas a continuación se muestran los milestones correspondientes en GitHub, donde se recoge su descripción, estado de avance, fecha prevista e issues asociados.
+
+\subsubsection{Sprint adaptado 1: preparación del entorno y comprensión del proyecto}
+
+Este sprint se corresponde con el milestone \textit{Environment setup and project understanding}. Su objetivo fue preparar el entorno de desarrollo y comprender el estado inicial de la aplicación heredada antes de introducir cambios funcionales relevantes. Los issues asociados pueden consultarse en el \href{https://github.com/saa1002/draw-entity-relation/milestone/1?closed=1}{milestone correspondiente en GitHub}.
+
+Durante esta fase se revisó la estructura del repositorio, se configuró la ejecución local, se comprobaron los comandos principales del proyecto y se realizó un primer despliegue en Vercel. El resultado fue disponer de una base de trabajo preparada y una organización inicial mediante issues, labels, milestones y ramas de desarrollo.
+
+\imagen{milestone_1}{Milestone 1: preparación del entorno y comprensión del proyecto.}
+
+\subsubsection{Sprint adaptado 2: estabilización del núcleo y entidades débiles}
+
+Este sprint se corresponde con el milestone \textit{Core stabilization and Weak Entities implementation}. Su objetivo fue estabilizar partes relevantes del núcleo del editor y comenzar la ampliación del modelo Entidad-Relación mediante el soporte de entidades débiles. Los issues asociados pueden consultarse en el \href{https://github.com/saa1002/draw-entity-relation/milestone/2?closed=1}{milestone correspondiente en GitHub}.
+
+El trabajo realizado permitió revisar la sincronización entre la representación visual y el modelo interno, así como integrar entidades débiles en el flujo de la aplicación. Esta ampliación se comprobó teniendo en cuenta su efecto sobre el lienzo, el modelo interno, las validaciones, la transformación relacional y la generación SQL.
+
+\imagen{milestone_2}{Milestone 2: estabilización del núcleo y entidades débiles.}
+
+\subsubsection{Sprint adaptado 3: refactorización, optimización y atributos avanzados}
+
+Este sprint se corresponde con el milestone \textit{Code refactoring, optimization and advanced attributes implementation}. Su objetivo fue reducir la complejidad de algunas partes del sistema y ampliar el soporte de atributos del modelo Entidad-Relación. Los issues asociados pueden consultarse en el \href{https://github.com/saa1002/draw-entity-relation/milestone/3?closed=1}{milestone correspondiente en GitHub}.
+
+Durante este sprint se trabajó en la mejora de la estructura interna del editor y en el soporte de atributos avanzados, como atributos compuestos y multivaluados. Estos cambios se revisaron considerando su representación visual, almacenamiento interno, validaciones, transformación relacional y generación SQL.
+
+\imagen{milestone_3}{Milestone 3: refactorización, optimización y atributos avanzados.}
+
+\subsubsection{Sprint adaptado 4: implementación de relaciones ternarias}
+
+Este sprint se corresponde con el milestone \textit{Ternary relationships implementation}. Su objetivo fue ampliar el editor para soportar relaciones ternarias, manteniendo el comportamiento existente de los elementos ya implementados. Los issues asociados pueden consultarse en el \href{https://github.com/saa1002/draw-entity-relation/milestone/4?closed=1}{milestone correspondiente en GitHub}.
+
+La implementación de relaciones ternarias afectó a varias partes del sistema: representación en el lienzo, participantes de la relación, roles, atributos propios, modelo interno, transformación relacional y SQL generado. El resultado fue la incorporación controlada de relaciones ternarias dentro del alcance del TFG.
+
+\imagen{milestone_4}{Milestone 4: implementación de relaciones ternarias.}
+
+\subsubsection{Sprint adaptado 5: soporte inicial de ISA y mejoras finales de usabilidad}
+
+Este sprint se corresponde con el milestone \textit{ISA initial support and editor usability refinements}. Su objetivo fue introducir un soporte inicial para jerarquías ISA y cerrar mejoras de usabilidad e interacción solicitadas o detectadas durante la revisión del editor. Los issues asociados pueden consultarse en el \href{https://github.com/saa1002/draw-entity-relation/milestone/5?closed=1}{milestone correspondiente en GitHub}.
+
+El soporte de ISA se abordó de forma limitada y controlada, incluyendo generalización, especializaciones, clave heredada, transformación al modelo relacional y generación SQL asociada. Además, se incorporaron mejoras finales como ayuda integrada, información del proyecto, selección múltiple visible, operaciones sobre multiselección, exportación visual, ajuste de vista y opciones de importación. El resultado fue una versión más completa y usable de UBU E-R App, manteniendo explícitas las limitaciones de alcance.
+
+\imagen{milestone_5}{Milestone 5: soporte inicial de ISA y mejoras finales de usabilidad.}
+
+\subsubsection{Cronograma general}
+
+La Figura~\ref{fig:cronograma_fases_proyecto} muestra una visión temporal resumida de los sprints adaptados del proyecto. Su finalidad no es representar actividades aisladas, sino situar en el tiempo los principales bloques funcionales abordados durante el desarrollo.
+
+\imagen{cronograma_fases_proyecto}{Cronograma resumido de los sprints adaptados del proyecto.}
+
+\subsection{Seguimiento y validación del proyecto}
+
+El seguimiento del proyecto se realizó a partir de los milestones e issues definidos en GitHub, junto con las revisiones mantenidas con el tutor. Estas revisiones permitieron comprobar el avance del trabajo, ajustar prioridades y detectar problemas de enfoque tanto en la aplicación como en la memoria y los anexos.
+
+Los despliegues en Vercel fueron un apoyo importante en este proceso, ya que permitieron revisar versiones funcionales del editor directamente desde el navegador, sin necesidad de instalar el proyecto en local. De esta forma, los cambios integrados podían comprobarse sobre una versión accesible de la aplicación.
+
+La validación técnica se realizó de forma progresiva durante el desarrollo. Algunas partes del proyecto se comprobaron mediante pruebas automáticas, especialmente aquellas relacionadas con validación, transformación relacional, generación SQL y comportamientos concretos del editor. Otras partes requirieron revisión manual, sobre todo las relacionadas con la interacción visual en el lienzo, la sincronización entre la vista y el modelo interno, la importación y exportación de diagramas y el comportamiento general de la interfaz.
+
+Esta validación no se concentró únicamente al final del proyecto. En cada sprint adaptado se revisó que las funcionalidades desarrolladas mantuvieran la coherencia entre el lienzo, el modelo interno, las validaciones, la transformación al modelo relacional y la generación SQL.
 
 \section{Estudio de viabilidad}
 
-El estudio de viabilidad permite valorar si el proyecto puede llevarse a cabo con los recursos disponibles y dentro del contexto académico en el que se desarrolla. En este caso, se trata de un proyecto software realizado como Trabajo Fin de Grado, por lo que la viabilidad se analiza principalmente desde dos puntos de vista: el económico y el legal.
+El estudio de viabilidad permite valorar si el proyecto puede llevarse a cabo con los recursos disponibles y dentro del contexto académico en el que se desarrolla. En este caso, se analiza principalmente la viabilidad económica y la viabilidad legal.
 
 \subsection{Viabilidad económica}
 
-Desde el punto de vista económico, el proyecto no requiere una inversión elevada en infraestructura. La aplicación se desarrolla como una herramienta web y puede ejecutarse en un entorno local utilizando un equipo personal y herramientas de desarrollo habituales.
+La viabilidad económica del proyecto puede analizarse desde dos puntos de vista. Por un lado, el coste directo real para el desarrollo del TFG fue reducido, ya que se utilizó un equipo propio y herramientas gratuitas o de acceso libre. Por otro lado, para valorar el esfuerzo necesario en un contexto profesional, se realiza una estimación económica del trabajo desarrollado.
 
-La mayor parte del coste del proyecto está asociado al tiempo de trabajo dedicado al análisis, implementación, pruebas y redacción de la documentación. También se han utilizado herramientas y servicios de apoyo al desarrollo, como el editor de código, el sistema de control de versiones, la plataforma de alojamiento del repositorio y el entorno de redacción de la memoria.
+El principal coste del proyecto corresponde al tiempo dedicado al análisis de la aplicación heredada, la implementación de mejoras, la revisión funcional, las pruebas y la elaboración de la documentación. Al tratarse de un proyecto basado en una aplicación existente, una parte importante del esfuerzo se destinó a comprender el sistema previo y a garantizar que las ampliaciones realizadas mantuvieran la coherencia entre el lienzo, el modelo interno, las validaciones, la transformación relacional y la generación SQL.
 
-% TODO: completar la estimación económica con horas dedicadas, coste/hora aproximado
-% y herramientas utilizadas cuando se cierre la planificación final.
+\subsubsection{Costes de personal}
+
+Para estimar el coste de personal se ha tomado como referencia una dedicación total aproximada de 713 horas. Esta estimación incluye las tareas de preparación inicial, análisis del sistema heredado, implementación, validación, pruebas, revisión manual y documentación final.
+
+La Tabla~\ref{tab:costes_personal_horas} muestra una distribución aproximada de horas por bloques de trabajo.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{0.65\textwidth} r}
+\toprule
+\textbf{Bloque de trabajo} & \textbf{Horas estimadas} \tabularnewline
+\midrule
+Preparación del entorno y comprensión inicial del proyecto & 65 h \tabularnewline
+Estabilización del núcleo y soporte de entidades débiles & 205 h \tabularnewline
+Refactorización, optimización y atributos avanzados & 145 h \tabularnewline
+Implementación de relaciones ternarias & 115 h \tabularnewline
+Soporte inicial de ISA y mejoras finales de usabilidad & 120 h \tabularnewline
+Memoria, anexos y revisión final & 63 h \tabularnewline
+\midrule
+\textbf{Total} & \textbf{713 h} \tabularnewline
+\bottomrule
+\end{tabular}
+\caption{Estimación de horas dedicadas por bloque de trabajo.}
+\label{tab:costes_personal_horas}
+\end{table}
+
+Para realizar la estimación económica se ha utilizado un coste orientativo de 15 €/h, correspondiente a una valoración prudente del trabajo de un perfil junior en un contexto académico. Con este criterio, el coste de personal estimado es el siguiente:
+
+\begin{equation}
+713 \text{ h} \times 15 \text{ €/h} = 10.695 \text{ €}
+\end{equation}
+
+Por tanto, el coste estimado de personal asciende a 10.695 €.
+
+\subsubsection{Costes de hardware}
+
+El desarrollo se realizó utilizando un ordenador de sobremesa propio, valorado aproximadamente en 1.200 €. Aunque no supuso un gasto directo específico para este TFG, se puede imputar una parte de su coste mediante amortización.
+
+Para esta estimación se considera una vida útil de cuatro años, equivalente a 48 meses, y una duración aproximada del proyecto de cinco meses y medio. El coste imputado al proyecto se calcula de la siguiente forma:
+
+\begin{equation}
+\frac{1.200 \text{ €}}{48 \text{ meses}} \times 5{,}5 \text{ meses} = 137,50 \text{ €}
+\end{equation}
+
+Por tanto, el coste de hardware imputado al proyecto es de 137,50 €.
+
+\subsubsection{Costes de software y servicios}
+
+Las herramientas utilizadas durante el desarrollo no supusieron un coste económico directo. El proyecto se desarrolló con herramientas gratuitas o disponibles sin coste para el uso realizado, como GitHub, Vercel, Visual Studio Code, Node.js, npm, navegadores web y las librerías principales empleadas por la aplicación.
+
+También se utilizaron herramientas de apoyo para pruebas, formateo, control de versiones y redacción de la memoria, sin necesidad de contratar planes de pago. Por tanto, el coste directo asociado al software y a los servicios empleados se considera nulo.
+
+\subsubsection{Coste total estimado}
+
+La Tabla~\ref{tab:coste_total_proyecto} resume el coste económico estimado del proyecto.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{0.65\textwidth} r}
+\toprule
+\textbf{Concepto} & \textbf{Coste estimado} \tabularnewline
+\midrule
+Coste de personal & 10.695,00 € \tabularnewline
+Coste imputado de hardware & 137,50 € \tabularnewline
+Costes de software y servicios & 0,00 € \tabularnewline
+Costes adicionales & 0,00 € \tabularnewline
+\midrule
+\textbf{Total estimado} & \textbf{10.832,50 €} \tabularnewline
+\bottomrule
+\end{tabular}
+\caption{Coste total estimado del proyecto.}
+\label{tab:coste_total_proyecto}
+\end{table}
+
+En conclusión, el proyecto fue viable económicamente dentro del contexto académico, ya que no requirió inversión directa en infraestructura ni contratación de servicios externos. La mayor parte del coste estimado corresponde al tiempo de desarrollo, análisis y documentación necesario para evolucionar una aplicación heredada de forma controlada.
 
 \subsection{Viabilidad legal}
 
-Desde el punto de vista legal, el proyecto se apoya en tecnologías y librerías de uso habitual en el desarrollo web. Al tratarse de una evolución de una aplicación existente, es importante tener en cuenta tanto la licencia del proyecto heredado como las licencias de las dependencias utilizadas.
+Desde el punto de vista legal, el proyecto se apoya en tecnologías y librerías de uso habitual en el desarrollo web. Al tratarse de la evolución de una aplicación existente, se revisó la licencia del proyecto original y las licencias de las principales dependencias utilizadas, con el objetivo de comprobar que la versión final pudiera distribuirse de forma coherente.
 
-Durante el cierre del proyecto deberá revisarse que las librerías empleadas sean compatibles con el uso académico del trabajo y que se respeten las condiciones de sus respectivas licencias. También será necesario citar adecuadamente las herramientas principales utilizadas en el desarrollo y en la redacción de la memoria.
+\subsubsection{Licencias del software}
 
-% TODO: revisar licencias concretas del proyecto y dependencias principales antes de cerrar este apartado.
+La versión actual del proyecto se distribuye bajo licencia MIT. Esta licencia es adecuada para el contexto del TFG porque permite el uso, copia, modificación y distribución del código, manteniendo la obligación de conservar el aviso de copyright y el texto de la licencia.
 
+Las dependencias principales utilizadas por la aplicación mantienen sus propias licencias. La Tabla~\ref{tab:licencias_proyecto} resume las licencias más relevantes consideradas durante el desarrollo. En general, se trata de licencias permisivas, principalmente MIT~\cite{mit-license} y Apache License 2.0~\cite{apache-license}, compatibles con el uso académico y con la distribución del proyecto bajo licencia MIT.
 
+\begin{table}[!htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{0.28\textwidth}|p{0.22\textwidth}|p{0.40\textwidth}|}
+\hline
+\textbf{Elemento} & \textbf{Licencia} & \textbf{Observación} \tabularnewline
+\hline
+Código desarrollado en el proyecto & MIT & La versión final incorpora un fichero \texttt{LICENSE} y la información correspondiente en \texttt{package.json}. \tabularnewline
+\hline
+React & MIT & Librería principal empleada para construir la interfaz de usuario. \tabularnewline
+\hline
+Material UI & MIT & Biblioteca de componentes utilizada para diferentes elementos de la interfaz. \tabularnewline
+\hline
+mxGraph & Apache License 2.0 & Librería utilizada para la creación y manipulación del lienzo de diagramas. \tabularnewline
+\hline
+Vitest & MIT & Herramienta utilizada para la ejecución de pruebas unitarias. \tabularnewline
+\hline
+Playwright & Apache License 2.0 & Herramienta utilizada para la ejecución de pruebas end-to-end. \tabularnewline
+\hline
+Biome & MIT & Herramienta empleada como apoyo para el análisis estático y el formateo del código. \tabularnewline
+\hline
+Lefthook & MIT & Herramienta utilizada como apoyo en la automatización de comprobaciones durante el desarrollo. \tabularnewline
+\hline
+\end{tabular}
+\caption{Licencias principales consideradas en el proyecto.}
+\label{tab:licencias_proyecto}
+\end{table}
+
+\subsubsection{Documentación, capturas y recursos gráficos}
+
+La memoria y los anexos se elaboran como documentación académica del Trabajo Fin de Grado. Las figuras utilizadas en la documentación corresponden principalmente a capturas propias de la aplicación, diagramas elaborados para explicar el proyecto o capturas de herramientas empleadas durante el desarrollo, como GitHub o Vercel.
+
+En caso de incorporar recursos externos, estos deben citarse correctamente y respetar las condiciones de uso correspondientes. No obstante, el proyecto no depende de bancos de imágenes, vídeos de terceros ni datasets externos, por lo que los riesgos legales asociados a este tipo de recursos son reducidos.
+
+\subsubsection{Protección de datos}
+
+La aplicación funciona como herramienta cliente y no incorpora registro de usuarios, autenticación, backend propio ni envío de diagramas a un servidor. El almacenamiento del diagrama se realiza en el navegador del usuario o mediante archivos exportados cuando el propio usuario decide guardarlos.
+
+Por este motivo, el proyecto no plantea un tratamiento centralizado de datos personales. Aun así, los diagramas creados o importados deben considerarse información bajo control del usuario, ya que pueden contener nombres o datos introducidos libremente durante el uso de la herramienta.
+
+En conclusión, el proyecto resulta viable desde el punto de vista legal. Las licencias principales son compatibles con el uso académico y con la distribución del código bajo licencia MIT, no se utilizan recursos externos críticos y la aplicación no incorpora tratamiento remoto de datos personales.

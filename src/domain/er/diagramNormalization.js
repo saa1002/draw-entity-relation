@@ -13,6 +13,18 @@ const normalizeAttributeCell = (cell, fallbackId = "") => {
     return [fallbackId, null];
 };
 
+const normalizeAttributeChildren = (attribute, normalizeChild) => {
+    if (!Object.prototype.hasOwnProperty.call(attribute, "children")) {
+        return {};
+    }
+
+    return {
+        children: Array.isArray(attribute.children)
+            ? attribute.children.map(normalizeChild)
+            : [],
+    };
+};
+
 const normalizeAttributeBase = (normalizeChild, attribute = {}) => ({
     ...attribute,
     idMx: attribute.idMx ?? "",
@@ -84,6 +96,25 @@ export const normalizeRelation = (relation = {}) => {
     return normalizedRelation;
 };
 
+export const normalizeIsaLink = (link = {}) => ({
+    ...link,
+    edgeId: link.edgeId ?? "",
+    entity: {
+        ...(link.entity ?? {}),
+        idMx: link.entity?.idMx ?? "",
+    },
+});
+
+export const normalizeIsa = (isa = {}) => ({
+    ...isa,
+    idMx: isa.idMx ?? "",
+    position: normalizePosition(isa.position),
+    generalization: normalizeIsaLink(isa.generalization),
+    specializations: Array.isArray(isa.specializations)
+        ? isa.specializations.map(normalizeIsaLink)
+        : [],
+});
+
 export const normalizeDiagramData = (diagramData = {}) => ({
     entities: Array.isArray(diagramData.entities)
         ? diagramData.entities.map(normalizeEntity)
@@ -91,16 +122,7 @@ export const normalizeDiagramData = (diagramData = {}) => ({
     relations: Array.isArray(diagramData.relations)
         ? diagramData.relations.map(normalizeRelation)
         : [],
+    isas: Array.isArray(diagramData.isas)
+        ? diagramData.isas.map(normalizeIsa)
+        : [],
 });
-
-const normalizeAttributeChildren = (attribute, normalizeChild) => {
-    if (!Object.prototype.hasOwnProperty.call(attribute, "children")) {
-        return {};
-    }
-
-    return {
-        children: Array.isArray(attribute.children)
-            ? attribute.children.map(normalizeChild)
-            : [],
-    };
-};

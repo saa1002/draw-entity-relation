@@ -2,8 +2,8 @@ import { hasPrimaryKeyAttributeInTree } from "../../attributes";
 import { findEntityById } from "../../entities";
 import {
     POSSIBLE_CARDINALITIES,
+    canRelationHoldAttributes,
     canRelationTypeHoldAttributes,
-    getRelationEntityIds,
     getRelationSideCardinality,
     getRelationSideRole,
     getRelationSides,
@@ -41,11 +41,9 @@ const relationHasAmbiguousRepeatedEntityParticipants = (relation) => {
     });
 };
 
-// True if there is an N:M relation that has a key
 export function nmRelationsWithPK(graph) {
     for (const relation of graph.relations) {
-        // Check if the relation is of type N:M
-        if (!relation.canHoldAttributes) {
+        if (!canRelationHoldAttributes(relation)) {
             continue;
         }
 
@@ -53,18 +51,17 @@ export function nmRelationsWithPK(graph) {
             return true;
         }
     }
-    // If no N:M relation with a key is found, return false
     return false;
 }
 
 export function relationsUnconnected(graph) {
     for (const relation of graph.relations) {
         if (!isRelationConfigured(relation)) {
-            return true; // Found an unconnected relation
+            return true;
         }
     }
 
-    return false; // All relations are connected
+    return false;
 }
 
 export function brokenRelationEntityReferences(graph) {
@@ -73,7 +70,6 @@ export function brokenRelationEntityReferences(graph) {
             (side) => side?.entity?.idMx ?? "",
         );
 
-        // Las relaciones no configuradas ya las cubre relationsUnconnected
         if (entityIds.some((entityId) => !entityId)) {
             continue;
         }
@@ -96,7 +92,7 @@ export function notNMRelationsWithAttributes(graph) {
             !canRelationTypeHoldAttributes(relation) &&
             relation.attributes.length > 0
         ) {
-            return true; // Found a relation that cannot hold attributes but holds them
+            return true;
         }
     }
 
@@ -160,9 +156,9 @@ export function cardinalitiesNotValid(graph) {
         );
 
         if (hasInvalidCardinality) {
-            return true; // Found an invalid cardinality
+            return true;
         }
     }
 
-    return false; // All cardinalities are valid
+    return false;
 }

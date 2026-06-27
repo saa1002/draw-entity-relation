@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+import { openExportJsonDialog } from '../helpers/persistence';
+
 import {
     addAttributeToSelectedElement,
     addEntity,
@@ -8,9 +10,12 @@ import {
     configureRelationSides,
     configureTernaryRelationCardinalities,
     configureTernaryRelationSides,
+    enableMxGraphDebug,
     expectSavedDiagramState,
     expectSavedRelationAttributeToMatch,
     expectSavedRelationToMatch,
+    getGraphCellValue,
+    getSavedRelation,
     openRelationCardinalitiesDialog,
     openRelationConfigDialog,
     renameElement,
@@ -241,13 +246,13 @@ test('configure cardinalities for a ternary relationship', async ({ page }) => {
         arity: 3,
         canHoldAttributes: true,
         side1: {
-            cardinality: "0:N",
+            cardinality: '0:N',
         },
         side2: {
-            cardinality: "0:1",
+            cardinality: '0:1',
         },
         side3: {
-            cardinality: "0:N",
+            cardinality: '0:N',
         },
     });
 });
@@ -436,15 +441,61 @@ test('allow role-disambiguated repeated participants in a ternary relationship',
         },
     });
 
-    await page.getByRole('button', { name: 'Exportar JSON' }).click();
-
-    const dialog = page.getByRole('dialog');
+    const dialog = await openExportJsonDialog(page);
 
     await expect(
-        dialog.getByText('Exportación diagrama en JSON'),
-    ).toBeVisible();
+        dialog.getByRole('button', { name: 'Exportar JSON' }),
+    ).toBeEnabled();
+});
 
-    await expect(dialog.getByRole('button', { name: 'Aceptar' })).toBeEnabled();
+test('display role labels on ternary relationship edges together with cardinalities', async ({
+    page,
+}) => {
+    await enableMxGraphDebug(page);
+
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 520, y: 180 });
+
+    await renameElement(page, 'Entidad', 'Tenista');
+    await renameElement(page, 'Entidad 1', 'Fecha');
+
+    await addRelation(page, 'Relación', { x: 360, y: 320 });
+
+    await configureTernaryRelationSides(
+        page,
+        'Relación',
+        'Tenista',
+        'Tenista',
+        'Fecha',
+        {
+            side1Role: 'tenista local',
+            side2Role: 'tenista visitante',
+        },
+    );
+
+    await configureTernaryRelationCardinalities(
+        page,
+        'Relación',
+        '0:N',
+        '0:N',
+        '0:N',
+    );
+
+    const relation = await getSavedRelation(page, 'Relación');
+
+    const sideLabelValues = {
+        side1: await getGraphCellValue(page, relation.side1.cell),
+        side2: await getGraphCellValue(page, relation.side2.cell),
+        side3: await getGraphCellValue(page, relation.side3.cell),
+    };
+
+    expect(sideLabelValues).toEqual({
+        side1: 'tenista local\nN',
+        side2: 'tenista visitante\nN',
+        side3: 'N',
+    });
 });
 
 test('do not offer identifying relationship action for ternary relationships', async ({ page }) => {
@@ -503,19 +554,99 @@ test('block export when a ternary relationship repeats participating entities wi
         '0:N',
     );
 
-    await page.getByRole('button', { name: 'Exportar JSON' }).click();
+    const dialog = await openExportJsonDialog(page);
 
-    const dialog = page.getByRole('dialog');
-
-    await expect(
-        dialog.getByText('Exportación diagrama en JSON'),
-    ).toBeVisible();
+    await expect(dialog.getByText('Relaciones', { exact: true })).toBeVisible();
 
     await expect(
         dialog.getByText(
-            'Hay relaciones ternarias con entidades participantes repetidas sin roles distintos.',
+            '"Relación": repite la entidad "Entidad" sin roles distintos.',
         ),
     ).toBeVisible();
 
-    await expect(dialog.getByRole('button', { name: 'Aceptar' })).toBeDisabled();
+    await expect(
+        dialog.getByRole('button', { name: 'Exportar JSON' }),
+    ).toBeDisabled();
+
+    await expect(dialog.getByRole('button', { name: 'Cerrar' })).toBeVisible();
+});
+
+test('edit ternary relationship roles without recreating the relationship', async ({
+    page,
+}) => {
+    await page.goto('/');
+
+    await addEntity(page, 'Entidad', { x: 180, y: 180 });
+    await addEntity(page, 'Entidad 1', { x: 520, y: 180 });
+
+    await renameElement(page, 'Entidad', 'Tenista');
+    await renameElement(page, 'Entidad 1', 'Fecha');
+
+    await addRelation(page, 'Relación', { x: 360, y: 320 });
+
+    await configureTernaryRelationSides(
+        page,
+        'Relación',
+        'Tenista',
+        'Tenista',
+        'Fecha',
+        {
+            side1Role: 'local',
+            side2Role: 'visitante',
+        },
+    );
+
+    await configureTernaryRelationCardinalities(
+        page,
+        'Relación',
+        '0:N',
+        '0:N',
+        '0:N',
+    );
+
+    const relationBefore = await getSavedRelation(page, 'Relación');
+
+    await selectRelation(page, 'Relación');
+
+    await page.getByRole('button', { name: 'Editar roles' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(dialog.getByText('Editar roles')).toBeVisible();
+
+    await dialog.locator('#relation-role-side1').fill('jugador local');
+    await dialog.locator('#relation-role-side2').fill('jugador visitante');
+
+    await dialog.getByRole('button', { name: 'Aceptar' }).click();
+
+    await expect(dialog).toBeHidden();
+
+    await expect(
+        page.getByText('Roles de relación actualizados'),
+    ).toBeVisible();
+
+    await expectSavedRelationToMatch(page, 'Relación', {
+        arity: 3,
+        side1: {
+            role: 'jugador local',
+            cardinality: '0:N',
+            entity: relationBefore.side1.entity,
+            cell: relationBefore.side1.cell,
+            edgeId: relationBefore.side1.edgeId,
+        },
+        side2: {
+            role: 'jugador visitante',
+            cardinality: '0:N',
+            entity: relationBefore.side2.entity,
+            cell: relationBefore.side2.cell,
+            edgeId: relationBefore.side2.edgeId,
+        },
+        side3: {
+            role: '',
+            cardinality: '0:N',
+            entity: relationBefore.side3.entity,
+            cell: relationBefore.side3.cell,
+            edgeId: relationBefore.side3.edgeId,
+        },
+    });
 });

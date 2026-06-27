@@ -1,7 +1,8 @@
 import {
-    getRelationCardinalityDisplayValue,
     getRelationSideKeys,
+    getRelationSideLabelDisplayValue,
 } from "../../../../domain/er/relations";
+import { getIsaEdgeStyleString } from "../mxStyles/diagramStyles";
 
 export const removeExistingGraphCells = (graph, cells) => {
     if (!graph?.removeCells) return;
@@ -28,6 +29,82 @@ export const clearGraphCanvas = (graph) => {
     removeExistingGraphCells(graph, cellsToRemove);
 };
 
+const FIT_TO_DIAGRAM_PADDING = 40;
+const FIT_TO_DIAGRAM_MAX_SCALE = 1;
+const FIT_TO_DIAGRAM_MIN_SCALE = 0.1;
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const isPositiveFiniteNumber = (value) => Number.isFinite(value) && value > 0;
+
+export const fitGraphToDiagram = (graph) => {
+    const bounds = graph?.getGraphBounds?.();
+    const view = graph?.getView?.();
+    const container = graph?.container;
+
+    if (
+        !bounds ||
+        !view ||
+        !container ||
+        !isPositiveFiniteNumber(bounds.width) ||
+        !isPositiveFiniteNumber(bounds.height) ||
+        !isPositiveFiniteNumber(container.clientWidth) ||
+        !isPositiveFiniteNumber(container.clientHeight)
+    ) {
+        return false;
+    }
+
+    const currentScale = view.scale || 1;
+
+    const modelBounds = {
+        x: bounds.x / currentScale - view.translate.x,
+        y: bounds.y / currentScale - view.translate.y,
+        width: bounds.width / currentScale,
+        height: bounds.height / currentScale,
+    };
+
+    const availableWidth = Math.max(
+        container.clientWidth - FIT_TO_DIAGRAM_PADDING * 2,
+        1,
+    );
+    const availableHeight = Math.max(
+        container.clientHeight - FIT_TO_DIAGRAM_PADDING * 2,
+        1,
+    );
+
+    const nextScale = clamp(
+        Math.min(
+            availableWidth / modelBounds.width,
+            availableHeight / modelBounds.height,
+        ),
+        FIT_TO_DIAGRAM_MIN_SCALE,
+        FIT_TO_DIAGRAM_MAX_SCALE,
+    );
+
+    const horizontalMargin = Math.max(
+        (container.clientWidth - modelBounds.width * nextScale) / 2,
+        FIT_TO_DIAGRAM_PADDING,
+    );
+    const verticalMargin = Math.max(
+        (container.clientHeight - modelBounds.height * nextScale) / 2,
+        FIT_TO_DIAGRAM_PADDING,
+    );
+
+    const nextTranslateX = horizontalMargin / nextScale - modelBounds.x;
+    const nextTranslateY = verticalMargin / nextScale - modelBounds.y;
+
+    if (typeof view.setScaleAndTranslate === "function") {
+        view.setScaleAndTranslate(nextScale, nextTranslateX, nextTranslateY);
+    } else {
+        view.setScale(nextScale);
+        view.setTranslate(nextTranslateX, nextTranslateY);
+    }
+
+    graph.refresh();
+
+    return true;
+};
+
 export const getConfiguredRelationGraphCells = ({ relation, accessCell }) => {
     if (!relation || typeof accessCell !== "function") return [];
 
@@ -38,6 +115,74 @@ export const getConfiguredRelationGraphCells = ({ relation, accessCell }) => {
         ])
         .map((cellId) => accessCell(cellId))
         .filter(Boolean);
+};
+
+export const getConfiguredIsaGraphCells = ({ isa, accessCell }) => {
+    if (!isa || typeof accessCell !== "function") return [];
+
+    const edgeIds = [
+        isa.generalization?.edgeId,
+        ...(isa.specializations ?? []).map(
+            (specialization) => specialization?.edgeId,
+        ),
+    ];
+
+    return edgeIds.map((cellId) => accessCell(cellId)).filter(Boolean);
+};
+
+const connectIsaLinkGraphCell = ({ graph, isaCell, link, entityCell }) => {
+    const edge = graph.insertEdge(
+        isaCell,
+        null,
+        null,
+        isaCell,
+        entityCell,
+        getIsaEdgeStyleString(),
+    );
+
+    link.edgeId = edge.id;
+    link.entity.idMx = entityCell.id;
+
+    return edge;
+};
+
+export const connectIsaGraphLinks = ({
+    graph,
+    isaCell,
+    isa,
+    generalizationEntityCell,
+    specializationEntityCells = [],
+}) => {
+    if (
+        !graph ||
+        !isaCell ||
+        !isa ||
+        !generalizationEntityCell ||
+        specializationEntityCells.length === 0
+    ) {
+        return null;
+    }
+
+    const edges = [
+        connectIsaLinkGraphCell({
+            graph,
+            isaCell,
+            link: isa.generalization,
+            entityCell: generalizationEntityCell,
+        }),
+        ...specializationEntityCells.map((entityCell, index) =>
+            connectIsaLinkGraphCell({
+                graph,
+                isaCell,
+                link: isa.specializations[index],
+                entityCell,
+            }),
+        ),
+    ];
+
+    graph.orderCells(true, edges);
+
+    return edges;
 };
 
 const DEFAULT_RELATION_CARDINALITY = "X:X";
@@ -52,10 +197,12 @@ const connectRelationSideGraphCell = ({
 }) => {
     const cardinality =
         relation[sideKey].cardinality || DEFAULT_RELATION_CARDINALITY;
-    const cardinalityLabel = getRelationCardinalityDisplayValue(
-        relation,
-        cardinality,
-    );
+
+    relation[sideKey].cardinality = cardinality;
+
+    const sideLabel = getRelationSideLabelDisplayValue(relation, sideKey, {
+        fallbackCardinality: DEFAULT_RELATION_CARDINALITY,
+    });
 
     const edge = graph.insertEdge(
         relationCell,
@@ -68,7 +215,7 @@ const connectRelationSideGraphCell = ({
     const cardinalityCell = graph.insertVertex(
         edge,
         null,
-        cardinalityLabel,
+        sideLabel,
         0,
         0,
         1,
@@ -79,7 +226,6 @@ const connectRelationSideGraphCell = ({
 
     graph.updateCellSize(cardinalityCell);
 
-    relation[sideKey].cardinality = cardinality;
     relation[sideKey].idMx = cardinalityCell.id;
     relation[sideKey].edgeId = edge.id;
     relation[sideKey].cell = cardinalityCell.id;
@@ -413,5 +559,18 @@ export const removeRelationGraphCells = ({
         relationCell,
         ...getConfiguredRelationGraphCells({ relation, accessCell }),
         ...relationAttributeCells,
+    ]);
+};
+
+export const removeIsaGraphCells = ({ graph, isa, accessCell }) => {
+    if (!isa) return;
+
+    const isaCell = accessCell(isa.idMx);
+
+    if (!isaCell) return;
+
+    removeExistingGraphCells(graph, [
+        isaCell,
+        ...getConfiguredIsaGraphCells({ isa, accessCell }),
     ]);
 };

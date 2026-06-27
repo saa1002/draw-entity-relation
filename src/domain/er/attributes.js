@@ -114,12 +114,21 @@ export const getDefaultAttributeSemantics = ({
     ownerType,
     isFirstAttribute,
     isWeakEntityOwner = false,
+    isIsaSpecializationOwner = false,
 }) => {
     const belongsToEntity = ownerType === ATTRIBUTE_OWNER_TYPES.ENTITY;
 
     return {
-        key: belongsToEntity && !isWeakEntityOwner && isFirstAttribute,
-        partialKey: belongsToEntity && isWeakEntityOwner && isFirstAttribute,
+        key:
+            belongsToEntity &&
+            !isWeakEntityOwner &&
+            !isIsaSpecializationOwner &&
+            isFirstAttribute,
+        partialKey:
+            belongsToEntity &&
+            isWeakEntityOwner &&
+            !isIsaSpecializationOwner &&
+            isFirstAttribute,
     };
 };
 
@@ -735,6 +744,27 @@ export const toggleExclusivePrimaryKeyAttributeInTree = (
         attributeId,
         semantic: ATTRIBUTE_KEY_SEMANTICS.PRIMARY_KEY,
     });
+
+export const clearPrimaryKeyAttributesInTree = (attributes) => {
+    const changedRootAttributes = [];
+
+    getAttributes(attributes).forEach((rootAttribute) => {
+        walkAttributeTree([rootAttribute], (attribute) => {
+            const previousKey = attribute.key;
+
+            attribute.key = false;
+
+            if (previousKey !== attribute.key) {
+                rememberChangedRootAttribute(
+                    changedRootAttributes,
+                    rootAttribute,
+                );
+            }
+        });
+    });
+
+    return changedRootAttributes;
+};
 
 export const toggleExclusivePartialKeyAttributeInTree = (
     attributes,

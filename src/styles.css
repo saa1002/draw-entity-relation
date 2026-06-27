@@ -1,16 +1,22 @@
-.App {
-  font-family: sans-serif;
-  text-align: center;
-  justify-content: center;
-  align-items: center;
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
 }
 
-.mxToolbarMode:hover {
-    cursor: move;
+body {
+  overflow: hidden;
+}
+
+.App {
+  height: 100%;
+  font-family: sans-serif;
+  text-align: center;
 }
 
 .container {
-  height: 90vh; /* 90% of the viewport height */
-  width: 100%; /* Full width available */
+  height: 100vh;
+  width: 100vw;
   overflow: hidden;
 }

@@ -1,8 +1,10 @@
 import {
+    ISA_CELL_LABEL,
     getAttributeChildren,
-    getRelationCardinalityDisplayValue,
     getRelationSideKeys,
+    getRelationSideLabelDisplayValue,
     isIdentifyingRelation,
+    isIsaConfigured,
     isRelationConfigured,
     isWeakEntity,
 } from "../../../../domain/er";
@@ -11,6 +13,9 @@ import {
     getCardinalityStyleString,
     getEntityDimensions,
     getEntityStyleString,
+    getIsaDimensions,
+    getIsaEdgeStyleString,
+    getIsaStyleString,
     getRelationDimensions,
     getRelationStyleString,
 } from "../mxStyles/diagramStyles";
@@ -173,10 +178,9 @@ export const reconstructDiagramGraph = ({
                     const cardinality = graph.insertVertex(
                         edge,
                         relationSide.cell,
-                        getRelationCardinalityDisplayValue(
-                            relation,
-                            cardinalityValue,
-                        ),
+                        getRelationSideLabelDisplayValue(relation, sideKey, {
+                            fallbackCardinality: cardinalityValue,
+                        }),
                         0,
                         0,
                         1,
@@ -209,11 +213,63 @@ export const reconstructDiagramGraph = ({
         }
     };
 
+    const recreateIsa = (isa) => {
+        const { width, height } = getIsaDimensions();
+
+        graph.insertVertex(
+            null,
+            isa.idMx,
+            ISA_CELL_LABEL,
+            isa.position.x,
+            isa.position.y,
+            width,
+            height,
+            getIsaStyleString(),
+        );
+    };
+
+    const recreateIsaLinks = (isa) => {
+        if (!isIsaConfigured(isa)) return;
+
+        const isaCell = accessCell(isa.idMx);
+
+        if (!isaCell) return;
+
+        const links = [isa.generalization, ...(isa.specializations ?? [])];
+
+        const edges = links
+            .map((link) => {
+                const target = accessCell(link?.entity?.idMx);
+
+                if (!target) return null;
+
+                return graph.insertEdge(
+                    isaCell,
+                    link.edgeId,
+                    null,
+                    isaCell,
+                    target,
+                    getIsaEdgeStyleString(),
+                );
+            })
+            .filter(Boolean);
+
+        graph.orderCells(true, edges);
+    };
+
     for (const entity of diagram.entities) {
         recreateEntity(entity);
     }
 
     for (const relation of diagram.relations) {
         recreateRelation(relation);
+    }
+
+    for (const isa of diagram.isas ?? []) {
+        recreateIsa(isa);
+    }
+
+    for (const isa of diagram.isas ?? []) {
+        recreateIsaLinks(isa);
     }
 };

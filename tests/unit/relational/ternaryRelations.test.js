@@ -1,130 +1,18 @@
 import { describe, expect, test } from 'vitest'
-import { RELATION_ARITIES } from '../../../src/domain/er/relations'
 import {
     filterTables,
     mapErDiagramToRelationalModel,
     processTernaryRelation,
 } from '../../../src/domain/relational/erToRelationalModel'
-
-const createEntity = ({ idMx, name, keyName }) => ({
-    idMx,
-    name,
-    attributes: [
-        {
-            idMx: `${idMx}-key`,
-            name: keyName,
-            key: true,
-            partialKey: false,
-        },
-    ],
-})
-
-const createTernaryGraph = ({
-    side1Cardinality = '0:N',
-    side2Cardinality = '0:N',
-    side3Cardinality = '0:N',
-} = {}) => {
-    const entities = [
-        createEntity({
-            idMx: 'entity-asignatura',
-            name: 'Asignatura',
-            keyName: 'id_asignatura',
-        }),
-        createEntity({
-            idMx: 'entity-profesor',
-            name: 'Profesor',
-            keyName: 'id_profesor',
-        }),
-        createEntity({
-            idMx: 'entity-grupo',
-            name: 'Grupo',
-            keyName: 'id_grupo',
-        }),
-    ]
-
-    return {
-        entities,
-        relations: [
-            {
-                idMx: 'relation-imparte',
-                name: 'Imparte',
-                arity: RELATION_ARITIES.TERNARY,
-                side1: {
-                    idMx: 'side-asignatura',
-                    cardinality: side1Cardinality,
-                    entity: { idMx: entities[0].idMx },
-                },
-                side2: {
-                    idMx: 'side-profesor',
-                    cardinality: side2Cardinality,
-                    entity: { idMx: entities[1].idMx },
-                },
-                side3: {
-                    idMx: 'side-grupo',
-                    cardinality: side3Cardinality,
-                    entity: { idMx: entities[2].idMx },
-                },
-                attributes: [
-                    {
-                        idMx: 'attr-horas',
-                        name: 'horas',
-                        key: false,
-                        partialKey: false,
-                    },
-                ],
-            },
-        ],
-    }
-}
-
-const createRepeatedParticipantTernaryGraph = () => {
-    const entities = [
-        createEntity({
-            idMx: 'entity-tenista',
-            name: 'Tenista',
-            keyName: 'id_tenista',
-        }),
-        createEntity({
-            idMx: 'entity-fecha',
-            name: 'Fecha',
-            keyName: 'fecha',
-        }),
-    ]
-
-    return {
-        entities,
-        relations: [
-            {
-                idMx: 'relation-juega',
-                name: 'Juega',
-                arity: RELATION_ARITIES.TERNARY,
-                side1: {
-                    idMx: 'side-tenista-local',
-                    cardinality: '0:N',
-                    role: 'tenista local',
-                    entity: { idMx: entities[0].idMx },
-                },
-                side2: {
-                    idMx: 'side-tenista-visitante',
-                    cardinality: '0:N',
-                    role: 'tenista visitante',
-                    entity: { idMx: entities[0].idMx },
-                },
-                side3: {
-                    idMx: 'side-fecha',
-                    cardinality: '0:N',
-                    role: 'fecha',
-                    entity: { idMx: entities[1].idMx },
-                },
-                attributes: [],
-            },
-        ],
-    }
-}
+import {
+    createAttribute,
+    createRepeatedParticipantTernaryDiagram,
+    createTernaryDiagram,
+} from '../../helpers/diagramBuilders'
 
 describe('Ternary relation table filtering', () => {
     test('should classify a ternary relation as a single ternary table candidate', () => {
-        const graph = createTernaryGraph()
+        const graph = createTernaryDiagram()
 
         const tables = filterTables(graph)
 
@@ -134,7 +22,7 @@ describe('Ternary relation table filtering', () => {
     })
 
     test('should preserve ternary side roles in the intermediate relation table', () => {
-        const graph = createRepeatedParticipantTernaryGraph()
+        const graph = createRepeatedParticipantTernaryDiagram()
 
         const tables = filterTables(graph)
 
@@ -146,7 +34,7 @@ describe('Ternary relation table filtering', () => {
 
 describe('Ternary relation extraction', () => {
     test('should create a relation table whose primary key uses the three sides for N:M:P cardinalities', () => {
-        const graph = createTernaryGraph()
+        const graph = createTernaryDiagram()
         const filteredTables = filterTables(graph)
 
         const tables = processTernaryRelation(filteredTables.at(0), graph)
@@ -167,7 +55,7 @@ describe('Ternary relation extraction', () => {
     })
 
     test('should use the other two sides as primary key when one side has maximum one', () => {
-        const graph = createTernaryGraph({
+        const graph = createTernaryDiagram({
             side2Cardinality: '0:1',
         })
         const filteredTables = filterTables(graph)
@@ -185,7 +73,7 @@ describe('Ternary relation extraction', () => {
     })
 
     test('should represent additional candidate keys as unique constraints for 1:1:N cardinalities', () => {
-        const graph = createTernaryGraph({
+        const graph = createTernaryDiagram({
             side1Cardinality: '0:1',
             side2Cardinality: '0:1',
         })
@@ -210,7 +98,7 @@ describe('Ternary relation extraction', () => {
     })
 
     test('should use side roles as foreign key suffixes for repeated ternary participants', () => {
-        const graph = createRepeatedParticipantTernaryGraph()
+        const graph = createRepeatedParticipantTernaryDiagram()
         const filteredTables = filterTables(graph)
 
         const tables = processTernaryRelation(filteredTables.at(0), graph)
@@ -230,7 +118,7 @@ describe('Ternary relation extraction', () => {
 
 describe('Additional ternary relation mapping coverage', () => {
     test('should represent all additional candidate keys as unique constraints for 1:1:1 cardinalities', () => {
-        const graph = createTernaryGraph({
+        const graph = createTernaryDiagram({
             side1Cardinality: '0:1',
             side2Cardinality: '0:1',
             side3Cardinality: '0:1',
@@ -267,29 +155,24 @@ describe('Additional ternary relation mapping coverage', () => {
     })
 
     test('should use all leaf columns from a composite primary key in a ternary relation table', () => {
-        const graph = createTernaryGraph()
+        const graph = createTernaryDiagram()
 
         graph.entities.at(0).attributes = [
-            {
+            createAttribute({
                 idMx: 'entity-asignatura-composite-key',
                 name: 'codigo',
                 key: true,
-                partialKey: false,
                 children: [
-                    {
+                    createAttribute({
                         idMx: 'entity-asignatura-key-serie',
                         name: 'serie',
-                        key: false,
-                        partialKey: false,
-                    },
-                    {
+                    }),
+                    createAttribute({
                         idMx: 'entity-asignatura-key-numero',
                         name: 'numero',
-                        key: false,
-                        partialKey: false,
-                    },
+                    }),
                 ],
-            },
+            }),
         ]
 
         const filteredTables = filterTables(graph)
@@ -315,29 +198,23 @@ describe('Additional ternary relation mapping coverage', () => {
     })
 
     test('should project composite relation attributes in the ternary relation table', () => {
-        const graph = createTernaryGraph()
+        const graph = createTernaryDiagram()
 
         graph.relations.at(0).attributes = [
-            {
+            createAttribute({
                 idMx: 'relation-attribute-periodo',
                 name: 'periodo',
-                key: false,
-                partialKey: false,
                 children: [
-                    {
+                    createAttribute({
                         idMx: 'relation-attribute-inicio',
                         name: 'inicio',
-                        key: false,
-                        partialKey: false,
-                    },
-                    {
+                    }),
+                    createAttribute({
                         idMx: 'relation-attribute-fin',
                         name: 'fin',
-                        key: false,
-                        partialKey: false,
-                    },
+                    }),
                 ],
-            },
+            }),
         ]
 
         const filteredTables = filterTables(graph)
@@ -358,7 +235,7 @@ describe('Additional ternary relation mapping coverage', () => {
     })
 
     test('should normalize ternary unique constraint names and columns in the full relational model', () => {
-        const graph = createTernaryGraph({
+        const graph = createTernaryDiagram({
             side1Cardinality: '0:1',
             side2Cardinality: '0:1',
             side3Cardinality: '0:N',
@@ -390,7 +267,7 @@ describe('Additional ternary relation mapping coverage', () => {
     })
 
     test('should keep one entity table and one role-disambiguated ternary table for repeated participants', () => {
-        const graph = createRepeatedParticipantTernaryGraph()
+        const graph = createRepeatedParticipantTernaryDiagram()
 
         const relationalModel = mapErDiagramToRelationalModel(graph)
         const relationTable = relationalModel.tables.find(

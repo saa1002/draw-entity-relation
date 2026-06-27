@@ -1,9 +1,43 @@
 \apendice{Anexo de sostenibilización curricular}
 
 \section{Introducción}
-Este anexo incluirá una reflexión personal del alumnado sobre los aspectos de la sostenibilidad que se abordan en el trabajo.
-Se pueden incluir tantas subsecciones como sean necesarias con la intención de explicar las competencias de sostenibilidad adquiridas durante el alumnado y aplicadas al Trabajo de Fin de Grado.
 
-Más información en el documento de la CRUE \url{https://www.crue.org/wp-content/uploads/2020/02/Directrices_Sosteniblidad_Crue2012.pdf}.
+Este anexo incluye una reflexión personal sobre los aspectos de sostenibilidad abordados durante el desarrollo del Trabajo Fin de Grado. En este contexto, la sostenibilidad no se entiende únicamente desde una perspectiva medioambiental, sino también desde dimensiones educativas, técnicas, sociales y profesionales.
 
-Este anexo tendrá una extensión comprendida entre 600 y 800 palabras.
+El proyecto desarrollado consiste en la evolución de una aplicación web para la creación, validación y transformación de diagramas Entidad-Relación. Por ello, su relación con la sostenibilidad se sitúa principalmente en el ámbito de la educación, la reutilización de software, la documentación, el mantenimiento responsable y el acceso a herramientas digitales de apoyo al aprendizaje.
+
+A continuación, se relacionan algunas de las competencias trabajadas durante el proyecto con distintos Objetivos de Desarrollo Sostenible de la Agenda 2030 de Naciones Unidas~\cite{ods-agenda2030}.
+
+\section{Competencias de sostenibilidad adquiridas}
+
+\textbf{ODS 4: Educación de calidad}
+
+La aplicación desarrollada puede servir como apoyo para estudiantes que estén aprendiendo el modelo Entidad-Relación y su transformación al modelo relacional. El hecho de poder crear diagramas, validarlos y observar una posible generación de SQL facilita la práctica con ejemplos vistos en clase y permite detectar errores de forma más visual.
+
+Además, al tratarse de una aplicación web, su uso no requiere instalar herramientas complejas. Esto reduce la barrera de entrada para el estudiante y permite centrarse en el aprendizaje del modelo. No obstante, la herramienta debe entenderse como un complemento al estudio y a la explicación del profesorado, no como un sustituto del razonamiento teórico necesario para diseñar correctamente una base de datos.
+
+\textbf{ODS 9: Industria, innovación e infraestructura}
+
+El proyecto se ha basado en la evolución de una herramienta software existente, incorporando nuevas funcionalidades y estabilizando su comportamiento. Esta forma de trabajo se aproxima a situaciones habituales en el ámbito profesional, donde no siempre se parte de cero, sino que es necesario comprender, mantener y ampliar sistemas ya desarrollados.
+
+Durante el trabajo se ha seguido una organización progresiva mediante issues, milestones, pruebas y documentación. Esta metodología ha permitido abordar los cambios de forma controlada, reduciendo el riesgo de introducir modificaciones incoherentes con el resto del sistema. Desde este punto de vista, el proyecto contribuye al desarrollo de una infraestructura digital académica más mantenible y preparada para futuras ampliaciones.
+
+\textbf{ODS 12: Producción y consumo responsables}
+
+Uno de los aprendizajes más importantes del proyecto ha sido comprender que reutilizar software existente también implica responsabilidad. Aunque partir de una aplicación heredada puede parecer más sencillo que comenzar desde cero, en la práctica fue necesario dedicar una parte importante del trabajo a entender su estructura interna, sus decisiones de diseño y las dependencias entre el lienzo, el modelo interno, las validaciones, la transformación relacional y la generación de SQL.
+
+Esta experiencia ha permitido valorar la reutilización como una práctica sostenible, siempre que vaya acompañada de análisis, documentación y mantenimiento. En lugar de descartar el trabajo previo, se ha aprovechado la base existente y se han introducido mejoras de forma progresiva. También se ha prestado atención a la licencia del proyecto actual y a las dependencias utilizadas, con el objetivo de respetar el trabajo de terceros y aclarar las condiciones de uso de la versión desarrollada.
+
+\textbf{ODS 17: Alianzas para lograr los objetivos}
+
+El desarrollo del proyecto ha requerido una comunicación continua con el tutor académico y una revisión progresiva de las decisiones tomadas. Esta colaboración ha sido especialmente importante porque el modelo Entidad-Relación puede admitir distintos matices de interpretación, y la aplicación debía mantenerse alineada con los materiales docentes y con el criterio seguido en la asignatura.
+
+También se ha intentado dejar una base documentada para que futuros estudiantes o desarrolladores puedan comprender el estado del proyecto, sus funcionalidades, sus limitaciones y sus posibles líneas de continuación. En este sentido, la documentación forma parte de la sostenibilidad del trabajo, ya que facilita que el conocimiento generado no quede limitado únicamente al periodo de desarrollo del TFG.
+
+\section{Reflexión final}
+
+La realización de este Trabajo Fin de Grado me ha permitido acercarme a una forma de trabajo más parecida a un contexto profesional real. No se ha tratado únicamente de implementar funcionalidades, sino de comprender un sistema existente, organizar tareas, tomar decisiones, validar cambios y documentar el resultado.
+
+Uno de los aspectos más relevantes ha sido comprobar que la sostenibilidad del software no depende solo de que una aplicación funcione, sino también de que pueda entenderse, mantenerse y evolucionar. En algunos casos, el mayor esfuerzo no estuvo en programar una nueva funcionalidad, sino en comprender por qué el sistema estaba organizado de una determinada manera y cómo introducir cambios sin romper su coherencia.
+
+El proyecto tiene un alcance claramente académico y presenta limitaciones conocidas. No pretende cubrir todos los casos posibles del modelo Entidad-Relación, el soporte para ISA se ha incorporado de forma inicial y controlada, y las agregaciones quedan fuera del alcance actual. Aun así, considero que el trabajo contribuye de forma modesta pero realista a la sostenibilidad educativa y técnica, ofreciendo una herramienta útil para el aprendizaje y dejando una base más estable, documentada y mantenible para futuras ampliaciones.

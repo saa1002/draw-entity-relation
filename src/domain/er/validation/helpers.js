@@ -1,4 +1,4 @@
-import { findEntityById } from "../entities";
+import { findEntityById, isWeakEntity } from "../entities";
 import { getWeakAndStrongSidesForRelation } from "../relations";
 
 export function getIdentifyingDependency(graph, relation) {
@@ -21,7 +21,7 @@ export function weakEntityOwnershipHasCycle(graph, entity) {
     const visitedEntityIds = new Set([entity.idMx]);
     let currentEntity = entity;
 
-    while (currentEntity?.weak === true && currentEntity.ownerEntityId) {
+    while (isWeakEntity(currentEntity) && currentEntity.ownerEntityId) {
         if (visitedEntityIds.has(currentEntity.ownerEntityId)) {
             return true;
         }

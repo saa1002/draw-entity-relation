@@ -10,32 +10,42 @@ async function mockSaveFilePicker(page) {
             value: async (options = {}) => ({
                 async createWritable() {
                     const chunks = [];
+                    let mimeType = '';
+                    let size = 0;
 
                     return {
                         async write(data) {
                             if (data instanceof Blob) {
+                                mimeType = data.type;
+                                size += data.size;
                                 chunks.push(await data.text());
                                 return;
                             }
 
                             if (typeof data === 'string') {
+                                size += data.length;
                                 chunks.push(data);
                                 return;
                             }
 
                             if (data instanceof ArrayBuffer) {
+                                size += data.byteLength;
                                 chunks.push(new TextDecoder().decode(data));
                                 return;
                             }
 
-                            chunks.push(String(data));
+                            const fallbackContent = String(data);
+
+                            size += fallbackContent.length;
+                            chunks.push(fallbackContent);
                         },
 
                         async close() {
                             window.__E2E_SAVED_FILES__.push({
-                                fileName:
-                                    options.suggestedName ?? 'diagram.json',
+                                fileName: options.suggestedName ?? 'diagram.json',
                                 content: chunks.join(''),
+                                mimeType,
+                                size,
                             });
                         },
                     };
@@ -45,51 +55,53 @@ async function mockSaveFilePicker(page) {
     });
 }
 
-
-export async function exportCurrentDiagram(page) {
+async function prepareSavedFileCapture(page) {
     await mockSaveFilePicker(page);
 
-    const previousExportsCount = await page.evaluate(
-        () => window.__E2E_SAVED_FILES__.length,
-    );
+    return page.evaluate(() => window.__E2E_SAVED_FILES__.length);
+}
 
-    await page.getByRole('button', { name: 'Exportar JSON' }).click();
-
-    const dialog = page.getByRole('dialog');
-    await expect(
-        dialog.getByText('Exportación diagrama en JSON'),
-    ).toBeVisible();
-
-    await dialog.getByRole('button', { name: 'Aceptar' }).click();
-
+async function waitForSavedFile(page, previousExportsCount) {
     await page.waitForFunction(
         (count) => window.__E2E_SAVED_FILES__.length > count,
         previousExportsCount,
     );
 
-    const raw = await page.evaluate(
-        () => window.__E2E_SAVED_FILES__.at(-1).content,
-    );
-    
-    return JSON.parse(raw);
+    return page.evaluate(() => window.__E2E_SAVED_FILES__.at(-1));
 }
 
-export async function resetDiagram(page) {
-    await page.getByRole('button', { name: 'Reiniciar' }).click();
-
-    const dialog = page.getByRole('dialog');
-    await expect(dialog.getByText('Reiniciar diagrama')).toBeVisible();
-
-    await dialog.getByRole('button', { name: 'Aceptar' }).click();
+export async function seedSavedDiagram(page, diagram) {
+    await page.addInitScript((initialDiagram) => {
+        window.localStorage.setItem(
+            'diagramData',
+            JSON.stringify(initialDiagram),
+        );
+    }, diagram);
 }
 
-export async function importDiagram(page, diagram) {
+export async function setSavedDiagram(page, diagram) {
+    await page.evaluate((diagramToSave) => {
+        window.localStorage.setItem(
+            'diagramData',
+            JSON.stringify(diagramToSave),
+        );
+    }, diagram);
+}
+
+export async function importDiagram(page, diagram, { mode = 'replace' } = {}) {
     await page.getByRole('button', { name: 'Importar JSON' }).click();
 
     const dialog = page.getByRole('dialog');
     await expect(
-        dialog.getByText('Importación de diagrama desde JSON'),
+        dialog.getByText('Importar diagrama desde JSON'),
     ).toBeVisible();
+
+    if (mode === 'merge') {
+        await dialog.locator('#import-json-mode').click();
+        await page
+            .getByRole('option', { name: 'Combinar con el diagrama actual' })
+            .click();
+    }
 
     const input = dialog.locator('input[type="file"]');
 
@@ -104,40 +116,140 @@ export async function importDiagram(page, diagram) {
     ).toBeVisible();
 }
 
-export async function seedSavedDiagram(page, diagram) {
-    await page.addInitScript((initialDiagram) => {
-        window.localStorage.setItem(
-            'diagramData',
-            JSON.stringify(initialDiagram),
-        );
-    }, diagram);
+export async function resetDiagram(page) {
+    await page.getByRole('button', { name: 'Reiniciar' }).click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText('Reiniciar diagrama')).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'Reiniciar' }).click();
+}
+
+export async function openExportJsonDialog(page) {
+    await page.getByRole('button', { name: 'Exportar JSON' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(
+        dialog.getByText('Exportar diagrama en JSON'),
+    ).toBeVisible();
+
+    return dialog;
+}
+
+export async function exportCurrentDiagram(page) {
+    const previousExportsCount = await prepareSavedFileCapture(page);
+
+    const dialog = await openExportJsonDialog(page);
+
+    await dialog.getByRole('button', { name: 'Exportar JSON' }).click();
+
+    const savedFile = await waitForSavedFile(page, previousExportsCount);
+
+    return JSON.parse(savedFile.content);
+}
+
+export async function exportCurrentDiagramImage(page, format = 'PNG') {
+    const previousExportsCount = await prepareSavedFileCapture(page);
+
+    await page.getByRole('button', { name: 'Exportar imagen' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(
+        dialog.getByText('Exportar diagrama como imagen'),
+    ).toBeVisible();
+
+    if (format !== 'PNG') {
+        await dialog.getByLabel('Formato').click();
+
+        const optionsList = page.getByRole('listbox');
+        await optionsList.getByRole('option', { name: format }).click();
+        await expect(optionsList).toBeHidden();
+    }
+
+    await dialog.getByRole('button', { name: 'Exportar imagen' }).click();
+
+    return waitForSavedFile(page, previousExportsCount);
 }
 
 export async function exportCurrentSqlScript(page) {
-    await mockSaveFilePicker(page);
-
-    const previousExportsCount = await page.evaluate(
-        () => window.__E2E_SAVED_FILES__.length,
-    );
+    const previousExportsCount = await prepareSavedFileCapture(page);
 
     await page.getByRole('button', { name: 'Generar SQL' }).click();
 
     const dialog = page.getByRole('dialog');
 
-    await expect(dialog.getByText('Generación script SQL')).toBeVisible();
+    await expect(dialog.getByText('Generar script SQL')).toBeVisible();
 
-    const acceptButton = dialog.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = dialog.getByRole('button', { name: 'Generar SQL' });
 
     await expect(acceptButton).toBeEnabled();
 
     await acceptButton.click();
 
-    await page.waitForFunction(
-        (count) => window.__E2E_SAVED_FILES__.length > count,
-        previousExportsCount,
-    );
+    const savedFile = await waitForSavedFile(page, previousExportsCount);
 
-    return page.evaluate(
-        () => window.__E2E_SAVED_FILES__.at(-1).content,
-    );
+    return savedFile.content;
 }
+
+export const createImportEntity = ({
+    idMx,
+    name,
+    x,
+    y,
+    attributeId = `${idMx}-id`,
+    attributeName = 'id',
+}) => ({
+    idMx,
+    name,
+    position: { x, y },
+    weak: false,
+    ownerEntityId: null,
+    identifyingRelationId: null,
+    attributes: [
+        {
+            idMx: attributeId,
+            name: attributeName,
+            position: { x: x + 120, y },
+            key: true,
+            partialKey: false,
+            cell: [attributeId, `${attributeId}-edge`],
+            offsetX: 120,
+            offsetY: 0,
+        },
+    ],
+});
+
+export const createBinaryImportRelation = ({
+    idMx,
+    name,
+    x,
+    y,
+    side1EntityId,
+    side2EntityId,
+}) => ({
+    idMx,
+    name,
+    position: { x, y },
+    arity: 2,
+    canHoldAttributes: false,
+    isIdentifying: false,
+    attributes: [],
+    side1: {
+        idMx: `${idMx}-side-1`,
+        cardinality: '1:N',
+        role: '',
+        cell: `${idMx}-side-1-cardinality`,
+        edgeId: `${idMx}-side-1-edge`,
+        entity: { idMx: side1EntityId },
+    },
+    side2: {
+        idMx: `${idMx}-side-2`,
+        cardinality: '1:1',
+        role: '',
+        cell: `${idMx}-side-2-cardinality`,
+        edgeId: `${idMx}-side-2-edge`,
+        entity: { idMx: side2EntityId },
+    },
+});

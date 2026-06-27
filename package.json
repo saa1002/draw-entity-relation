@@ -1,10 +1,15 @@
 {
-  "name": "react",
+  "name": "ubu-er-app",
   "version": "1.0.0",
-  "description": "React example starter project",
+  "license": "MIT",
+  "description": "Web editor for Entity-Relationship diagrams with validation, relational transformation and SQL generation.",
   "keywords": [
-    "react",
-    "starter"
+  "entity-relationship",
+  "database-design",
+  "sql",
+  "react",
+  "mxgraph",
+  "ubu"
   ],
   "main": "src/index.js",
   "dependencies": {
@@ -24,7 +29,6 @@
     "start": "react-scripts start",
     "prebuild": "node scripts/generateBuildInfo.js",
     "build": "react-scripts build",
-    "pretest": "node scripts/generateBuildInfo.js",
     "test": "vitest --exclude \"**/tests/e2e\"",
     "test:e2e": "npx playwright test",
     "test:coverage": "vitest --exclude \"**/tests/e2e\" --coverage",

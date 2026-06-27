@@ -1,80 +1,485 @@
-\apendice{Especificación de requisitos}
+\apendice{Especificación de Requisitos}
 
 \section{Introducción}
 
-En este anexo se recogen los requisitos principales del editor de diagramas Entidad-Relación desarrollado durante el proyecto. Estos requisitos sirven para describir qué funcionalidades debe ofrecer la aplicación y qué condiciones generales debe cumplir para que su uso sea coherente con los objetivos del trabajo.
+En este apartado se enumeran y desarrollan los objetivos y requisitos que debe tener la aplicación según el alcance final del proyecto. La herramienta parte de un editor de diagramas Entidad-Relación ya existente, por lo que los requisitos no se plantean como si el sistema se hubiera desarrollado desde cero, sino como una evolución de una aplicación heredada.
 
-El proyecto parte de una aplicación heredada, por lo que los requisitos no se plantean como si el sistema se hubiera diseñado desde cero. Parte del trabajo consistió en analizar la funcionalidad existente, estabilizarla y ampliarla para soportar nuevos elementos del modelo Entidad-Relación. Por este motivo, los requisitos reflejan tanto funcionalidades ya presentes en el editor inicial como ampliaciones incorporadas durante este TFG.
-
-La especificación se centra en los aspectos más relevantes para el alcance del proyecto: edición visual de diagramas, mantenimiento de un modelo interno coherente, validación, transformación al modelo relacional, generación de SQL e importación y exportación de diagramas. No se pretende recoger todos los posibles casos de uso de una herramienta profesional de modelado, sino aquellos que resultan necesarios para el desarrollo realizado.
+Durante el trabajo se han incorporado nuevas funcionalidades del modelo Entidad-Relación, se ha revisado la validación y la generación de SQL, y se han añadido mejoras de usabilidad para facilitar la edición de diagramas. Por ello, este anexo recoge tanto las funcionalidades principales del editor como las ampliaciones realizadas durante el desarrollo del TFG.
 
 \section{Objetivos generales}
 
-El objetivo general del sistema es permitir al usuario diseñar diagramas Entidad-Relación mediante una aplicación web y obtener, a partir de ellos, una representación relacional y un script SQL inicial.
+Desde el punto de vista de la especificación de requisitos, la aplicación debe conservar las funcionalidades principales del editor heredado y añadir las ampliaciones desarrolladas en este TFG de forma coherente con el modelo interno, la validación, la transformación relacional y la generación SQL. Los objetivos generales del sistema se resumen en los siguientes puntos:
 
-A partir de este objetivo general, la aplicación debe permitir crear y modificar elementos del modelo Entidad-Relación, mantener la información del diagrama en una estructura interna coherente, validar el modelo antes de procesarlo y generar una salida que pueda servir como base para la creación de tablas en una base de datos relacional.
-
-También se considera importante que la herramienta permita guardar y recuperar diagramas, de forma que el trabajo realizado por el usuario no dependa únicamente de una sesión concreta del navegador.
-
-\clearpage
+\begin{itemize}
+\tightlist
+\item Modelar diagramas E-R mediante una aplicación web.
+\item Almacenar los diagramas en una estructura interna coherente y extensible.
+\item Representar elementos básicos y avanzados del modelo E-R dentro del alcance implementado.
+\item Validar la estructura interna del diagrama para detectar errores antes de generar resultados.
+\item Transformar el diagrama E-R validado a una representación relacional.
+\item Generar scripts SQL a partir de la representación relacional obtenida.
+\item Exportar e importar diagramas en formato JSON.
+\item Permitir la combinación controlada de diagramas importados o estructuras generadas.
+\item Exportar la representación visual del diagrama en formatos de imagen.
+\item Mejorar la usabilidad del editor sin alterar la notación académica del modelo E-R, incorporando acciones contextuales, selección múltiple visible y secciones de ayuda e información del proyecto.
+\end{itemize}
 
 \section{Catálogo de requisitos}
 
-En esta sección se presenta un catálogo resumido de los requisitos principales del sistema. Se distinguen requisitos funcionales, relacionados con las operaciones que debe permitir la aplicación, y requisitos no funcionales, relacionados con condiciones generales de uso, mantenimiento y desarrollo.
+En este apartado se enumeran los requisitos funcionales y no funcionales que describen el comportamiento esperado de UBU E-R App tras la evolución realizada en este TFG. Los requisitos combinan funcionalidades heredadas que se mantienen como parte del editor, ampliaciones incorporadas durante el desarrollo y restricciones de alcance necesarias para no atribuir al sistema capacidades que todavía no implementa.
 
-\begin{table}[H]
-    \centering
-    \begin{tabular}{p{0.18\textwidth} p{0.70\textwidth}}
-        \toprule
-        \textbf{Código} & \textbf{Descripción} \\
-        \midrule
-        RF-01 & El sistema debe permitir crear y editar entidades dentro del lienzo del editor. \\
-        RF-02 & El sistema debe permitir añadir atributos a entidades y relaciones. \\
-        RF-03 & El sistema debe permitir representar atributos clave, compuestos, multivaluados y discriminantes en los casos soportados por la aplicación. \\
-        RF-04 & El sistema debe permitir crear y configurar relaciones entre entidades, incluyendo cardinalidades y roles en los casos soportados por la aplicación. \\
-        RF-05 & El sistema debe permitir representar entidades débiles y su dependencia respecto a una entidad propietaria. \\
-        RF-06 & El sistema debe mantener un modelo interno coherente con los elementos representados en el lienzo. \\
-        RF-07 & El sistema debe validar el diagrama antes de realizar operaciones como la transformación relacional o la generación de SQL. \\
-        RF-08 & El sistema debe transformar el diagrama Entidad-Relación validado a una representación relacional. \\
-        RF-09 & El sistema debe generar un script SQL a partir de la representación relacional obtenida. \\
-        RF-10 & El sistema debe permitir guardar, importar y exportar diagramas en formato JSON. \\
-        \bottomrule
-    \end{tabular}
-    \caption{Catálogo de requisitos funcionales.}
-    \label{tab:requisitos-funcionales}
-\end{table}
+\subsection{Requisitos funcionales}
 
-\begin{table}[H]
-    \centering
-    \begin{tabular}{p{0.18\textwidth} p{0.70\textwidth}}
-        \toprule
-        \textbf{Código} & \textbf{Descripción} \\
-        \midrule
-        RNF-01 & La aplicación debe poder ejecutarse en un navegador web moderno. \\
-        RNF-02 & La interfaz debe permitir una edición visual clara de los elementos principales del diagrama. \\
-        RNF-03 & El código debe mantener una separación razonable entre la interfaz, el modelo interno, la validación y la generación de SQL. \\
-        RNF-04 & El sistema debe facilitar la revisión del comportamiento mediante pruebas automáticas y revisión manual. \\
-        RNF-05 & La aplicación debe mantener la compatibilidad, en la medida de lo posible, con diagramas guardados en versiones anteriores del modelo interno. \\
-        \bottomrule
-    \end{tabular}
-    \caption{Catálogo de requisitos no funcionales.}
-    \label{tab:requisitos-no-funcionales}
-\end{table}
+\begin{itemize}
+\tightlist
+\item \textbf{RF1 - Modelar elementos básicos E-R:} La aplicación debe permitir crear y manipular entidades, atributos y relaciones dentro del lienzo del editor.
+\item \textbf{RF2 - Configurar atributos:} La aplicación debe permitir trabajar con atributos simples, clave, compuestos, multivaluados y discriminantes de entidades débiles en los casos soportados.
+\item \textbf{RF3 - Configurar relaciones:} La aplicación debe permitir configurar relaciones binarias, cardinalidades y atributos propios de relación cuando proceda.
+\item \textbf{RF4 - Modelar relaciones ternarias y roles:} La aplicación debe permitir representar relaciones de grado tres y distinguir roles de participación cuando sean necesarios.
+\item \textbf{RF5 - Modelar entidades débiles:} La aplicación debe permitir representar entidades débiles, relaciones identificadoras y discriminantes.
+\item \textbf{RF6 - Modelar jerarquías ISA sencillas:} La aplicación debe permitir representar una generalización con una o varias especializaciones.
+\item \textbf{RF7 - Acotar el soporte de jerarquías ISA:} La aplicación debe limitar el tratamiento de ISA al caso implementado. En particular, no debe tratar especializaciones con clave propia, herencia múltiple real, discriminantes ISA ni restricciones de totalidad, parcialidad, solapamiento o exclusividad.
+\item \textbf{RF8 - Mantener el modelo interno:} La aplicación debe mantener una estructura interna coherente con el contenido representado en el lienzo.
+\item \textbf{RF9 - Persistir diagramas localmente:} La aplicación debe conservar el diagrama en el almacenamiento local del navegador.
+\item \textbf{RF10 - Exportar e importar JSON:} La aplicación debe permitir exportar diagramas a JSON e importar diagramas desde archivos JSON válidos.
+\item \textbf{RF11 - Reemplazar o combinar contenido:} La aplicación debe permitir importar diagramas o generar estructuras reemplazando el diagrama actual o combinándolas con el contenido existente.
+\item \textbf{RF12 - Validar diagramas:} La aplicación debe validar el modelo interno y mostrar los errores detectados de forma comprensible.
+\item \textbf{RF13 - Generar SQL:} La aplicación debe transformar el diagrama validado al modelo relacional y generar un script SQL con un formato claro y legible.
+\item \textbf{RF14 - Generar estructuras básicas:} La aplicación debe permitir crear estructuras de ejemplo para facilitar la prueba y exploración del editor.
+\item \textbf{RF15 - Exportar imagen del diagrama:} La aplicación debe permitir exportar la representación visual del diagrama en formato PNG y SVG.
+\item \textbf{RF16 - Ofrecer acciones de apoyo:} La aplicación debe incluir acciones como comprobar el diagrama, ajustar la vista, cambiar el idioma de la interfaz, consultar ayuda, visualizar información del proyecto y reiniciar el lienzo previa confirmación.
+\item \textbf{RF17 - Gestionar selección múltiple y acciones contextuales:} La aplicación debe permitir seleccionar varios elementos de forma visible, mover o eliminar una selección múltiple y evitar mostrar acciones individuales cuando hay varios elementos seleccionados.
+\end{itemize}
 
-% TODO: revisar el catálogo cuando se cierre el soporte final de ISA y agregaciones.
+El soporte de ISA se considera inicial y controlado: se contempla una única generalización con una o varias especializaciones, con clave heredada desde la generalización, pero quedan fuera del alcance la totalidad o parcialidad, el solapamiento o exclusividad, los discriminantes ISA y la herencia múltiple real. Las agregaciones no forman parte de los requisitos implementados en esta versión.
+
+\subsection{Requisitos no funcionales}
+
+\begin{itemize}
+\tightlist
+\item \textbf{RNF1 - Usabilidad:} La aplicación debe ofrecer una interfaz clara y cómoda para la creación y revisión de diagramas E-R, incluyendo guías, descripciones breves de acciones, acciones contextuales y retroalimentación visual durante la selección de elementos.
+\item \textbf{RNF2 - Compatibilidad:} La aplicación debe poder ejecutarse en navegadores web modernos.
+\item \textbf{RNF3 - Mantenibilidad:} El código debe organizarse de forma que permita seguir ampliando el editor con nuevas funcionalidades.
+\item \textbf{RNF4 - Coherencia visual:} La representación gráfica debe respetar la notación académica utilizada para entidades, relaciones, atributos, entidades débiles, relaciones identificadoras e ISA.
+\item \textbf{RNF5 - Separación de responsabilidades:} La aplicación debe mantener una separación razonable entre interfaz, modelo interno, validación, transformación relacional y generación SQL.
+\item \textbf{RNF6 - Funcionamiento sin backend:} La aplicación debe funcionar sin requerir autenticación de usuarios, servidor propio ni almacenamiento remoto.
+\item \textbf{RNF7 - Contexto académico:} La herramienta debe servir como apoyo práctico para el aprendizaje y uso del modelo Entidad-Relación y su transformación relacional.
+\end{itemize}
 
 \section{Especificación de requisitos}
 
-Los requisitos funcionales se pueden agrupar en varios bloques. El primero corresponde a la edición visual del diagrama. En este bloque se incluyen las operaciones necesarias para crear entidades, atributos y relaciones, modificar sus nombres y configurar la información asociada a cada elemento.
+Los requisitos funcionales se agrupan en varios bloques. El primero corresponde a la edición visual del diagrama, que incluye la creación y modificación de entidades, atributos y relaciones. El segundo bloque recoge los elementos avanzados del modelo E-R soportados por la aplicación, como entidades débiles, atributos compuestos y multivaluados, relaciones ternarias, roles y jerarquías ISA sencillas.
 
-Un segundo bloque está relacionado con el mantenimiento del modelo interno. Cada elemento representado en el lienzo debe tener una correspondencia en la estructura de datos de la aplicación. Esta estructura es la que permite guardar el diagrama, reconstruirlo posteriormente, validarlo y utilizarlo como entrada para la transformación relacional.
+Otro bloque importante es el mantenimiento del modelo interno. Cada elemento representado en el lienzo debe conservarse en una estructura de datos que permita reconstruir el diagrama, validarlo, persistirlo y transformarlo posteriormente. Esta estructura es también la base para la exportación e importación en formato JSON.
 
-El tercer bloque corresponde a la validación del modelo. Antes de generar una salida relacional o SQL, la aplicación debe comprobar que el diagrama contiene la información mínima necesaria y que no existen configuraciones ambiguas o incompletas. Esta validación no pretende cubrir cualquier posible restricción semántica, pero sí evitar que se generen resultados incoherentes a partir de un diagrama mal definido.
+La validación del diagrama permite comprobar si el modelo contiene errores antes de generar una salida relacional o SQL. Además, el usuario puede ejecutar una comprobación explícita del diagrama sin necesidad de generar SQL. Si se detectan errores, la aplicación debe mostrarlos de forma agrupada y comprensible.
 
-Otro bloque importante es la transformación al modelo relacional. A partir del diagrama validado, el sistema debe obtener una representación basada en tablas, columnas, claves primarias y claves foráneas. Esta representación intermedia permite separar la lógica de transformación de la generación concreta del script SQL.
+La transformación relacional y la generación de SQL constituyen la salida principal del sistema. A partir del diagrama validado, la aplicación obtiene una representación basada en tablas, columnas, claves primarias y claves foráneas, y posteriormente genera el script SQL correspondiente.
 
-Finalmente, la aplicación debe permitir generar SQL y trabajar con diagramas guardados. La generación de SQL proporciona una salida textual útil como punto de partida para crear la estructura de una base de datos, mientras que la importación y exportación en JSON permite conservar y recuperar diagramas para continuar su edición.
+Finalmente, la aplicación incorpora varias funcionalidades de apoyo a la edición: generación de estructuras básicas, importación y generación combinada de contenido, exportación visual en PNG y SVG, ajuste de la vista, soporte básico de idioma, selección múltiple visible, acciones contextuales, secciones de ayuda e información del proyecto y reinicio controlado del lienzo.
 
-En cuanto a los requisitos no funcionales, se busca que la aplicación sea utilizable desde un entorno web, que el código sea mantenible y que las distintas partes del sistema estén organizadas de forma que sea posible seguir ampliando el editor sin depender de comportamientos demasiado frágiles.
+\subsection{Actores}
 
-% TODO: completar o ajustar esta sección si las ampliaciones finales modifican el alcance funcional.
+El sistema contempla un actor principal, denominado usuario del editor. Este actor representa a la persona que utiliza UBU E-R App para crear, revisar, validar, importar, exportar o transformar diagramas Entidad-Relación. En el contexto académico del proyecto, este usuario puede corresponderse con un estudiante, un docente o cualquier persona que necesite modelar un esquema E-R y obtener una representación relacional o SQL a partir de él.
+
+\subsection{Diagrama de casos de uso}
+
+La figura~\ref{fig:diagrama_casos_uso} resume los principales casos de uso identificados para UBU E-R App. Se ha considerado un único actor principal, el usuario del editor, ya que la aplicación no incorpora autenticación, perfiles diferenciados ni backend propio. Los casos de uso se agrupan en edición del modelo E-R, validación y generación, persistencia e intercambio, y acciones de apoyo a la edición.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{img/diagrama_casos_uso.png}
+\caption{Diagrama de casos de uso de UBU E-R App.}
+\label{fig:diagrama_casos_uso}
+\end{figure}
+
+\subsection{Casos de uso}
+
+Las tablas siguientes describen los principales casos de uso del sistema a nivel funcional, sin entrar en detalles internos de implementación ni en pasos concretos dependientes de la interfaz.
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-1} & \textbf{Crear y editar entidades}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF1, RF8 \\
+\textbf{Descripción} & Permite al usuario crear entidades en el lienzo y modificar sus propiedades básicas. \\
+\textbf{Precondición} & La aplicación debe estar abierta y funcionando. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario crea una entidad en el lienzo.
+\item El usuario puede mover, seleccionar, renombrar o eliminar la entidad.
+\item Si se trata de una entidad fuerte normal, la aplicación puede crear una clave \texttt{id} por defecto.
+\end{enumerate}\\
+\textbf{Postcondición} & La entidad queda representada visualmente y almacenada en el modelo interno. \\
+\textbf{Excepciones} & - \\
+\textbf{Importancia} & Alta \\
+\bottomrule
+\end{tabularx}
+\caption{CU-1 Crear y editar entidades.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-2} & \textbf{Crear y editar atributos}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF1, RF2, RF8 \\
+\textbf{Descripción} & Permite añadir atributos a entidades o relaciones y modificar su información básica. \\
+\textbf{Precondición} & Debe existir una entidad o relación seleccionable en el diagrama. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario selecciona el elemento al que desea añadir un atributo.
+\item El usuario crea el atributo.
+\item El usuario puede renombrar, mover o eliminar el atributo.
+\end{enumerate}\\
+\textbf{Postcondición} & El atributo queda asociado al elemento correspondiente en el lienzo y en el modelo interno. \\
+\textbf{Excepciones} & El atributo no se crea si no existe un elemento válido al que asociarlo. \\
+\textbf{Importancia} & Alta \\
+\bottomrule
+\end{tabularx}
+\caption{CU-2 Crear y editar atributos.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-3} & \textbf{Configurar atributos especiales}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF2 \\
+\textbf{Descripción} & Permite configurar atributos con significado especial dentro del modelo E-R. \\
+\textbf{Precondición} & Debe existir al menos un atributo asociado a una entidad o relación. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario selecciona un atributo.
+\item El usuario configura el atributo como clave, discriminante de entidad débil, compuesto o multivaluado cuando la acción está disponible.
+\item En atributos compuestos, el usuario puede añadir subatributos.
+\end{enumerate}\\
+\textbf{Postcondición} & El atributo queda representado con la notación correspondiente y su tipo se conserva en el modelo interno. \\
+\textbf{Excepciones} & Algunas acciones no están disponibles si el atributo pertenece a un elemento donde esa configuración no es válida. \\
+\textbf{Importancia} & Alta \\
+\bottomrule
+\end{tabularx}
+\caption{CU-3 Configurar atributos especiales.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-4} & \textbf{Crear y configurar relaciones binarias}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF3, RF8 \\
+\textbf{Descripción} & Permite crear relaciones binarias entre entidades y configurar sus participantes y cardinalidades. \\
+\textbf{Precondición} & Deben existir entidades en el diagrama. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario crea una relación.
+\item El usuario selecciona las entidades participantes.
+\item El usuario configura las cardinalidades de la relación.
+\item Si procede, el usuario añade atributos propios a la relación.
+\end{enumerate}\\
+\textbf{Postcondición} & La relación queda conectada a sus entidades participantes y almacenada en el modelo interno. \\
+\textbf{Excepciones} & La relación puede quedar pendiente de validación si faltan participantes o cardinalidades. \\
+\textbf{Importancia} & Alta \\
+\bottomrule
+\end{tabularx}
+\caption{CU-4 Crear y configurar relaciones binarias.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-5} & \textbf{Crear y configurar relaciones ternarias y roles}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF4, RF8 \\
+\textbf{Descripción} & Permite representar relaciones de grado tres y distinguir roles de participación cuando sea necesario. \\
+\textbf{Precondición} & Deben existir entidades suficientes para configurar una relación ternaria. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario crea una relación ternaria.
+\item El usuario selecciona sus tres participantes.
+\item El usuario configura cardinalidades.
+\item El usuario define roles cuando una entidad participa más de una vez o cuando se requiere mayor claridad.
+\end{enumerate}\\
+\textbf{Postcondición} & La relación ternaria queda almacenada con sus participantes, cardinalidades y roles. \\
+\textbf{Excepciones} & La validación informa de participantes, cardinalidades o roles incorrectos cuando proceda. \\
+\textbf{Importancia} & Alta \\
+\bottomrule
+\end{tabularx}
+\caption{CU-5 Crear y configurar relaciones ternarias y roles.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-6} & \textbf{Modelar entidades débiles y relaciones identificadoras}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF5, RF8, RF13 \\
+\textbf{Descripción} & Permite representar una entidad débil y su dependencia por identificación respecto a una entidad propietaria. \\
+\textbf{Precondición} & Deben existir las entidades necesarias para configurar la dependencia. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario marca una entidad como débil.
+\item El usuario configura la relación identificadora.
+\item El usuario establece la entidad propietaria.
+\item El usuario define el discriminante correspondiente.
+\end{enumerate}\\
+\textbf{Postcondición} & La entidad débil queda representada con la notación adecuada y se tiene en cuenta en la transformación relacional. \\
+\textbf{Excepciones} & La validación informa si la entidad débil no tiene propietario, relación identificadora o discriminante válido. \\
+\textbf{Importancia} & Alta \\
+\bottomrule
+\end{tabularx}
+\caption{CU-6 Modelar entidades débiles y relaciones identificadoras.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-7} & \textbf{Modelar jerarquías ISA sencillas}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF6, RF7, RF8, RF13 \\
+\textbf{Descripción} & Permite representar una jerarquía ISA con una entidad general y una o varias especializaciones. \\
+\textbf{Precondición} & Deben existir las entidades que participarán en la jerarquía. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario crea un elemento ISA.
+\item El usuario selecciona la entidad general.
+\item El usuario añade una o varias entidades especializadas.
+\item La aplicación impide configuraciones fuera del alcance implementado.
+\end{enumerate}\\
+\textbf{Postcondición} & La jerarquía ISA queda representada en el lienzo y almacenada en el modelo interno. \\
+\textbf{Excepciones} & La validación informa de ISA sin generalización, sin especializaciones, con claves propias en especializaciones o con configuraciones de herencia no soportadas. Las restricciones de totalidad o parcialidad, solapamiento o exclusividad y discriminante ISA quedan fuera del alcance. \\
+\textbf{Importancia} & Alta \\
+\bottomrule
+\end{tabularx}
+\caption{CU-7 Modelar jerarquías ISA sencillas.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-8} & \textbf{Validar explícitamente el diagrama}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF12 \\
+\textbf{Descripción} & Permite comprobar si el diagrama actual es válido sin generar SQL ni exportar información. \\
+\textbf{Precondición} & La aplicación debe estar abierta y puede existir un diagrama completo o en construcción. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario selecciona la acción de comprobar el diagrama.
+\item La aplicación ejecuta las reglas de validación sobre el modelo interno.
+\item La aplicación muestra el resultado de la validación.
+\end{enumerate}\\
+\textbf{Postcondición} & Si el diagrama es válido, se muestra una notificación de éxito. Si contiene errores, se abre el diálogo de validación. \\
+\textbf{Excepciones} & - \\
+\textbf{Importancia} & Alta \\
+\bottomrule
+\end{tabularx}
+\caption{CU-8 Validar explícitamente el diagrama.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-9} & \textbf{Generar SQL a partir del diagrama}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF12, RF13 \\
+\textbf{Descripción} & Permite generar un script SQL a partir del diagrama E-R validado. \\
+\textbf{Precondición} & El diagrama debe contener una estructura suficiente para poder validarse. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario selecciona la opción de generar SQL.
+\item La aplicación valida el diagrama.
+\item La aplicación transforma el modelo E-R a una representación relacional.
+\item La aplicación genera el script SQL correspondiente.
+\end{enumerate}\\
+\textbf{Postcondición} & Si el diagrama es válido, se obtiene el SQL generado. Si no lo es, se muestran los errores detectados. \\
+\textbf{Excepciones} & Errores de validación del diagrama. \\
+\textbf{Importancia} & Alta \\
+\bottomrule
+\end{tabularx}
+\caption{CU-9 Generar SQL a partir del diagrama.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-10} & \textbf{Guardar y recuperar el diagrama localmente}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF8, RF9 \\
+\textbf{Descripción} & Permite conservar el estado del diagrama entre recargas o sesiones del navegador. \\
+\textbf{Precondición} & El usuario debe haber creado o modificado un diagrama. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item La aplicación mantiene actualizado el modelo interno.
+\item La aplicación guarda el estado en el almacenamiento local del navegador.
+\item Al recargar, la aplicación reconstruye el diagrama guardado.
+\end{enumerate}\\
+\textbf{Postcondición} & El usuario puede continuar trabajando sobre el diagrama sin perder el contenido por una recarga. \\
+\textbf{Excepciones} & El contenido puede no recuperarse si se borra el almacenamiento local del navegador. \\
+\textbf{Importancia} & Alta \\
+\bottomrule
+\end{tabularx}
+\caption{CU-10 Guardar y recuperar el diagrama localmente.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-11} & \textbf{Exportar e importar diagramas en JSON}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF10, RF11 \\
+\textbf{Descripción} & Permite guardar el diagrama en un archivo JSON o cargar un diagrama previamente exportado. \\
+\textbf{Precondición} & Para exportar, debe existir un diagrama. Para importar, el usuario debe disponer de un archivo JSON compatible. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario selecciona la opción de exportar o importar JSON.
+\item En la importación, el usuario elige entre reemplazar el diagrama actual o combinar el contenido importado.
+\item La aplicación valida y reconstruye el resultado cuando procede.
+\end{enumerate}\\
+\textbf{Postcondición} & El diagrama se guarda como JSON o se carga en el editor manteniendo una estructura interna coherente. \\
+\textbf{Excepciones} & Archivo incompatible, JSON inválido o diagrama combinado no válido. \\
+\textbf{Importancia} & Media \\
+\bottomrule
+\end{tabularx}
+\caption{CU-11 Exportar e importar diagramas en JSON.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-12} & \textbf{Generar estructuras básicas de ejemplo}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF11, RF14 \\
+\textbf{Descripción} & Permite crear de forma rápida estructuras habituales del modelo E-R. \\
+\textbf{Precondición} & La aplicación debe estar abierta y funcionando. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario abre la acción de generar estructura.
+\item El usuario selecciona una estructura básica.
+\item El usuario decide si desea reemplazar el diagrama actual o combinar la estructura con el contenido existente.
+\end{enumerate}\\
+\textbf{Postcondición} & La estructura seleccionada aparece en el lienzo y queda integrada en el modelo interno. \\
+\textbf{Excepciones} & La operación no se realiza si el usuario cancela la confirmación. Si el diagrama resultante queda incompleto o incoherente, podrá detectarse posteriormente mediante la validación del diagrama. \\
+\textbf{Importancia} & Media \\
+\bottomrule
+\end{tabularx}
+\caption{CU-12 Generar estructuras básicas de ejemplo.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-13} & \textbf{Exportar la representación visual del diagrama}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF15 \\
+\textbf{Descripción} & Permite obtener una imagen del diagrama para documentación, revisión o uso externo. \\
+\textbf{Precondición} & Debe existir contenido visual en el lienzo del editor. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario selecciona la opción de exportar imagen.
+\item El usuario elige el formato disponible, PNG o SVG.
+\item La aplicación genera el archivo visual correspondiente.
+\end{enumerate}\\
+\textbf{Postcondición} & El usuario obtiene una imagen del diagrama. Esta operación no modifica el modelo interno ni el SQL generado. \\
+\textbf{Excepciones} & La aplicación informa si no existe contenido suficiente para exportar. \\
+\textbf{Importancia} & Media \\
+\bottomrule
+\end{tabularx}
+\caption{CU-13 Exportar la representación visual del diagrama.}
+\end{table}
+
+\begin{table}[p]
+\centering
+\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+\toprule
+\textbf{CU-14} & \textbf{Utilizar acciones de apoyo de la interfaz}\\
+\toprule
+\textbf{Versión} & 1.0 \\
+\textbf{Autor} & Steven Paul Alba Alba \\
+\textbf{Requisitos asociados} & RF16, RF17 \\
+\textbf{Descripción} & Permite utilizar acciones auxiliares que facilitan la interacción con el editor. \\
+\textbf{Precondición} & La aplicación debe estar abierta. \\
+\textbf{Acciones} &
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item El usuario puede ajustar la vista al contenido del diagrama.
+\item El usuario puede cambiar el idioma de la interfaz entre español e inglés.
+\item El usuario puede consultar la guía mostrada cuando no hay selección.
+\item El usuario puede reiniciar el lienzo previa confirmación.
+\item El usuario puede consultar la ayuda de uso y la información del proyecto.
+\item El usuario puede seleccionar varios elementos de forma visible.
+\item El usuario puede mover o eliminar una selección múltiple cuando proceda.
+\end{enumerate}\\
+\textbf{Postcondición} & La edición del diagrama resulta más cómoda sin modificar la semántica del modelo E-R. \\
+\textbf{Excepciones} & El reinicio del lienzo no se realiza si el usuario cancela la confirmación. \\
+\textbf{Importancia} & Media \\
+\bottomrule
+\end{tabularx}
+\caption{CU-14 Utilizar acciones de apoyo de la interfaz.}
+\end{table}

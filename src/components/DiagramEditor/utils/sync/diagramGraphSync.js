@@ -135,4 +135,13 @@ export const syncDiagramDataFromGraph = ({
             updateAttributePosition,
         });
     });
+
+    (diagram.isas ?? []).forEach((isa) => {
+        if (!hasGraphCell(graph, isa.idMx)) return;
+
+        const isaCell = accessCell(isa.idMx);
+
+        isa.position.x = isaCell.geometry.x;
+        isa.position.y = isaCell.geometry.y;
+    });
 };

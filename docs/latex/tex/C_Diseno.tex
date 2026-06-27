@@ -2,55 +2,150 @@
 
 \section{Introducción}
 
-En este anexo se describe el diseño general de la aplicación desarrollada durante el proyecto. El objetivo no es recoger todos los detalles internos del código, sino explicar las decisiones principales que permiten entender cómo se organiza el editor y cómo se relacionan sus partes más importantes.
+En este anexo se describe el diseño general de la aplicación resultante de la evolución realizada durante el proyecto. El objetivo no es recoger todos los detalles internos del código, sino explicar cómo se organiza el editor y cómo se relacionan sus partes principales.
 
-El diseño de la aplicación está condicionado por el hecho de partir de un proyecto heredado. Por tanto, una parte del trabajo consistió en comprender la estructura existente y adaptarla progresivamente para poder incorporar nuevos elementos del modelo Entidad-Relación sin romper el funcionamiento previo.
+La aplicación parte de un proyecto heredado, por lo que el diseño final es el resultado de comprender una base existente y adaptarla progresivamente. El trabajo no consistió únicamente en añadir elementos visuales al lienzo, sino en mantener la coherencia entre la representación gráfica, el modelo interno, la validación, la transformación relacional y la generación de SQL.
 
-En términos generales, el editor se apoya en tres ideas principales: una interfaz visual basada en el lienzo de edición, un modelo interno que representa el diagrama diseñado por el usuario y un conjunto de procesos que permiten validar ese modelo, transformarlo al modelo relacional y generar SQL a partir de él.
+De forma general, el sistema puede entenderse como una aplicación web compuesta por tres bloques principales. El primero es la interfaz visual, que permite al usuario crear y modificar el diagrama. El segundo es el modelo interno, que almacena la información estructurada del diagrama. El tercero está formado por los procesos que trabajan sobre ese modelo: validación, transformación relacional, generación de SQL, persistencia, importación y exportación.
 
 \section{Diseño de datos}
 
-El diseño de datos se centra en la estructura interna utilizada por la aplicación para representar los diagramas Entidad-Relación. Aunque el usuario trabaja visualmente sobre un lienzo, la aplicación necesita mantener una representación propia del diagrama para poder guardar, validar y transformar la información introducida.
+El diseño de datos se centra en la estructura interna utilizada por la aplicación para representar los diagramas Entidad-Relación. Aunque el usuario trabaja sobre un lienzo visual, la aplicación necesita mantener una representación propia del diagrama para poder guardarlo, validarlo, transformarlo y reconstruirlo posteriormente.
 
-Esta representación interna incluye los elementos principales del modelo: entidades, atributos y relaciones. Cada uno de estos elementos almacena la información necesaria para identificarlo, mostrarlo en el editor y utilizarlo posteriormente en las operaciones de validación y transformación.
+\subsection{Modelo interno del diagrama}
 
-En el caso de las entidades, el modelo debe conservar información como su nombre, su identificador interno y las propiedades necesarias para distinguir comportamientos especiales, como ocurre con las entidades débiles. Los atributos, por su parte, deben almacenar datos sobre su nombre, su pertenencia a una entidad o relación y sus características, como si forman parte de una clave, si son compuestos, multivaluados o discriminantes.
+El modelo interno actúa como la fuente principal de información lógica del editor. En él se almacenan los elementos creados por el usuario, sus propiedades y las relaciones entre ellos. Esta representación permite que las operaciones principales de la aplicación no dependan únicamente de la posición o de la apariencia de los elementos gráficos.
 
-Las relaciones tienen un papel especialmente importante dentro del modelo interno, ya que conectan distintos elementos y pueden contener información adicional. Además del nombre de la relación, se deben conservar sus participantes, las cardinalidades asociadas y, en los casos en los que sea necesario, los roles de participación. Esta información permite que el diagrama no dependa únicamente de la representación gráfica, sino de una estructura de datos que puede procesarse de forma más controlada.
+La Figura \ref{fig:estructura_modelo_interno} muestra una visión simplificada de los principales elementos que forman parte del modelo interno del diagrama.
 
-Otro aspecto relevante del diseño de datos es la normalización del diagrama. Al partir de una aplicación existente y haber ido ampliando el modelo interno, algunos diagramas guardados pueden no contener todos los campos incorporados posteriormente. Por ello, la aplicación necesita adaptar los datos cargados al formato esperado, completando valores por defecto cuando sea necesario.
+\imagen{estructura_modelo_interno}{Estructura simplificada del modelo interno del diagrama.}
 
-% TODO: revisar esta sección cuando se cierre el soporte final de ISA y agregaciones,
-% por si introducen nuevos campos en el modelo interno.
+Cada elemento del diagrama tiene un identificador interno y una serie de propiedades asociadas. Esta información permite distinguir entidades, atributos, relaciones y elementos especiales, así como reconstruir el diagrama cuando se carga desde el almacenamiento local o desde un archivo JSON.
+
+\subsection{Entidades y atributos}
+
+Las entidades almacenan la información necesaria para identificarlas dentro del diagrama y para distinguir comportamientos especiales. Una entidad puede actuar como entidad fuerte, entidad débil, generalización o especialización dentro de una jerarquía ISA, según el caso.
+
+Los atributos se asocian a entidades o relaciones. El modelo debe conservar su nombre, su elemento propietario y las propiedades que afectan a la notación y a la transformación posterior. Entre estas propiedades se incluyen los atributos clave, compuestos, multivaluados y discriminantes en los casos soportados.
+
+En las entidades fuertes nuevas, la aplicación puede crear una clave \texttt{id} por defecto. Este comportamiento se aplica de forma controlada para no alterar la semántica de las entidades débiles ni de las especializaciones ISA, que tienen restricciones propias sobre sus claves.
+
+\subsection{Relaciones}
+
+Las relaciones almacenan sus participantes y las cardinalidades asociadas. Esta información es necesaria para validar el diagrama y para decidir cómo se transforma posteriormente al modelo relacional.
+
+El modelo también debe permitir representar relaciones con atributos propios, relaciones identificadoras, relaciones ternarias y roles. En estos casos, la relación no solo une entidades, sino que contiene información adicional que afecta a la interpretación del diagrama y a la generación de la salida relacional.
+
+\subsection{Jerarquías ISA}
+
+El soporte de ISA se diseñó con un alcance inicial y controlado. El modelo permite representar una generalización con una o varias especializaciones. La entidad general mantiene su clave, mientras que las especializaciones heredan esa clave y no pueden definir claves propias.
+
+Este diseño evita introducir variantes más complejas del modelo ISA, como totalidad o parcialidad, solapamiento o exclusividad, discriminantes de especialización o herencia múltiple real. Estas características quedan fuera del alcance implementado y se consideran posibles líneas de trabajo futuro.
+
+En la transformación relacional, la generalización se convierte en una tabla ordinaria. Cada especialización se transforma en una tabla propia cuya clave primaria es la clave heredada de la generalización y, al mismo tiempo, una clave foránea hacia la tabla general~\cite{tema6}.
+
+\subsection{Persistencia e intercambio de diagramas}
+
+El modelo interno también se utiliza para conservar el estado del diagrama. La aplicación guarda la información en el almacenamiento local del navegador, permitiendo que el usuario recupere el contenido al recargar la página.
+
+Además, el sistema permite exportar e importar diagramas en formato JSON. La exportación genera una representación del modelo interno que puede almacenarse en un archivo. La importación permite reconstruir un diagrama previamente guardado. En las operaciones de importación y generación de estructuras, el usuario puede reemplazar el contenido actual o combinarlo con el diagrama existente mediante una inserción controlada.
+
+La Figura \ref{fig:flujo_persistencia_intercambio} resume el papel del modelo interno como punto común entre la edición visual, la persistencia local y el intercambio de diagramas mediante JSON.
+
+\imagen{flujo_persistencia_intercambio}{Flujo de persistencia local e intercambio de diagramas mediante JSON.}
 
 \section{Diseño arquitectónico}
 
-La aplicación se organiza como una herramienta web desarrollada con React, en la que la interfaz de usuario y la lógica principal se ejecutan en el cliente. El editor visual se apoya en mxGraph para representar y manipular los elementos del diagrama dentro del lienzo.
+El diseño arquitectónico describe la organización general de la aplicación y la separación entre sus bloques principales. La herramienta se desarrolla como una aplicación web en la que la interfaz y la lógica principal se ejecutan en el cliente.
 
-A nivel de diseño, puede distinguirse entre la parte visual del editor y la parte lógica de la aplicación. La parte visual se encarga de mostrar los elementos, permitir su edición y recoger las acciones del usuario. La parte lógica trabaja con el modelo interno del diagrama, que es el que se utiliza para validar, persistir y transformar la información.
+\subsection{Arquitectura general}
 
-Esta separación es importante porque evita que toda la lógica dependa directamente de la posición o apariencia de los elementos en pantalla. Aunque la representación gráfica es necesaria para que el usuario pueda trabajar con el diagrama, las operaciones principales de la aplicación deben apoyarse en una estructura de datos más estable.
+La aplicación está construida alrededor de un editor visual que permite manipular diagramas Entidad-Relación. La parte gráfica se apoya en un lienzo de edición, mientras que la lógica de la aplicación trabaja con el modelo interno del diagrama.
 
-Dentro de esta organización, pueden identificarse varios bloques funcionales. El editor de diagramas se encarga de la interacción principal con el usuario. Los módulos de dominio gestionan la representación interna del modelo Entidad-Relación y sus reglas de validación. A partir de ese modelo, otros módulos realizan la transformación al modelo relacional y la generación del script SQL final.
+La separación entre vista y modelo es una de las decisiones más importantes del diseño, aunque en la práctica existe una dependencia entre el lienzo gráfico y el modelo interno durante la sincronización de elementos. La vista permite que el usuario interactúe con el diagrama, pero las operaciones principales intentan apoyarse en una representación estructurada del modelo. Gracias a ello, el sistema puede validar, persistir, importar, exportar y transformar diagramas sin depender únicamente de la representación visual.
 
-También existe una parte relacionada con la persistencia del diagrama, que permite conservar la información creada por el usuario y recuperarla posteriormente. Esta persistencia está relacionada tanto con el almacenamiento local como con las operaciones de importación y exportación en formato JSON.
+La Figura \ref{fig:arquitectura_general_aplicacion} resume la organización general de la aplicación, separando la interfaz visual, el modelo interno y los procesos que trabajan sobre dicho modelo.
 
-% Posible figura: esquema general de arquitectura con interfaz, modelo interno,
-% validación, transformación relacional, generación SQL y persistencia.
+\imagen{arquitectura_general_aplicacion}{Arquitectura general de la aplicación.}
+
+\subsection{Organización por módulos}
+
+A nivel funcional, pueden distinguirse varios bloques dentro de la aplicación. El primero corresponde a la interfaz de usuario, encargada de mostrar el lienzo, los paneles de acciones, las acciones contextuales, los diálogos, los mensajes de validación y las secciones de ayuda e información del proyecto.
+
+El segundo bloque corresponde al modelo interno del diagrama. Este bloque representa la información lógica creada por el usuario y sirve como base para el resto de operaciones. Sobre este modelo trabajan los procesos de validación, persistencia, transformación relacional y generación de SQL.
+
+El tercer bloque está formado por las operaciones de entrada y salida. Aquí se incluyen la persistencia local, la exportación e importación de JSON, la generación de estructuras básicas y la exportación visual del diagrama en PNG y SVG.
+
+Por último, la aplicación cuenta con módulos relacionados con la validación y transformación. Estos módulos comprueban que el diagrama sea coherente dentro del alcance implementado y generan una representación relacional que posteriormente se convierte en SQL.
+
+En la versión final, esta separación se refleja en módulos como el editor visual del diagrama, los módulos de dominio del modelo E-R, las reglas de validación, la transformación al modelo relacional, la generación del SQL y los servicios de entrada y salida. Esta división permite diferenciar entre la interacción del usuario con el lienzo y las operaciones que interpretan el diagrama desde el punto de vista lógico.
+
+
+\subsection{Mantenibilidad y extensibilidad}
+
+El diseño final busca que las nuevas funcionalidades del editor no dependan únicamente de la representación gráfica del lienzo. Por ello, las reglas del dominio, la validación, la transformación relacional y la generación de SQL se apoyan en módulos diferenciados que trabajan sobre el modelo interno del diagrama.
+
+Esta organización facilita la evolución posterior de la aplicación, ya que nuevas reglas de validación o nuevos casos de transformación pueden incorporarse sin convertir la interfaz visual en el único punto de decisión del sistema. Aun así, al tratarse de una aplicación heredada basada en mxGraph, sigue existiendo una dependencia práctica entre la representación visual y el modelo interno durante la sincronización de elementos.
+
+Las pruebas automáticas y la revisión manual se utilizan como mecanismos de apoyo para comprobar que los cambios introducidos no rompen la coherencia entre el lienzo, el modelo interno, la validación, la transformación relacional y la salida SQL. No obstante, el detalle de instalación, ejecución y pruebas del proyecto se reserva para el manual del programador.
+
+
 
 \section{Diseño procedimental}
 
-El funcionamiento principal de la aplicación puede entenderse como un flujo que comienza con la edición visual del diagrama y termina, cuando el modelo es válido, con la generación de una salida relacional o SQL.
+El diseño procedimental describe los principales flujos de funcionamiento de la aplicación. Estos flujos muestran cómo las acciones del usuario se convierten en cambios del modelo interno y cómo ese modelo se valida y transforma para generar resultados.
 
-En primer lugar, el usuario interactúa con el lienzo del editor para crear o modificar entidades, atributos y relaciones. Cada una de estas acciones debe reflejarse en el modelo interno de la aplicación, de forma que el estado visual y la estructura de datos se mantengan sincronizados.
+\subsection{Flujo general de edición}
 
-Cuando el usuario solicita una operación como la generación de SQL, la aplicación no trabaja directamente sobre los elementos gráficos, sino sobre el modelo interno del diagrama. Antes de generar la salida, se ejecuta una fase de validación para comprobar que el diagrama contiene la información necesaria y que no presenta configuraciones incompletas o ambiguas.
+El flujo principal comienza cuando el usuario crea o modifica elementos en el lienzo del editor. Cada acción visual debe reflejarse en el modelo interno, de forma que lo que aparece en pantalla coincida con la información que la aplicación conserva y procesa.
 
-Si el modelo supera la validación, se realiza la transformación al modelo relacional. En esta fase, las entidades, atributos y relaciones se convierten en una representación basada en tablas, columnas, claves primarias y claves foráneas. Esta representación intermedia permite separar la conversión del modelo Entidad-Relación de la escritura concreta del script SQL.
+Este flujo incluye operaciones como crear entidades, añadir atributos, configurar relaciones, establecer cardinalidades, mover elementos, renombrarlos o eliminarlos. En todos los casos, la aplicación debe mantener la sincronización entre la vista y el modelo interno.
 
-Finalmente, a partir del modelo relacional generado, la aplicación construye el texto SQL correspondiente. Esta última fase se encarga de producir las sentencias necesarias para crear las tablas y definir las restricciones principales derivadas del diagrama.
+Además, la interfaz contempla la selección múltiple de elementos. Este comportamiento permite mover o eliminar varios elementos de forma conjunta, pero evita mostrar acciones individuales cuando la selección contiene más de un elemento. De esta forma, se mantiene la coherencia entre las acciones disponibles en la interfaz y las operaciones que realmente pueden aplicarse sobre el modelo.
 
-Este diseño por fases facilita la comprensión del funcionamiento de la aplicación. Además, permite revisar cada parte del proceso de forma separada: primero la edición y sincronización del modelo, después la validación, más tarde la transformación relacional y finalmente la generación de SQL.
+\subsection{Validación del modelo}
 
-% TODO: revisar esta sección al finalizar ISA y agregaciones, por si modifican el flujo
-% de validación, transformación o generación.
+Antes de generar una salida relacional o SQL, la aplicación valida el modelo interno. Esta validación comprueba que el diagrama contiene la información necesaria y que no existen configuraciones incompletas o incompatibles con el alcance implementado.
+
+La validación se ejecuta en operaciones como la generación de SQL y también puede lanzarse de forma explícita mediante la acción de comprobar el diagrama. Cuando se detectan errores, la aplicación debe mostrarlos de forma comprensible para que el usuario pueda corregir el modelo.
+
+En el caso de ISA, la validación impide configuraciones fuera del alcance implementado, como una ISA sin generalización, una ISA sin especializaciones, especializaciones con clave propia o entidades especializadas en más de una jerarquía.
+
+\subsection{Transformación al modelo relacional}
+
+Si el diagrama supera la validación, la aplicación transforma el modelo Entidad-Relación a una representación relacional. Esta representación se basa en tablas, columnas, claves primarias y claves foráneas.
+
+La existencia de una representación intermedia permite separar la lógica de transformación de la generación concreta del script SQL. De esta forma, la aplicación primero decide qué tablas y restricciones deben existir, y después construye el texto SQL correspondiente.
+
+\subsection{Generación de SQL}
+
+La generación de SQL toma como entrada la representación relacional obtenida en la fase anterior. A partir de ella, se generan las sentencias necesarias para crear las tablas y definir sus claves principales y foráneas.
+
+En la versión final se opta por una salida SQL más legible, evitando nombres explícitos de restricciones de clave foránea cuando no resultan necesarios y simplificando las referencias cuando una clave foránea referencia la clave primaria completa de la tabla destino. Esta decisión no modifica la transformación relacional previa, sino únicamente la forma en la que se renderiza el script SQL generado.
+
+La salida SQL debe entenderse como una traducción razonable del modelo relacional generado por la aplicación, no como un generador industrial completo para cualquier sistema gestor de bases de datos. Su objetivo principal dentro del proyecto es servir como apoyo académico y como punto de partida para comprender la transformación desde el modelo Entidad-Relación.
+
+La Figura \ref{fig:flujo_validacion_sql} resume este proceso: el modelo interno se valida antes de construir la representación relacional y solo después se genera el script SQL correspondiente.
+
+\imagen{flujo_validacion_sql}{Flujo de validación, transformación relacional y generación de SQL.}
+
+\subsection{Importación, combinación y generación de estructuras}
+
+Además del flujo principal de edición, la aplicación incluye operaciones para importar diagramas JSON y generar estructuras básicas. En ambos casos, el usuario puede reemplazar el diagrama actual o combinar el nuevo contenido con el existente.
+
+Cuando se combina contenido, la aplicación debe evitar conflictos directos de identificadores y mantener la coherencia de las referencias internas. Además, los elementos añadidos se insertan de forma controlada para facilitar su revisión visual dentro del lienzo.
+
+Estas operaciones se diseñan como ayudas a la edición, no como mecanismos de fusión semántica avanzada. Por tanto, la aplicación no intenta interpretar si dos entidades representan el mismo concepto, sino insertar el contenido de forma controlada para que el usuario pueda revisarlo y ajustarlo posteriormente.
+
+\section{Diseño de interfaces}
+
+El diseño de la interfaz se centra en facilitar la edición de diagramas Entidad-Relación dentro de un lienzo web. La aplicación no se plantea como una herramienta de dibujo genérica, sino como un editor orientado a elementos concretos del modelo E-R. Por ello, las acciones disponibles dependen del tipo de elemento seleccionado y del contexto del diagrama.
+
+La interfaz se organiza alrededor del lienzo principal, donde el usuario crea y manipula entidades, atributos, relaciones, entidades débiles, relaciones ternarias y jerarquías ISA sencillas. Junto al lienzo se ofrecen acciones generales, como validar el diagrama, generar SQL, importar o exportar JSON, exportar la imagen del diagrama, ajustar la vista, generar estructuras básicas y reiniciar el contenido previa confirmación.
+
+Una decisión relevante del diseño de interfaz es el uso de acciones contextuales. Cuando el usuario selecciona un único elemento, la aplicación muestra acciones específicas para ese tipo de elemento, como añadir atributos, configurar relaciones, marcar una entidad como débil o trabajar con una jerarquía ISA. En cambio, cuando existe una selección múltiple, se ocultan las acciones individuales y se priorizan operaciones aplicables al conjunto, como mover o eliminar los elementos seleccionados.
+
+También se incorporan elementos de apoyo al usuario, como la ayuda integrada, la información del proyecto y el cambio de idioma de la interfaz. Estas funcionalidades no modifican la semántica del modelo E-R, pero mejoran la comprensión del editor y facilitan su uso en un contexto académico.
+
+El diseño visual mantiene la notación propia del modelo Entidad-Relación: entidades, relaciones, atributos, atributos clave, atributos compuestos, atributos multivaluados, entidades débiles, relaciones identificadoras e ISA se representan mediante convenciones gráficas diferenciadas. De esta forma, la interfaz busca que el usuario pueda reconocer los elementos del diagrama sin que las mejoras de usabilidad alteren su significado académico.
+

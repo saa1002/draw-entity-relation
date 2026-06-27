@@ -1,4 +1,46 @@
-\capitulo{7}{Conclusiones y Líneas de trabajo futuras}
+\capitulo{7}{Conclusiones y líneas de trabajo futuras}
 
-Todo proyecto debe incluir las conclusiones que se derivan de su desarrollo. Éstas pueden ser de diferente índole, dependiendo de la tipología del proyecto, pero normalmente van a estar presentes un conjunto de conclusiones relacionadas con los resultados del proyecto y un conjunto de conclusiones técnicas. 
-Además, resulta muy útil realizar un informe crítico indicando cómo se puede mejorar el proyecto, o cómo se puede continuar trabajando en la línea del proyecto realizado. 
+En este capítulo se recogen las principales conclusiones obtenidas tras el desarrollo del proyecto y se señalan algunas posibles líneas de continuación. El objetivo no es repetir todo el trabajo realizado, sino valorar el resultado alcanzado, las decisiones tomadas durante el desarrollo y los aspectos que podrían ampliarse en el futuro.
+
+\section{Conclusiones}
+
+El desarrollo de este trabajo ha permitido evolucionar una aplicación web ya existente para el diseño de diagramas Entidad-Relación, ampliando sus capacidades y mejorando su coherencia interna. El proyecto no partía de cero, por lo que una parte importante del trabajo consistió en comprender el funcionamiento del sistema heredado, estabilizar algunos puntos delicados y adaptar su estructura para incorporar nuevas funcionalidades de forma controlada.
+
+Una de las conclusiones principales es que, en una herramienta visual de modelado, no basta con representar correctamente los elementos en pantalla. Cada elemento del diagrama debe estar reflejado también en el modelo interno de la aplicación, ya que esa información se utiliza después para guardar el diagrama, reconstruirlo, validarlo, transformarlo al modelo relacional y generar el script SQL. Esta relación entre interfaz, modelo interno y generación de resultados ha sido uno de los aspectos más importantes del desarrollo.
+
+A lo largo del proyecto se ha ampliado el soporte del modelo Entidad-Relación incorporando entidades débiles, atributos compuestos y multivaluados, relaciones ternarias con roles y un soporte inicial para jerarquías ISA. Estas ampliaciones no se limitaron a la parte visual, sino que también afectaron a la persistencia, la validación y la transformación relacional.
+
+El soporte de jerarquías ISA se planteó de forma limitada y controlada. La aplicación permite representar una generalización con una o varias especializaciones, y transforma esta estructura generando una tabla para la entidad general y una tabla para cada especialización, donde la clave heredada actúa como clave primaria y clave foránea. No se incorporaron variantes más avanzadas como totalidad o parcialidad, especializaciones solapadas o exclusivas, discriminantes o herencia múltiple real. Esta decisión permitió implementar una primera base funcional sin aumentar el alcance de forma excesiva.
+
+También se revisó la generación de SQL, especialmente el tratamiento de claves foráneas y la forma de expresar el script final. El objetivo fue obtener una salida más clara y coherente con el modelo relacional generado, reduciendo el uso de sentencias \texttt{ALTER TABLE} cuando las dependencias entre tablas pueden resolverse mediante el orden de creación.
+
+Otro resultado relevante del proyecto es la mejora de la usabilidad del editor. Se reorganizó la interfaz, se revisaron los mensajes de validación y confirmación, se incorporaron ayudas dentro de la aplicación y se añadieron operaciones de apoyo como selección múltiple, ajuste de vista, exportación visual, importación JSON y generación de estructuras de ejemplo. Estas mejoras no cambian la notación Entidad-Relación, pero facilitan el uso de la herramienta y la revisión de los diagramas creados.
+
+Durante el desarrollo también se ha comprobado la importancia de trabajar de forma incremental. Al tratarse de una aplicación heredada y visual, muchos cambios podían afectar a varias partes del sistema al mismo tiempo. Por ello, dividir el trabajo en tareas acotadas y combinar pruebas automáticas con revisión manual permitió avanzar con más seguridad y reducir el riesgo de introducir regresiones.
+
+Al estar orientada a un contexto académico, la herramienta no busca sustituir la explicación teórica del modelo Entidad-Relación ni competir con soluciones profesionales de diseño de bases de datos. Su finalidad es servir como apoyo práctico para construir diagramas, validarlos y observar una posible traducción al modelo relacional y a SQL.
+
+En conjunto, el resultado obtenido es una herramienta más completa que la aplicación inicial, con mayor soporte para elementos del modelo Entidad-Relación, una salida SQL más cuidada y una interfaz más clara.
+
+\section{Líneas de trabajo futuras}
+
+A pesar de las mejoras realizadas, el proyecto sigue ofreciendo varias posibilidades de ampliación. Algunas de ellas quedaron fuera del alcance de este trabajo por decisión de diseño, mientras que otras surgieron durante el desarrollo como mejoras posibles para versiones posteriores. Entre las líneas de trabajo futuras más relevantes se encuentran las siguientes:
+
+\begin{itemize}
+\item \textbf{Ampliar el soporte de jerarquías ISA.} La implementación actual cubre una versión inicial centrada en la herencia de clave desde la generalización hacia las especializaciones. Como trabajo futuro se podrían incorporar restricciones de totalidad o parcialidad, especializaciones solapadas o exclusivas y discriminantes. También podría estudiarse con más detalle si tendría sentido incorporar herencia múltiple real. Estas ampliaciones requerirían revisar la representación visual, el modelo interno, las validaciones y la transformación relacional.
+
+\item \textbf{Incorporar agregaciones.} Las agregaciones forman parte del modelo Entidad-Relación avanzado, pero no se implementaron en este trabajo. Su incorporación supondría representar relaciones tratadas como entidades de nivel superior, lo que afectaría al lienzo, a la persistencia, a la validación y a la generación del modelo relacional.
+
+\item \textbf{Estudiar una fusión semántica avanzada de diagramas.} La aplicación permite combinar un diagrama importado o una estructura generada con el contenido actual mediante una solución controlada basada en remapeo de identificadores, renombrado de conflictos y desplazamiento visual. Como trabajo futuro podría estudiarse una fusión más inteligente, capaz de detectar elementos equivalentes, reutilizar entidades ya existentes o resolver conflictos de forma guiada por el usuario. Esta ampliación tendría más complejidad, porque afectaría a nombres, referencias internas, relaciones, ISA, validación y persistencia.
+
+\item \textbf{Localizar nombres por defecto de nuevos elementos.} Actualmente la interfaz puede mostrarse en español o en inglés, pero los nombres creados por defecto para elementos del diagrama se mantienen como datos del usuario y no se traducen automáticamente. Una posible mejora sería adaptar los nombres iniciales de nuevos elementos al idioma activo, sin modificar los elementos ya existentes al cambiar de idioma.
+
+\item \textbf{Permitir una configuración más detallada del SQL generado.} Actualmente la herramienta genera una estructura SQL suficiente para representar el esquema obtenido, pero no permite editar en detalle los tipos de datos, tamaños, restricciones adicionales o decisiones específicas de un sistema gestor concreto. Esta sería una posible ampliación si se quisiera acercar más la herramienta a un uso práctico avanzado.
+
+\item \textbf{Añadir funcionalidades avanzadas de edición.} La aplicación incorpora operaciones básicas sobre selección múltiple, como mover o borrar varios elementos seleccionados. En el futuro podrían incorporarse acciones más avanzadas como copiar y pegar fragmentos del diagrama, alinear o distribuir elementos, organizar automáticamente el contenido del lienzo o trabajar con varias vistas del mismo modelo. Estas mejoras aumentarían la comodidad de uso, aunque también introducirían nuevos retos relacionados con la sincronización entre el modelo interno y la representación visual.
+
+\item \textbf{Explorar persistencia remota y usuarios.} La aplicación se centra actualmente en el uso local, con persistencia en el navegador e importación y exportación mediante archivos JSON. Una posible evolución sería añadir un backend para guardar diagramas asociados a usuarios o compartir modelos, aunque esto supondría ampliar de forma importante el alcance técnico del proyecto.
+
+\end{itemize}
+
+En definitiva, el proyecto deja una base funcional sobre la que pueden construirse nuevas ampliaciones. Estas mejoras deberían abordarse de forma gradual, manteniendo el mismo criterio seguido durante este trabajo: introducir cambios acotados, comprobar su impacto en el modelo interno y asegurar que cada nueva funcionalidad se integre de forma coherente con la validación, la persistencia y la generación de SQL.
