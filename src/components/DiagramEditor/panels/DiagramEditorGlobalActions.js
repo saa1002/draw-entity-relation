@@ -84,6 +84,7 @@ export function DiagramEditorGlobalActions({
     composeDiagramWithCurrent,
     applyDiagramData,
     resetCanvas,
+    children,
 }) {
     const showSaveFileResultToast = (result) => {
         if (result === SAVE_FILE_RESULT.SAVED) {
@@ -1063,6 +1064,8 @@ export function DiagramEditorGlobalActions({
             <SidebarSection title={t("sidebar.erElements")}>
                 <div className="mxgraph-palette-container" ref={toolbarRef} />
             </SidebarSection>
+
+            {children}
 
             <SidebarSection title={t("sidebar.history")}>
                 {renderSidebarAction(UndoRedoButtons())}
