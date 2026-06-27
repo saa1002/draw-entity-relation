@@ -4,108 +4,132 @@
 
 En este anexo se describe el diseño general de la aplicación resultante de la evolución realizada durante el proyecto. El objetivo no es recoger todos los detalles internos del código, sino explicar cómo se organiza el editor y cómo se relacionan sus partes principales.
 
-La aplicación parte de un proyecto heredado, por lo que el diseño final es el resultado de comprender una base existente y adaptarla progresivamente. El trabajo no consistió únicamente en añadir elementos visuales al lienzo, sino en mantener la coherencia entre la representación gráfica, el modelo interno, la validación, la transformación relacional y la generación de SQL.
+La aplicación parte de un proyecto heredado, por lo que el diseño final es el resultado de comprender una base existente y adaptarla progresivamente. El trabajo no consistió únicamente en añadir elementos visuales al lienzo, sino en mantener la coherencia entre la representación gráfica, la representación interna del diagrama, la validación, la transformación relacional y la generación de SQL.
 
-De forma general, el sistema puede entenderse como una aplicación web compuesta por tres bloques principales. El primero es la interfaz visual, que permite al usuario crear y modificar el diagrama. El segundo es el modelo interno, que almacena la información estructurada del diagrama. El tercero está formado por los procesos que trabajan sobre ese modelo: validación, transformación relacional, generación de SQL, persistencia, importación y exportación.
+De forma general, el sistema puede entenderse como una aplicación web compuesta por tres bloques principales. El primero es la interfaz visual, que permite al usuario crear y modificar el diagrama. El segundo es la representación interna o metamodelo, que almacena la información estructurada del diagrama. El tercero está formado por los procesos que trabajan sobre esa representación: validación, transformación relacional, generación de SQL, persistencia, importación y exportación.
 
 \section{Diseño de datos}
 
-El diseño de datos se centra en la estructura interna utilizada por la aplicación para representar los diagramas Entidad-Relación. Aunque el usuario trabaja sobre un lienzo visual, la aplicación necesita mantener una representación propia del diagrama para poder guardarlo, validarlo, transformarlo y reconstruirlo posteriormente.
+El diseño de datos de la aplicación se centra en el metamodelo utilizado para representar los diagramas Entidad-Relación creados por el usuario. La herramienta no utiliza una base de datos propia ni un servidor que almacene los diagramas, pero sí mantiene una representación estructurada del contenido del lienzo. Esta representación es la base sobre la que se apoyan la edición, la validación, la persistencia local, la importación y exportación en JSON, la transformación al modelo relacional y la generación de SQL.
 
-\subsection{Modelo interno del diagrama}
+En este contexto, se utiliza el término metamodelo porque la aplicación no modela directamente un dominio concreto, como una empresa, una biblioteca o un sistema de ventas, sino los elementos que pueden aparecer dentro de un diagrama E/R. Es decir, el sistema almacena información sobre entidades, atributos, relaciones, participantes, cardinalidades y jerarquías ISA. A partir de esa información puede reconstruir el diagrama visual y aplicar las operaciones propias del editor.
 
-El modelo interno actúa como la fuente principal de información lógica del editor. En él se almacenan los elementos creados por el usuario, sus propiedades y las relaciones entre ellos. Esta representación permite que las operaciones principales de la aplicación no dependan únicamente de la posición o de la apariencia de los elementos gráficos.
+\subsection{Metamodelo del diagrama}
 
-La Figura \ref{fig:estructura_modelo_interno} muestra una visión simplificada de los principales elementos que forman parte del modelo interno del diagrama.
+La Figura \ref{fig:metamodelo_er_diagrama} muestra una representación conceptual del metamodelo utilizado por la aplicación. Este diagrama no representa una base de datos física, sino la estructura lógica que permite describir los diagramas creados en el editor y conservar la información necesaria para procesarlos posteriormente.
 
-\imagen{estructura_modelo_interno}{Estructura simplificada del modelo interno del diagrama.}
+\imagen{metamodelo_er_diagrama}{Metamodelo E/R de la representación interna de un diagrama.}
 
-Cada elemento del diagrama tiene un identificador interno y una serie de propiedades asociadas. Esta información permite distinguir entidades, atributos, relaciones y elementos especiales, así como reconstruir el diagrama cuando se carga desde el almacenamiento local o desde un archivo JSON.
+El elemento principal del metamodelo es el diagrama, que actúa como contenedor de los elementos creados por el usuario. Dentro de un diagrama pueden existir entidades, relaciones y jerarquías ISA. Las entidades representan los conjuntos de entidades del modelo E/R creado por el usuario, mientras que las relaciones representan las interrelaciones existentes entre ellas.
 
-\subsection{Entidades y atributos}
+Las relaciones no enlazan directamente todos sus datos con las entidades, sino que incorporan participantes. Cada participante vincula una relación con una entidad concreta y conserva información propia de esa participación, como la cardinalidad mínima, la cardinalidad máxima y, cuando procede, el rol. Esta separación resulta especialmente útil para representar relaciones ternarias y casos en los que una misma entidad participa más de una vez en una relación con distintos roles. La comprobación de que una relación dispone de los participantes necesarios no se expresa únicamente mediante la cardinalidad del metamodelo, sino también mediante las reglas de validación del editor.
 
-Las entidades almacenan la información necesaria para identificarlas dentro del diagrama y para distinguir comportamientos especiales. Una entidad puede actuar como entidad fuerte, entidad débil, generalización o especialización dentro de una jerarquía ISA, según el caso.
+Los atributos se tratan como elementos propios del metamodelo porque pueden presentar distintas propiedades relevantes para la validación y la transformación posterior. Entre ellas se encuentran su condición de clave, atributo compuesto, atributo multivaluado o discriminante, según el tipo de elemento y el alcance soportado por la aplicación.
 
-Los atributos se asocian a entidades o relaciones. El modelo debe conservar su nombre, su elemento propietario y las propiedades que afectan a la notación y a la transformación posterior. Entre estas propiedades se incluyen los atributos clave, compuestos, multivaluados y discriminantes en los casos soportados.
+En el metamodelo, un atributo puede estar asociado a una entidad, a una relación o a otro atributo cuando forma parte de una estructura compuesta. Estas asociaciones representan alternativas de pertenencia dentro del editor, no la obligación de que un mismo atributo aparezca simultáneamente en todos esos contextos.
 
-En las entidades fuertes nuevas, la aplicación puede crear una clave \texttt{id} por defecto. Este comportamiento se aplica de forma controlada para no alterar la semántica de las entidades débiles ni de las especializaciones ISA, que tienen restricciones propias sobre sus claves.
+Las jerarquías ISA se representan mediante una entidad general y un conjunto de entidades especializadas. El alcance implementado contempla una generalización con una o varias especializaciones y clave heredada desde la entidad general. No se incluyen en el metamodelo implementado características como totalidad o parcialidad, solapamiento o exclusividad, discriminantes ISA ni herencia múltiple real, que quedan fuera del alcance desarrollado.
 
-\subsection{Relaciones}
+\subsection{Correspondencia con la representación JSON}
 
-Las relaciones almacenan sus participantes y las cardinalidades asociadas. Esta información es necesaria para validar el diagrama y para decidir cómo se transforma posteriormente al modelo relacional.
+La representación JSON exportada por la aplicación sigue la organización definida por el metamodelo. El archivo generado almacena las colecciones de entidades, relaciones, atributos, jerarquías ISA y referencias necesarias para reconstruir el diagrama. Por tanto, el JSON no debe entenderse como una base de datos independiente, sino como una serialización del estado del editor.
 
-El modelo también debe permitir representar relaciones con atributos propios, relaciones identificadoras, relaciones ternarias y roles. En estos casos, la relación no solo une entidades, sino que contiene información adicional que afecta a la interpretación del diagrama y a la generación de la salida relacional.
+Cada elemento conserva identificadores visuales que permiten relacionar la información lógica con su representación en el lienzo gestionado mediante mxGraph. Esta correspondencia es necesaria para reconstruir el diagrama tras una importación o después de recuperar el estado guardado en el almacenamiento local del navegador. De esta forma, la aplicación puede volver a crear las celdas visuales, las conexiones y los elementos auxiliares manteniendo la coherencia entre el metamodelo del diagrama y su representación gráfica.
 
-\subsection{Jerarquías ISA}
+La Figura \ref{fig:estructura_modelo_interno} resume esta correspondencia entre el metamodelo, la representación JSON y los procesos que trabajan sobre ella.
 
-El soporte de ISA se diseñó con un alcance inicial y controlado. El modelo permite representar una generalización con una o varias especializaciones. La entidad general mantiene su clave, mientras que las especializaciones heredan esa clave y no pueden definir claves propias.
+\imagen{estructura_modelo_interno}{Correspondencia simplificada entre el metamodelo, la representación JSON y los procesos de la aplicación.}
 
-Este diseño evita introducir variantes más complejas del modelo ISA, como totalidad o parcialidad, solapamiento o exclusividad, discriminantes de especialización o herencia múltiple real. Estas características quedan fuera del alcance implementado y se consideran posibles líneas de trabajo futuro.
+La persistencia local y la exportación a JSON reutilizan esta misma estructura. Cuando el usuario exporta un diagrama, la aplicación genera un archivo que contiene la información necesaria para volver a cargarlo. Cuando importa un archivo, el sistema interpreta esa estructura y reconstruye tanto el contenido lógico como los elementos visuales asociados. En las operaciones de combinación, el contenido importado se inserta de forma controlada para evitar conflictos directos de identificadores y facilitar la revisión posterior en el lienzo.
 
-En la transformación relacional, la generalización se convierte en una tabla ordinaria. Cada especialización se transforma en una tabla propia cuya clave primaria es la clave heredada de la generalización y, al mismo tiempo, una clave foránea hacia la tabla general~\cite{tema6}.
+\subsection{Diccionario de datos}
 
-\subsection{Persistencia e intercambio de diagramas}
+A continuación se recoge un diccionario de datos simplificado del metamodelo. El objetivo no es enumerar todos los campos internos de implementación, sino describir el significado de los principales elementos almacenados por la aplicación y su papel dentro del editor.
 
-El modelo interno también se utiliza para conservar el estado del diagrama. La aplicación guarda la información en el almacenamiento local del navegador, permitiendo que el usuario recupere el contenido al recargar la página.
+\begin{table}[H]
+\centering
+\begin{tabular}{p{0.24\textwidth} p{0.66\textwidth}}
+\textbf{Elemento} & \textbf{Descripción} \\
+\hline
+Diagrama & Contenedor principal del estado del editor. Agrupa las entidades, relaciones, atributos, jerarquías ISA y referencias necesarias para reconstruir el contenido del lienzo. \\
 
-Además, el sistema permite exportar e importar diagramas en formato JSON. La exportación genera una representación del modelo interno que puede almacenarse en un archivo. La importación permite reconstruir un diagrama previamente guardado. En las operaciones de importación y generación de estructuras, el usuario puede reemplazar el contenido actual o combinarlo con el diagrama existente mediante una inserción controlada.
+Entidad & Representa un conjunto de entidades del modelo E/R creado por el usuario. Conserva su nombre, su identificador visual y propiedades relevantes para la edición, como su posible condición de entidad débil, generalización o especialización ISA. \\
 
-La Figura \ref{fig:flujo_persistencia_intercambio} resume el papel del modelo interno como punto común entre la edición visual, la persistencia local y el intercambio de diagramas mediante JSON.
+Relación & Representa una interrelación entre entidades. Conserva su nombre, identificador visual, grado, participantes, cardinalidades y propiedades específicas, como su posible condición de relación identificadora. \\
 
-\imagen{flujo_persistencia_intercambio}{Flujo de persistencia local e intercambio de diagramas mediante JSON.}
+Participante & Elemento que vincula una relación con una entidad concreta. Permite conservar la cardinalidad mínima, la cardinalidad máxima y, en relaciones con entidades repetidas, el rol que diferencia cada participación. \\
+
+Atributo & Representa una propiedad asociada a una entidad, a una relación o a otro atributo en el caso de atributos compuestos. Puede contener información sobre clave, discriminante, atributos compuestos, atributos multivaluados y subatributos. \\
+
+Jerarquía ISA & Representa una estructura de generalización/especialización. Conserva la entidad general y las entidades especializadas, manteniendo la restricción de clave heredada dentro del alcance implementado. \\
+
+Identificador visual & Referencia que permite mantener la correspondencia entre los elementos del metamodelo y las celdas del lienzo gestionadas mediante mxGraph. Es necesaria para reconstruir el diagrama y sincronizar los cambios visuales con la representación interna. \\
+\end{tabular}
+\caption{Diccionario de datos simplificado del metamodelo del diagrama.}
+\label{tab:diccionario_metamodelo}
+\end{table}
+
+Este diseño permite separar, al menos conceptualmente, el contenido lógico del diagrama y su representación visual. No obstante, al tratarse de una aplicación heredada basada en mxGraph, existe un acoplamiento práctico entre ambos niveles durante la sincronización de elementos. Por esta razón, parte del trabajo realizado se orientó a mantener la coherencia entre el lienzo, la representación interna, la validación, la transformación relacional y la generación de SQL sin introducir una reescritura completa del editor.
 
 \section{Diseño arquitectónico}
 
-El diseño arquitectónico describe la organización general de la aplicación y la separación entre sus bloques principales. La herramienta se desarrolla como una aplicación web en la que la interfaz y la lógica principal se ejecutan en el cliente.
+El diseño arquitectónico describe la organización general de la aplicación y la separación entre los bloques que intervienen en la edición, validación, transformación y persistencia de los diagramas. La herramienta se desarrolla como una aplicación web de cliente, por lo que la mayor parte de la lógica se ejecuta en el navegador del usuario.
 
-\subsection{Arquitectura general}
+La aplicación no dispone de un servidor propio encargado de procesar los diagramas ni de una base de datos remota asociada al proyecto. El despliegue en Vercel se utiliza para servir la aplicación web generada durante el proceso de construcción. Una vez cargada en el navegador, la herramienta trabaja localmente con el lienzo de mxGraph, la representación interna del diagrama, el almacenamiento local del navegador y los archivos importados o exportados por el usuario.
 
-La aplicación está construida alrededor de un editor visual que permite manipular diagramas Entidad-Relación. La parte gráfica se apoya en un lienzo de edición, mientras que la lógica de la aplicación trabaja con el modelo interno del diagrama.
+\subsection{Diagrama de despliegue}
 
-La separación entre vista y modelo es una de las decisiones más importantes del diseño, aunque en la práctica existe una dependencia entre el lienzo gráfico y el modelo interno durante la sincronización de elementos. La vista permite que el usuario interactúe con el diagrama, pero las operaciones principales intentan apoyarse en una representación estructurada del modelo. Gracias a ello, el sistema puede validar, persistir, importar, exportar y transformar diagramas sin depender únicamente de la representación visual.
+La Figura \ref{fig:diagrama_despliegue_aplicacion} muestra el despliegue general de la aplicación. El usuario accede desde un navegador web a la versión publicada de UBU E-R App. Vercel sirve los recursos estáticos generados a partir de la aplicación React, pero no ejecuta la lógica de validación ni la transformación de los diagramas en un servidor propio. Estas operaciones se realizan en el cliente.
 
-La Figura \ref{fig:arquitectura_general_aplicacion} resume la organización general de la aplicación, separando la interfaz visual, el modelo interno y los procesos que trabajan sobre dicho modelo.
+\imagen{diagrama_despliegue_aplicacion}{Diagrama UML de despliegue de la aplicación.}
 
-\imagen{arquitectura_general_aplicacion}{Arquitectura general de la aplicación.}
+En este despliegue pueden distinguirse tres elementos principales. En primer lugar, el repositorio GitHub, utilizado como sistema de control de versiones y como origen del código fuente. En segundo lugar, Vercel, que construye y publica la aplicación web a partir del repositorio. En tercer lugar, el navegador del usuario, donde se ejecuta la aplicación, se manipula el lienzo y se almacena temporalmente el estado del diagrama mediante \textit{LocalStorage}.
 
-\subsection{Organización por módulos}
+La importación y exportación de diagramas se realiza mediante archivos JSON gestionados desde el propio navegador. Del mismo modo, la exportación visual genera archivos de imagen a partir del contenido del lienzo. Por tanto, estas operaciones no requieren una base de datos externa ni un servicio backend específico.
 
-A nivel funcional, pueden distinguirse varios bloques dentro de la aplicación. El primero corresponde a la interfaz de usuario, encargada de mostrar el lienzo, los paneles de acciones, las acciones contextuales, los diálogos, los mensajes de validación y las secciones de ayuda e información del proyecto.
+\subsection{Diagrama de componentes}
 
-El segundo bloque corresponde al modelo interno del diagrama. Este bloque representa la información lógica creada por el usuario y sirve como base para el resto de operaciones. Sobre este modelo trabajan los procesos de validación, persistencia, transformación relacional y generación de SQL.
+La Figura \ref{fig:diagrama_componentes_aplicacion} resume los principales componentes lógicos de la aplicación y sus dependencias. El componente central es el editor de diagramas, que coordina la interfaz React, el lienzo gestionado mediante mxGraph, la representación interna del diagrama y los módulos de dominio.
 
-El tercer bloque está formado por las operaciones de entrada y salida. Aquí se incluyen la persistencia local, la exportación e importación de JSON, la generación de estructuras básicas y la exportación visual del diagrama en PNG y SVG.
+\imagen{diagrama_componentes_aplicacion}{Diagrama UML de componentes de la aplicación.}
 
-Por último, la aplicación cuenta con módulos relacionados con la validación y transformación. Estos módulos comprueban que el diagrama sea coherente dentro del alcance implementado y generan una representación relacional que posteriormente se convierte en SQL.
+La interfaz de usuario se organiza alrededor del componente principal del editor y de los paneles de acciones. Estos paneles permiten crear elementos E/R, ejecutar operaciones globales sobre el diagrama y mostrar acciones contextuales en función de la selección actual. La interacción visual con el lienzo se apoya en mxGraph, que proporciona la infraestructura necesaria para representar y manipular celdas, conexiones y elementos gráficos.
 
-En la versión final, esta separación se refleja en módulos como el editor visual del diagrama, los módulos de dominio del modelo E-R, las reglas de validación, la transformación al modelo relacional, la generación del SQL y los servicios de entrada y salida. Esta división permite diferenciar entre la interacción del usuario con el lienzo y las operaciones que interpretan el diagrama desde el punto de vista lógico.
+La lógica del editor se apoya en varios grupos de módulos. Los \textit{hooks} del editor agrupan acciones relacionadas con historial, persistencia, atributos, relaciones, ISA y borrado. Las utilidades específicas del editor encapsulan operaciones de integración con mxGraph, renderizado, sincronización, selección, persistencia y reconstrucción visual. Por su parte, los módulos de dominio del modelo E/R concentran reglas y funciones independientes de la interfaz siempre que es posible.
 
+Sobre la representación interna del diagrama trabajan los módulos de validación, transformación relacional y generación de SQL. La validación comprueba que el diagrama sea coherente dentro del alcance implementado. La transformación relacional construye una representación intermedia basada en tablas, columnas, claves primarias y claves foráneas. Finalmente, el servicio de generación de SQL convierte esa representación en un script compatible con el enfoque simplificado adoptado por la aplicación.
+
+\subsection{Organización interna del código}
+
+La estructura del código fuente refleja esta separación de responsabilidades. El componente \texttt{DiagramEditor.js} actúa como orquestador principal del editor. En él se conservan la inicialización de mxGraph, las referencias principales, los efectos de ciclo de vida y la composición de los módulos extraídos.
+
+Las acciones específicas del editor se agrupan en \textit{hooks}, como la gestión del historial, la persistencia, las acciones de atributos, relaciones, ISA y borrado. La interfaz contextual y las acciones globales se organizan en paneles diferenciados. Las utilidades del editor se dividen según su responsabilidad principal: integración con mxGraph, renderizado, sincronización, persistencia, selección y validación orientada a la interfaz.
+
+Fuera del componente visual, los módulos de dominio se organizan en torno al modelo E/R y al modelo relacional. La carpeta de dominio E/R agrupa reglas y funciones relacionadas con entidades, relaciones, atributos, ISA, composición de diagramas y validación. La parte relacional contiene la lógica de transformación desde el diagrama E/R hacia una representación basada en tablas. La generación final de SQL se mantiene en servicios específicos, separando la transformación conceptual del renderizado textual del script.
 
 \subsection{Mantenibilidad y extensibilidad}
 
-El diseño final busca que las nuevas funcionalidades del editor no dependan únicamente de la representación gráfica del lienzo. Por ello, las reglas del dominio, la validación, la transformación relacional y la generación de SQL se apoyan en módulos diferenciados que trabajan sobre el modelo interno del diagrama.
+La arquitectura final no plantea una reescritura completa de la aplicación heredada. La evolución se realizó de forma incremental, separando responsabilidades allí donde aportaba claridad sin introducir riesgos innecesarios. Por este motivo, algunas partes especialmente acopladas a mxGraph, como la inicialización del lienzo y determinados efectos de sincronización, permanecen en el componente principal del editor.
 
-Esta organización facilita la evolución posterior de la aplicación, ya que nuevas reglas de validación o nuevos casos de transformación pueden incorporarse sin convertir la interfaz visual en el único punto de decisión del sistema. Aun así, al tratarse de una aplicación heredada basada en mxGraph, sigue existiendo una dependencia práctica entre la representación visual y el modelo interno durante la sincronización de elementos.
+Esta organización facilita que futuras ampliaciones puedan localizar mejor el punto de cambio. Las reglas del dominio E/R deberían incorporarse en los módulos de dominio, las transformaciones hacia el modelo relacional en la parte relacional, la generación textual en los servicios SQL, las acciones de edición en los \textit{hooks} del editor y los cambios de interfaz en los paneles correspondientes.
 
-Las pruebas automáticas y la revisión manual se utilizan como mecanismos de apoyo para comprobar que los cambios introducidos no rompen la coherencia entre el lienzo, el modelo interno, la validación, la transformación relacional y la salida SQL. No obstante, el detalle de instalación, ejecución y pruebas del proyecto se reserva para el manual del programador.
-
-
+Aun así, al tratarse de una aplicación heredada basada en mxGraph, sigue existiendo una dependencia práctica entre la representación visual y la representación interna durante la sincronización de elementos. Por ello, cualquier ampliación futura debería mantener la coherencia entre el lienzo, el metamodelo, la validación, la transformación relacional, la persistencia y la generación de SQL.
 
 \section{Diseño procedimental}
 
-El diseño procedimental describe los principales flujos de funcionamiento de la aplicación. Estos flujos muestran cómo las acciones del usuario se convierten en cambios del modelo interno y cómo ese modelo se valida y transforma para generar resultados.
+El diseño procedimental recoge los flujos de funcionamiento más relevantes de la aplicación. No se pretende describir cada interacción posible de la interfaz, sino mostrar cómo las acciones principales del usuario se traducen en cambios sobre la representación interna del diagrama y cómo dicha representación se valida y transforma para generar resultados.
 
 \subsection{Flujo general de edición}
 
-El flujo principal comienza cuando el usuario crea o modifica elementos en el lienzo del editor. Cada acción visual debe reflejarse en el modelo interno, de forma que lo que aparece en pantalla coincida con la información que la aplicación conserva y procesa.
+El flujo principal comienza cuando el usuario crea o modifica elementos en el lienzo del editor. Cada acción visual debe reflejarse en la representación interna, de forma que lo que aparece en pantalla coincida con la información que la aplicación conserva y procesa.
 
-Este flujo incluye operaciones como crear entidades, añadir atributos, configurar relaciones, establecer cardinalidades, mover elementos, renombrarlos o eliminarlos. En todos los casos, la aplicación debe mantener la sincronización entre la vista y el modelo interno.
+Este flujo incluye operaciones como crear entidades, añadir atributos, configurar relaciones, establecer cardinalidades, mover elementos, renombrarlos o eliminarlos. En todos los casos, la aplicación debe mantener la sincronización entre la vista y la representación interna del diagrama.
 
 Además, la interfaz contempla la selección múltiple de elementos. Este comportamiento permite mover o eliminar varios elementos de forma conjunta, pero evita mostrar acciones individuales cuando la selección contiene más de un elemento. De esta forma, se mantiene la coherencia entre las acciones disponibles en la interfaz y las operaciones que realmente pueden aplicarse sobre el modelo.
 
 \subsection{Validación del modelo}
 
-Antes de generar una salida relacional o SQL, la aplicación valida el modelo interno. Esta validación comprueba que el diagrama contiene la información necesaria y que no existen configuraciones incompletas o incompatibles con el alcance implementado.
+Antes de generar una salida relacional o SQL, la aplicación valida la representación interna del diagrama. Esta validación comprueba que el diagrama contiene la información necesaria y que no existen configuraciones incompletas o incompatibles con el alcance implementado.
 
 La validación se ejecuta en operaciones como la generación de SQL y también puede lanzarse de forma explícita mediante la acción de comprobar el diagrama. Cuando se detectan errores, la aplicación debe mostrarlos de forma comprensible para que el usuario pueda corregir el modelo.
 
@@ -125,9 +149,13 @@ En la versión final se opta por una salida SQL más legible, evitando nombres e
 
 La salida SQL debe entenderse como una traducción razonable del modelo relacional generado por la aplicación, no como un generador industrial completo para cualquier sistema gestor de bases de datos. Su objetivo principal dentro del proyecto es servir como apoyo académico y como punto de partida para comprender la transformación desde el modelo Entidad-Relación.
 
-La Figura \ref{fig:flujo_validacion_sql} resume este proceso: el modelo interno se valida antes de construir la representación relacional y solo después se genera el script SQL correspondiente.
+La Figura \ref{fig:flujo_validacion_sql} resume este proceso: la representación interna se valida antes de construir la representación relacional y solo después se genera el script SQL correspondiente.
 
 \imagen{flujo_validacion_sql}{Flujo de validación, transformación relacional y generación de SQL.}
+
+La Figura \ref{fig:secuencia_generacion_sql} muestra el mismo proceso desde el punto de vista de la interacción entre los principales componentes implicados. La interfaz del editor inicia la operación a partir de la acción del usuario, consulta la representación interna del diagrama, solicita la validación y, si no existen errores bloqueantes, continúa con la transformación relacional y la generación del script SQL.
+
+\imagen{secuencia_generacion_sql}{Diagrama de secuencia de validación, transformación relacional y generación de SQL.}
 
 \subsection{Importación, combinación y generación de estructuras}
 
