@@ -78,7 +78,7 @@ Some advanced E-R concepts remain outside the current scope, including aggregati
 
 The application is deployed on Vercel:
 
-* Production: https://draw-entity-relation.vercel.app/
+* Production: https://draw-entity-relation-opal.vercel.app/
 
 ## Credits
 
