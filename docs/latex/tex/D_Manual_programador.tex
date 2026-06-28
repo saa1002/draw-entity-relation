@@ -161,7 +161,7 @@ Esta sección describe los pasos necesarios para preparar el entorno de desarrol
 
 \subsection{Requisitos previos}
 
-Para trabajar con el proyecto es necesario disponer de un entorno de desarrollo web basado en Node.js y npm. La aplicación se ejecuta completamente en el navegador y no requiere la instalación de un servidor de bases de datos ni de un backend propio.
+Para trabajar con el proyecto es necesario disponer de un entorno de desarrollo web basado en Node.js y npm \cite{nodejs,npm}. La aplicación se ejecuta completamente en el navegador y no requiere la instalación de un servidor de bases de datos ni de un backend propio.
 
 Los requisitos principales son:
 
@@ -172,7 +172,7 @@ Los requisitos principales son:
 
 \item \textbf{Navegador web moderno}: necesario para utilizar la aplicación durante el desarrollo. Se recomienda emplear un navegador actualizado, especialmente al ejecutar pruebas manuales sobre el lienzo.
 
-\item \textbf{Editor de código}: se puede utilizar cualquier editor compatible con proyectos JavaScript. Durante el desarrollo se ha trabajado principalmente con Visual Studio Code.
+\item \textbf{Editor de código}: se puede utilizar cualquier editor compatible con proyectos JavaScript. Durante el desarrollo se ha trabajado principalmente con Visual Studio Code \cite{vscode}.
 
 \end{itemize}
 
@@ -218,7 +218,7 @@ npm run build
 
 De forma análoga al arranque en desarrollo, antes de construir la aplicación se ejecuta el script \texttt{prebuild}, que actualiza la información de construcción. Posteriormente, \texttt{react-scripts} genera una versión optimizada de la aplicación en la carpeta \texttt{build/}.
 
-La carpeta \texttt{build/} contiene los ficheros estáticos resultantes, preparados para ser servidos por una plataforma de despliegue web. En el proyecto actual, el despliegue se realiza sobre Vercel, que se encarga de construir y publicar la aplicación a partir del repositorio.
+La carpeta \texttt{build/} contiene los ficheros estáticos resultantes, preparados para ser servidos por una plataforma de despliegue web. En el proyecto actual, el despliegue se realiza sobre Vercel \cite{vercel}, que se encarga de construir y publicar la aplicación a partir del repositorio.
 
 La aplicación no depende de un backend propio. La lógica principal se ejecuta en el navegador del usuario y la persistencia ordinaria del diagrama se realiza mediante \texttt{localStorage} y mediante ficheros JSON importados o exportados por el usuario.
 
@@ -265,7 +265,7 @@ En caso de problemas persistentes de dependencias, una estrategia habitual consi
 
 \section{Organización interna del código fuente}
 
-La aplicación se organiza en torno a una separación progresiva entre la interfaz React, la integración con mxGraph, las reglas propias del modelo Entidad--Relación, la transformación al modelo relacional y la generación de SQL. Esta separación no elimina por completo el acoplamiento propio de una aplicación heredada, pero permite localizar mejor las responsabilidades principales del sistema.
+La aplicación se organiza en torno a una separación progresiva entre la interfaz React \cite{react}, la integración con mxGraph \cite{mxgraph}, las reglas propias del modelo Entidad--Relación, la transformación al modelo relacional y la generación de SQL. Esta separación no elimina por completo el acoplamiento propio de una aplicación heredada, pero permite localizar mejor las responsabilidades principales del sistema.
 
 \subsection{Componente principal del editor}
 
@@ -368,7 +368,7 @@ Las reglas y utilidades propias del dominio Entidad--Relación se encuentran en:
 src/domain/er/
 \end{verbatim}
 
-Esta carpeta contiene funciones relacionadas con entidades, relaciones, atributos, composición del diagrama, normalización, ejemplos predefinidos, jerarquías ISA y validación.
+Esta carpeta contiene funciones relacionadas con entidades, relaciones, atributos, composición del diagrama, normalización, ejemplos predefinidos, jerarquías ISA y validación. Estas reglas se apoyan en los conceptos del modelo E/R y su transformación relacional descritos en el material teórico de referencia \cite{tema6}.
 
 Entre sus ficheros principales se encuentran:
 
@@ -449,6 +449,55 @@ Los ficheros principales son:
 
 Cuando se añadan nuevas acciones, mensajes de validación o textos de interfaz, debe comprobarse si procede incorporarlos a este sistema de traducción en lugar de dejarlos como literales dispersos en los componentes.
 
+\subsection{Métricas del código fuente}
+
+Además de la organización modular descrita en los apartados anteriores, se realizó una medición básica del tamaño del código fuente y de los artefactos de prueba del proyecto. Estas métricas no deben interpretarse como una medida exacta del esfuerzo realizado, ya que el proyecto parte de una aplicación heredada, pero sí permiten obtener una visión objetiva del tamaño actual del sistema y de la proporción entre código de producción y código de pruebas.
+
+La medición se realizó sobre las carpetas \texttt{src/}, \texttt{tests/} y \texttt{scripts/}, excluyendo dependencias instaladas, artefactos de construcción, recursos estáticos generados y documentación externa.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{0.52\textwidth} r r}
+\toprule
+\textbf{Bloque analizado} & \textbf{Ficheros} & \textbf{Líneas} \tabularnewline
+\midrule
+Código de producción en \texttt{src/} & 58 & 16.184 \tabularnewline
+Pruebas y utilidades de prueba en \texttt{tests/} & 53 & 14.377 \tabularnewline
+Scripts auxiliares en \texttt{scripts/} & 1 & 38 \tabularnewline
+\midrule
+\textbf{Total considerado} & \textbf{112} & \textbf{30.599} \tabularnewline
+\bottomrule
+\end{tabular}
+\caption{Métricas básicas de tamaño del código fuente y pruebas del proyecto.}
+\label{tab:metricas_codigo_fuente}
+\end{table}
+
+Como indicador complementario de complejidad estructural, se revisó la distribución del código dentro de \texttt{src/}. La mayor parte del tamaño se concentra en la interfaz del editor y en la lógica de dominio, lo cual es coherente con la naturaleza del proyecto: una aplicación web interactiva basada en React y mxGraph.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{0.52\textwidth} r r}
+\toprule
+\textbf{Carpeta de \texttt{src/}} & \textbf{Ficheros} & \textbf{Líneas} \tabularnewline
+\midrule
+\texttt{src/components/} & 27 & 10.194 \tabularnewline
+\texttt{src/domain/} & 23 & 4.571 \tabularnewline
+\texttt{src/i18n/} & 2 & 969 \tabularnewline
+\texttt{src/services/} & 2 & 396 \tabularnewline
+\bottomrule
+\end{tabular}
+\caption{Distribución aproximada del código de producción por carpetas principales.}
+\label{tab:metricas_codigo_carpetas}
+\end{table}
+
+Estas métricas muestran que el editor conserva una complejidad relevante en la capa de interfaz, especialmente por la integración con mxGraph y la gestión de interacciones visuales. Por este motivo, durante el desarrollo se optó por una reestructuración incremental y conservadora, separando acciones, paneles, utilidades de renderizado, sincronización y reglas de dominio, sin realizar una reescritura completa del componente principal.
+
+La calidad del código se evaluó mediante análisis estático, pruebas unitarias, pruebas de extremo a extremo y construcción de producción. Estas comprobaciones se describen en el apartado siguiente y permiten complementar las métricas de tamaño con evidencias de validación técnica.
+
 \section{Pruebas del sistema}
 
 Las pruebas del sistema combinan comprobaciones automáticas y revisiones manuales. Esta combinación es necesaria porque la aplicación tiene una parte importante de lógica de dominio, que puede verificarse mediante pruebas unitarias, y una parte visual e interactiva basada en mxGraph, que requiere comprobar también el comportamiento real del editor en el navegador.
@@ -466,7 +515,7 @@ Además, para los cambios que afectaban al comportamiento visual del editor se r
 
 \subsection{Análisis estático}
 
-El análisis estático se realiza mediante Biome. Esta herramienta permite detectar problemas de estilo, código no utilizado, errores simples y otras inconsistencias en el código fuente.
+El análisis estático se realiza mediante Biome \cite{biome}. Esta herramienta permite detectar problemas de estilo, código no utilizado, errores simples y otras inconsistencias en el código fuente.
 
 El comando utilizado es:
 
@@ -480,7 +529,7 @@ Durante la limpieza final del código fuente, este comando se utilizó para comp
 
 \subsection{Pruebas unitarias}
 
-Las pruebas unitarias se ejecutan con Vitest. Estas pruebas se centran principalmente en la lógica interna de la aplicación, como validación del diagrama, transformación al modelo relacional, generación SQL, persistencia, normalización de datos y funciones auxiliares del dominio.
+Las pruebas unitarias se ejecutan con Vitest \cite{vitest}. Estas pruebas se centran principalmente en la lógica interna de la aplicación, como validación del diagrama, transformación al modelo relacional, generación SQL, persistencia, normalización de datos y funciones auxiliares del dominio.
 
 El comando recomendado para una ejecución puntual es:
 
@@ -508,7 +557,7 @@ No obstante, conviene interpretar estas pruebas con prudencia. Que una funcional
 
 \subsection{Pruebas de extremo a extremo}
 
-El proyecto también dispone de pruebas de extremo a extremo mediante Playwright. Estas pruebas permiten verificar flujos completos de uso desde el punto de vista del usuario, ejecutando la aplicación en un navegador controlado por la herramienta.
+El proyecto también dispone de pruebas de extremo a extremo mediante Playwright \cite{playwright}. Estas pruebas permiten verificar flujos completos de uso desde el punto de vista del usuario, ejecutando la aplicación en un navegador controlado por la herramienta.
 
 El comando definido para este tipo de pruebas es:
 

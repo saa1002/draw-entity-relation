@@ -2,7 +2,8 @@
 
 \section{Introducción}
 
-En este apartado se enumeran y desarrollan los objetivos y requisitos que debe tener la aplicación según el alcance final del proyecto. La herramienta parte de un editor de diagramas Entidad-Relación ya existente, por lo que los requisitos no se plantean como si el sistema se hubiera desarrollado desde cero, sino como una evolución de una aplicación heredada.
+En este apartado se enumeran y desarrollan los objetivos y requisitos que debe tener la aplicación según el alcance final del proyecto. La especificación se plantea como una descripción estructurada del comportamiento esperado del sistema, siguiendo el enfoque general de la ingeniería de requisitos software \cite{iso29148}. La herramienta parte de un editor de diagramas Entidad-Relación ya existente, por lo que los requisitos no se plantean como si el sistema se hubiera desarrollado desde cero, sino como una evolución de una aplicación heredada.
+
 
 Durante el trabajo se han incorporado nuevas funcionalidades del modelo Entidad-Relación, se ha revisado la validación y la generación de SQL, y se han añadido mejoras de usabilidad para facilitar la edición de diagramas. Por ello, este anexo recoge tanto las funcionalidades principales del editor como las ampliaciones realizadas durante el desarrollo del TFG.
 
@@ -26,7 +27,7 @@ Desde el punto de vista de la especificación de requisitos, la aplicación debe
 
 \section{Catálogo de requisitos}
 
-En este apartado se enumeran los requisitos funcionales y no funcionales que describen el comportamiento esperado de UBU E-R App tras la evolución realizada en este TFG. Los requisitos combinan funcionalidades heredadas que se mantienen como parte del editor, ampliaciones incorporadas durante el desarrollo y restricciones de alcance necesarias para no atribuir al sistema capacidades que todavía no implementa.
+En este apartado se enumeran los requisitos funcionales y no funcionales que describen el comportamiento esperado de UBU E-R App tras la evolución realizada en este TFG. La distinción entre requisitos funcionales y no funcionales permite separar las capacidades observables del sistema de las restricciones de calidad, compatibilidad, mantenibilidad y contexto de uso \cite{iso29148}. Los requisitos combinan funcionalidades heredadas que se mantienen como parte del editor, ampliaciones incorporadas durante el desarrollo y restricciones de alcance necesarias para no atribuir al sistema capacidades que todavía no implementa.
 
 \subsection{Requisitos funcionales}
 
@@ -51,7 +52,7 @@ En este apartado se enumeran los requisitos funcionales y no funcionales que des
 \item \textbf{RF17 - Gestionar selección múltiple y acciones contextuales:} La aplicación debe permitir seleccionar varios elementos de forma visible, mover o eliminar una selección múltiple y evitar mostrar acciones individuales cuando hay varios elementos seleccionados.
 \end{itemize}
 
-El soporte de ISA se considera inicial y controlado: se contempla una única generalización con una o varias especializaciones, con clave heredada desde la generalización, pero quedan fuera del alcance la totalidad o parcialidad, el solapamiento o exclusividad, los discriminantes ISA y la herencia múltiple real. Las agregaciones no forman parte de los requisitos implementados en esta versión.
+El soporte de ISA se considera inicial y controlado: se contempla una única generalización con una o varias especializaciones, con clave heredada desde la generalización, pero quedan fuera del alcance la totalidad o parcialidad, el solapamiento o exclusividad, los discriminantes ISA y la herencia múltiple real. Esta delimitación se corresponde con una selección concreta de los elementos avanzados del modelo E/R tratados en la teoría de bases de datos \cite{tema6}. Las agregaciones no forman parte de los requisitos implementados en esta versión.
 
 \subsection{Requisitos no funcionales}
 
@@ -70,11 +71,11 @@ El soporte de ISA se considera inicial y controlado: se contempla una única gen
 
 Los requisitos funcionales se agrupan en varios bloques. El primero corresponde a la edición visual del diagrama, que incluye la creación y modificación de entidades, atributos y relaciones. El segundo bloque recoge los elementos avanzados del modelo E-R soportados por la aplicación, como entidades débiles, atributos compuestos y multivaluados, relaciones ternarias, roles y jerarquías ISA sencillas.
 
-Otro bloque importante es el mantenimiento del modelo interno. Cada elemento representado en el lienzo debe conservarse en una estructura de datos que permita reconstruir el diagrama, validarlo, persistirlo y transformarlo posteriormente. Esta estructura es también la base para la exportación e importación en formato JSON.
+Otro bloque importante es el mantenimiento del modelo interno. Cada elemento representado en el lienzo debe conservarse en una estructura de datos que permita reconstruir el diagrama, validarlo, persistirlo y transformarlo posteriormente. Esta estructura es también la base para la exportación e importación en formato JSON, utilizado como formato de intercambio de datos estructurados \cite{ecma-json}.
 
 La validación del diagrama permite comprobar si el modelo contiene errores antes de generar una salida relacional o SQL. Además, el usuario puede ejecutar una comprobación explícita del diagrama sin necesidad de generar SQL. Si se detectan errores, la aplicación debe mostrarlos de forma agrupada y comprensible.
 
-La transformación relacional y la generación de SQL constituyen la salida principal del sistema. A partir del diagrama validado, la aplicación obtiene una representación basada en tablas, columnas, claves primarias y claves foráneas, y posteriormente genera el script SQL correspondiente.
+La transformación relacional y la generación de SQL constituyen la salida principal del sistema. A partir del diagrama validado, la aplicación obtiene una representación basada en tablas, columnas, claves primarias y claves foráneas, y posteriormente genera el script SQL correspondiente, siguiendo las reglas generales de paso del modelo E/R al modelo relacional \cite{tema6}.
 
 Finalmente, la aplicación incorpora varias funcionalidades de apoyo a la edición: generación de estructuras básicas, importación y generación combinada de contenido, exportación visual en PNG y SVG, ajuste de la vista, soporte básico de idioma, selección múltiple visible, acciones contextuales, secciones de ayuda e información del proyecto y reinicio controlado del lienzo.
 
@@ -84,7 +85,7 @@ El sistema contempla un actor principal, denominado usuario del editor. Este act
 
 \subsection{Diagrama de casos de uso}
 
-La figura~\ref{fig:diagrama_casos_uso} resume los principales casos de uso identificados para UBU E-R App. Se ha considerado un único actor principal, el usuario del editor, ya que la aplicación no incorpora autenticación, perfiles diferenciados ni backend propio. Los casos de uso se agrupan en edición del modelo E-R, validación y generación, persistencia e intercambio, y acciones de apoyo a la edición.
+La figura~\ref{fig:diagrama_casos_uso} resume los principales casos de uso identificados para UBU E-R App mediante notación UML \cite{omg-uml}. Se ha considerado un único actor principal, el usuario del editor, ya que la aplicación no incorpora autenticación, perfiles diferenciados ni backend propio. Los casos de uso se agrupan en edición del modelo E-R, validación y generación, persistencia e intercambio, y acciones de apoyo a la edición.
 
 \begin{figure}[h]
 \centering
@@ -381,7 +382,7 @@ Las tablas siguientes describen los principales casos de uso del sistema a nivel
 \textbf{Versión} & 1.0 \\
 \textbf{Autor} & Steven Paul Alba Alba \\
 \textbf{Requisitos asociados} & RF10, RF11 \\
-\textbf{Descripción} & Permite guardar el diagrama en un archivo JSON o cargar un diagrama previamente exportado. \\
+\textbf{Descripción} & Permite conservar el estado del diagrama entre recargas o sesiones del navegador. \\
 \textbf{Precondición} & Para exportar, debe existir un diagrama. Para importar, el usuario debe disponer de un archivo JSON compatible. \\
 \textbf{Acciones} &
 \begin{enumerate}

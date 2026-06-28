@@ -12,15 +12,15 @@ El estudio de viabilidad analiza los costes que tendría un proyecto de estas ca
 
 \subsection{Metodología y organización del trabajo}
 
-El desarrollo del proyecto se organizó mediante una metodología ágil basada en Scrum, adaptada al contexto de un Trabajo Fin de Grado individual. No se aplicó Scrum de forma completa, ya que no existía un equipo de desarrollo con roles diferenciados ni reuniones diarias, pero sí se utilizaron varios de sus principios: división del trabajo en bloques, definición de tareas concretas, revisión periódica de resultados y adaptación de la planificación según el avance del proyecto.
+El desarrollo del proyecto se organizó mediante una metodología ágil basada en Scrum \cite{scrum-guide}, adaptada al contexto de un Trabajo Fin de Grado individual. No se aplicó Scrum de forma completa, ya que no existía un equipo de desarrollo con roles diferenciados ni reuniones diarias, pero sí se utilizaron varios de sus principios: división del trabajo en bloques, definición de tareas concretas, revisión periódica de resultados y adaptación de la planificación según el avance del proyecto.
 
-La organización práctica del trabajo se apoyó principalmente en GitHub. Los issues se utilizaron para registrar tareas concretas de análisis, implementación, pruebas, revisión y documentación. Estos issues actuaron como backlog del proyecto y permitieron mantener trazabilidad entre los objetivos planteados y el trabajo realizado.
+La organización práctica del trabajo se apoyó principalmente en GitHub. Los issues, labels y milestones se utilizaron como mecanismos de clasificación y seguimiento del trabajo \cite{github-labels-milestones}. Los issues se emplearon para registrar tareas concretas de análisis, implementación, pruebas, revisión y documentación. Estos issues actuaron como backlog del proyecto y permitieron mantener trazabilidad entre los objetivos planteados y el trabajo realizado.
 
 Para facilitar su clasificación, se definió un conjunto de labels en GitHub. Estas etiquetas permitieron distinguir la naturaleza de cada tarea, por ejemplo si estaba relacionada con la configuración del entorno, el despliegue, la documentación, las pruebas, el modelo Entidad-Relación, mejoras funcionales, cuestiones teóricas o elementos centrales del TFG. Entre las etiquetas utilizadas se encontraban \textit{setup}, \textit{deployment}, \textit{documentation}, \textit{testing}, \textit{er-model}, \textit{enhancement}, \textit{theory} y \textit{tfg-core}.
 
 Los milestones agruparon issues relacionados y se utilizaron como sprints adaptados. Cada milestone representó un bloque de trabajo de mayor duración que un sprint Scrum convencional, centrado en una parte concreta de la evolución del editor. Esta adaptación resultó adecuada para el proyecto, ya que se trataba de un TFG individual basado en una aplicación heredada y no de un desarrollo en equipo desde cero.
 
-Además, se trabajó con ramas de desarrollo para separar cambios funcionales o de documentación. Los despliegues en Vercel permitieron publicar versiones funcionales de la aplicación y facilitaron su revisión desde el navegador, sin necesidad de instalar el proyecto en local.
+Además, se trabajó con ramas de desarrollo mediante Git \cite{git-docs}, con el objetivo de separar cambios funcionales o de documentación. Los despliegues en Vercel \cite{vercel} permitieron publicar versiones funcionales de la aplicación y facilitaron su revisión desde el navegador, sin necesidad de instalar el proyecto en local.
 
 En este contexto, la equivalencia entre Scrum y la organización real del TFG puede resumirse de la siguiente forma: los issues actuaron como tareas del backlog, las labels permitieron clasificar el trabajo, los milestones funcionaron como sprints adaptados, las versiones integradas y desplegadas como incrementos revisables, y las revisiones con el tutor como mecanismo de seguimiento y ajuste del trabajo.
 
@@ -80,6 +80,30 @@ La Figura~\ref{fig:cronograma_fases_proyecto} muestra una visión temporal resum
 
 \imagen{cronograma_fases_proyecto}{Cronograma resumido de los sprints adaptados del proyecto.}
 
+De forma complementaria al cronograma, la Tabla~\ref{tab:resumen_planificacion_esfuerzo} resume la relación entre los sprints adaptados, el periodo aproximado de realización, el trabajo abordado y el esfuerzo estimado. Esta planificación no se planteó como una división rígida de tareas cerradas desde el inicio, sino como una organización incremental basada en issues y milestones, ajustada conforme se iba comprendiendo mejor el sistema heredado y se validaban las ampliaciones realizadas.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{0.20\textwidth} p{0.18\textwidth} p{0.42\textwidth} r}
+\toprule
+\textbf{Bloque de trabajo} & \textbf{Periodo aproximado} & \textbf{Trabajo principal realizado} & \textbf{Esfuerzo} \tabularnewline
+\midrule
+Preparación inicial & Enero--febrero & Configuración del entorno, revisión del repositorio, análisis inicial del proyecto heredado y organización del seguimiento en GitHub. & 65 h \tabularnewline
+Estabilización del núcleo y entidades débiles & Febrero--mayo & Revisión del núcleo del editor, corrección de inconsistencias, estabilización del modelo interno y soporte de entidades débiles. & 205 h \tabularnewline
+Refactorización y atributos avanzados & Mayo & Mejora progresiva de la estructura interna del código y ampliación del soporte de atributos compuestos y multivaluados. & 145 h \tabularnewline
+Relaciones ternarias & Mayo--junio & Implementación y revisión de relaciones ternarias, participantes, roles, atributos propios, transformación relacional y generación SQL. & 115 h \tabularnewline
+ISA y mejoras finales de usabilidad & Junio--julio & Soporte inicial de jerarquías ISA, importación/exportación, selección múltiple, ayuda integrada, ajustes visuales y mejoras de interacción. & 120 h \tabularnewline
+Memoria, anexos y revisión final & Junio--julio & Redacción y revisión de la memoria, anexos, documentación técnica, documentación de usuario y comprobaciones finales. & 63 h \tabularnewline
+\midrule
+\textbf{Total} & & & \textbf{713 h} \tabularnewline
+\bottomrule
+\end{tabular}
+\caption{Resumen de planificación, seguimiento y esfuerzo estimado por bloque de trabajo.}
+\label{tab:resumen_planificacion_esfuerzo}
+\end{table}
+
 \subsection{Seguimiento y validación del proyecto}
 
 El seguimiento del proyecto se realizó a partir de los milestones e issues definidos en GitHub, junto con las revisiones mantenidas con el tutor. Estas revisiones permitieron comprobar el avance del trabajo, ajustar prioridades y detectar problemas de enfoque tanto en la aplicación como en la memoria y los anexos.
@@ -128,13 +152,40 @@ Memoria, anexos y revisión final & 63 h \tabularnewline
 \label{tab:costes_personal_horas}
 \end{table}
 
-Para realizar la estimación económica se ha utilizado un coste orientativo de 15 €/h, correspondiente a una valoración prudente del trabajo de un perfil junior en un contexto académico. Con este criterio, el coste de personal estimado es el siguiente:
+Para realizar la estimación económica se ha utilizado una retribución bruta orientativa de 15 €/h, correspondiente a una valoración prudente del trabajo de un perfil junior en un contexto académico. Con este criterio, el coste salarial bruto estimado es el siguiente:
 
 \begin{equation}
-713 \text{ h} \times 15 \text{ €/h} = 10.695 \text{ €}
+\text{713 h} \times \text{15 €/h} = \text{10.695,00 €}
 \end{equation}
 
-Por tanto, el coste estimado de personal asciende a 10.695 €.
+Además del salario bruto, en un contexto profesional debe considerarse la parte empresarial de la cotización a la Seguridad Social. Para esta estimación se han tomado como referencia los tipos aplicables en 2026 para el Régimen General, considerando contingencias comunes, desempleo, Fondo de Garantía Salarial, formación profesional y Mecanismo de Equidad Intergeneracional \cite{boe-cotizacion-2026}.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{0.50\textwidth} r r}
+\toprule
+\textbf{Concepto} & \textbf{Tipo empresa} & \textbf{Coste estimado} \tabularnewline
+\midrule
+Contingencias comunes & 23,60 \% & 2.524,02 € \tabularnewline
+Desempleo & 5,50 \% & 588,23 € \tabularnewline
+Fondo de Garantía Salarial & 0,20 \% & 21,39 € \tabularnewline
+Formación profesional & 0,60 \% & 64,17 € \tabularnewline
+Mecanismo de Equidad Intergeneracional & 0,75 \% & 80,21 € \tabularnewline
+\midrule
+\textbf{Total cotizaciones empresariales} & \textbf{30,65 \%} & \textbf{3.278,02 €} \tabularnewline
+\bottomrule
+\end{tabular}
+\caption{Estimación de cotizaciones empresariales asociadas al coste de personal.}
+\label{tab:costes_personal_cotizaciones}
+\end{table}
+
+Por tanto, el coste total estimado de personal, incluyendo salario bruto y cotizaciones empresariales, asciende a:
+
+\begin{equation}
+\text{10.695,00 €} + \text{3.278,02 €} = \text{13.973,02 €}
+\end{equation}
 
 \subsubsection{Costes de hardware}
 
@@ -143,7 +194,7 @@ El desarrollo se realizó utilizando un ordenador de sobremesa propio, valorado 
 Para esta estimación se considera una vida útil de cuatro años, equivalente a 48 meses, y una duración aproximada del proyecto de cinco meses y medio. El coste imputado al proyecto se calcula de la siguiente forma:
 
 \begin{equation}
-\frac{1.200 \text{ €}}{48 \text{ meses}} \times 5{,}5 \text{ meses} = 137,50 \text{ €}
+\frac{\text{1.200 €}}{\text{48 meses}} \times \text{5,5 meses} = \text{137,50 €}
 \end{equation}
 
 Por tanto, el coste de hardware imputado al proyecto es de 137,50 €.
@@ -166,12 +217,12 @@ La Tabla~\ref{tab:coste_total_proyecto} resume el coste económico estimado del 
 \toprule
 \textbf{Concepto} & \textbf{Coste estimado} \tabularnewline
 \midrule
-Coste de personal & 10.695,00 € \tabularnewline
+Coste de personal, incluyendo cotizaciones empresariales & 13.973,02 € \tabularnewline
 Coste imputado de hardware & 137,50 € \tabularnewline
 Costes de software y servicios & 0,00 € \tabularnewline
 Costes adicionales & 0,00 € \tabularnewline
 \midrule
-\textbf{Total estimado} & \textbf{10.832,50 €} \tabularnewline
+\textbf{Total estimado} & \textbf{14.110,52 €} \tabularnewline
 \bottomrule
 \end{tabular}
 \caption{Coste total estimado del proyecto.}
@@ -186,31 +237,43 @@ Desde el punto de vista legal, el proyecto se apoya en tecnologías y librerías
 
 \subsubsection{Licencias del software}
 
-La versión actual del proyecto se distribuye bajo licencia MIT. Esta licencia es adecuada para el contexto del TFG porque permite el uso, copia, modificación y distribución del código, manteniendo la obligación de conservar el aviso de copyright y el texto de la licencia.
+La versión actual del proyecto se distribuye bajo licencia MIT \cite{mit-license}. Esta licencia es adecuada para el contexto del TFG porque permite el uso, copia, modificación y distribución del código, manteniendo la obligación de conservar el aviso de copyright y el texto de la licencia.
 
-Las dependencias principales utilizadas por la aplicación mantienen sus propias licencias. La Tabla~\ref{tab:licencias_proyecto} resume las licencias más relevantes consideradas durante el desarrollo. En general, se trata de licencias permisivas, principalmente MIT~\cite{mit-license} y Apache License 2.0~\cite{apache-license}, compatibles con el uso académico y con la distribución del proyecto bajo licencia MIT.
+Las dependencias principales utilizadas por la aplicación mantienen sus propias licencias. En el caso de las dependencias con licencia Apache License 2.0, se ha comprobado que su uso es compatible con la distribución del proyecto, manteniendo las condiciones propias de dicha licencia \cite{apache-license}.
+
+La Tabla~\ref{tab:licencias_proyecto} resume las licencias de la aplicación y de las principales dependencias directas declaradas en el proyecto. No se detallan todas las dependencias transitivas instaladas por npm, ya que estas quedan incorporadas indirectamente a través de las librerías principales, pero sí se revisa que el conjunto de dependencias directas empleadas sea coherente con la distribución del proyecto bajo licencia MIT.
 
 \begin{table}[!htbp]
 \centering
 \small
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{|p{0.28\textwidth}|p{0.22\textwidth}|p{0.40\textwidth}|}
+\begin{tabular}{|p{0.30\textwidth}|p{0.22\textwidth}|p{0.38\textwidth}|}
 \hline
 \textbf{Elemento} & \textbf{Licencia} & \textbf{Observación} \tabularnewline
 \hline
 Código desarrollado en el proyecto & MIT & La versión final incorpora un fichero \texttt{LICENSE} y la información correspondiente en \texttt{package.json}. \tabularnewline
 \hline
-React & MIT & Librería principal empleada para construir la interfaz de usuario. \tabularnewline
+React y React DOM & MIT & Librerías principales empleadas para construir y renderizar la interfaz de usuario. \tabularnewline
 \hline
-Material UI & MIT & Biblioteca de componentes utilizada para diferentes elementos de la interfaz. \tabularnewline
+Material UI & MIT & Biblioteca de componentes utilizada en distintos elementos de la interfaz. \tabularnewline
+\hline
+Emotion & MIT & Dependencia asociada al sistema de estilos utilizado por Material UI. \tabularnewline
 \hline
 mxGraph & Apache License 2.0 & Librería utilizada para la creación y manipulación del lienzo de diagramas. \tabularnewline
+\hline
+React Color & MIT & Biblioteca utilizada como apoyo para la selección de colores en la interfaz. \tabularnewline
+\hline
+React Hot Toast & MIT & Biblioteca utilizada para mostrar notificaciones al usuario. \tabularnewline
+\hline
+Fontsource Roboto & MIT / Apache License 2.0 & Paquete empleado para incorporar la fuente Roboto en la aplicación. \tabularnewline
+\hline
+React Scripts & MIT & Herramienta de construcción y ejecución heredada de Create React App. \tabularnewline
 \hline
 Vitest & MIT & Herramienta utilizada para la ejecución de pruebas unitarias. \tabularnewline
 \hline
 Playwright & Apache License 2.0 & Herramienta utilizada para la ejecución de pruebas end-to-end. \tabularnewline
 \hline
-Biome & MIT & Herramienta empleada como apoyo para el análisis estático y el formateo del código. \tabularnewline
+Biome & MIT o Apache License 2.0 & Herramienta empleada como apoyo para el análisis estático y el formateo del código. \tabularnewline
 \hline
 Lefthook & MIT & Herramienta utilizada como apoyo en la automatización de comprobaciones durante el desarrollo. \tabularnewline
 \hline

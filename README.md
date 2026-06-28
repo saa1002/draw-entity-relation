@@ -13,7 +13,7 @@ The project is developed with React and mxGraph. It is based on the original Dra
 * Initial and controlled support for ISA/generalisation-specialisation structures.
 * Diagram validation before generating relational structures or SQL scripts.
 * Transformation from the conceptual E-R model to a relational representation.
-* SQL generation with simplified foreign key rendering.
+* SQL generation compatible with PostgreSQL-oriented syntax.
 * Export and import of diagrams in JSON format, with replace and merge modes.
 * Visual export of the canvas as PNG or SVG.
 * View adjustment tools to improve navigation in the canvas.
@@ -32,7 +32,7 @@ The project is developed with React and mxGraph. It is based on the original Dra
 * GitHub Actions
 * Vercel
 
-## Installation
+## Installation and local execution
 
 Install the project dependencies with:
 
@@ -52,19 +52,25 @@ Create a production build with:
 npm run build
 ```
 
-## Testing
+## Verification and evaluation
 
-Run the unit test suite with:
+The application can be evaluated in two ways:
+
+1. **Deployed version**: the final version is available through the Vercel deployment listed in the Deployment section.
+2. **Local execution**: the project can be installed and executed locally using the commands described above.
+
+For a complete local verification, the following project scripts are available:
 
 ```bash
+npm run lint
 npm test
+npm run test:e2e
+npm run build
 ```
 
-Run the end-to-end tests with:
+At the time of submission, the final version was checked with these scripts for static analysis, unit tests, end-to-end tests and production build.
 
-```bash
-npx playwright test
-```
+The application does not require a backend server, external database or additional local services. All editing, validation, transformation, SQL generation and JSON import/export operations are executed in the browser.
 
 ## Current scope and limitations
 
