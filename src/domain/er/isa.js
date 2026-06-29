@@ -1,3 +1,7 @@
+// Domain helpers for the initial ISA support. The current model stores one
+// generalization link and one or more specialization links, but it does not model
+// total/partial constraints, disjoint/overlapping constraints, ISA discriminants
+// or real multiple inheritance.
 const getIsas = (diagram) => (Array.isArray(diagram?.isas) ? diagram.isas : []);
 
 export const ISA_CELL_LABEL = "ISA";
@@ -54,6 +58,8 @@ export const isaHasGeneralization = (isa) =>
 export const isaHasSpecializations = (isa) =>
     getIsaSpecializationEntityIds(isa).length > 0;
 
+// A configured ISA requires a generalization entity, at least one specialization
+// entity and the mxGraph edge identifiers needed to reconstruct the hierarchy.
 export const isIsaConfigured = (isa) =>
     isaHasGeneralization(isa) &&
     isaHasSpecializations(isa) &&

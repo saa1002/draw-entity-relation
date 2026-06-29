@@ -1,3 +1,5 @@
+// Shared utilities for visual decorators. Decorators are separate mxGraph cells
+// with predictable ids derived from the base cell id.
 export const buildDecoratorCellId = (baseCellId, suffix) =>
     `${baseCellId}${suffix}`;
 
@@ -40,6 +42,8 @@ export const applyBoundsToCellGeometry = (cell, bounds) => {
     return true;
 };
 
+// Some decorators overlap their base cell; disabling pointer events prevents
+// them from capturing clicks or drag operations.
 const disablePointerEventsForCell = (graph, cell) => {
     const state = graph?.view?.getState?.(cell);
 
@@ -56,6 +60,8 @@ const disablePointerEventsForCell = (graph, cell) => {
     });
 };
 
+// Synchronizes a decorator with its base vertex geometry and optionally keeps it
+// behind the base cell.
 export const syncVertexDecoratorBounds = ({
     graph,
     decoratorCell,

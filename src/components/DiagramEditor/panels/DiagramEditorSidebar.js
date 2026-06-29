@@ -61,8 +61,13 @@ import {
     renderSidebarAction,
 } from "./DiagramEditorPanelControls";
 
+// Contextual sidebar actions for the current mxGraph selection. Most buttons are
+// shown only when the selected logical E/R element supports the corresponding action.
+
 const DRAGGABLE_DIALOG_TITLE_CLASS = "draggable-dialog-title";
 
+// Material UI dialogs are made draggable through the title area so large
+// configuration dialogs do not permanently cover the diagram.
 const DraggableDialogPaper = React.forwardRef(
     function DraggableDialogPaper(props, ref) {
         const { onMouseDown, style, ...paperProps } = props;
@@ -391,6 +396,8 @@ export function DiagramEditorSidebar({
         }
     };
 
+    // Primary-key actions are hidden for weak entities, ISA specializations and
+    // multivalued attributes because those cases use different key semantics.
     const ToggleAttrKeyButton = () => {
         const isAttribute = isAttributeShapeCell(selected);
 
@@ -458,6 +465,8 @@ export function DiagramEditorSidebar({
         );
     };
 
+    // Multivalued actions are exposed only for attribute shapes that can still be
+    // represented by the supported relational transformation.
     const ToggleMultivaluedAttributeButton = () => {
         const isAttribute = isAttributeShapeCell(selected);
         const selectedEntityAttribute =
@@ -525,6 +534,8 @@ export function DiagramEditorSidebar({
         }
     };
 
+    // Relation configuration connects the relation vertex to its participant entities
+    // and stores the generated edge/cardinality cell ids in the relation sides.
     const RelationConfigurationButton = () => {
         const isRelation = isRelationShapeCell(selected);
         const [open, setOpen] = React.useState(false);
@@ -550,6 +561,8 @@ export function DiagramEditorSidebar({
         const getSelectedSideEntityId = (sideKey) =>
             selectedRelationSides[sideKey]?.idMx ?? "";
 
+        // Roles are required only when a ternary relation repeats the same entity in
+        // multiple participant sides.
         const sideRequiresRole = (sideKey) => {
             if (!selectedArityIsTernary) {
                 return false;
@@ -626,6 +639,8 @@ export function DiagramEditorSidebar({
             }
         };
 
+        // Reconfiguration removes old relation edges and attributes because changing
+        // participants or arity can invalidate previous relation semantics.
         const handleAccept = () => {
             const source = selected;
             const relation = findRelationById(diagramRef.current, source.id);
@@ -933,6 +948,8 @@ export function DiagramEditorSidebar({
         }
     };
 
+    // Role editing is limited to configured ternary relations. Repeated participants
+    // must keep distinct roles to avoid ambiguous foreign-key names.
     const RelationRolesButton = () => {
         const isRelation = isRelationShapeCell(selected);
         const selectedRelationDiag = getSelectedRelationData();
@@ -1120,6 +1137,8 @@ export function DiagramEditorSidebar({
         );
     };
 
+    // ISA configuration selects one generalization and one or more specializations
+    // for the limited inheritance strategy implemented by the editor.
     const IsaConfigurationButton = () => {
         const isIsa = isIsaShapeCell(selected);
         const [open, setOpen] = React.useState(false);
@@ -1145,6 +1164,7 @@ export function DiagramEditorSidebar({
             setOpen(false);
         };
 
+        // The generalization entity cannot also remain selected as a specialization.
         const handleChangeGeneralization = (event) => {
             const nextGeneralizationId = event.target.value;
 
@@ -1281,6 +1301,9 @@ export function DiagramEditorSidebar({
             </>
         );
     };
+
+    // Cardinality editing updates both the domain relation sides and the visible
+    // labels embedded in mxGraph relation edges.
     const RelationCardinalitiesButton = () => {
         const isRelation = isRelationShapeCell(selected);
         const selectedDiag = findRelationById(diagramRef.current, selected?.id);
@@ -1319,6 +1342,8 @@ export function DiagramEditorSidebar({
         };
 
         const handleAccept = () => {
+            // Identifying relations keep fixed owner-side cardinality and restrict the weak
+            // side to the supported weak-entity cardinalities.
             if (
                 isIdentifyingRelation(selectedDiag) &&
                 !side1IsWeak &&
@@ -1402,7 +1427,8 @@ export function DiagramEditorSidebar({
 
             return false;
         };
-
+        // Available cardinalities depend on relation type: ternary, regular binary or
+        // identifying binary relation.
         const getAllowedCardinalitiesForSide = (sideKey) => {
             if (isTernaryRelation(selectedDiag)) {
                 return TERNARY_RELATION_CARDINALITIES;

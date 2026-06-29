@@ -51,6 +51,8 @@ const accentMap = {
     Ç: "C",
 };
 
+// Converts user-facing names into simple SQL identifiers by removing supported
+// accents and replacing whitespace with underscores.
 export const normalizeIdentifier = (name) => {
     return name
         .split("")

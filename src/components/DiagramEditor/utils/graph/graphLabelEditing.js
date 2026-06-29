@@ -7,6 +7,7 @@ import {
     isRelationShapeCell,
 } from "../mxStyles/diagramStyles";
 
+// Keeps visual geometry and decorators consistent when mxGraph labels are edited directly.
 export const installGraphLabelEditingHandler = ({
     graph,
     getDiagram,
@@ -41,11 +42,15 @@ export const installGraphLabelEditingHandler = ({
 
     const originalCellLabelChanged = graph.cellLabelChanged;
 
+    // Wrap mxGraph's label editing hook: first let mxGraph update the label, then
+    // resize the edited cell and resynchronize related decorators.
     graph.cellLabelChanged = function (cell, newValue, autoSize) {
         originalCellLabelChanged.call(this, cell, newValue, autoSize);
 
         if (!cell?.style) return;
 
+        // Renaming weak entities or identifying relations can move decorator bounds and
+        // parallel identifying edges, so they are synchronized after the label update.
         const identifyingRelationEdgesToSync = [];
         let editedAttributeId = null;
 
@@ -125,6 +130,8 @@ export const installGraphLabelEditingHandler = ({
             this.getModel().endUpdate();
         }
 
+        // Attribute edits need an additional visual sync because changing the label or
+        // semantic state can affect composite connectors and decorators.
         if (editedAttributeId) {
             updateDiagramData();
 

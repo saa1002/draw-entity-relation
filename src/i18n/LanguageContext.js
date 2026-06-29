@@ -6,6 +6,9 @@ import {
     translate,
 } from "./translations";
 
+// Language loading is defensive so the app can start even when localStorage is
+// unavailable or contains an unsupported value.
+
 const LanguageContext = React.createContext({
     language: DEFAULT_LANGUAGE,
     setLanguage: () => {},

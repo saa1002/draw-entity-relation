@@ -12,6 +12,11 @@ import {
     isTernaryRelation,
 } from "../../relations";
 
+// Relation validation rules for binary, ternary, identifying and repeated
+// participant relations.
+
+// Repeated participants in a ternary relation are only supported when each
+// repeated side has a non-empty and distinct role.
 const relationHasAmbiguousRepeatedEntityParticipants = (relation) => {
     const sidesByEntityId = getRelationSides(relation).reduce(
         (result, side) => {
@@ -41,6 +46,8 @@ const relationHasAmbiguousRepeatedEntityParticipants = (relation) => {
     });
 };
 
+// Relation attributes are regular descriptive columns in the generated relation
+// table; they are not allowed to define primary keys themselves.
 export function nmRelationsWithPK(graph) {
     for (const relation of graph.relations) {
         if (!canRelationHoldAttributes(relation)) {
@@ -64,6 +71,8 @@ export function relationsUnconnected(graph) {
     return false;
 }
 
+// Unconfigured sides are handled by the unconnected-relation rule. This rule only
+// reports references to entities that should exist but no longer do.
 export function brokenRelationEntityReferences(graph) {
     for (const relation of graph.relations) {
         const entityIds = getRelationSides(relation).map(
@@ -86,6 +95,8 @@ export function brokenRelationEntityReferences(graph) {
     return false;
 }
 
+// In this implementation, own relation attributes are kept only for relation
+// types that generate an independent relation table.
 export function notNMRelationsWithAttributes(graph) {
     for (const relation of graph.relations) {
         if (
@@ -99,6 +110,8 @@ export function notNMRelationsWithAttributes(graph) {
     return false;
 }
 
+// Ternary relations with repeated participants require non-empty and distinct
+// roles so each participation can be distinguished later.
 export function ternaryRelationsWithAmbiguousRepeatedParticipants(graph) {
     for (const relation of graph.relations) {
         if (!isTernaryRelation(relation)) {
@@ -127,6 +140,8 @@ export function identifyingTernaryRelations(graph) {
     return false;
 }
 
+// Ternary minimum cardinalities are not represented in the simplified SQL output,
+// so mandatory ternary participation is rejected by validation.
 export function ternaryRelationsWithMandatoryCardinalities(graph) {
     for (const relation of graph.relations) {
         if (!isTernaryRelation(relation)) {

@@ -1,5 +1,7 @@
 import { RELATION_ARITIES, getRelationArity } from "./relations";
 
+// Normalizes diagrams loaded from JSON or localStorage. This keeps import,
+// persistence and graph reconstruction tolerant to missing fields or older shapes.
 const normalizePosition = (position) => ({
     x: typeof position?.x === "number" ? position.x : 0,
     y: typeof position?.y === "number" ? position.y : 0,
@@ -115,6 +117,8 @@ export const normalizeIsa = (isa = {}) => ({
         : [],
 });
 
+// Entry point used before persisting, importing or reconstructing diagrams.
+// Always return arrays for the main diagram collections.
 export const normalizeDiagramData = (diagramData = {}) => ({
     entities: Array.isArray(diagramData.entities)
         ? diagramData.entities.map(normalizeEntity)

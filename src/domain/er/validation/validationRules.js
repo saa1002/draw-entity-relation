@@ -33,6 +33,8 @@ import {
     weakEntitiesWithoutPartialKey,
 } from "./rules";
 
+// Central registry of E/R validation rules. Each rule maps one diagnostic flag
+// to a predicate that returns true when that specific validation condition fails.
 export const VALIDATION_RULES = [
     {
         diagnostic: "notEmpty",

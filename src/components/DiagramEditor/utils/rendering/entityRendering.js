@@ -6,6 +6,7 @@ import {
     syncVertexDecoratorBounds,
 } from "./decoratorRendering";
 
+// Rendering helpers for entities and weak-entity decorators.
 export const WEAK_ENTITY_DECORATOR_SUFFIX = "__weak_decorator";
 
 const WEAK_ENTITY_DECORATOR_OFFSET = 4;
@@ -20,6 +21,8 @@ export const isWeakEntityDecoratorCell = (cell) =>
     isDecoratorCellForSuffix(cell, WEAK_ENTITY_DECORATOR_SUFFIX);
 
 export const createEntityRenderingHelpers = ({ graph, accessCell }) => {
+    // The weak-entity double rectangle is a separate decorator cell kept aligned
+    // with the entity vertex.
     const syncWeakEntityDecorator = (entityCell) => {
         if (!entityCell) return;
 
@@ -58,7 +61,8 @@ export const createEntityRenderingHelpers = ({ graph, accessCell }) => {
             "weakEntityDecoratorStyle;shape=rectangle",
         );
     };
-
+    // Ensure helpers are idempotent: they either synchronize an existing decorator
+    // or create it and then synchronize it.
     const ensureWeakEntityDecorator = (entityCell, entityData) => {
         const existingDecorator = accessCell(
             getWeakEntityDecoratorId(entityCell.id),

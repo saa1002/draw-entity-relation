@@ -1,5 +1,10 @@
 import { normalizeIdentifier } from "../domain/relational/naming";
 
+// Renders the intermediate relational model as simplified PostgreSQL-compatible
+// SQL. The E/R transformation is already done; this module focuses on identifier
+// normalization, constraints, table ordering and deferred foreign keys.
+
+// The current SQL generator uses a single simplified type for all attributes.
 const getSQLType = () => "VARCHAR(40)";
 
 const getTableName = (table) => normalizeIdentifier(table.name);
@@ -21,6 +26,9 @@ const areSameColumnList = (firstColumns, secondColumns) =>
     firstColumns.length === secondColumns.length &&
     firstColumns.every((column, index) => column === secondColumns[index]);
 
+// Groups foreign-key columns that belong to the same logical constraint. This is
+// required for composite foreign keys, where several columns must be rendered as
+// a single FOREIGN KEY clause.
 const getForeignKeyGroups = (table, primaryKeyColumnsByTable) => {
     const foreignKeyAttributes = table.attributes.filter(
         (attr) => attr.foreign_key,
@@ -60,6 +68,8 @@ const getForeignKeyGroups = (table, primaryKeyColumnsByTable) => {
         const referencedPrimaryKeyColumns =
             primaryKeyColumnsByTable.get(referencedTable) ?? [];
 
+        // PostgreSQL allows omitting the referenced column list when the FK points to the
+        // complete primary key. Otherwise the referenced columns are emitted explicitly.
         const referencesPrimaryKey =
             referencedPrimaryKeyColumns.length > 0 &&
             areSameColumnList(
@@ -110,6 +120,8 @@ const createDeferredForeignKeySQL = (foreignKeyGroup) =>
         foreignKeyGroup,
     )};`;
 
+// Only single-column foreign keys can be safely rendered inline next to the
+// column definition. Composite foreign keys are rendered as table constraints.
 const canRenderForeignKeyInline = (foreignKeyGroup) =>
     foreignKeyGroup.sourceColumnNames.length === 1 &&
     foreignKeyGroup.referencedColumnNames.length === 1;
@@ -127,6 +139,8 @@ const getInlineForeignKeyGroupsByColumn = (foreignKeyGroups) =>
             ]),
     );
 
+// DROP uses CASCADE to make regeneration easier even when previous tables have
+// foreign-key dependencies between them.
 const createDropTablesSQL = (tables) => {
     const tableNames = [...new Set([...tables].map(getTableName))];
 
@@ -137,12 +151,16 @@ const createDropTablesSQL = (tables) => {
     return `DROP TABLE IF EXISTS ${tableNames.join(", ")} CASCADE;`;
 };
 
+// Renders one CREATE TABLE statement, including columns, primary keys, UNIQUE
+// constraints and the foreign keys that can be emitted safely at creation time.
 const createTableSQL = (table, inlineForeignKeyGroups = []) => {
     const primaryKeyAttributes = table.attributes.filter((attr) => attr.key);
     const primaryKeyColumns = primaryKeyAttributes.map((attr) =>
         normalizeIdentifier(attr.name),
     );
 
+    // Composite UNIQUE constraints are represented by grouping several attributes
+    // under the same unique_group identifier.
     const uniqueGroups = new Map();
 
     for (const attr of table.attributes) {
@@ -212,6 +230,8 @@ const createTableSQL = (table, inlineForeignKeyGroups = []) => {
         })
         .join("");
 
+    // Some transformations, such as ternary relations, add explicit candidate keys
+    // that must be rendered as table-level UNIQUE constraints.
     const explicitUniqueClauses = Array.isArray(table.uniqueConstraints)
         ? table.uniqueConstraints
               .map((constraint) => {
@@ -256,6 +276,8 @@ const collectForeignKeyGroupsByTable = (tables, primaryKeyColumnsByTable) => {
     return foreignKeyGroupsByTable;
 };
 
+// Returns the foreign keys that prevent a table from being created now because
+// the referenced table has not been created yet.
 const getBlockingForeignKeyGroups = ({
     table,
     createdTableNames,
@@ -275,10 +297,14 @@ const getBlockingForeignKeyGroups = ({
             return false;
         }
 
+        // Self-references do not block table creation because the table exists by the
+        // time its own CREATE TABLE statement is completed.
         if (foreignKeyGroup.referencedTable === tableName) {
             return false;
         }
 
+        // References to tables outside the generated model are not considered ordering
+        // blockers here.
         if (!tableNames.has(foreignKeyGroup.referencedTable)) {
             return false;
         }
@@ -287,6 +313,9 @@ const getBlockingForeignKeyGroups = ({
     });
 };
 
+// Orders tables so that most foreign keys can be declared inside CREATE TABLE.
+// If dependencies cannot be satisfied, for example due to cycles, the blocking
+// foreign keys are deferred and rendered later with ALTER TABLE.
 const orderTablesAndForeignKeys = (tables) => {
     const remainingTables = [...tables];
     const orderedTables = [];
@@ -313,6 +342,8 @@ const orderTablesAndForeignKeys = (tables) => {
                 }).length === 0,
         );
 
+        // No table can be created without unresolved dependencies. Pick one table and
+        // defer its blocking foreign keys to break the cycle.
         if (selectedTableIndex === -1) {
             selectedTableIndex = 0;
 
@@ -335,6 +366,8 @@ const orderTablesAndForeignKeys = (tables) => {
         const [table] = remainingTables.splice(selectedTableIndex, 1);
         const tableName = getTableName(table);
 
+        // Deferred groups are excluded here because they will be emitted later as ALTER
+        // TABLE statements instead of inside CREATE TABLE.
         const inlineForeignKeyGroups = (
             foreignKeyGroupsByTable.get(tableName) ?? []
         ).filter(
@@ -356,6 +389,8 @@ const orderTablesAndForeignKeys = (tables) => {
     };
 };
 
+// Renders the final script in three parts: DROP statements, ordered CREATE TABLE
+// statements and deferred ALTER TABLE statements for unresolved foreign keys.
 function renderSqlScript(tables) {
     const {
         orderedTables,
@@ -383,6 +418,7 @@ function renderSqlScript(tables) {
         .join("\n\n");
 }
 
+// Public SQL rendering entry point used by the application service layer.
 export function renderRelationalModelToSQL(relationalModel) {
     return renderSqlScript(relationalModel.tables);
 }

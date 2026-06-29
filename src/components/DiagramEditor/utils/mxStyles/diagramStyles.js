@@ -1,3 +1,6 @@
+// Centralized mxGraph dimensions and style strings for the E/R notation used by
+// the editor.
+
 const ENTITY_WIDTH = 120;
 const ENTITY_HEIGHT = 42;
 
@@ -23,6 +26,8 @@ export const ER_FONT = "#000000";
 export const ER_FONT_FAMILY = "Times New Roman";
 export const ER_FONT_SIZE = 16;
 
+// Cell type detection currently relies on mxGraph style strings, so style changes
+// must preserve these shape markers.
 const hasCellShape = (cell, shape) =>
     String(cell?.style ?? "").includes(`shape=${shape}`);
 
@@ -163,6 +168,7 @@ export const getIsaEdgeStyleString = () =>
         "resizable=0",
     ].join(";");
 
+// Registers named mxGraph styles used by rendering helpers for keys and decorators.
 export const installDiagramEditorStyles = ({ graph, mxConstants }) => {
     if (!graph || !mxConstants) return;
 

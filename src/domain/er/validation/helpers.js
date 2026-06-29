@@ -1,6 +1,8 @@
 import { findEntityById, isWeakEntity } from "../entities";
 import { getWeakAndStrongSidesForRelation } from "../relations";
 
+// Resolves the weak entity, owner entity and their relation sides for an
+// identifying relation. Invalid or ambiguous identifying relations return null.
 export function getIdentifyingDependency(graph, relation) {
     const { weakEntity, strongEntity, weakSide, strongSide } =
         getWeakAndStrongSidesForRelation(graph, relation);
@@ -17,6 +19,8 @@ export function getIdentifyingDependency(graph, relation) {
     };
 }
 
+// Weak entities may depend on other weak entities. This check prevents ownership
+// cycles that would make inherited primary-key resolution recursive forever.
 export function weakEntityOwnershipHasCycle(graph, entity) {
     const visitedEntityIds = new Set([entity.idMx]);
     let currentEntity = entity;

@@ -7,6 +7,8 @@ import {
     syncVertexDecoratorBounds,
 } from "./decoratorRendering";
 
+// Rendering helpers for relation-specific decorators: identifying relations,
+// identifying edges and repeated-participant edge routing.
 export const IDENTIFYING_RELATION_DECORATOR_SUFFIX = "__identifying_decorator";
 
 export const IDENTIFYING_RELATION_EDGE_DECORATOR_SUFFIX =
@@ -110,6 +112,7 @@ export const createRelationRenderingHelpers = ({
         }
     };
 
+    // Computes a parallel line in model coordinates from the current rendered edge state.
     const getParallelTerminalPointsFromMainEdge = (mainEdge) => {
         if (!mainEdge) return null;
 
@@ -164,6 +167,8 @@ export const createRelationRenderingHelpers = ({
         };
     };
 
+    // The identifying edge decorator is a separate non-interactive edge drawn
+    // parallel to the weak-side relation edge.
     const createIdentifyingRelationEdgeDecorator = (
         relationCell,
         relationData,
@@ -288,6 +293,8 @@ export const createRelationRenderingHelpers = ({
         };
     };
 
+    // Repeated participants occur when several relation sides point to the same
+    // entity, typically in reflexive or role-based ternary relations.
     const getRepeatedParticipantSideGroups = (relationData) => {
         const sideKeys = getRelationSideKeys(relationData);
 
@@ -308,6 +315,8 @@ export const createRelationRenderingHelpers = ({
         );
     };
 
+    // The first edge keeps the default route; additional edges are bent above or
+    // below to remain visually distinguishable.
     const getRepeatedParticipantRoutePoints = ({
         relationCell,
         entityCell,
@@ -350,6 +359,7 @@ export const createRelationRenderingHelpers = ({
         ];
     };
 
+    // Recomputes custom routes after relation/entity moves or resizing.
     const syncRepeatedParticipantRelationEdges = (
         relationCell,
         relationData,

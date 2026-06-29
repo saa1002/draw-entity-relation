@@ -3,9 +3,13 @@ import {
     isCompositeAttribute,
 } from "../../../../domain/er";
 
+// Synchronizes model data from the live mxGraph canvas. This is the main bridge
+// for names, positions and cell identifiers after user interactions.
 const hasGraphCell = (graph, idMx) =>
     Object.prototype.hasOwnProperty.call(graph.model.cells, idMx);
 
+// Attribute edges may be missing from stored data after imports or older
+// diagrams, so they are recovered from mxGraph connections when possible.
 const findConnectedAttributeEdge = (graph, attributeCell) => {
     const connectedEdges = graph.getEdges(attributeCell) || [];
 
@@ -16,6 +20,8 @@ const findConnectedAttributeEdge = (graph, attributeCell) => {
     );
 };
 
+// Updates one attribute from its visual cell and connection edge. The function
+// then recurses through child attributes to keep composite trees synchronized.
 const syncAttributeFromGraph = ({
     attribute,
     owner,
@@ -40,6 +46,8 @@ const syncAttributeFromGraph = ({
 
     if (!attributeCell || !edgeCell) return;
 
+    // Composite attribute connector cells render with an empty value, so they should
+    // not overwrite the model name unless mxGraph provides an explicit value.
     const shouldSyncAttributeName =
         !isCompositeAttribute(attribute) ||
         (attributeCell.value !== "" &&
@@ -88,6 +96,8 @@ const syncOwnerAttributesFromGraph = ({
     });
 };
 
+// Entities and relations share the same synchronization pattern: their label and
+// position come from the main vertex, then their attribute trees are synchronized.
 const syncOwnerNodeFromGraph = ({
     owner,
     graph,
@@ -110,6 +120,8 @@ const syncOwnerNodeFromGraph = ({
     });
 };
 
+// Public synchronization entry point used before persistence, export or other
+// operations that need the internal model to reflect the current canvas state.
 export const syncDiagramDataFromGraph = ({
     diagram,
     graph,

@@ -1,5 +1,8 @@
 import * as React from "react";
 
+// Empty sidebar sections are not rendered so contextual actions do not leave
+// blank groups in the panel.
+
 export const SidebarSection = ({ title, children }) => {
     const visibleChildren = React.Children.toArray(children).filter(Boolean);
 

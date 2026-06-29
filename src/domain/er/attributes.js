@@ -1,3 +1,6 @@
+// Attribute helpers operate on tree-shaped attributes. Root attributes belong to
+// an entity or relation; child attributes represent composite attributes and keep
+// positions relative to their parent node.
 const getAttributes = (attributes) =>
     Array.isArray(attributes) ? attributes : [];
 
@@ -110,6 +113,9 @@ export const generateUniqueAttributeName = (
     return candidateName;
 };
 
+// Default semantics depend on the owner: the first attribute of a strong entity
+// becomes a primary key, the first attribute of a weak entity becomes a partial
+// key, and ISA specializations do not receive their own primary key.
 export const getDefaultAttributeSemantics = ({
     ownerType,
     isFirstAttribute,
@@ -183,6 +189,8 @@ export const addChildAttributeToAttribute = (
     return childAttribute;
 };
 
+// Groups existing root attributes under a new composite attribute while preserving
+// their relative order in the owner's attribute list.
 export const groupRootAttributesIntoCompositeAttribute = ({
     owner,
     attributeIds,
@@ -262,6 +270,8 @@ const createRemovedCompositeAttributeSnapshot = (attribute) => {
     return attributeWithoutChildren;
 };
 
+// When a composite attribute is removed or flattened, its promoted child inherits
+// key, partial-key and multivalued semantics from the composite parent.
 const inheritCompositeAttributeSemantics = (
     promotedAttribute,
     parentAttribute,
@@ -299,6 +309,8 @@ const inheritCompositeAttributeSemantics = (
     return promotedAttribute;
 };
 
+// Removes an attribute from a tree. If a composite attribute is left with a single
+// child, that child is promoted to avoid keeping an unnecessary composite node.
 const removeAttributeFromListById = (attributes, attributeId) => {
     const attributeIndex = findAttributeIndexById(attributes, attributeId);
 
@@ -367,6 +379,8 @@ const createEmptySubattributeConversionResult = () => ({
     removedCompositeAttribute: null,
 });
 
+// Converts a child attribute back into a root-level attribute. If the composite
+// parent would no longer be meaningful, its remaining children are promoted too.
 const convertSubattributeToSimpleAttributeInListById = (
     attributes,
     attributeId,
@@ -463,6 +477,8 @@ export const removeAllAttributesFromOwner = (owner) => {
     return removedAttributes;
 };
 
+// Stores both the absolute canvas position and the offset relative to the owner.
+// The offset is later used to keep attributes aligned when the owner moves.
 export const updateAttributePosition = ({ attribute, owner, position }) => {
     if (!attribute || !owner || !position) {
         return null;
@@ -578,6 +594,8 @@ export const isMultivaluedAttribute = (attribute) =>
 export const isCompositeMultivaluedAttribute = (attribute) =>
     isCompositeAttribute(attribute) && isMultivaluedAttribute(attribute);
 
+// Traverses the attribute tree and passes structural context to the visitor.
+// The context is used by validation, selection and key/partial-key operations.
 export const walkAttributeTree = (attributes, visitor) => {
     if (typeof visitor !== "function") {
         return;
@@ -673,6 +691,8 @@ const rememberChangedRootAttribute = (changedRootAttributes, rootAttribute) => {
 export const getRootAttributeFromTreeNode = (attributeNode) =>
     attributeNode?.ancestors?.at(0) ?? attributeNode?.attribute ?? null;
 
+// Primary-key and partial-key markers are exclusive at root level. Selecting a
+// child attribute applies the semantic to its root composite attribute.
 const toggleExclusiveAttributeSemanticInTree = ({
     attributes,
     attributeId,

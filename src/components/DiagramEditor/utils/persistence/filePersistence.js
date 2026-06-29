@@ -1,5 +1,7 @@
 import { normalizeDiagramData } from "../../../../domain/er";
 
+// File persistence and export helpers. JSON operations normalize diagrams when
+// loading or writing them, while image export works from the current mxGraph SVG.
 export const SAVE_FILE_RESULT = {
     SAVED: "saved",
     CANCELLED: "cancelled",
@@ -33,6 +35,8 @@ const getExportTimestamp = () => {
 const buildExportFileName = (baseName, extension) =>
     `${baseName}-${getExportTimestamp()}.${extension}`;
 
+// Uses the File System Access API when available. Callers receive explicit result
+// codes so the UI can distinguish unsupported browsers, cancellations and errors.
 const saveFileWithPicker = async ({
     content,
     fileName,
@@ -86,6 +90,8 @@ export const exportSqlScriptToFile = (sqlScript) =>
         ],
     });
 
+// Exported diagrams are normalized to avoid persisting missing fields or
+// intermediate editor states.
 export const exportDiagramToJsonFile = (diagram) => {
     const jsonString = JSON.stringify(normalizeDiagramData(diagram), null, 2);
 
@@ -104,6 +110,8 @@ export const exportDiagramToJsonFile = (diagram) => {
     });
 };
 
+// Export bounds are computed from the current graph bounds and padded so labels,
+// decorators and edges are not cropped in the exported image.
 const getDiagramImageExportBounds = (graph) => {
     const bounds = graph?.getGraphBounds?.();
 
@@ -127,6 +135,8 @@ const getDiagramImageExportBounds = (graph) => {
     };
 };
 
+// Clones the rendered mxGraph SVG instead of rebuilding the image from the
+// internal model. This keeps the export aligned with what the user sees.
 const createDiagramSvgExport = (graph) => {
     if (
         typeof document === "undefined" ||
@@ -177,6 +187,8 @@ const createDiagramSvgExport = (graph) => {
     };
 };
 
+// PNG export renders the generated SVG through a canvas. The conversion remains
+// fully client-side and does not require a backend.
 const convertSvgExportToPngBlob = ({ content, width, height }) =>
     new Promise((resolve, reject) => {
         if (typeof document === "undefined") {
@@ -301,6 +313,8 @@ const readFileAsText = (file) =>
         reader.readAsText(file);
     });
 
+// Imported JSON is normalized before the editor uses it, which keeps older or
+// partially incomplete diagram files compatible with the current model.
 export const readDiagramJsonFile = async (file) => {
     const fileContent = await readFileAsText(file);
     const rawDiagram = JSON.parse(fileContent);
@@ -308,6 +322,8 @@ export const readDiagramJsonFile = async (file) => {
     return normalizeDiagramData(rawDiagram);
 };
 
+// Local persistence stores the normalized model so reload and JSON import share
+// the same expected diagram shape.
 export const saveDiagramToLocalStorage = (diagram) => {
     localStorage.setItem(
         "diagramData",
@@ -315,6 +331,7 @@ export const saveDiagramToLocalStorage = (diagram) => {
     );
 };
 
+// Corrupt localStorage data is discarded to avoid blocking the editor on startup.
 export const loadDiagramFromLocalStorage = () => {
     const savedDiagram = localStorage.getItem("diagramData");
 

@@ -7,6 +7,10 @@ import {
     someAttributeInTree,
 } from "../../attributes";
 import { canRelationHoldAttributes } from "../../relations";
+
+// Attribute validation rules for the tree-shaped attribute model. The editor
+// supports composite attributes, but nested composites and some multivalued
+// combinations are intentionally rejected before transformation.
 const getEntities = (graph) =>
     Array.isArray(graph?.entities) ? graph.entities : [];
 
@@ -28,6 +32,7 @@ const getRelationAttributeCollections = (
         )
         .map((relation) => relation.attributes ?? []);
 
+// Only entities and relations that are allowed to own attributes are checked here.
 const getValidAttributeOwnerCollections = (graph) => [
     ...getEntityAttributeCollections(graph),
     ...getRelationAttributeCollections(graph),
@@ -48,6 +53,8 @@ export function emptyCompositeAttributes(graph) {
     return someAttributeOwnerMatches(graph, hasEmptyCompositeAttributeInTree);
 }
 
+// The supported model allows one composite level, but not composites nested
+// inside other composite attributes.
 const hasNestedCompositeAttribute = (attributes = []) =>
     someAttributeInTree(
         attributes,
@@ -59,6 +66,8 @@ export function nestedCompositeAttributes(graph) {
     return someAttributeOwnerMatches(graph, hasNestedCompositeAttribute);
 }
 
+// Composite multivalued attributes cannot contain key, partial-key or nested
+// multivalued semantics in the current relational transformation.
 const hasUnsupportedCompositeMultivaluedChild = (attribute) =>
     someAttributeInTree(
         getAttributeChildren(attribute),
@@ -79,6 +88,8 @@ const hasUnsupportedEntityMultivaluedAttribute = (attributes = []) =>
                 hasUnsupportedCompositeMultivaluedChild(attribute)),
     );
 
+// Multivalued attributes are supported only for entity attributes and under the
+// simplified shapes that can be mapped to auxiliary relational tables.
 export function unsupportedMultivaluedAttributes(graph) {
     const hasUnsupportedEntityAttribute = getEntityAttributeCollections(
         graph,

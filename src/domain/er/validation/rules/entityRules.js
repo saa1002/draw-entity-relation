@@ -5,6 +5,11 @@ import {
 import { isWeakEntity } from "../../entities";
 import { isEntityIsaSpecialization } from "../../isa";
 
+// Entity validation rules. ISA specializations are treated specially because
+// their primary key is inherited from the generalization entity.
+
+// Entities and relations share the same SQL table namespace, so repeated names
+// are checked across both collections.
 export function repeatedEntities(graph) {
     const entityNames = new Set();
 
@@ -25,6 +30,8 @@ export function repeatedEntities(graph) {
     return false;
 }
 
+// Weak entities use partial keys and ISA specializations inherit their key, so
+// only regular strong entities are required to define their own primary key.
 export function entitiesWithoutPK(graph) {
     for (const entity of graph.entities) {
         if (isWeakEntity(entity)) continue;
@@ -39,6 +46,8 @@ export function entitiesWithoutPK(graph) {
     return false;
 }
 
+// The editor supports a single primary-key attribute marker per entity. Composite
+// keys can be represented through composite attributes rather than multiple roots.
 export function entitiesWithMoreThanOnePK(graph) {
     for (const entity of graph.entities) {
         if (isEntityIsaSpecialization(graph, entity.idMx)) continue;
@@ -51,6 +60,8 @@ export function entitiesWithMoreThanOnePK(graph) {
     return false;
 }
 
+// ISA specializations may be valid without own attributes because they still
+// inherit the generalization key during relational transformation.
 export function entitiesWithoutAttributes(graph) {
     for (const entity of graph.entities) {
         if (isEntityIsaSpecialization(graph, entity.idMx)) continue;

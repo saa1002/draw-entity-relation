@@ -43,6 +43,10 @@ import {
     isIdentifyingRelationDecoratorCell,
 } from "./utils/rendering/relationRendering";
 
+// Main editor orchestrator. This component owns the mxGraph instance, the mutable
+// diagram model reference and the hooks that coordinate domain actions, rendering,
+// persistence, history and sidebar state.
+
 const { mxGraph, mxEvent, mxConstants, mxPoint, mxGeometry } = MxGraph();
 
 export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
@@ -58,6 +62,8 @@ export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
     const toolbarRef = React.useRef(null);
 
     const [graph, setGraph] = React.useState(null);
+    // The diagram model is kept in a ref because mxGraph callbacks and editor
+    // utilities need immediate access to the latest mutable diagram state.
     const diagramRef = React.useRef({
         entities: [],
         relations: [],
@@ -83,7 +89,8 @@ export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
         },
         [],
     );
-
+    // mxGraph selection can contain one or many cells. The sidebar receives the
+    // selected cell only for single selection and uses selectionSize for batch actions.
     const onSelected = React.useCallback(
         (evt) => {
             if (onSelectedProp) {
@@ -101,7 +108,8 @@ export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
         },
         [onSelectedProp, graph],
     );
-
+    // Resolves a stored model id to its current mxGraph cell. Many model objects keep
+    // mxGraph cell ids so they can be synchronized, deleted or reconstructed later.
     function accessCell(idMx) {
         if (!idMx || !graph?.model?.cells) {
             return null;
@@ -204,7 +212,8 @@ export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
         canApplySnapshot: () => Boolean(graph),
         applyDiagramSnapshotData: applyHistoryDiagramData,
     });
-
+    // Public replacement wrapper that records history after the persistence hook has
+    // applied and reconstructed the diagram.
     const applyDiagramData = (diagramData) => {
         const diagramApplied = applyDiagramDataWithoutHistory(diagramData);
 
@@ -212,7 +221,8 @@ export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
             recordCurrentDiagramInHistory();
         }
     };
-
+    // Synchronizes mxGraph into the model, persists the diagram and optionally stores
+    // a history snapshot.
     const syncAndPersistDiagramData = ({ recordHistory = true } = {}) => {
         const diagramSynced = syncAndPersistDiagramDataWithoutHistory();
 
@@ -230,7 +240,8 @@ export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
             recordCurrentDiagramInHistory();
         }
     };
-
+    // Keyboard shortcuts are ignored while dialogs, popovers or text editors are
+    // active so editor actions do not interfere with form input or label editing.
     const shouldIgnoreEditorKeyboardShortcut = (event) => {
         if (
             document.querySelector(
@@ -274,6 +285,7 @@ export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
             (event.shiftKey && event.key.toLowerCase() === "z"));
 
     React.useEffect(() => {
+        // mxGraph is created once after the container div is available.
         if (!graph) {
             mxEvent.disableContextMenu(containerRef.current);
             setGraph(new mxGraph(containerRef.current));
@@ -283,7 +295,8 @@ export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
             if (typeof window !== "undefined" && window.__PW__) {
                 window.__DEBUG_GRAPH__ = graph;
             }
-
+            // Graph setup is intentionally centralized here because mxGraph lifecycle and
+            // editor-level callbacks are tightly coupled.
             setInitialConfiguration(graph, diagramRef, toolbarRef);
 
             graph.getSelectionModel().addListener(mxEvent.CHANGE, onSelected);
@@ -438,6 +451,8 @@ export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
             clearEditorSelection,
         });
 
+    // Geometry synchronization depends on the current selection and refresh flag
+    // because moving, resizing or editing cells can affect related decorators.
     React.useEffect(() => {
         if (!graph) return;
 
@@ -485,6 +500,8 @@ export default function DiagramEditor({ onSelected: onSelectedProp } = {}) {
         graph.orderCells(moveBack);
     };
 
+    // Global keyboard shortcuts provide undo, redo and deletion while respecting
+    // active dialogs and editable fields.
     React.useEffect(() => {
         if (!graph) {
             return;

@@ -11,6 +11,9 @@ import {
 import { syncDiagramDataFromGraph } from "../utils/sync/diagramGraphSync";
 import { reconstructDiagramGraph } from "../utils/sync/diagramReconstruction";
 
+// Coordinates diagram persistence, graph reconstruction and localStorage updates
+// for the editor component.
+
 export function useDiagramPersistence({
     graph,
     diagramRef,
@@ -28,7 +31,8 @@ export function useDiagramPersistence({
     const saveToLocalStorage = () => {
         saveDiagramToLocalStorage(diagramRef.current);
     };
-
+    // Replaces the in-memory diagram and rebuilds mxGraph from it. This is used for
+    // imports, localStorage loading and undo/redo snapshots.
     const recreateGraphFromDiagram = (diagramData) => {
         if (!diagramData) return false;
 
@@ -60,6 +64,8 @@ export function useDiagramPersistence({
             mode,
         });
 
+    // Applies a complete diagram replacement: clear current cells, rebuild the graph,
+    // reset selection and persist the new state.
     const applyDiagramData = (diagramData) => {
         if (graph) {
             clearGraphCanvas(graph);
@@ -81,6 +87,7 @@ export function useDiagramPersistence({
         return recreateGraphFromDiagram(savedData);
     };
 
+    // Pulls the latest visual state from mxGraph into the model before saving it.
     const syncAndPersistDiagramData = () => {
         if (!graph) return false;
 

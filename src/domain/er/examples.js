@@ -1,6 +1,9 @@
 import { normalizeDiagramData } from "./diagramNormalization";
 import { RELATION_ARITIES } from "./relations";
 
+// Predefined E/R structures used by the editor to generate valid starter diagrams.
+// They are normalized before use so they follow the same shape as imported data.
+
 export const GENERATE_STRUCTURE_TEMPLATE_IDS = Object.freeze({
     MANY_TO_MANY: "many-to-many",
     ONE_TO_MANY: "one-to-many",
@@ -10,6 +13,8 @@ export const GENERATE_STRUCTURE_TEMPLATE_IDS = Object.freeze({
     ISA: "isa",
 });
 
+// Template attributes include both the vertex id and the expected connection edge
+// id so reconstruction can create the same model-to-mxGraph references.
 const createAttribute = ({
     idMx,
     name = "Atributo",
@@ -139,6 +144,8 @@ const createDefaultWeakEntity = ({
         ],
     });
 
+// Relation sides predefine cardinality and edge ids because configured templates
+// must be reconstructable without going through the interactive dialogs.
 const createRelationSide = ({
     relationId,
     sideKey,
@@ -196,6 +203,8 @@ const createBinaryRelation = ({
     attributes,
 });
 
+// N:M templates include a relation attribute because this relation type generates
+// an independent relation table.
 const createManyToManyStructure = () => {
     const relationPosition = { x: 370, y: 200 };
 
@@ -358,6 +367,8 @@ const createTernaryStructure = () => {
     });
 };
 
+// Weak-entity templates include owner references, identifying relation references
+// and a partial key so the generated diagram is valid immediately.
 const createWeakEntityStructure = () =>
     normalizeDiagramData({
         entities: [
@@ -390,6 +401,8 @@ const createWeakEntityStructure = () =>
         isas: [],
     });
 
+// ISA templates omit primary keys in specializations because keys are inherited
+// from the generalization under the implemented strategy.
 const createIsaStructure = () =>
     normalizeDiagramData({
         entities: [
@@ -449,6 +462,8 @@ const createIsaStructure = () =>
         ],
     });
 
+// Template metadata is translated in the UI; these Spanish strings are fallback
+// labels kept with the predefined diagram definitions.
 export const GENERATE_STRUCTURE_TEMPLATES = [
     {
         id: GENERATE_STRUCTURE_TEMPLATE_IDS.MANY_TO_MANY,

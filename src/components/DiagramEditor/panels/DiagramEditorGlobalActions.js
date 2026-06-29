@@ -40,6 +40,9 @@ import {
     renderSidebarAction,
 } from "./DiagramEditorPanelControls";
 
+// Global sidebar actions for diagram-level operations: validation, SQL generation,
+// import/export, history, predefined structures, help and application metadata.
+
 const getActionTooltip = (label, shortcut) =>
     shortcut ? `${label} (${shortcut})` : label;
 
@@ -86,6 +89,8 @@ export function DiagramEditorGlobalActions({
     resetCanvas,
     children,
 }) {
+    // File operations return normalized result codes so all export actions can show
+    // consistent feedback to the user.
     const showSaveFileResultToast = (result) => {
         if (result === SAVE_FILE_RESULT.SAVED) {
             toast.success(t("feedback.fileSaved"));
@@ -147,6 +152,7 @@ export function DiagramEditorGlobalActions({
         </>
     );
 
+    // Diagram validation only reports diagnostics; it does not modify the diagram.
     const ValidateDiagramButton = () => {
         const [open, setOpen] = React.useState(false);
         const [validationMessages, setValidationMessages] = React.useState([]);
@@ -241,6 +247,7 @@ export function DiagramEditorGlobalActions({
         );
     };
 
+    // SQL generation is allowed only after validation succeeds for the current diagram.
     const GenerateSQLButton = () => {
         const [open, setOpen] = React.useState(false);
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
@@ -269,7 +276,8 @@ export function DiagramEditorGlobalActions({
 
         const handleAccept = async () => {
             setOpen(false);
-
+            // At this point diagnostics are valid, so the domain model can be transformed
+            // into the relational model and rendered as SQL.
             const sqlScript = generateSQL(diagramRef.current);
 
             const result = await exportSqlScriptToFile(sqlScript);
@@ -318,6 +326,8 @@ export function DiagramEditorGlobalActions({
         );
     };
 
+    // JSON export is validated first so saved diagrams are suitable for later import
+    // and reconstruction.
     const ExportJSONButton = () => {
         const [open, setOpen] = React.useState(false);
         const [acceptDisabled, setAcceptDisabled] = React.useState(true);
@@ -392,6 +402,8 @@ export function DiagramEditorGlobalActions({
         );
     };
 
+    // Visual export uses the current mxGraph rendering, so selection is cleared before
+    // creating the image file.
     const ExportImageButton = () => {
         const [open, setOpen] = React.useState(false);
         const [selectedFormat, setSelectedFormat] = React.useState(
@@ -487,6 +499,8 @@ export function DiagramEditorGlobalActions({
         );
     };
 
+    // Imported JSON can replace the current diagram or be merged with it. The composed
+    // result is validated before it is applied to the editor.
     const ImportJSONButton = () => {
         const [open, setOpen] = React.useState(false);
         const [validationMessages, setValidationMessages] = React.useState([]);
@@ -515,6 +529,8 @@ export function DiagramEditorGlobalActions({
 
             try {
                 const importedDiagram = await readDiagramJsonFile(file);
+                // Composition is applied before validation because merge mode can rename ids,
+                // offset positions and resolve naming conflicts.
                 const composedDiagram = composeDiagramWithCurrent({
                     incomingDiagram: importedDiagram,
                     mode: selectedImportMode,
@@ -666,6 +682,8 @@ export function DiagramEditorGlobalActions({
         );
     };
 
+    // Predefined structures reuse the same composition flow as JSON import, which
+    // keeps replace and merge behavior consistent.
     const GenerateStructureButton = () => {
         const [open, setOpen] = React.useState(false);
         const [selectedTemplateId, setSelectedTemplateId] = React.useState(

@@ -37,6 +37,9 @@ import {
     getSimpleEntityAttributesGroupingSelectionData,
 } from "../utils/selection/attributeSelection";
 
+// Attribute actions coordinate tree-shaped attribute updates with mxGraph cells,
+// decorators and persistence.
+
 const hasSiblingAttributeWithName = ({
     owner,
     name,
@@ -125,6 +128,8 @@ export function useAttributeActions({
         changedAttributes.forEach(syncAttributeVisualRepresentation);
     };
 
+    // Adds a root attribute to the selected entity or relation. Default semantics
+    // depend on the owner type, weak-entity state and ISA specialization state.
     const addAttribute = () => {
         let selectedDiag;
         let isRelation = false;
@@ -162,6 +167,8 @@ export function useAttributeActions({
         let offsetX = 120;
         let offsetY = -40;
 
+        // New attributes are placed close to the last existing attribute to keep the
+        // diagram readable without requiring manual repositioning every time.
         const lastAttribute = getLastAttribute(selectedDiag.attributes);
 
         if (lastAttribute) {
@@ -216,6 +223,8 @@ export function useAttributeActions({
     const canAddChildAttributeToSelectedAttribute = (attributeOwner) =>
         canAddChildAttributeToSelection(attributeOwner);
 
+    // Creates a child attribute under an existing composite attribute and records the
+    // new mxGraph vertex/edge ids in the domain model.
     const createSiblingSubattribute = ({
         parentAttribute,
         source,
@@ -256,6 +265,8 @@ export function useAttributeActions({
         return childAttribute;
     };
 
+    // Groups selected simple root attributes into a new composite attribute. Existing
+    // cells are reparented instead of being recreated from scratch.
     const groupSelectedSimpleAttributesIntoComposite = () => {
         const selectionData = getSelectedSimpleEntityAttributesForGrouping();
 
@@ -302,6 +313,8 @@ export function useAttributeActions({
             return;
         }
 
+        // The composite connector is placed near the geometric center of the selected
+        // attributes to minimize visual jumps after grouping.
         const averageChildX =
             childAttributeCells.reduce(
                 (sum, cell) => sum + cell.geometry.x,
@@ -380,6 +393,8 @@ export function useAttributeActions({
         toast.success(t("feedback.attributesGrouped"));
     };
 
+    // Adds a child to a composite attribute. If the selected attribute is still a
+    // simple root attribute, it is first converted into a composite node.
     const addChildAttribute = () => {
         if (!isAttributeShapeCell(selected)) return;
 
@@ -401,7 +416,8 @@ export function useAttributeActions({
         const source = accessCell(compositeAttribute.idMx);
 
         if (!source) return;
-
+        // The original simple attribute becomes the first child so its visible label is
+        // preserved after converting the root into a composite connector.
         if (
             attributeOwner.depth === 0 &&
             !compositeAttribute.children &&
@@ -496,6 +512,8 @@ export function useAttributeActions({
         setAttributesVisibility(isRelationNM, true);
     };
 
+    // Primary-key toggling is restricted to strong, non-ISA-specialization entities
+    // and cannot be applied to multivalued attributes.
     const toggleAttrKey = () => {
         const selectedEntityAttribute = getSelectedEntityAttributeKeyData();
         if (!selectedEntityAttribute) return;
@@ -538,6 +556,8 @@ export function useAttributeActions({
         );
     };
 
+    // Switching between strong and weak entity states also converts key markers and
+    // updates the weak-entity visual decorator.
     const toggleWeakEntity = () => {
         if (!selected) return;
         if (!isEntityShapeCell(selected)) return;
@@ -566,6 +586,8 @@ export function useAttributeActions({
         setRefreshDiagram((prevState) => !prevState);
     };
 
+    // Partial keys are used only as weak-entity discriminants and cannot be
+    // multivalued.
     const togglePartialKey = () => {
         if (!selected) return;
         if (!isAttributeShapeCell(selected)) return;
@@ -606,6 +628,8 @@ export function useAttributeActions({
         );
     };
 
+    // Multivalued semantics are applied at root level and are incompatible with
+    // primary-key or partial-key semantics.
     const toggleMultivaluedAttribute = () => {
         const selectedEntityAttribute =
             getSelectedEntityMultivaluedAttributeData();
@@ -648,6 +672,8 @@ export function useAttributeActions({
     const canConvertSelectedSubattributeToSimpleAttribute = (attributeOwner) =>
         canConvertSelectedSubattributeToSimple(attributeOwner);
 
+    // Converts a direct child of a composite attribute back into a root attribute,
+    // reparenting graph cells so the visual model remains consistent.
     const convertSelectedSubattributeToSimpleAttribute = () => {
         if (!isAttributeShapeCell(selected)) return;
 

@@ -7,6 +7,11 @@ import {
 } from "../../../../domain/er";
 import { isAttributeShapeCell } from "../mxStyles/diagramStyles";
 
+// Selection helpers convert mxGraph selected cells into attribute-domain targets.
+// They keep UI actions independent from the internal attribute tree traversal.
+
+// Key, partial-key and multivalued actions are applied at root level even when
+// the user selects a child of a composite attribute.
 const getRootAttribute = (attributeOwner) =>
     attributeOwner?.ancestors?.at(0) ?? attributeOwner?.attribute;
 
@@ -56,6 +61,8 @@ export const getEntityMultivaluedAttributeSelectionData = ({
     };
 };
 
+// Only simple, non-key, non-multivalued root attributes from the same entity can
+// be grouped into a new composite attribute.
 export const getSimpleEntityAttributesGroupingSelectionData = ({
     diagram,
     selectionCells,
@@ -147,6 +154,8 @@ export const getCompositeAttributeSelectionTarget = (attributeOwner) => {
     };
 };
 
+// Multivalued composite attributes have stricter rules because their relational
+// projection must remain representable as an auxiliary table.
 export const canAddChildAttributeToSelection = (attributeOwner) => {
     const selectedCompositeTarget =
         getCompositeAttributeSelectionTarget(attributeOwner);

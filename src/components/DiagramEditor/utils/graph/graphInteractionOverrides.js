@@ -9,6 +9,7 @@ import {
     isDiscriminantUnderlineCell,
     isMultivaluedAttributeDecoratorCell,
 } from "../rendering/attributeRendering";
+import { getBaseCellIdFromDecoratorId } from "../rendering/decoratorRendering";
 import {
     WEAK_ENTITY_DECORATOR_SUFFIX,
     isWeakEntityDecoratorCell,
@@ -20,8 +21,11 @@ import {
     isIdentifyingRelationEdgeDecoratorCell,
 } from "../rendering/relationRendering";
 
-import { getBaseCellIdFromDecoratorId } from "../rendering/decoratorRendering";
+// Overrides selected mxGraph interactions so visual decorators behave as part of
+// their base E/R element instead of independent selectable cells.
 
+// Decorator ids are derived from their base cell id, which allows hit testing to
+// redirect events back to the real E/R element.
 const INTERACTIVE_DECORATOR_SUFFIXES = [
     WEAK_ENTITY_DECORATOR_SUFFIX,
     IDENTIFYING_RELATION_DECORATOR_SUFFIX,
@@ -52,6 +56,8 @@ const getDiagramAttributeOwners = (getDiagram) => {
     return [...(diagram.entities ?? []), ...(diagram.relations ?? [])];
 };
 
+// Composite attributes use tiny connector vertices; direct selection of those
+// internal cells would confuse editing and deletion actions.
 const isCompositeAttributeConnectorCell = ({ cell, getDiagram }) => {
     if (!cell?.id) {
         return false;
@@ -107,6 +113,8 @@ const getCompositeAttributeRootCellFromEdge = ({
     return compositeAttribute ? accessCell(compositeAttribute.idMx) : null;
 };
 
+// Resolves the cell that should receive the user interaction. Decorators and
+// connector edges are mapped to their logical base element when possible.
 const getUnderlyingInteractiveCell = ({
     cell,
     graph,
@@ -187,6 +195,8 @@ export const installGraphInteractionOverrides = ({
         return () => {};
     }
 
+    // Selection is restricted to logical E/R elements; edges and decorators are
+    // managed by the editor and should not be edited directly.
     mxGraph.prototype.isCellSelectable = function (cell) {
         if (
             this.model.isEdge(cell) ||
@@ -204,6 +214,7 @@ export const installGraphInteractionOverrides = ({
 
     const originalGetCellForEvent = graph.getCellForEvent;
 
+    // Clicks on decorators are treated as clicks on the underlying element.
     graph.getCellForEvent = function (evt) {
         const cell = originalGetCellForEvent.call(this, evt);
 
@@ -246,6 +257,8 @@ export const installGraphInteractionOverrides = ({
 
     let shouldClearCompositeAttributeSelection = false;
 
+    // Composite connector edges may be hit during mouse interactions, but their
+    // transient selection is cleared immediately afterwards.
     const compositeAttributeSelectionCleaner = {
         mouseDown: (_sender, me) => {
             const cell = me.getCell?.();

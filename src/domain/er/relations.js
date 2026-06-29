@@ -5,6 +5,9 @@ import {
     isWeakEntity,
 } from "./entities";
 
+// Relation helpers centralize binary, ternary, identifying and self-relation
+// rules. The editor stores relation sides explicitly because each side keeps its
+// entity reference, cardinality label, optional role and mxGraph cell identifiers.
 const getRelations = (diagram) =>
     Array.isArray(diagram?.relations) ? diagram.relations : [];
 
@@ -207,6 +210,8 @@ export const resetRelationSides = (relation, { cardinality = "" } = {}) => {
     return relation;
 };
 
+// Mandatory 1:1 relations are transformed by merging both entities into the
+// relation table. Identifying and self-relations are excluded from this strategy.
 export const isMandatoryOneToOneMergeRelation = (relation) => {
     if (isIdentifyingRelation(relation)) {
         return false;
@@ -261,6 +266,9 @@ export const getWeakSideOfIdentifyingRelation = (diagram, relationData) => {
     return null;
 };
 
+// Infers the weak and owner sides of a potential identifying relation. The
+// function is intentionally conservative because ambiguous weak-to-weak or
+// self-relation cases should not be guessed automatically.
 export const getWeakAndStrongSidesForRelation = (diagram, relationData) => {
     const emptyResult = {
         weakEntity: null,
@@ -401,6 +409,9 @@ export const getWeakAndStrongSidesForRelation = (diagram, relationData) => {
     return emptyResult;
 };
 
+// Handles the UX case where a strong entity can be converted into a weak entity
+// because the opposite entity already owns weak entities. Ambiguous cases are
+// ignored to avoid applying domain semantics automatically.
 export const getCascadedWeakConversionCandidate = (diagram, relationData) => {
     if (!relationData) return null;
 
@@ -455,6 +466,8 @@ export const getCascadedWeakConversionCandidate = (diagram, relationData) => {
     };
 };
 
+// Identifying relations force the weak side to 0:N and the owner side to 1:1,
+// matching the simplified weak-entity semantics supported by the editor.
 export const applyIdentifyingRelationCardinalities = (
     diagram,
     relationData,
@@ -474,6 +487,8 @@ export const applyIdentifyingRelationCardinalities = (
     return true;
 };
 
+// Removes identifying-relation semantics from both the relation and the affected
+// weak entities. Visual cleanup is handled by the editor layer.
 export const clearIdentifyingRelationDomainSemantics = (
     diagram,
     relationId,

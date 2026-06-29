@@ -6,6 +6,8 @@ import {
     isIsaConfigured,
 } from "../../isa";
 
+// ISA validation rules for the limited inheritance strategy implemented by the
+// editor: one generalization, one or more specializations and inherited keys.
 const getIsas = (graph) => (Array.isArray(graph?.isas) ? graph.isas : []);
 
 export function isaHierarchiesUnconnected(graph) {
@@ -62,6 +64,8 @@ export function isaHierarchiesWithGeneralizationAsSpecialization(graph) {
     return false;
 }
 
+// Real multiple inheritance is outside the implemented scope, so an entity cannot
+// be a specialization in more than one configured ISA hierarchy.
 export function isaSpecializationsInMultipleHierarchies(graph) {
     const specializationIdsInConfiguredHierarchies = new Set();
 
@@ -96,6 +100,8 @@ export function isaSpecializationsInMultipleHierarchies(graph) {
     return false;
 }
 
+// Specializations inherit the generalization primary key and therefore must not
+// keep an independent primary-key marker.
 export function isaSpecializationsWithPrimaryKey(graph) {
     const specializationIds = new Set(
         getIsas(graph).flatMap(getIsaSpecializationEntityIds),

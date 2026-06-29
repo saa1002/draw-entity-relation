@@ -1,6 +1,9 @@
 import * as React from "react";
 import { normalizeDiagramData } from "../../../domain/er";
 
+// Undo/redo history for diagram data. Snapshots are serialized JSON strings so
+// changes can be compared cheaply and restored without keeping object references.
+
 const DEFAULT_HISTORY_LIMIT = 100;
 
 const createDiagramSnapshot = (diagram) =>
@@ -38,6 +41,8 @@ export function useDiagramHistory({
         updateHistoryAvailability();
     }, [diagramRef, updateHistoryAvailability]);
 
+    // Recording is skipped while a snapshot is being applied to avoid creating a new
+    // history entry from undo/redo itself.
     const recordCurrentDiagramInHistory = React.useCallback(() => {
         if (isApplyingHistorySnapshotRef.current) {
             return;
@@ -65,6 +70,7 @@ export function useDiagramHistory({
         updateHistoryAvailability();
     }, [diagramRef, historyLimit, updateHistoryAvailability]);
 
+    // Applying a snapshot delegates graph reconstruction to the persistence layer.
     const applyDiagramSnapshot = React.useCallback(
         (snapshot) => {
             if (!snapshot || !canApplySnapshot()) {

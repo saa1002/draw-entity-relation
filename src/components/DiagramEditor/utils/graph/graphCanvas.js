@@ -4,6 +4,8 @@ import {
 } from "../../../../domain/er/relations";
 import { getIsaEdgeStyleString } from "../mxStyles/diagramStyles";
 
+// Canvas-level helpers for mxGraph operations that affect existing cells:
+// clearing, fitting, connecting configured relations/ISA and removing visual groups.
 export const removeExistingGraphCells = (graph, cells) => {
     if (!graph?.removeCells) return;
 
@@ -16,6 +18,7 @@ export const removeExistingGraphCells = (graph, cells) => {
     graph.removeCells(cellsToRemove);
 };
 
+// mxGraph keeps root cells "0" and "1"; only user-created diagram cells are removed.
 export const clearGraphCanvas = (graph) => {
     if (!graph?.model?.cells) return;
 
@@ -37,6 +40,8 @@ const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const isPositiveFiniteNumber = (value) => Number.isFinite(value) && value > 0;
 
+// Fits the current diagram into the visible container without zooming in above
+// the natural scale.
 export const fitGraphToDiagram = (graph) => {
     const bounds = graph?.getGraphBounds?.();
     const view = graph?.getView?.();
@@ -105,6 +110,8 @@ export const fitGraphToDiagram = (graph) => {
     return true;
 };
 
+// Returns only relation configuration cells, not the main relation vertex. This
+// is useful when reconnecting or clearing relation endpoints.
 export const getConfiguredRelationGraphCells = ({ relation, accessCell }) => {
     if (!relation || typeof accessCell !== "function") return [];
 
@@ -117,6 +124,8 @@ export const getConfiguredRelationGraphCells = ({ relation, accessCell }) => {
         .filter(Boolean);
 };
 
+// Returns only ISA edge cells; the ISA vertex itself is handled separately when
+// deleting the hierarchy.
 export const getConfiguredIsaGraphCells = ({ isa, accessCell }) => {
     if (!isa || typeof accessCell !== "function") return [];
 
@@ -146,6 +155,8 @@ const connectIsaLinkGraphCell = ({ graph, isaCell, link, entityCell }) => {
     return edge;
 };
 
+// Stores mxGraph edge identifiers back into the ISA model so the hierarchy can
+// be synchronized, persisted and reconstructed later.
 export const connectIsaGraphLinks = ({
     graph,
     isaCell,
@@ -187,6 +198,8 @@ export const connectIsaGraphLinks = ({
 
 const DEFAULT_RELATION_CARDINALITY = "X:X";
 
+// A relation side is represented by an edge plus a child vertex that displays
+// the cardinality and, when needed, the participant role.
 const connectRelationSideGraphCell = ({
     graph,
     relationCell,
@@ -234,6 +247,8 @@ const connectRelationSideGraphCell = ({
     return { edge, cardinalityCell };
 };
 
+// Connects all configured relation sides and persists the generated edge and
+// cardinality cell ids in the internal model.
 export const connectRelationGraphSides = ({
     graph,
     relationCell,
@@ -287,6 +302,8 @@ export const connectRelationGraphSides = ({
     return connectedSides;
 };
 
+// Installs mxGraph listeners that keep decorators, attribute offsets and
+// repeated-participant edges aligned after moves or resizes.
 export const installCellGeometrySyncHandlers = ({
     graph,
     mxEvent,
@@ -389,6 +406,8 @@ export const installCellGeometrySyncHandlers = ({
         }
     };
 
+    // Attribute movement updates the stored offset relative to its current owner,
+    // not only its absolute canvas position.
     const handleAttributeMove = (cell) => {
         const attributeOwner = findAttributeTreeOwnerById(
             getDiagram(),
@@ -498,6 +517,8 @@ export const installCellGeometrySyncHandlers = ({
     };
 };
 
+// Deletes the entity vertex together with its weak-entity decorator and the
+// complete attribute subtree.
 export const removeEntityGraphCells = ({
     graph,
     entity,
@@ -525,6 +546,7 @@ export const removeEntityGraphCells = ({
     ]);
 };
 
+// Removes only relation configuration cells so the relation vertex can be reused.
 export const removeRelationConfigurationGraphCells = ({
     graph,
     relation,
@@ -541,6 +563,8 @@ export const removeRelationConfigurationGraphCells = ({
     ]);
 };
 
+// Deletes a relation vertex together with participant edges, cardinality labels
+// and relation attributes.
 export const removeRelationGraphCells = ({
     graph,
     relation,
@@ -562,6 +586,7 @@ export const removeRelationGraphCells = ({
     ]);
 };
 
+// Deletes the ISA vertex together with its generalization and specialization edges.
 export const removeIsaGraphCells = ({ graph, isa, accessCell }) => {
     if (!isa) return;
 

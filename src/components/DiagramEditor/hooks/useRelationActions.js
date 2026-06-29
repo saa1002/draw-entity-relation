@@ -20,6 +20,8 @@ import {
 } from "../utils/mxStyles/diagramStyles";
 import { isIdentifyingRelationDecoratorCell } from "../utils/rendering/relationRendering";
 
+// Relation actions coordinate domain updates, mxGraph decorators and persisted
+// state for relation configuration and identifying relations.
 export function useRelationActions({
     graph,
     selected,
@@ -49,6 +51,7 @@ export function useRelationActions({
         changedAttributes.forEach(syncAttributeVisualRepresentation);
     };
 
+    // Clears both domain semantics and visual decorators for an identifying relation.
     const clearIdentifyingRelationSemantics = (relationId) => {
         const { relation } = clearIdentifyingRelationDomainSemantics(
             diagramRef.current,
@@ -69,6 +72,7 @@ export function useRelationActions({
         }
     };
 
+    // Relation side labels show cardinality and, when needed, role information.
     const syncRelationCardinalityLabels = (relationData) => {
         if (!relationData) return;
 
@@ -95,6 +99,8 @@ export function useRelationActions({
         relationData.canHoldAttributes = false;
     };
 
+    // Removing a relation configuration keeps the relation vertex but deletes its
+    // participant edges, cardinality cells and identifying semantics.
     const removeRelationConfiguration = (relation) => {
         if (!relation) return;
 
@@ -110,6 +116,8 @@ export function useRelationActions({
         resetRelationSides(relation);
     };
 
+    // Toggling an identifying relation can also convert an entity to weak, update
+    // cardinalities, remove relation attributes and create visual decorators.
     const toggleIdentifyingRelation = () => {
         if (!selected) return;
         if (isIdentifyingRelationDecoratorCell(selected)) return;
@@ -128,6 +136,8 @@ export function useRelationActions({
             }
 
             if (!weakEntity || !ownerEntity) {
+                // When the user did not pre-mark a weak entity, the editor only auto-converts
+                // safe cascaded cases.
                 const conversionCandidate = getCascadedWeakConversionCandidate(
                     diagramRef.current,
                     relation,
@@ -150,7 +160,7 @@ export function useRelationActions({
                     ensureWeakEntityDecorator(weakEntityCell, weakEntity);
                 }
             }
-
+            // A weak entity can only keep one identifying relation in the simplified model.
             if (
                 weakEntity.identifyingRelationId &&
                 weakEntity.identifyingRelationId !== relation.idMx

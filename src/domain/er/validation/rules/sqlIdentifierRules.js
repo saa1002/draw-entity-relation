@@ -10,6 +10,11 @@ import {
     findMandatoryOneToOneMergeRelationForEntity,
 } from "../../relations";
 
+// SQL identifier validation detects collisions that would appear only after
+// normalizing names for SQL output.
+
+// Multivalued auxiliary tables reuse owner key columns. Mandatory 1:1 merge
+// relations rename those copied columns, so validation mirrors that strategy.
 function getMultivaluedAuxiliaryOwnerColumnNames(entity, graph) {
     const ownerColumnNames = getEntityPrimaryKeyColumnNamesIgnoringCycles(
         entity,
@@ -29,6 +34,8 @@ function getMultivaluedAuxiliaryOwnerColumnNames(entity, graph) {
     );
 }
 
+// Two different user-facing names may become the same SQL identifier after
+// accent removal, whitespace replacement or lower-level normalization.
 function hasNormalizedNameCollision(names) {
     const normalizedNames = new Set();
 
@@ -76,7 +83,7 @@ function hasMultivaluedAuxiliaryTableColumnCollision(entity, graph) {
 export function sqlIdentifierCollisions(graph) {
     const normalizedNames = new Set();
 
-    // Entidades y relaciones comparten namespace de tablas
+    // Entities and relations share the SQL table namespace.
     for (const entity of graph.entities) {
         const normalized = normalizeIdentifier(entity.name);
 
@@ -115,6 +122,8 @@ export function sqlIdentifierCollisions(graph) {
         }
     }
 
+    // Composite attributes are validated after projection to relational columns,
+    // because only leaf attributes become SQL columns.
     const hasNormalizedAttributeCollision = (attributes) => {
         const normalizedAttrNames = new Set();
 

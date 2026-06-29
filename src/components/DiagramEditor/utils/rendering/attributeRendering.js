@@ -20,6 +20,9 @@ import {
     syncVertexDecoratorBounds,
 } from "./decoratorRendering";
 
+// Rendering helpers for E/R attributes. Composite attributes use connector cells,
+// while leaf attributes use visible ellipses and optional decorators.
+
 export const DISCRIMINANT_UNDERLINE_SUFFIX = "__discriminant_underline";
 export const MULTIVALUED_ATTRIBUTE_DECORATOR_SUFFIX = "__multivalued_decorator";
 
@@ -48,6 +51,8 @@ const VISIBLE_ATTRIBUTE_STYLE = [
     `fontFamily=${ER_FONT_FAMILY}`,
 ].join(";");
 
+// Composite attributes are not rendered as labeled ellipses themselves; their
+// children carry the visible attribute labels.
 const COMPOSITE_ATTRIBUTE_CONNECTOR_STYLE = [
     ...ATTRIBUTE_BASE_STYLE_PARTS,
     "fontSize=0",
@@ -103,6 +108,8 @@ export const getAttributeStyleString = (
     return VISIBLE_ATTRIBUTE_STYLE;
 };
 
+// Factory bound to the current mxGraph instance. Returned helpers create, remove
+// and resynchronize attribute cells and their decorators.
 export const createAttributeRenderingHelpers = ({
     graph,
     accessCell,
@@ -131,6 +138,8 @@ export const createAttributeRenderingHelpers = ({
         );
     };
 
+    // An attribute may own multiple cells: the visible or connector vertex, its
+    // connection edge and optional decorators.
     const getAttributesCells = (attributes = []) =>
         flattenAttributeTree(attributes).flatMap(getAttributeCells);
 
@@ -165,6 +174,8 @@ export const createAttributeRenderingHelpers = ({
         };
     };
 
+    // Discriminant markers are implemented as independent edges so they can be
+    // positioned under an attribute without changing the ellipse style.
     const createDiscriminantUnderline = (attributeCell) => {
         const points = getDiscriminantUnderlinePoints(attributeCell);
         if (!points) return null;
@@ -261,6 +272,7 @@ export const createAttributeRenderingHelpers = ({
         }
     };
 
+    // The multivalued marker is a second ellipse inset inside the attribute cell.
     const syncMultivaluedAttributeDecorator = (attributeCell) => {
         if (!attributeCell?.id) return;
 
@@ -342,6 +354,8 @@ export const createAttributeRenderingHelpers = ({
         return edgeCells;
     };
 
+    // Recreates the edge from an attribute to its current owner after tree operations
+    // such as converting subattributes back to root attributes.
     const reparentAttributeCellToCurrentOwner = ({
         attribute,
         attributeOwner,
@@ -376,6 +390,8 @@ export const createAttributeRenderingHelpers = ({
         return edge;
     };
 
+    // Refreshes the full visual state of an attribute subtree after semantic changes
+    // such as key, partial-key or multivalued toggles.
     const syncAttributeVisualRepresentation = (
         attribute,
         {
@@ -490,6 +506,8 @@ export const createAttributeRenderingHelpers = ({
         }
     };
 
+    // Child attributes are positioned from stored offsets relative to their current
+    // parent cell.
     const syncAttributePositionFromParent = (
         attribute,
         parentCell,
@@ -572,6 +590,8 @@ export const createAttributeRenderingHelpers = ({
         });
     };
 
+    // Creates both the attribute vertex and its owner edge. The returned ids are
+    // stored in the domain model by the caller.
     const createAttributeGraphCells = ({
         name,
         source,

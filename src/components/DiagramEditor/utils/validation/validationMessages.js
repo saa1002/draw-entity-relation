@@ -13,6 +13,9 @@ import {
 } from "../../../../domain/er";
 import { DEFAULT_LANGUAGE, translate } from "../../../../i18n/translations";
 
+// Converts validation diagnostics into localized dialog messages. Validation
+// rules live in the domain layer; this module only formats user-facing feedback.
+
 const translateInDefaultLanguage = (key, values = {}) =>
     translate(DEFAULT_LANGUAGE, key, values);
 
@@ -37,6 +40,8 @@ export const VALIDATION_SECTION_TITLE_KEYS = {
     sql: "validation.section.sql",
 };
 
+// Message definitions preserve the display order of diagnostics and allow some
+// contexts, such as SQL export or JSON import, to use more specific wording.
 const VALIDATION_MESSAGE_DEFINITIONS = [
     { key: "notEmpty" },
     {
@@ -80,6 +85,8 @@ const VALIDATION_MESSAGE_DEFINITIONS = [
     { key: "noNotValidCardinalities" },
 ];
 
+// Diagnostic sections group low-level validation flags into readable blocks in
+// the validation dialog.
 const DIAGNOSTIC_SECTIONS = {
     notEmpty: "general",
     noRepeatedNames: "general",
@@ -145,6 +152,8 @@ const getIsaLabel = (index) => `ISA ${index + 1}`;
 const getAttributeChildren = (attribute) =>
     Array.isArray(attribute?.children) ? attribute.children : [];
 
+// Attribute paths are built while traversing the tree so validation details can
+// identify nested attributes with readable names.
 const visitAttributes = (
     attributes,
     callback,
@@ -320,6 +329,8 @@ const getNestedCompositeAttributes = (
     return result;
 };
 
+// Reuses the same detail-building logic for entity attributes and relation
+// attributes.
 const getAttributeOwnerDetails = (diagram, predicate, t) => {
     const details = [];
 
@@ -358,6 +369,8 @@ const getEntityNameById = (diagram, entityId, t = translateInDefaultLanguage) =>
         t("validation.fallback.entityMissing"),
     );
 
+// Names are checked across entities and relations because both can become SQL
+// tables depending on the transformation strategy.
 const getRepeatedDiagramNames = (diagram) => {
     const repeatedNames = new Set();
     const seen = new Set();
@@ -379,6 +392,8 @@ const getRepeatedDiagramNames = (diagram) => {
     return [...repeatedNames];
 };
 
+// Repeated ternary participants need explicit distinct roles so generated
+// foreign-key columns remain unambiguous.
 const getTernaryRepeatedParticipantDetails = (diagram, t) =>
     getRelations(diagram)
         .filter(isTernaryRelation)
@@ -427,6 +442,8 @@ const getTernaryRepeatedParticipantDetails = (diagram, t) =>
                 );
         });
 
+// Adds concrete detail lines for diagnostics that can point to specific entities,
+// relations, attributes or ISA hierarchies.
 const getValidationDetailMessages = (
     diagnosticKey,
     diagram,
@@ -820,6 +837,8 @@ const getValidationDetailMessages = (
     }
 };
 
+// Public formatter used by dialogs. It keeps success messages, error headers,
+// section titles and detailed diagnostics in one ordered list.
 export const getValidationDialogMessages = (
     diagnostics,
     context,

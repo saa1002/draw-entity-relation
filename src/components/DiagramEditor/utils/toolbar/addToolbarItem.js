@@ -28,6 +28,8 @@ const generateUniqueName = (baseName, existingItems = []) => {
     return uniqueName;
 };
 
+// New strong entities start with a default primary-key attribute to keep diagrams
+// valid sooner and reduce repetitive user actions.
 const createDefaultPrimaryKeyAttributeForEntity = (graph, entityCell) => {
     if (!graph || !entityCell?.geometry) {
         return null;
@@ -91,6 +93,8 @@ export default function addToolbarItem(
     addIsaToDiagram = false,
     tooltip = "",
 ) {
+    // Toolbar insertion updates both mxGraph and the internal diagram model in the
+    // same operation.
     const insertToolbarVertex = (graph, _evt, _cell, x, y) => {
         graph.stopEditing(false);
 
@@ -185,7 +189,7 @@ export default function addToolbarItem(
         graph.setSelectionCell(vertex);
     };
 
-    // Creates the image which is used as the drag icon (preview)
+    // Creates the toolbar icon used for click insertion and drag-and-drop insertion.
     const img = toolbar.addMode(null, image, function (evt, cell) {
         const pt = this.graph.getPointForEvent(evt);
         insertToolbarVertex(graph, evt, cell, pt.x, pt.y);

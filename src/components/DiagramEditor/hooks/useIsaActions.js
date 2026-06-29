@@ -12,6 +12,9 @@ import {
     removeExistingGraphCells,
 } from "../utils/graph/graphCanvas";
 
+// ISA actions configure the limited generalization/specialization support and
+// keep inherited-key semantics synchronized with the visual hierarchy.
+
 export function useIsaActions({
     graph,
     selected,
@@ -24,6 +27,8 @@ export function useIsaActions({
     const getSelectedIsaData = () =>
         findIsaById(diagramRef.current, selected?.id) ?? null;
 
+    // Removes only the configured ISA links. The ISA vertex remains available for
+    // reconfiguration.
     const removeIsaConfiguration = (isa) => {
         if (!isa) return;
 
@@ -39,6 +44,8 @@ export function useIsaActions({
         isa.specializations = [];
     };
 
+    // Configures one generalization and one or more specializations. Specialization
+    // primary-key markers are cleared because the key is inherited.
     const configureIsaHierarchy = ({ generalizationId, specializationIds }) => {
         const isa = getSelectedIsaData();
 
@@ -73,6 +80,8 @@ export function useIsaActions({
             }),
         );
 
+        // Specializations must not keep their own primary key under the implemented ISA
+        // strategy.
         specializationIds.forEach((entityId) => {
             const specializationEntity = findEntityById(
                 diagramRef.current,

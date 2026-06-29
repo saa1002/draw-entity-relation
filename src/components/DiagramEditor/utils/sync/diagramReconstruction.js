@@ -25,6 +25,8 @@ import {
     getAttributeStyleString,
 } from "../rendering/attributeRendering";
 
+// Rebuilds mxGraph cells from persisted diagram data. The order matters: main
+// nodes are created first, while relation and ISA edges require existing endpoints.
 export const reconstructDiagramGraph = ({
     graph,
     diagram,
@@ -38,7 +40,8 @@ export const reconstructDiagramGraph = ({
     syncRepeatedParticipantRelationEdges,
 }) => {
     if (!graph || !diagram) return;
-
+    // Recreates an attribute subtree. Composite attributes are represented by small
+    // connector cells, while leaf attributes carry visible labels and decorators.
     const recreateAttribute = (
         attribute,
         source,
@@ -48,6 +51,8 @@ export const reconstructDiagramGraph = ({
             inheritedMultivalued = false,
         } = {},
     ) => {
+        // Key, partial-key and multivalued semantics can be inherited by descendants of
+        // composite attributes for visual rendering.
         const effectiveKey = inheritedKey || attribute?.key === true;
         const effectivePartialKey =
             inheritedPartialKey || attribute?.partialKey === true;
@@ -67,7 +72,8 @@ export const reconstructDiagramGraph = ({
             height,
             getAttributeStyleString(attribute, { inheritedKey }),
         );
-
+        // Keep the stored edge id when available so persisted diagrams preserve stable
+        // references between the model and mxGraph cells.
         const storedEdgeId = attribute.cell?.at(1) ?? null;
 
         const edge = graph.insertEdge(
@@ -100,7 +106,8 @@ export const reconstructDiagramGraph = ({
         const shouldPassMultivaluedDecoratorToChildren =
             (attribute.multivalued === true || inheritedMultivalued) &&
             isCompositeAttribute;
-
+        // Composite semantics are propagated to children because only leaf attributes
+        // display the final key, partial-key or multivalued markers.
         childAttributes.forEach((childAttribute) => {
             recreateAttribute(childAttribute, target, {
                 inheritedKey: effectiveKey,
@@ -134,6 +141,8 @@ export const reconstructDiagramGraph = ({
         }
     };
 
+    // Recreates the relation vertex, its own attributes and, when configured, the
+    // participant edges with their cardinality or role labels.
     const recreateRelation = (relation) => {
         const { width, height } = getRelationDimensions(relation.name);
 
@@ -175,6 +184,7 @@ export const reconstructDiagramGraph = ({
                             ? "X:X"
                             : relationSide.cardinality;
 
+                    // Cardinality labels are mxGraph vertices embedded in each relation edge.
                     const cardinality = graph.insertVertex(
                         edge,
                         relationSide.cell,
@@ -200,6 +210,7 @@ export const reconstructDiagramGraph = ({
                 },
             );
 
+            // Repeated participants need custom edge routes to keep parallel connections visible.
             syncRepeatedParticipantRelationEdges?.(source, relation);
 
             if (isIdentifyingRelation(relation)) {
@@ -228,6 +239,8 @@ export const reconstructDiagramGraph = ({
         );
     };
 
+    // ISA links are recreated after entities and ISA nodes because edges need both
+    // endpoints to exist in mxGraph.
     const recreateIsaLinks = (isa) => {
         if (!isIsaConfigured(isa)) return;
 

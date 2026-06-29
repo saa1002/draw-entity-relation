@@ -23,6 +23,8 @@ import {
 } from "../utils/mxStyles/diagramStyles";
 import { isWeakEntityDecoratorCell } from "../utils/rendering/entityRendering";
 
+// Deletion actions remove both domain objects and their mxGraph cells. Some
+// deletions also clear dependent relation or ISA configurations.
 export function useDeletionActions({
     graph,
     selected,
@@ -40,6 +42,8 @@ export function useDeletionActions({
     syncAndPersistDiagramData,
     clearEditorSelection,
 }) {
+    // Supports both single selection and mxGraph multiselection while deduplicating
+    // cells that may appear more than once.
     const getSelectedDiagramCells = () => {
         const selectionCells =
             typeof graph?.getSelectionCells === "function"
@@ -61,6 +65,8 @@ export function useDeletionActions({
         );
     };
 
+    // Entity primary-key attributes are protected from direct deletion. Relation
+    // attributes can be deleted because they are descriptive columns.
     const canDeleteAttributeCell = (cell) => {
         if (!isAttributeShapeCell(cell)) {
             return false;
@@ -83,6 +89,8 @@ export function useDeletionActions({
 
     const canDeleteSelectedAttribute = () => canDeleteAttributeCell(selected);
 
+    // Deleting an entity also clears any relation or ISA configuration that points
+    // to it, preventing stale references in the diagram model.
     const deleteEntityCell = (cell, { syncAfterDelete = true } = {}) => {
         const isEntity =
             isEntityShapeCell(cell) && !isWeakEntityDecoratorCell(cell);
@@ -129,6 +137,8 @@ export function useDeletionActions({
         return true;
     };
 
+    // Attribute deletion may promote remaining children when a composite attribute no
+    // longer has enough children to justify the composite node.
     const deleteAttributeCell = (cell, { syncAfterDelete = true } = {}) => {
         if (!canDeleteAttributeCell(cell)) {
             return false;
@@ -287,6 +297,8 @@ export function useDeletionActions({
         return deleteDiagramElementCell(selected);
     };
 
+    // Relations and ISA nodes are deleted before entities so dependent configurations
+    // are cleared in a predictable order during batch deletion.
     const getCellDeletionPriority = (cell) => {
         if (isRelationShapeCell(cell)) return 1;
         if (isIsaShapeCell(cell)) return 2;
@@ -300,6 +312,8 @@ export function useDeletionActions({
         return 5;
     };
 
+    // Batch deletion delays synchronization until all selected cells have been
+    // processed to avoid persisting intermediate inconsistent states.
     const deleteSelectedDiagramElements = () => {
         if (!graph) {
             return false;

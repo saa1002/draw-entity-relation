@@ -20,14 +20,21 @@ import {
 import { getEntityPrimaryKeyColumnReferences as getEntityPrimaryKeyColumns } from "./entityKeyColumns";
 import { normalizeIdentifier } from "./naming";
 
-// This function takes the graph and prepares the relations
-// for the extractTables function
+// Converts the internal E/R diagram model into an intermediate relational model.
+// This module decides which tables, columns, primary keys, foreign keys and
+// uniqueness constraints are needed. SQL text is generated later by sqlRenderer.
+
+// Prepares the first transformation pass. Regular relations become relation
+// descriptors, while identifying relations are skipped because weak-entity
+// ownership is applied separately.
 export function filterTables(graph) {
-    const entities = [...graph.entities]; // Clone entities to avoid mutating the original graph
-    const usedEntities = new Set(); // Track used entities
+    const entities = [...graph.entities];
+    const usedEntities = new Set();
     const tables = [];
 
     function getCardinalityType(max1, max2) {
+        // The relational strategy is selected from maximum cardinalities only:
+        // 1:1, 1:N or N:M. Minimum cardinalities are handled later as nullability.
         const combinedCardinality = `${max1}:${max2}`;
         const reversedCombinedCardinality = `${max2}:${max1}`;
 
@@ -43,7 +50,7 @@ export function filterTables(graph) {
         } else if (combinedCardinality === "N:N") {
             type = "N:M";
         } else {
-            type = "Unknown"; // This should never happen if data is correct
+            type = "Unknown";
         }
 
         return type;
@@ -54,6 +61,8 @@ export function filterTables(graph) {
     }
 
     function processRelation(relation) {
+        // Ternary relations keep all participant sides because candidate keys depend on
+        // the full combination of participating entities and their cardinalities.
         if (isTernaryRelation(relation)) {
             const table = {
                 name: relation.name,
@@ -98,14 +107,12 @@ export function filterTables(graph) {
             attributes: [...relation.attributes],
         };
 
-        // Mark entities as used
         usedEntities.add(side1.entity.idMx);
         usedEntities.add(side2.entity.idMx);
 
         return table;
     }
 
-    // Process relations first
     for (const relation of graph.relations) {
         if (isIdentifyingRelation(relation)) {
             continue;
@@ -114,7 +121,6 @@ export function filterTables(graph) {
         tables.push(processRelation(relation));
     }
 
-    // Add remaining entities as tables
     for (const entity of entities) {
         if (!usedEntities.has(entity.idMx)) {
             tables.push(entity);
@@ -145,6 +151,7 @@ function getMultivaluedEntityAttributes(entity) {
     return (entity.attributes ?? []).filter(isMultivaluedAttribute);
 }
 
+// Builds the value columns that will be part of a multivalued-attribute table.
 function buildMultivaluedValueAttributes(attribute) {
     return projectMultivaluedAttributeToColumns(attribute).map((column) => ({
         name: column.name,
@@ -155,6 +162,9 @@ function buildMultivaluedValueAttributes(attribute) {
     }));
 }
 
+// Finds the table that owns a multivalued attribute. In mandatory 1:1 merge
+// cases, the original entity table may not exist because its data was moved into
+// the relation table.
 function getMultivaluedAttributeOwnerReference(entity, graph, tableMap) {
     if (tableMap.has(entity.name)) {
         return {
@@ -186,6 +196,9 @@ function getMultivaluedAttributeOwnerReference(entity, graph, tableMap) {
     };
 }
 
+// Multivalued attributes are mapped to independent tables. The owner primary key
+// is copied into the new table and combined with the attribute value columns as
+// the table primary key.
 function buildMultivaluedAttributeTables(entity, graph, tableMap) {
     const ownerReference = getMultivaluedAttributeOwnerReference(
         entity,
@@ -230,6 +243,8 @@ function buildRelationAttributes(attributes) {
     }));
 }
 
+// Builds foreign-key columns used as part of a relation table primary key,
+// for example in N:M and ternary relations.
 function buildRelationForeignKeyAttributes({
     keyColumns,
     entity,
@@ -262,6 +277,8 @@ function buildRelationForeignKeyAttributes({
     });
 }
 
+// Builds foreign-key columns copied into an existing entity table, mainly for
+// 1:N and 1:1 relations. Composite keys are kept in the same foreign-key group.
 function buildForeignKeyCopyAttributes({
     keyColumns,
     referencedEntity,
@@ -295,13 +312,14 @@ function buildForeignKeyCopyAttributes({
     }));
 }
 
+// Maps a 1:N relation by copying the key of the "one" side into the table of
+// the "many" side. Reflexive relations keep a single table with a self-reference.
 export function process1NRelation(relation, graph) {
     const { side1, side2 } = relation;
 
     let oneSide;
     let manySide;
 
-    // Determine which side is 1 and which is N
     if (side1.cardinality.maximum === "1") {
         oneSide = side1;
         manySide = side2;
@@ -310,7 +328,6 @@ export function process1NRelation(relation, graph) {
         manySide = side1;
     }
 
-    // Determine the notnull property
     const notnull = oneSide.cardinality.minimum === "1";
 
     const oneSideTable = buildEntityTable(oneSide.entity);
@@ -332,7 +349,7 @@ export function process1NRelation(relation, graph) {
         ],
     };
 
-    // Relación reflexiva, se crea solo una tabla
+    // Reflexive 1:N relations use one table with an additional self-referencing FK.
     if (isSelfRelation(relation)) {
         return [manySideTable];
     }
@@ -340,6 +357,8 @@ export function process1NRelation(relation, graph) {
     return [oneSideTable, manySideTable];
 }
 
+// Maps 1:1 relations. Mandatory 1:1 relations are merged into a relation table;
+// optional cases keep both entity tables and place a UNIQUE foreign key on one side.
 export function process11Relation(relation, graph) {
     const { side1, side2 } = relation;
 
@@ -371,6 +390,8 @@ export function process11Relation(relation, graph) {
         return [table];
     }
 
+    // When both sides are mandatory 1:1, the implementation follows the simplified
+    // strategy of creating a single table named after the relation.
     if (
         side1.cardinality.minimum === "1" &&
         side2.cardinality.minimum === "1" &&
@@ -393,10 +414,10 @@ export function process11Relation(relation, graph) {
             }),
         );
 
-        // Merge attributes, ensuring PKs are correctly set
+        // The first side keeps the primary key. Key attributes from the second side are
+        // converted into NOT NULL and UNIQUE columns to preserve the 1:1 constraint.
         const mergedAttributes = [...side1Attributes, ...side2Attributes];
 
-        // Create the resulting table
         const resultTable = {
             name: `${relation.name}`,
             attributes: mergedAttributes,
@@ -405,7 +426,8 @@ export function process11Relation(relation, graph) {
         return [resultTable];
     }
 
-    // Case where one side has (0,1) cardinality or both sides have equal minimum cardinality
+    // Optional 1:1 cases are represented with a UNIQUE foreign key. If both sides
+    // are optional, the first side is chosen deterministically to keep the algorithm simple.
     let tableWithForeignKey;
     let tableWithoutForeignKey;
     let foreignKeySide;
@@ -416,12 +438,12 @@ export function process11Relation(relation, graph) {
         side1.cardinality.minimum === "0" &&
         side2.cardinality.minimum === "0"
     ) {
-        // Both sides have the same minimum cardinality
+        // If both sides are optional, choose one side deterministically.
         foreignKeySide = side1;
         primaryKeySide = side2;
     } else {
         notnull = true;
-        // Use ternary operators to determine foreignKeySide and primaryKeySide
+        // The optional side receives the foreign key; the mandatory side is referenced.
         foreignKeySide = side1.cardinality.minimum === "0" ? side1 : side2;
         primaryKeySide = side1.cardinality.minimum === "0" ? side2 : side1;
     }
@@ -456,7 +478,7 @@ export function process11Relation(relation, graph) {
         attributes: primaryKeyAttributes,
     };
 
-    // Si la relación es reflexiva solo se devuelve esta tabla
+    // Reflexive 1:1 relations still produce a single self-referencing table.
     if (isSelfRelation(relation)) {
         return [tableWithForeignKey];
     }
@@ -464,10 +486,12 @@ export function process11Relation(relation, graph) {
     return [tableWithoutForeignKey, tableWithForeignKey];
 }
 
+// Maps an N:M relation by creating a relation table whose primary key is built
+// from the primary keys of both participating entities. Relation attributes are
+// added as non-key columns.
 export function processNMRelation(relation, graph) {
     const { side1, side2, attributes } = relation;
 
-    // Extract attributes from both sides
     const side1Entity = side1.entity;
     const side2Entity = side2.entity;
 
@@ -505,8 +529,7 @@ export function processNMRelation(relation, graph) {
         attributes: thirdTableAttributes,
     };
 
-    // La relación es reflexiva y por tanto first y second table
-    // son iguales y solo necesitamos una de las dos
+    // Reflexive N:M relations need only one entity table plus the relation table.
     if (isSelfRelation(relation)) {
         return [firstTable, thirdTable];
     }
@@ -514,12 +537,16 @@ export function processNMRelation(relation, graph) {
     return [firstTable, secondTable, thirdTable];
 }
 
+// Roles are used as suffixes when available so repeated participants in a ternary
+// relation generate distinct and meaningful foreign-key column names.
 function getTernarySideForeignKeySuffix(side, index) {
     const role = String(side?.role ?? "").trim();
 
     return role ? normalizeIdentifier(role) : String(index + 1);
 }
 
+// Candidate keys for ternary relations depend on the sides with maximum 1.
+// If no side has maximum 1, the full combination of the three sides is used.
 function getTernaryCandidateKeySideIndexes(sides) {
     const oneSideIndexes = sides
         .map((side, index) => ({ side, index }))
@@ -537,9 +564,15 @@ function getTernaryCandidateKeySideIndexes(sides) {
     );
 }
 
+// Maps a ternary relation to a relation table with one foreign-key group per
+// participant side. The first candidate key becomes the primary key and the
+// remaining candidate keys are rendered later as UNIQUE constraints.
 export function processTernaryRelation(relation, graph) {
     const sides = [relation.side1, relation.side2, relation.side3];
     const candidateKeySideIndexes = getTernaryCandidateKeySideIndexes(sides);
+
+    // The first candidate key is selected as the primary key. Additional candidate
+    // keys are preserved as explicit unique constraints.
     const primaryKeySideIndexes = new Set(candidateKeySideIndexes.at(0));
     const uniqueCandidateKeySideIndexes = candidateKeySideIndexes.slice(1);
 
@@ -595,6 +628,9 @@ export function processTernaryRelation(relation, graph) {
     return [...entityTables, relationTable];
 }
 
+// Applies weak-entity semantics after the first table map exists. The weak table
+// receives its partial key plus the owner primary key as a composite primary key,
+// and the owner key is also marked as a cascading foreign key.
 function applyWeakEntitySemantics(tableMap, graph) {
     for (const entity of graph.entities) {
         if (!isWeakEntity(entity)) continue;
@@ -659,6 +695,9 @@ function ensureEntityTable(tableMap, entity) {
     return table;
 }
 
+// Builds the inherited key columns for an ISA specialization. Each inherited
+// column is both part of the specialization primary key and a foreign key to the
+// generalization table.
 function buildIsaInheritedPrimaryKeyAttributes({
     isa,
     generalizationEntity,
@@ -686,6 +725,9 @@ function buildIsaInheritedPrimaryKeyAttributes({
     }));
 }
 
+// Applies the implemented ISA strategy: keep the generalization table and create
+// one table per specialization. Specialization tables inherit the generalization
+// key and do not keep an independent primary key.
 function applyIsaSemantics(tableMap, graph) {
     for (const isa of graph.isas ?? []) {
         const generalizationEntity = findEntityById(
@@ -720,6 +762,8 @@ function applyIsaSemantics(tableMap, graph) {
                     graph,
                 });
 
+            // Existing specialization attributes remain as regular columns. Any previous key
+            // marker is cleared because the inherited generalization key is the table PK.
             const existingAttributes = specializationTable.attributes
                 .filter((attr) => attr.foreign_key_group !== foreignKeyGroup)
                 .map((attr) => ({
@@ -736,6 +780,8 @@ function applyIsaSemantics(tableMap, graph) {
     }
 }
 
+// Multiple transformations can contribute columns to the same table. Existing
+// columns are preserved and only new attributes are appended.
 function mergeProcessedTable(tableMap, processedTable) {
     if (tableMap.has(processedTable.name)) {
         const existingTable = tableMap.get(processedTable.name);
@@ -770,9 +816,11 @@ function processRelationalTable(table, graph) {
     }
 }
 
+// Builds all relational tables in a controlled order: weak-entity semantics,
+// relation transformations, ISA inheritance and finally multivalued attributes.
 function buildRelationalTables(graph) {
     const tables = filterTables(graph);
-    const tableMap = new Map(); // Track processed tables and their attributes
+    const tableMap = new Map();
 
     applyWeakEntitySemantics(tableMap, graph);
 
@@ -793,6 +841,8 @@ function buildRelationalTables(graph) {
     return [...tableMap.values(), ...multivaluedAttributeTables];
 }
 
+// Normalizes table and column identifiers for SQL output and resolves duplicate
+// column names generated by suffixes, composite keys or inherited keys.
 function normalizeRelationalTableIdentifiers(tables) {
     for (const table of tables) {
         table.name = normalizeIdentifier(table.name);
@@ -820,6 +870,8 @@ function normalizeRelationalTableIdentifiers(tables) {
             attributeNameMap.set(originalName, uniqueName);
         });
 
+        // Unique constraints must be updated after column renaming so they still point to
+        // the final SQL column names.
         if (Array.isArray(table.uniqueConstraints)) {
             table.uniqueConstraints = table.uniqueConstraints.map(
                 (constraint) => ({
@@ -838,6 +890,8 @@ function normalizeRelationalTableIdentifiers(tables) {
     return tables;
 }
 
+// Public entry point for the E/R to relational transformation.
+// The returned model is SQL-ready but still independent from SQL rendering.
 export function mapErDiagramToRelationalModel(graph) {
     const relationalTables = buildRelationalTables(graph);
     const normalizedTables =

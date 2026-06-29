@@ -1,6 +1,9 @@
 import { normalizeDiagramData } from "./diagramNormalization";
 import { getRelationSideKeys } from "./relations";
 
+// Diagram composition supports replacing the current diagram or merging an
+// imported one. Merge mode must remap ids, offset positions and rename conflicts
+// so both diagrams can coexist safely on the same canvas.
 export const DIAGRAM_COMPOSITION_MODES = Object.freeze({
     REPLACE: "replace",
     MERGE: "merge",
@@ -77,6 +80,8 @@ const collectDiagramIds = (diagram) => {
     return ids;
 };
 
+// Creates stable replacement ids for the imported diagram. The same original id
+// must always map to the same new id to preserve internal references.
 const createIdRemapper = (usedIds) => {
     const idMap = new Map();
     let counter = 0;
@@ -154,6 +159,8 @@ const getDiagramBounds = (diagram) => {
     );
 };
 
+// Places the imported diagram to the right of the current diagram to reduce
+// visual overlap after a merge.
 const getMergeOffset = (currentDiagram, importedDiagram) => {
     const currentBounds = getDiagramBounds(currentDiagram);
     const importedBounds = getDiagramBounds(importedDiagram);
@@ -206,6 +213,8 @@ const renameAttributeSiblings = (attributes = []) => {
     });
 };
 
+// Entity and relation names share the SQL table namespace, so imported conflicts
+// are renamed before merging. Attribute conflicts are resolved among siblings.
 const renameImportedDiagramConflicts = (currentDiagram, importedDiagram) => {
     const usedElementNames = new Set([
         ...currentDiagram.entities.map((entity) => entity.name),

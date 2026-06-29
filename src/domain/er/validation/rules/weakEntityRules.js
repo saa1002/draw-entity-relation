@@ -16,6 +16,8 @@ import {
     weakEntityOwnershipHasCycle,
 } from "../helpers";
 
+// Weak-entity validation rules. The supported model uses one identifying
+// relation, one owner entity and one partial key per weak entity.
 export function weakEntitiesWithoutPartialKey(graph) {
     for (const entity of graph.entities) {
         if (!isWeakEntity(entity)) continue;
@@ -64,6 +66,8 @@ export function strongEntitiesWithPartialKey(graph) {
     return false;
 }
 
+// A weak entity is only complete when it points to an existing identifying
+// relation that is still marked as identifying.
 export function weakEntitiesWithoutIdentifyingRelation(graph) {
     for (const entity of graph.entities) {
         if (!isWeakEntity(entity)) continue;
@@ -97,6 +101,8 @@ export function identifyingRelationsNotValid(graph) {
     return false;
 }
 
+// Identifying relations use fixed simplified cardinalities: the weak side is
+// 0:N and the owner side is 1:1.
 export function identifyingRelationCardinalitiesNotValid(graph) {
     for (const relation of graph.relations) {
         if (!isIdentifyingRelation(relation)) continue;
@@ -123,6 +129,8 @@ export function identifyingRelationCardinalitiesNotValid(graph) {
     return false;
 }
 
+// Cross-checks the weak entity fields against the identifying relation so stale
+// ids, wrong owners or ownership cycles are detected before SQL generation.
 export function inconsistentWeakEntityOwnership(graph) {
     for (const entity of graph.entities) {
         if (!isWeakEntity(entity)) continue;
@@ -170,6 +178,8 @@ export function inconsistentWeakEntityOwnership(graph) {
     return false;
 }
 
+// The simplified weak-entity model allows at most one identifying relation per
+// weak entity.
 export function multipleIdentifyingRelationsPerWeakEntity(graph) {
     const dependencyCountByWeakEntityId = new Map();
 

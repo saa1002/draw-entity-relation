@@ -1,3 +1,5 @@
+// Validation diagnostics are optimistic by default. Each rule turns its own
+// diagnostic flag to false when it detects an invalid diagram condition.
 export const DEFAULT_DIAGNOSTICS = {
     noRepeatedNames: true,
     noRepeatedAttrNames: true,

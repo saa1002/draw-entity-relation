@@ -10,6 +10,8 @@ import {
 } from "../mxStyles/diagramStyles";
 import addToolbarItem from "./addToolbarItem";
 
+// Defines the draggable mxGraph prototypes used to create entities, relations
+// and ISA nodes from the toolbar.
 const {
     mxEvent,
     mxUtils,

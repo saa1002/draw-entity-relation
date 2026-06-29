@@ -1,6 +1,8 @@
 import { default as MxGraph } from "mxgraph";
 import initToolbar from "../toolbar/initToolbar";
 
+// Applies the minimal mxGraph setup used by the editor. Most domain-specific
+// behavior is installed later through dedicated graph helpers.
 const { mxClient, mxEdgeHandler, mxRubberband, mxUtils } = MxGraph();
 
 export default function setInitialConfiguration(graph, diagramRef, toolbarRef) {
