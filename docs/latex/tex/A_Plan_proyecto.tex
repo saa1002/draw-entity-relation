@@ -80,39 +80,41 @@ La Figura~\ref{fig:cronograma_fases_proyecto} muestra una visión temporal resum
 
 \imagen{cronograma_fases_proyecto}{Cronograma resumido de los sprints adaptados del proyecto.}
 
-De forma complementaria al cronograma, la Tabla~\ref{tab:resumen_planificacion_esfuerzo} resume la relación entre los sprints adaptados, el periodo aproximado de realización, el trabajo abordado y el esfuerzo estimado. Esta planificación no se planteó como una división rígida de tareas cerradas desde el inicio, sino como una organización incremental basada en issues y milestones, ajustada conforme se iba comprendiendo mejor el sistema heredado y se validaban las ampliaciones realizadas.
+De forma complementaria al cronograma, la Tabla~\ref{tab:resumen_planificacion_esfuerzo} resume la relación entre los sprints adaptados, las fechas aproximadas de inicio y fin, el trabajo abordado y el esfuerzo estimado. Esta planificación no se planteó como una división rígida de tareas cerradas desde el inicio, sino como una organización incremental basada en issues y milestones, ajustada conforme se iba comprendiendo mejor el sistema heredado y se validaban las ampliaciones realizadas.
 
 \begin{table}[H]
 \centering
 \small
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{p{0.20\textwidth} p{0.18\textwidth} p{0.42\textwidth} r}
+\begin{tabular}{p{0.20\textwidth} p{0.13\textwidth} p{0.13\textwidth} p{0.36\textwidth} r}
 \toprule
-\textbf{Bloque de trabajo} & \textbf{Periodo aproximado} & \textbf{Trabajo principal realizado} & \textbf{Esfuerzo} \tabularnewline
+\textbf{Bloque de trabajo} & \textbf{Inicio} & \textbf{Fin} & \textbf{Trabajo principal realizado} & \textbf{Esfuerzo} \tabularnewline
 \midrule
-Preparación inicial & Enero--febrero & Configuración del entorno, revisión del repositorio, análisis inicial del proyecto heredado y organización del seguimiento en GitHub. & 65 h \tabularnewline
-Estabilización del núcleo y entidades débiles & Febrero--mayo & Revisión del núcleo del editor, corrección de inconsistencias, estabilización del modelo interno y soporte de entidades débiles. & 205 h \tabularnewline
-Refactorización y atributos avanzados & Mayo & Mejora progresiva de la estructura interna del código y ampliación del soporte de atributos compuestos y multivaluados. & 145 h \tabularnewline
-Relaciones ternarias & Mayo--junio & Implementación y revisión de relaciones ternarias, participantes, roles, atributos propios, transformación relacional y generación SQL. & 115 h \tabularnewline
-ISA y mejoras finales de usabilidad & Junio--julio & Soporte inicial de jerarquías ISA, importación/exportación, selección múltiple, ayuda integrada, ajustes visuales y mejoras de interacción. & 120 h \tabularnewline
-Memoria, anexos y revisión final & Junio--julio & Redacción y revisión de la memoria, anexos, documentación técnica, documentación de usuario y comprobaciones finales. & 63 h \tabularnewline
+Preparación inicial & 19 de enero & 11 de febrero & Configuración del entorno, revisión del repositorio, análisis inicial del proyecto heredado y organización del seguimiento en GitHub. & 65 h \tabularnewline
+Estabilización del núcleo y entidades débiles & 11 de febrero & 29 de abril & Revisión del núcleo del editor, comprensión del código heredado, mejora progresiva del dominio de JavaScript y soporte de entidades débiles. & 205 h \tabularnewline
+Refactorización y atributos avanzados & 30 de abril & 20 de mayo & Reorganización progresiva de partes del código, reducción de complejidad y ampliación del soporte de atributos compuestos y multivaluados. & 145 h \tabularnewline
+Relaciones ternarias & 20 de mayo & 8 de junio & Implementación y revisión de relaciones ternarias, participantes, roles, atributos propios, transformación relacional y generación SQL. & 115 h \tabularnewline
+ISA y mejoras finales de usabilidad & 8 de junio & 1 de julio & Soporte inicial de jerarquías ISA, importación/exportación, selección múltiple, ayuda integrada, ajustes visuales y mejoras de interacción. & 120 h \tabularnewline
+Memoria, anexos y revisión final & 1 de junio & 1 de julio & Redacción y revisión de la memoria, anexos, documentación técnica, documentación de usuario y comprobaciones finales. & 63 h \tabularnewline
 \midrule
-\textbf{Total} & & & \textbf{713 h} \tabularnewline
+\textbf{Total} & & & & \textbf{713 h} \tabularnewline
 \bottomrule
 \end{tabular}
 \caption{Resumen de planificación, seguimiento y esfuerzo estimado por bloque de trabajo.}
 \label{tab:resumen_planificacion_esfuerzo}
 \end{table}
 
-\subsection{Seguimiento y validación del proyecto}
+La distribución de horas debe interpretarse como una estimación razonada del esfuerzo real realizado, no como una predicción cerrada definida al inicio del proyecto. El segundo bloque concentra el mayor número de horas porque coincidió con la fase de mayor incertidumbre técnica: comprensión del código heredado, análisis de la integración con mxGraph, revisión de la sincronización entre el lienzo y el modelo interno, y mejora progresiva del dominio de JavaScript necesario para intervenir con seguridad en la aplicación. Esta fase tuvo un coste elevado porque antes de implementar nuevas funcionalidades fue necesario entender las dependencias existentes y evitar introducir cambios que rompieran comportamientos ya presentes.
+
+En los bloques posteriores, aunque se abordaron funcionalidades relevantes, el esfuerzo fue más contenido gracias al conocimiento adquirido durante la estabilización inicial y a la reorganización progresiva del código. En particular, la refactorización y la separación de responsabilidades en distintos ficheros facilitaron que las implementaciones posteriores, como relaciones ternarias, soporte inicial de ISA y mejoras de usabilidad, pudieran abordarse de forma más controlada. Por tanto, las horas asignadas a cada bloque no dependen únicamente del tamaño visible de la funcionalidad final, sino también del grado de incertidumbre, del coste de comprensión del sistema heredado y del esfuerzo necesario para mantener la coherencia entre lienzo, modelo interno, validación, transformación relacional y generación SQL.
+
+\subsection{Seguimiento del proyecto}
 
 El seguimiento del proyecto se realizó a partir de los milestones e issues definidos en GitHub, junto con las revisiones mantenidas con el tutor. Estas revisiones permitieron comprobar el avance del trabajo, ajustar prioridades y detectar problemas de enfoque tanto en la aplicación como en la memoria y los anexos.
 
-Los despliegues en Vercel fueron un apoyo importante en este proceso, ya que permitieron revisar versiones funcionales del editor directamente desde el navegador, sin necesidad de instalar el proyecto en local. De esta forma, los cambios integrados podían comprobarse sobre una versión accesible de la aplicación.
+Los despliegues en Vercel fueron un apoyo importante en este proceso, ya que permitieron revisar versiones funcionales del editor directamente desde el navegador, sin necesidad de instalar el proyecto en local. De esta forma, los cambios integrados podían comprobarse sobre una versión accesible de la aplicación y podían contrastarse de manera más sencilla durante el seguimiento del TFG.
 
-La validación técnica se realizó de forma progresiva durante el desarrollo. Algunas partes del proyecto se comprobaron mediante pruebas automáticas, especialmente aquellas relacionadas con validación, transformación relacional, generación SQL y comportamientos concretos del editor. Otras partes requirieron revisión manual, sobre todo las relacionadas con la interacción visual en el lienzo, la sincronización entre la vista y el modelo interno, la importación y exportación de diagramas y el comportamiento general de la interfaz.
-
-Esta validación no se concentró únicamente al final del proyecto. En cada sprint adaptado se revisó que las funcionalidades desarrolladas mantuvieran la coherencia entre el lienzo, el modelo interno, las validaciones, la transformación al modelo relacional y la generación SQL.
+La validación técnica detallada del sistema, incluyendo pruebas automáticas, pruebas de extremo a extremo, análisis estático, construcción de producción y revisión manual, se recoge en el Anexo D. En este apartado únicamente se deja constancia de que el desarrollo se realizó de forma incremental y que cada bloque de trabajo fue revisado antes de continuar con las siguientes ampliaciones.
 
 \section{Estudio de viabilidad}
 
@@ -152,7 +154,7 @@ Memoria, anexos y revisión final & 63 h \tabularnewline
 \label{tab:costes_personal_horas}
 \end{table}
 
-Para realizar la estimación económica se ha utilizado una retribución bruta orientativa de 15 €/h, correspondiente a una valoración prudente del trabajo de un perfil junior en un contexto académico. Con este criterio, el coste salarial bruto estimado es el siguiente:
+Para realizar la estimación económica se ha utilizado una retribución bruta orientativa de 15 €/h. Esta cifra se ha tomado como hipótesis razonada a partir de referencias salariales actuales para perfiles junior de desarrollo software en España, situadas aproximadamente en el rango de 22.000 € a 28.000 € brutos anuales \cite{italenters-fullstack-junior-2025}. Considerando como simplificación una jornada anual de 1.800 horas, coherente con la jornada máxima anual recogida en el convenio estatal de consultoría y tecnologías de la información \cite{boe-convenio-consultoria-2025}, una retribución bruta anual de 27.000 € equivale aproximadamente a 15 €/h. Por tanto, el valor utilizado no pretende representar un salario exacto, sino una referencia prudente para estimar el coste profesional del trabajo realizado.
 
 \begin{equation}
 \text{713 h} \times \text{15 €/h} = \text{10.695,00 €}
@@ -203,7 +205,9 @@ Por tanto, el coste de hardware imputado al proyecto es de 137,50 €.
 
 Las herramientas utilizadas durante el desarrollo no supusieron un coste económico directo. El proyecto se desarrolló con herramientas gratuitas o disponibles sin coste para el uso realizado, como GitHub, Vercel, Visual Studio Code, Node.js, npm, navegadores web y las librerías principales empleadas por la aplicación.
 
-También se utilizaron herramientas de apoyo para pruebas, formateo, control de versiones y redacción de la memoria, sin necesidad de contratar planes de pago. Por tanto, el coste directo asociado al software y a los servicios empleados se considera nulo.
+También se utilizaron herramientas de apoyo para pruebas, formateo, control de versiones y redacción de la memoria, sin necesidad de contratar planes de pago. Durante el desarrollo se empleó ChatGPT, en su modalidad gratuita, como herramienta de inteligencia artificial de apoyo auxiliar para tareas de revisión de redacción, contraste de explicaciones técnicas, análisis puntual de fragmentos de código y preparación de propuestas de documentación. Esta herramienta no sustituyó la revisión técnica del proyecto ni la validación manual o automática de la aplicación, sino que se utilizó como soporte durante el proceso de trabajo.
+
+Al no haberse contratado un plan de pago específico imputable al TFG, el coste directo asociado al software, servicios y herramientas de apoyo utilizadas se considera 0,00 €.
 
 \subsubsection{Coste total estimado}
 
@@ -228,6 +232,8 @@ Costes adicionales & 0,00 € \tabularnewline
 \caption{Coste total estimado del proyecto.}
 \label{tab:coste_total_proyecto}
 \end{table}
+
+Los costes adicionales se han considerado nulos como simplificación dentro del contexto académico del TFG. En un proyecto profesional podrían existir costes indirectos de oficina, electricidad, agua o conexión a Internet, pero en este caso no fueron contratados específicamente para el desarrollo del trabajo y su coste marginal resulta difícil de aislar de los gastos personales ordinarios.
 
 En conclusión, el proyecto fue viable económicamente dentro del contexto académico, ya que no requirió inversión directa en infraestructura ni contratación de servicios externos. La mayor parte del coste estimado corresponde al tiempo de desarrollo, análisis y documentación necesario para evolucionar una aplicación heredada de forma controlada.
 

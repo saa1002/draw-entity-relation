@@ -101,21 +101,33 @@ La lógica del editor se apoya en varios grupos de módulos. Los \textit{hooks} 
 
 Sobre la representación interna del diagrama trabajan los módulos de validación, transformación relacional y generación de SQL. La validación comprueba que el diagrama sea coherente dentro del alcance implementado. La transformación relacional construye una representación intermedia basada en tablas, columnas, claves primarias y claves foráneas. Finalmente, el servicio de generación de SQL convierte esa representación en un script compatible con el enfoque simplificado adoptado por la aplicación.
 
-\subsection{Organización interna del código}
+\subsection{Organización por módulos}
 
-La estructura del código fuente refleja esta separación de responsabilidades. El componente \texttt{DiagramEditor.js} actúa como orquestador principal del editor. En él se conservan la inicialización de mxGraph, las referencias principales, los efectos de ciclo de vida y la composición de los módulos extraídos.
+Además del diagrama de componentes, la Figura~\ref{fig:diagrama_paquetes_aplicacion} muestra una visión simplificada de la organización por módulos del código fuente. No se trata de paquetes en el sentido estricto de una aplicación Java, sino de una agrupación funcional de carpetas y módulos JavaScript que separan responsabilidades dentro de la aplicación React.
 
-Las acciones específicas del editor se agrupan en \textit{hooks}, como la gestión del historial, la persistencia, las acciones de atributos, relaciones, ISA y borrado. La interfaz contextual y las acciones globales se organizan en paneles diferenciados. Las utilidades del editor se dividen según su responsabilidad principal: integración con mxGraph, renderizado, sincronización, persistencia, selección y validación orientada a la interfaz.
+\imagen{diagrama_paquetes_aplicacion}{Diagrama UML de paquetes simplificado de la organización interna de la aplicación.}
 
-Fuera del componente visual, los módulos de dominio se organizan en torno al modelo E/R y al modelo relacional. La carpeta de dominio E/R agrupa reglas y funciones relacionadas con entidades, relaciones, atributos, ISA, composición de diagramas y validación. La parte relacional contiene la lógica de transformación desde el diagrama E/R hacia una representación basada en tablas. La generación final de SQL se mantiene en servicios específicos, separando la transformación conceptual del renderizado textual del script.
+El componente \texttt{DiagramEditor.js} actúa como orquestador principal del editor. Desde este componente se integran la inicialización del lienzo de mxGraph, las referencias principales del editor, los efectos de ciclo de vida y la composición de los módulos extraídos. Por este motivo, mantiene dependencias hacia los hooks del editor, los paneles de interfaz, las utilidades de integración con mxGraph y los módulos de dominio necesarios para validar y transformar el diagrama.
+
+Los módulos agrupados en \texttt{hooks/} concentran acciones ligadas al comportamiento del editor, como la gestión del historial, la persistencia, las acciones sobre atributos, relaciones, jerarquías ISA y borrado. Estos hooks dependen del estado del editor y de las utilidades necesarias para aplicar cambios sobre el modelo y el lienzo, pero evitan que toda la lógica quede concentrada en el componente principal.
+
+Los módulos de \texttt{panels/} contienen la interfaz lateral y los controles visibles para el usuario. Su responsabilidad principal es presentar acciones globales y contextuales, delegando la lógica de negocio en los hooks o en las funciones recibidas desde el componente principal. Esta separación permite modificar la disposición de la interfaz sin alterar directamente las reglas del modelo E/R.
+
+Las utilidades del editor se agrupan según su responsabilidad principal. Las utilidades de integración con mxGraph encapsulan operaciones relacionadas con el grafo visual; las de renderizado se encargan de crear o reconstruir elementos gráficos; las de sincronización mantienen la correspondencia entre el lienzo y la representación interna; y las de persistencia gestionan operaciones de importación, exportación y almacenamiento local.
+
+Los módulos de \texttt{domain/er} agrupan reglas y funciones propias del modelo Entidad-Relación, como entidades, relaciones, atributos, jerarquías ISA, composición de diagramas y validación. Estos módulos deberían mantenerse lo más independientes posible de la interfaz visual. Por su parte, \texttt{domain/relational} contiene la transformación desde el metamodelo E/R hacia una representación relacional basada en tablas, columnas, claves primarias y claves foráneas.
+
+Finalmente, los servicios de SQL se encargan de convertir la representación relacional en un script textual. Esta separación evita mezclar la decisión conceptual de qué tablas deben generarse con la forma concreta en la que dichas tablas se escriben en SQL. La dependencia con mxGraph queda concentrada principalmente en el editor y en las utilidades visuales, mientras que los módulos de dominio y transformación relacional se mantienen más cercanos a la lógica del modelo.
 
 \subsection{Mantenibilidad y extensibilidad}
 
-La arquitectura final no plantea una reescritura completa de la aplicación heredada. La evolución se realizó de forma incremental, separando responsabilidades allí donde aportaba claridad sin introducir riesgos innecesarios. Por este motivo, algunas partes especialmente acopladas a mxGraph, como la inicialización del lienzo y determinados efectos de sincronización, permanecen en el componente principal del editor.
+La organización arquitectónica descrita no pretende eliminar por completo el acoplamiento existente en la aplicación heredada, sino reducirlo de forma progresiva allí donde aporta claridad y menor riesgo de mantenimiento. Por este motivo, \texttt{DiagramEditor.js} conserva el papel de orquestador principal, mientras que las acciones específicas, los paneles de interfaz, las utilidades de integración con mxGraph, los módulos de dominio y los servicios de generación SQL se separan en módulos diferenciados.
 
-Esta organización facilita que futuras ampliaciones puedan localizar mejor el punto de cambio. Las reglas del dominio E/R deberían incorporarse en los módulos de dominio, las transformaciones hacia el modelo relacional en la parte relacional, la generación textual en los servicios SQL, las acciones de edición en los \textit{hooks} del editor y los cambios de interfaz en los paneles correspondientes.
+Esta separación facilita localizar el punto de cambio ante futuras ampliaciones. Las reglas propias del modelo Entidad-Relación deberían incorporarse en \texttt{domain/er}; las transformaciones hacia el modelo relacional, en \texttt{domain/relational}; la generación textual del script, en los servicios SQL; las acciones de edición, en los \textit{hooks} del editor; y los cambios de presentación, en los paneles o utilidades de renderizado correspondientes.
 
-Aun así, al tratarse de una aplicación heredada basada en mxGraph, sigue existiendo una dependencia práctica entre la representación visual y la representación interna durante la sincronización de elementos. Por ello, cualquier ampliación futura debería mantener la coherencia entre el lienzo, el metamodelo, la validación, la transformación relacional, la persistencia y la generación de SQL.
+Las dependencias entre módulos se han mantenido en un nivel limitado y orientado al flujo natural de la aplicación. La interfaz y el editor dependen de los módulos de edición y de integración visual; el dominio E/R alimenta la transformación relacional; y la representación relacional se utiliza como entrada para la generación SQL. La dependencia con mxGraph queda concentrada principalmente en el editor y en las utilidades visuales, evitando extenderla innecesariamente a los módulos de dominio.
+
+Aun así, sigue existiendo una dependencia práctica entre la representación visual y la representación interna durante la sincronización de elementos. Esta limitación es coherente con el origen heredado del proyecto y con la decisión de no realizar una reescritura completa del editor. Por ello, cualquier ampliación futura debería mantener la coherencia entre el lienzo, el metamodelo, la validación, la transformación relacional, la persistencia y la generación de SQL.
 
 \section{Diseño procedimental}
 
@@ -143,21 +155,57 @@ Si el diagrama supera la validación, la aplicación transforma el modelo Entida
 
 La existencia de una representación intermedia permite separar la lógica de transformación de la generación concreta del script SQL. De esta forma, la aplicación primero decide qué tablas y restricciones deben existir, y después construye el texto SQL correspondiente.
 
-\subsection{Generación de SQL}
+\subsection{Generación de SQL y ordenación de claves foráneas}
 
-La generación de SQL toma como entrada la representación relacional obtenida en la fase anterior. A partir de ella, se generan las sentencias necesarias para crear las tablas y definir sus claves principales y foráneas.
+Una vez obtenida la representación relacional, la aplicación genera un script SQL a partir de las tablas, columnas, claves primarias y claves foráneas calculadas durante la transformación. Esta fase no vuelve a interpretar directamente el diagrama E/R, sino que trabaja sobre el modelo relacional intermedio generado en la fase anterior.
 
-En la versión final se opta por una salida SQL más legible, evitando nombres explícitos de restricciones de clave foránea cuando no resultan necesarios y simplificando las referencias cuando una clave foránea referencia la clave primaria completa de la tabla destino. Esta decisión no modifica la transformación relacional previa, sino únicamente la forma en la que se renderiza el script SQL generado.
+Uno de los aspectos más relevantes de esta generación es el tratamiento de las claves foráneas. Para que el script resultante sea más legible y pueda ejecutarse de forma ordenada, el generador intenta crear primero las tablas de las que dependen otras tablas. De esta forma, muchas claves foráneas pueden incluirse directamente dentro de la sentencia \texttt{CREATE TABLE} correspondiente.
+
+El procedimiento parte del conjunto de tablas generadas y calcula, para cada una de ellas, los grupos de claves foráneas asociados. A continuación, mantiene un conjunto de tablas ya creadas y selecciona en cada iteración una tabla cuyas claves foráneas no dependan de tablas pendientes de creación. Si existe una tabla que cumple esta condición, se añade al orden de creación. Si no existe, se considera que hay una dependencia bloqueante, por ejemplo una dependencia circular, y las claves foráneas que impiden avanzar se aplazan para generarse al final mediante sentencias \texttt{ALTER TABLE}.
+
+Este enfoque permite mantener una salida SQL compacta en los casos habituales, incorporando las claves foráneas dentro de los \texttt{CREATE TABLE}, pero conserva un mecanismo de respaldo para los casos en los que no es posible resolver todas las dependencias únicamente mediante reordenación de tablas.
+
+El pseudocódigo simplificado del algoritmo es el siguiente:
+
+\begin{verbatim}
+entrada: lista de tablas del modelo relacional
+
+tablasPendientes <- copia de la lista de tablas
+tablasOrdenadas <- []
+tablasCreadas <- conjunto vacío
+clavesForaneasAplazadas <- []
+
+mientras tablasPendientes no esté vacía:
+buscar una tabla T en tablasPendientes tal que:
+todas sus claves foráneas apunten a tablas ya creadas,
+a la propia tabla,
+o a tablas externas al conjunto generado
+
+si existe T:
+    mover T de tablasPendientes a tablasOrdenadas
+    añadir nombre(T) a tablasCreadas
+
+si no existe T:
+    seleccionar una tabla pendiente
+    identificar las claves foráneas que bloquean su creación
+    añadir esas claves a clavesForaneasAplazadas
+    mover la tabla seleccionada a tablasOrdenadas
+    añadir su nombre a tablasCreadas
+
+para cada tabla en tablasOrdenadas:
+generar sentencia CREATE TABLE
+
+para cada clave foránea aplazada:
+generar sentencia ALTER TABLE
+\end{verbatim}
+
+La Figura~\ref{fig:actividad_ordenacion_sql} representa este proceso mediante un diagrama de actividad UML. En ella se observa que el algoritmo intenta resolver primero las dependencias mediante ordenación de tablas y solo recurre a claves foráneas aplazadas cuando no puede seleccionar ninguna tabla libre de dependencias bloqueantes.
+
+\imagen{actividad_ordenacion_sql}{Diagrama de actividad UML del algoritmo de ordenación de tablas y claves foráneas.}
+
+En la versión final de la aplicación, la salida SQL se mantiene deliberadamente sencilla. Se omiten nombres explícitos de restricciones de clave foránea cuando no resultan necesarios y se simplifican las referencias cuando una clave foránea apunta a la clave primaria completa de la tabla destino. Esta decisión afecta al renderizado textual del SQL, no a la transformación relacional previa.
 
 La salida SQL debe entenderse como una traducción razonable del modelo relacional generado por la aplicación, no como un generador industrial completo para cualquier sistema gestor de bases de datos. Su objetivo principal dentro del proyecto es servir como apoyo académico y como punto de partida para comprender la transformación desde el modelo Entidad-Relación.
-
-La Figura \ref{fig:flujo_validacion_sql} resume este proceso: la representación interna se valida antes de construir la representación relacional y solo después se genera el script SQL correspondiente.
-
-\imagen{flujo_validacion_sql}{Flujo de validación, transformación relacional y generación de SQL.}
-
-La Figura \ref{fig:secuencia_generacion_sql} muestra el mismo proceso desde el punto de vista de la interacción entre los principales componentes implicados. La interfaz del editor inicia la operación a partir de la acción del usuario, consulta la representación interna del diagrama, solicita la validación y, si no existen errores bloqueantes, continúa con la transformación relacional y la generación del script SQL.
-
-\imagen{secuencia_generacion_sql}{Diagrama de secuencia de validación, transformación relacional y generación de SQL.}
 
 \subsection{Importación, combinación y generación de estructuras}
 
@@ -169,13 +217,61 @@ Estas operaciones se diseñan como ayudas a la edición, no como mecanismos de f
 
 \section{Diseño de interfaces}
 
-El diseño de la interfaz se centra en facilitar la edición de diagramas Entidad-Relación dentro de un lienzo web. La aplicación no se plantea como una herramienta de dibujo genérica, sino como un editor orientado a elementos concretos del modelo E-R. Por ello, las acciones disponibles dependen del tipo de elemento seleccionado y del contexto del diagrama.
+El diseño de la interfaz se centra en facilitar la edición de diagramas Entidad-Relación dentro de un lienzo web. La aplicación no se plantea como una herramienta de dibujo genérica, sino como un editor orientado a elementos concretos del modelo E/R. Por este motivo, la interfaz combina un lienzo de edición, una paleta lateral de elementos, acciones generales del diagrama, acciones contextuales dependientes de la selección y diálogos de configuración para aquellas operaciones que requieren introducir varios datos.
 
-La interfaz se organiza alrededor del lienzo principal, donde el usuario crea y manipula entidades, atributos, relaciones, entidades débiles, relaciones ternarias y jerarquías ISA sencillas. Junto al lienzo se ofrecen acciones generales, como validar el diagrama, generar SQL, importar o exportar JSON, exportar la imagen del diagrama, ajustar la vista, generar estructuras básicas y reiniciar el contenido previa confirmación.
+No se conservan bocetos iniciales independientes de la interfaz, ya que el diseño evolucionó de forma incremental sobre una aplicación heredada. Por ello, en esta sección se utilizan bocetos esquemáticos elaborados a partir de la versión final del editor. Estos bocetos no representan una propuesta futura ni una fase previa completa de diseño gráfico, sino una documentación simplificada de las principales decisiones de interfaz aplicadas durante el proyecto.
 
-Una decisión relevante del diseño de interfaz es el uso de acciones contextuales. Cuando el usuario selecciona un único elemento, la aplicación muestra acciones específicas para ese tipo de elemento, como añadir atributos, configurar relaciones, marcar una entidad como débil o trabajar con una jerarquía ISA. En cambio, cuando existe una selección múltiple, se ocultan las acciones individuales y se priorizan operaciones aplicables al conjunto, como mover o eliminar los elementos seleccionados.
+\subsection{Estructura general de la interfaz}
 
-También se incorporan elementos de apoyo al usuario, como la ayuda integrada, la información del proyecto y el cambio de idioma de la interfaz. Estas funcionalidades no modifican la semántica del modelo E-R, pero mejoran la comprensión del editor y facilitan su uso en un contexto académico.
+La interfaz se organiza en torno a dos zonas principales: el lienzo de edición y el panel lateral. El lienzo ocupa la parte central de la pantalla y permite crear, seleccionar, mover y conectar los elementos del diagrama. El panel lateral concentra la paleta de elementos E/R y las acciones disponibles para el usuario.
+
+\imagen{boceto_interfaz_general}{Boceto de la estructura general de la interfaz del editor.}
+
+La Figura~\ref{fig:boceto_interfaz_general} muestra esta organización general. En el lienzo se representa el contenido principal del editor mediante entidades, relaciones y atributos. En el panel lateral se agrupan las acciones de creación, las acciones contextuales asociadas a la selección actual y las acciones globales del diagrama. Además, la interfaz reserva una zona para mostrar información de versión o construcción de la aplicación.
+
+Esta distribución permite mantener visible el diagrama mientras el usuario accede a las operaciones principales. También evita dispersar las acciones en menús independientes, lo que facilita el uso de la herramienta en un contexto académico y de aprendizaje del modelo E/R.
+
+\subsection{Botonera general del diagrama}
+
+La botonera general agrupa las acciones que afectan al conjunto del diagrama o al funcionamiento global de la aplicación. Entre ellas se incluyen la validación del diagrama, la generación de SQL, la importación y exportación JSON, la exportación visual, el ajuste de vista, la generación de estructuras predefinidas, el reinicio del diagrama y el acceso a información de ayuda.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[
+        height=0.78\textheight,
+        keepaspectratio
+    ]{img/boceto_botonera_general}
+    \caption{Boceto de la botonera general del diagrama.}
+    \label{fig:boceto_botonera_general}
+\end{figure}
+
+La Figura~\ref{fig:boceto_botonera_general} representa la organización de esta botonera. La parte superior del panel incluye el nombre de la aplicación y el selector de idioma. A continuación se sitúa la paleta de elementos E/R, desde la que el usuario puede crear elementos como entidades, relaciones o jerarquías ISA. Después se agrupan las acciones de historial, las acciones globales del diagrama y las opciones de información.
+
+La separación por bloques facilita localizar las operaciones disponibles. Las acciones relacionadas con el diagrama se mantienen diferenciadas de la paleta de elementos y de las opciones informativas. De esta forma, el usuario puede distinguir entre crear nuevos elementos, modificar el estado global del diagrama o acceder a ayuda sobre la aplicación.
+
+\subsection{Acciones contextuales}
+
+Una decisión relevante del diseño de interfaz es el uso de acciones contextuales. Cuando el usuario selecciona un único elemento del diagrama, el panel lateral muestra operaciones específicas para ese tipo de elemento. En cambio, cuando no hay una selección aplicable o cuando la selección contiene varios elementos, se evita mostrar acciones individuales que podrían resultar ambiguas.
+
+\imagen{boceto_acciones_contextuales}{Boceto de la botonera contextual para una entidad seleccionada.}
+
+La Figura~\ref{fig:boceto_acciones_contextuales} muestra un ejemplo de entidad seleccionada. En este caso, el panel lateral identifica la selección actual y presenta acciones propias de una entidad, como añadir un atributo, esconder sus atributos, marcarla como entidad débil o eliminarla. La entidad seleccionada se resalta visualmente en el lienzo para indicar que las acciones mostradas se aplican sobre ella.
+
+Este diseño reduce la cantidad de opciones visibles en cada momento y evita mostrar operaciones que no tienen sentido para la selección actual. Además, facilita la extensión futura de la interfaz, ya que nuevas acciones pueden asociarse al tipo de elemento correspondiente sin modificar la organización general del panel.
+
+\subsection{Diálogos de configuración}
+
+Además de la botonera lateral, la aplicación utiliza diálogos para operaciones que requieren introducir o revisar varios datos antes de modificar el diagrama. Este enfoque se aplica, por ejemplo, en la configuración de relaciones, la asignación de cardinalidades, la importación de diagramas o la configuración de jerarquías ISA dentro del alcance implementado.
+
+\imagen{boceto_dialogo_configuracion}{Boceto de los diálogos de configuración de relaciones y cardinalidades.}
+
+La Figura~\ref{fig:boceto_dialogo_configuracion} muestra un boceto simplificado de un diálogo de configuración de relación. En este tipo de operación, el usuario debe revisar los participantes de la relación y establecer las cardinalidades correspondientes. Por ello, la información se presenta en una ventana separada del panel lateral, con controles específicos y acciones de confirmación o cancelación.
+
+El uso de diálogos permite separar las operaciones simples, que pueden ejecutarse directamente desde el panel, de aquellas que requieren una configuración previa. En el caso de las relaciones, esta separación resulta especialmente útil porque la representación visual del lienzo debe mantenerse coherente con los participantes, las cardinalidades y la representación interna del diagrama.
+
+\subsection{Criterios de diseño aplicados}
+
+El diseño final de la interfaz sigue varios criterios prácticos. En primer lugar, se prioriza la visibilidad del lienzo, ya que el diagrama es el elemento central de trabajo. En segundo lugar, se separan la paleta de elementos, las acciones globales y las acciones contextuales, reduciendo la carga visual y evitando operaciones no aplicables. En tercer lugar, las operaciones que requieren varios parámetros se desplazan a diálogos específicos para que el usuario pueda revisar la configuración antes de confirmar los cambios.
 
 El diseño visual mantiene la notación propia del modelo Entidad-Relación: entidades, relaciones, atributos, atributos clave, atributos compuestos, atributos multivaluados, entidades débiles, relaciones identificadoras e ISA se representan mediante convenciones gráficas diferenciadas. De esta forma, la interfaz busca que el usuario pueda reconocer los elementos del diagrama sin que las mejoras de usabilidad alteren su significado académico.
 
