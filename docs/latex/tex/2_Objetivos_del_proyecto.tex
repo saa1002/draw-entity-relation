@@ -2,11 +2,11 @@
 
 \section{Objetivos generales}
 
-El objetivo principal de este Trabajo Fin de Grado es analizar y continuar el desarrollo de una aplicación web ya existente para el diseño de diagramas Entidad-Relación. El trabajo no parte de una herramienta creada desde cero, sino de un editor heredado que ya contaba con una base funcional y que se toma como punto de partida para introducir mejoras, ampliar sus capacidades y reforzar su coherencia interna.
+El objetivo principal de este Trabajo Fin de Grado es analizar y continuar el desarrollo de una aplicación web existente para el diseño de diagramas Entidad-Relación. El proyecto parte de un editor heredado que ya contaba con una base funcional, y se centra en evolucionarlo de forma controlada, ampliando sus capacidades y reforzando su coherencia interna.
 
-Esta evolución se plantea manteniendo la relación entre las distintas partes de la aplicación. Por un lado, el usuario trabaja con una representación visual del diagrama en el lienzo. Por otro, la aplicación mantiene un modelo interno que debe reflejar correctamente lo que se ha diseñado. A partir de ese modelo se aplican validaciones y, cuando corresponde, se realizan transformaciones hacia el modelo relacional y la generación de SQL.
+Además de esta dimensión técnica, el trabajo tiene una orientación docente. La aplicación se plantea como una herramienta de apoyo para que los estudiantes puedan practicar el modelado Entidad-Relación con una notación cercana a la utilizada en la asignatura de Bases de Datos, validar sus diagramas y observar la transformación hacia el modelo relacional y SQL.
 
-Por tanto, el objetivo general no se limita a añadir nuevas opciones al editor, sino a hacer que estas encajen dentro del funcionamiento global de la herramienta. Para ello resulta necesario comprender el sistema heredado, revisar sus decisiones de diseño y continuar su desarrollo de forma progresiva y controlada.
+Por tanto, el objetivo general no se limita a añadir nuevas opciones al editor, sino a hacer que estas encajen dentro del funcionamiento global de la herramienta. Para ello resulta necesario mantener la relación entre el lienzo visual, el modelo interno, las reglas de validación, la transformación relacional, la generación SQL y la experiencia de edición.
 
 \section{Objetivos específicos}
 
@@ -17,17 +17,17 @@ A partir del objetivo general anterior, se plantean los siguientes objetivos esp
 
 \item Revisar y estabilizar la relación entre los elementos visuales del lienzo y la representación interna del diagrama, evitando inconsistencias entre lo que el usuario ve y lo que la aplicación procesa.
 
-\item Ampliar la representación interna de los diagramas Entidad-Relación para soportar nuevos elementos y propiedades, manteniendo la compatibilidad con la persistencia, la importación y la exportación de diagramas.
+\item Ampliar el soporte del modelo Entidad-Relación incorporando elementos como entidades débiles, dependencias por identificación, atributos compuestos y multivaluados, relaciones ternarias con roles y un soporte inicial para jerarquías ISA.
 
-\item Incorporar soporte para elementos adicionales del modelo Entidad-Relación, como entidades débiles, dependencias por identificación, atributos compuestos, atributos multivaluados, relaciones ternarias con roles y un soporte inicial para jerarquías ISA.
-
-\item Mantener la coherencia entre la parte visual del editor, las reglas de validación, la transformación al modelo relacional y la generación de SQL, de forma que los elementos soportados puedan traducirse de manera razonable a tablas, columnas, claves primarias y claves foráneas.
+\item Mantener la coherencia entre la parte visual del editor, las reglas de validación, la transformación al modelo relacional, la generación de SQL y los mecanismos de persistencia, importación y exportación.
 
 \item Mejorar la validación del diagrama y la comunicación de errores al usuario, haciendo que los mensajes sean más claros y, cuando sea posible, vinculados a los elementos concretos relacionados con cada problema.
 
-\item Incorporar mejoras de usabilidad y apoyo a la edición, incluyendo una organización más clara de la interfaz, acciones contextuales más comprensibles, selección múltiple, ayuda integrada, soporte básico de idioma y operaciones de importación, exportación y generación de estructuras de ejemplo.
+\item Reforzar el uso docente de la aplicación, facilitando que el usuario pueda relacionar el diagrama Entidad-Relación que construye con las validaciones aplicadas, el modelo relacional resultante y el SQL generado.
+
+\item Incorporar mejoras de usabilidad y apoyo a la edición, como una organización más clara de la interfaz, acciones contextuales, selección múltiple, acceso a información de ayuda, soporte básico de idioma, importación, exportación y generación de estructuras de ejemplo.
 
 \item Comprobar el comportamiento de la aplicación mediante pruebas automatizadas cuando proceda y mediante revisión manual en aquellos casos que requieran validación funcional o visual.
 
-\item Documentar el trabajo realizado, tanto desde el punto de vista del desarrollo como desde el uso de la aplicación y la evolución seguida durante el proyecto.
+\item Documentar el trabajo realizado desde el punto de vista del desarrollo, el diseño, las pruebas, el uso de la aplicación y la evolución seguida durante el proyecto.
 \end{itemize}

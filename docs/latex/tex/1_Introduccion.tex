@@ -2,29 +2,35 @@
 
 \section{Contexto del proyecto}
 
-Cuando se diseña una base de datos, antes de crear tablas o escribir sentencias SQL, es necesario representar de forma conceptual la información del dominio y las relaciones existentes entre sus elementos. El modelo Entidad-Relación permite realizar esta representación mediante entidades, atributos e interrelaciones, facilitando el análisis previo al paso al modelo relacional.
+Cuando se diseña una base de datos, antes de decidir su implementación en un modelo lógico concreto, es necesario representar de forma conceptual la información del dominio y las relaciones existentes entre sus elementos. El modelo Entidad-Relación, propuesto por Chen~\cite{chen1976}, permite realizar esta representación mediante entidades, atributos e interrelaciones, facilitando el análisis del problema antes de abordar su transformación posterior.
 
-Este Trabajo Fin de Grado se sitúa en ese contexto, pero no aborda el desarrollo de una herramienta desde cero. El proyecto se centra en la evolución de UBU E-R App, anteriormente denominada Draw E-R App, una aplicación web para la creación de diagramas Entidad-Relación desarrollada con React y mxGraph. La aplicación heredada ya ofrecía una base funcional, pero requería análisis, estabilización y ampliación para mejorar la coherencia entre el diagrama editado en el lienzo, el modelo interno, las validaciones, la transformación relacional y la generación de SQL.
+Este Trabajo Fin de Grado se sitúa en ese contexto, pero no aborda el desarrollo de una herramienta desde cero. El proyecto se centra en la evolución de UBU E-R App, anteriormente denominada Draw E-R App, una aplicación web para la creación de diagramas Entidad-Relación desarrollada con React y mxGraph a partir del trabajo previo de Rubén Maté Iturriaga~\cite{mate2024drawERApp} y del repositorio original de la aplicación~\cite{mate2024drawERRepo}. La aplicación heredada ya ofrecía una base funcional, pero requería análisis, estabilización y ampliación para mejorar la coherencia entre el diagrama editado en el lienzo, el modelo interno, las validaciones, la transformación relacional y la generación de SQL.
 
-La Figura \ref{fig:editor_general} muestra una vista general del editor, donde se aprecia el lienzo de trabajo, el panel de acciones y la representación visual de un diagrama Entidad-Relación sencillo.
+A fin de ofrecer una primera visión de la aplicación, la Figura~\ref{fig:editor_general} muestra una vista general del editor, donde se aprecia el lienzo de trabajo, el panel de acciones y la representación visual de un diagrama Entidad-Relación sencillo.
 
-\imagen{editor_general}{Vista general del editor web con un diagrama Entidad-Relación cargado.}{0.85}
+\imagen{editor_general}{Vista general del editor web con un diagrama Entidad-Relación sencillo.}{0.85}
 
 \section{Motivación}
 
-Aunque existen distintas herramientas para crear diagramas, muchas de ellas están pensadas como editores gráficos generales y no siempre encajan bien con el trabajo específico sobre diagramas Entidad-Relación. En estos diagramas no solo importa dibujar elementos, sino que también debe mantenerse una relación clara entre lo que se muestra en pantalla y el significado que tiene dentro del modelo.
+La motivación de este trabajo surge de una necesidad práctica detectada en el aprendizaje del diseño de bases de datos. Aunque existen numerosas herramientas para crear diagramas, muchas están orientadas al modelado con UML, a diagramas físicos de bases de datos o a notaciones de tipo \textit{crow's foot}. Algunas incluso se presentan como herramientas para diagramas E/R, aunque no sigan de forma fiel la notación utilizada habitualmente en la docencia del modelo Entidad-Relación.
 
-La motivación de este trabajo no fue sustituir a esas herramientas generales de diagramación, sino continuar una aplicación académica ya existente para el modelado de diagramas Entidad-Relación. En lugar de comenzar desde cero, el proyecto permite trabajar sobre una base previa, analizar sus limitaciones y evolucionarla poco a poco, manteniendo una herramienta accesible desde el navegador y orientada principalmente a un uso académico.
+Esta situación dificulta que los estudiantes puedan practicar con una herramienta gratuita, accesible y cercana a los ejemplos vistos en clase. En este contexto, resulta útil disponer de una aplicación que no solo permita dibujar entidades y relaciones, sino también validar el diagrama, entender su transformación al modelo relacional y observar el SQL derivado.
 
-Además, el proyecto permite relacionar dos aspectos importantes del diseño de bases de datos: la representación conceptual mediante diagramas y su posterior transformación hacia un esquema relacional. Por ello, el trabajo no se centra únicamente en la edición gráfica, sino también en la coherencia entre el diagrama construido, las validaciones aplicadas y la salida SQL generada.
+Por ello, la evolución de UBU E-R App tiene una motivación principalmente docente. El objetivo no es competir con herramientas profesionales de diseño de bases de datos, sino avanzar hacia una aplicación que ayude a practicar el modelado conceptual y refuerce la comprensión de las reglas de transformación al modelo relacional.
 
 \section{Punto de partida}
 
-El proyecto parte de una aplicación web previa orientada al modelado de diagramas Entidad-Relación, desarrollada con React y la librería mxGraph. Esta aplicación ya contaba con una base funcional para trabajar con entidades, atributos y relaciones, además de incluir mecanismos de validación y generación de SQL.
+El proyecto parte de una aplicación web previa, denominada Draw E-R App, orientada al modelado de diagramas Entidad-Relación con React y mxGraph. Esta versión ya ofrecía una base funcional para trabajar con entidades, atributos y relaciones, además de incluir mecanismos iniciales de validación y generación de SQL.
 
-A partir de ese punto, este Trabajo Fin de Grado se centra en analizar el funcionamiento interno del editor y continuar su evolución. Esto implica trabajar sobre código ya existente, comprender decisiones de diseño heredadas y ampliar el soporte del sistema sin perder la relación entre la representación visual del diagrama y el modelo interno que maneja la aplicación.
+A partir de ese punto, este Trabajo Fin de Grado se centra en analizar el funcionamiento interno del editor, detectar limitaciones y evolucionarlo de forma incremental. El trabajo realizado no consistió en construir la herramienta desde cero, sino en mejorar la coherencia entre la representación visual del diagrama, el modelo interno, la validación, la transformación relacional, la generación SQL, la persistencia y la experiencia de edición.
 
-Por tanto, el trabajo realizado no consistió en construir el editor desde cero, sino en comprender su funcionamiento interno, detectar limitaciones y evolucionarlo de forma incremental.
+Como estimación razonada, puede considerarse que aproximadamente un 40~\% del resultado final corresponde a la base heredada y un 60~\% al trabajo realizado durante este proyecto. Esta estimación no mide líneas de código, sino alcance funcional y técnico: la versión previa aportaba el editor inicial y una base de validación y generación SQL, mientras que este TFG incorpora estabilización, ampliación del soporte E/R, mejoras de transformación relacional y SQL, persistencia, usabilidad, pruebas y documentación.
+
+La versión previa del proyecto puede consultarse en \href{https://draw-entity-relation.vercel.app/}{el despliegue original en Vercel}, mientras que la versión evolucionada está disponible en \href{https://draw-entity-relation-opal.vercel.app/}{el despliegue actual de UBU E-R App}. Las Figuras~\ref{fig:vercel_ruben} y~\ref{fig:vercel_actual} muestran la diferencia visual entre ambos despliegues: la versión heredada presenta una interfaz más básica, mientras que la versión actual incorpora una organización más completa del panel lateral, branding UBU, selector de idioma, acciones de validación, generación, importación y exportación, e información de apoyo.
+
+\imagen{vercel_ruben}{Vista de la versión previa de Draw E-R App desplegada en Vercel.}{0.85}
+
+\imagen{vercel_actual}{Vista de la versión evolucionada de UBU E-R App desplegada en Vercel.}{0.85}
 
 \section{Problema abordado}
 
@@ -38,27 +44,23 @@ El alcance de este Trabajo Fin de Grado se centra en la evolución de un editor 
 
 A partir de ese punto, el trabajo realizado incluye el análisis del sistema previo, la estabilización de partes relevantes del editor y la ampliación controlada de sus capacidades. El eje principal del desarrollo ha sido mantener la coherencia entre lo que el usuario diseña en el lienzo, la representación interna del diagrama, las validaciones aplicadas, la transformación al modelo relacional y la generación de SQL.
 
-Dentro del alcance implementado se incluyen mejoras en la representación interna del diagrama, en las reglas de validación, en la transformación al modelo relacional y en la generación del script SQL, así como la incorporación de nuevos elementos del modelo Entidad-Relación soportados por la aplicación. También se han añadido mejoras de interacción y usabilidad orientadas a facilitar el trabajo con el editor, como la selección múltiple, la ayuda integrada, opciones de importación y exportación, y ajustes visuales de la interfaz.
+Dentro del alcance implementado se incluyen mejoras en la representación interna del diagrama, en las reglas de validación, en la transformación al modelo relacional y en la generación del script SQL, así como la incorporación de nuevos elementos del modelo Entidad-Relación soportados por la aplicación. También se han añadido mejoras de interacción y usabilidad orientadas a facilitar el trabajo con el editor, como la selección múltiple, el acceso a información de ayuda, opciones de importación y exportación, y ajustes visuales de la interfaz.
 
 Al tratarse de la continuación de una aplicación existente, la contribución propia de este trabajo se delimita en el análisis del sistema heredado, la estabilización de su núcleo funcional, la ampliación de elementos E/R soportados, la revisión de la transformación relacional y SQL, las mejoras de persistencia, importación, exportación y edición, así como la documentación técnica y de usuario asociada. La base inicial del editor no se presenta como desarrollo propio completo, sino como punto de partida sobre el que se ha realizado la evolución descrita.
 
-No se pretende construir una herramienta profesional completa de diseño de bases de datos ni cubrir todas las variantes posibles del modelo Entidad-Relación. Quedan fuera del alcance implementado funcionalidades avanzadas como las agregaciones, la cobertura completa de jerarquías ISA, la herencia múltiple real, la gestión de usuarios, la persistencia remota o la configuración detallada de tipos de datos SQL. Estas limitaciones se consideran decisiones de alcance del proyecto y posibles líneas de trabajo futuro.
+No se pretende construir una herramienta profesional completa de diseño de bases de datos ni cubrir todas las variantes posibles del modelo Entidad-Relación. Quedan fuera del alcance implementado funcionalidades avanzadas como las agregaciones, las restricciones completas de jerarquías ISA, la herencia múltiple, la gestión de usuarios, la persistencia remota o la configuración detallada de tipos de datos SQL. Estas limitaciones se consideran decisiones de alcance del proyecto y posibles líneas de trabajo futuro.
 
 \section{Materiales entregados}
 
-Junto con esta memoria se entregan varios documentos y recursos asociados al Trabajo Fin de Grado. Estos materiales complementan la explicación del proyecto y permiten revisar tanto el resultado obtenido como los elementos necesarios para su ejecución y evaluación.
+Junto con esta memoria se entregan los materiales necesarios para revisar, ejecutar y evaluar el proyecto:
 
 \begin{itemize}
-\item \textbf{Memoria del proyecto}: documento principal del TFG, en el que se presenta el contexto, los objetivos, la base teórica, el desarrollo realizado y las conclusiones obtenidas.
+\item \textbf{Memoria y anexos}: documentación principal del TFG, incluyendo planificación, requisitos, diseño, documentación técnica, manual de usuario y sostenibilización curricular.
 
-\item \textbf{Anexos}: documento complementario que recoge información más detallada sobre la planificación, los requisitos, el diseño, la documentación técnica, la documentación de usuario y otros aspectos asociados al proyecto.
+\item \textbf{Aplicación web desplegada}: versión funcional de UBU E-R App publicada en Vercel. Acceso: \href{https://draw-entity-relation-opal.vercel.app/}{aplicación desplegada en Vercel}.
 
-\item \textbf{Aplicación web desplegada}: versión funcional de UBU E-R App publicada en Vercel, accesible desde el navegador para facilitar su revisión sin necesidad de instalar el proyecto en local. Acceso: \href{https://draw-entity-relation-opal.vercel.app/}{aplicación desplegada en Vercel}.
+\item \textbf{Repositorio Git del proyecto}: código fuente, historial de desarrollo e instrucciones de instalación y ejecución~\cite{alba2026ubuERRepo}. Acceso: \href{https://github.com/saa1002/draw-entity-relation}{repositorio del proyecto}.
 
-\item \textbf{Repositorio Git del proyecto}: repositorio que contiene el código fuente de la aplicación, la evolución del desarrollo y los recursos necesarios para su instalación y ejecución. Acceso: \href{https://github.com/saa1002/draw-entity-relation}{repositorio del proyecto}.
-
-\item \textbf{Instrucciones de instalación y ejecución}: indicaciones incluidas en el repositorio para preparar el entorno local, instalar dependencias, ejecutar la aplicación y lanzar las comprobaciones disponibles.
-
-\item \textbf{Ayuda integrada en la aplicación}: información accesible desde la propia interfaz del editor para orientar al usuario en el uso básico de la herramienta y en algunas operaciones relevantes.
+\item \textbf{Material complementario}: información de ayuda disponible desde la interfaz y vídeos de demostración del funcionamiento de la aplicación.
 \end{itemize}
 

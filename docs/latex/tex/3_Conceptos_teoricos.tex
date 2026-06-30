@@ -2,35 +2,29 @@
 
 \section{Modelo Entidad-Relación}
 
-El modelo Entidad-Relación es un modelo conceptual utilizado para representar la información de un dominio antes de llevarla a una base de datos concreta. Fue propuesto por Chen como una forma de describir la información mediante entidades y relaciones, separando el diseño conceptual de los detalles propios de la implementación final \cite{chen1976}.
+El modelo Entidad-Relación es un modelo conceptual utilizado para representar la información de un dominio antes de decidir su implementación en un modelo lógico concreto. Fue propuesto por Chen como una forma de describir la información mediante entidades e interrelaciones, separando el diseño conceptual de los detalles propios de la implementación final~\cite{chen1976}.
 
-Esta separación resulta útil porque permite razonar primero sobre el problema que se quiere representar, sin empezar directamente por tablas, columnas o sentencias SQL. De esta forma, el diseño puede centrarse en identificar qué elementos intervienen, qué información se almacena sobre ellos y cómo se relacionan entre sí.
+Esta separación permite razonar primero sobre el problema que se quiere representar, sin empezar directamente por el modelo lógico, que habitualmente para los estudiantes consiste en definir tablas, columnas o sentencias SQL. Aunque en este trabajo la transformación posterior se realiza hacia el modelo relacional, el modelo E/R no depende necesariamente de dicho modelo y podría servir como punto de partida para otras formas de representación lógica.
 
-En el contexto de este trabajo, el modelo Entidad-Relación sirve como base teórica para el editor desarrollado. La aplicación permite representar visualmente diagramas E/R y, a partir de esa representación, aplicar validaciones y transformaciones posteriores hacia el modelo relacional. Por ello, los elementos gráficos del editor no deben entenderse solo como dibujos, sino como partes de un modelo con significado propio.
-
-La Figura \ref{fig:er_basico} muestra un ejemplo sencillo de diagrama Entidad-Relación, en el que se representan entidades, atributos, claves, una interrelación y sus cardinalidades.
+En el contexto de este trabajo, el modelo Entidad-Relación sirve como base teórica para el editor desarrollado. La Figura~\ref{fig:er_basico} muestra un ejemplo sencillo con entidades, atributos, claves, una interrelación y cardinalidades.
 
 \imagen{er_basico}{Ejemplo básico de diagrama Entidad-Relación con entidades, atributos, claves, una interrelación y cardinalidades.}{0.70}
 
 \section{Elementos básicos del modelo}
 
-Un diagrama Entidad-Relación se construye a partir de varios elementos que permiten describir la información de un dominio de forma visual. Aunque existen distintas notaciones y variantes, en este trabajo se consideran especialmente los conceptos que son necesarios para entender el funcionamiento del editor y las transformaciones que se realizan posteriormente \cite{tema6}.
+Un diagrama Entidad-Relación se construye a partir de entidades, atributos, interrelaciones, cardinalidades y, en algunos casos, roles. Estos conceptos permiten describir la información de un dominio de forma visual y sirven como base para las transformaciones posteriores~\cite{tema6}.
 
 \subsection{Entidades y atributos}
 
-Las entidades representan objetos o conceptos del dominio sobre los que se quiere almacenar información. Por ejemplo, en un sistema académico podrían existir entidades como alumno, asignatura o profesor. Cada entidad agrupa un conjunto de elementos del mismo tipo y se describe mediante atributos.
+Las entidades representan objetos o conceptos del dominio sobre los que se quiere almacenar información. Cada entidad se describe mediante atributos, que representan propiedades de dicha entidad o de una interrelación.
 
-Los atributos representan propiedades de una entidad o de una interrelación. Algunos atributos pueden actuar como identificadores, mientras que otros simplemente aportan información adicional. En el modelo relacional, los atributos identificadores tienen una relación directa con las claves primarias, ya que permiten distinguir de forma única las ocurrencias de una entidad.
-
-Además de los atributos simples, el modelo Entidad-Relación puede incluir atributos con una estructura más compleja, como ocurre con los atributos compuestos o multivaluados. Estos casos se tratan con más detalle en el apartado de elementos avanzados considerados.
+Algunos atributos actúan como identificadores, mientras que otros aportan información adicional. En el paso al modelo relacional, los atributos identificadores suelen utilizarse para definir claves primarias, ya que permiten distinguir de forma única las ocurrencias de una entidad. En la Figura~\ref{fig:er_basico}, los atributos \textit{idEmpleado} e \textit{idOficina} aparecen subrayados porque identifican sus respectivas entidades. En cambio, atributos como \textit{nombre}, \textit{email} o \textit{ciudad} describen información adicional.
 
 \subsection{Interrelaciones, cardinalidades y roles}
 
-Las interrelaciones representan asociaciones entre entidades. Permiten expresar que dos o más entidades participan en un mismo hecho del dominio. Por ejemplo, una entidad alumno puede relacionarse con una entidad asignatura mediante una interrelación de matrícula.
+Las interrelaciones representan asociaciones entre entidades. Las cardinalidades indican la forma en la que las entidades participan en una interrelación y condicionan su transformación posterior al modelo relacional. No se representa igual una relación uno a muchos que una relación muchos a muchos, ya que la estructura relacional resultante puede ser distinta.
 
-Las cardinalidades indican la forma en la que las entidades participan en una interrelación. Esta información es importante porque condiciona la interpretación del diagrama y también su transformación posterior al modelo relacional. No se representa igual una relación uno a muchos que una relación muchos a muchos, ya que la estructura relacional resultante puede ser distinta.
-
-En algunos casos, una misma entidad puede participar más de una vez en una interrelación. Para evitar ambigüedades, se utilizan roles, que indican el papel que desempeña cada participación. Esto es especialmente útil en interrelaciones reflexivas o en relaciones de mayor grado donde un mismo conjunto de entidades aparece repetido.
+En algunos casos, una misma entidad puede participar más de una vez en una interrelación. Para evitar ambigüedades se utilizan roles, que indican el papel que desempeña cada participación. Esto es especialmente útil en relaciones reflexivas o en relaciones de mayor grado con participantes repetidos.
 
 \section{Elementos avanzados considerados}
 
@@ -40,39 +34,39 @@ Además de los elementos básicos, el modelo Entidad-Relación permite represent
 
 Una entidad débil es una entidad que no puede identificarse completamente por sí misma y depende de otra entidad para formar su identificación. Esta dependencia suele representarse mediante una relación identificadora entre la entidad débil y la entidad propietaria.
 
-En estos casos, la clave de la entidad débil se construye normalmente a partir de la clave de la entidad fuerte y de un atributo propio que actúa como discriminante. Por este motivo, las entidades débiles tienen un tratamiento especial tanto en la validación del diagrama como en la transformación al modelo relacional \cite{tema6}.
+En estos casos, la clave de la entidad débil se construye normalmente a partir de la clave de la entidad fuerte y de un atributo propio que actúa como discriminante. Por este motivo, las entidades débiles requieren un tratamiento específico en la validación y en la transformación al modelo relacional~\cite{tema6}.
 
-La Figura \ref{fig:er_entidad_debil} resume este patrón: la entidad débil se identifica mediante la clave de la entidad propietaria y un discriminante propio.
+La Figura~\ref{fig:er_entidad_debil} resume este patrón.
 
-\imagen{er_entidad_debil}{Ejemplo de entidad débil asociada a una entidad propietaria mediante una relación identificadora.}{0.70}
+\imagen{er_entidad_debil}{Ejemplo de entidad débil asociada a una entidad propietaria mediante una relación identificadora.}{0.65}
 
 \subsection{Atributos compuestos y multivaluados}
 
-Los atributos compuestos permiten representar información que puede dividirse en partes. Por ejemplo, una dirección podría descomponerse en calle, número, ciudad y código postal. Esta descomposición ayuda a expresar mejor la estructura de la información en el modelo conceptual.
+Los atributos compuestos permiten descomponer una propiedad en partes más simples. Por ejemplo, un atributo \textit{nombreCompleto} puede dividirse en nombre y apellidos. Los atributos multivaluados representan propiedades que pueden tener varios valores para una misma ocurrencia, como varios teléfonos asociados a una persona.
 
-Los atributos multivaluados representan propiedades que pueden tener varios valores para una misma entidad. Por ejemplo, una persona podría tener varios teléfonos. En el paso al modelo relacional, este tipo de atributo no suele representarse como una única columna de la tabla principal, sino mediante una estructura separada que permita almacenar varios valores.
+Estos atributos afectan a la transformación relacional. Los compuestos se descomponen en sus partes simples, mientras que los multivaluados suelen requerir una tabla propia para representar los distintos valores asociados a la entidad.
 
-\subsection{Interrelaciones ternarias}
+La Figura~\ref{fig:er_atributos_avanzados} muestra ambos casos.
 
-Las interrelaciones ternarias son relaciones en las que participan tres entidades. No siempre pueden sustituirse por varias relaciones binarias sin perder significado, ya que en algunos casos el hecho que se quiere representar depende de la combinación de los tres participantes \cite{tema6}.
+\imagen{er_atributos_avanzados}{Ejemplo de atributo compuesto y atributo multivaluado en una entidad.}{0.60}
 
-Este tipo de relación requiere prestar atención a las cardinalidades y a los posibles roles de los participantes. En el editor desarrollado, las relaciones ternarias son relevantes porque obligan a conservar más información en el modelo interno y a tratarlas de forma específica durante la transformación relacional.
+\subsection{Relaciones de grado superior y reflexivas}
 
-La Figura \ref{fig:er_ternaria} muestra un caso en el que la interrelación depende de tres participantes y no de asociaciones binarias independientes.
+Además de las relaciones binarias, el modelo E/R permite representar interrelaciones en las que participan más de dos entidades. Las relaciones ternarias son especialmente relevantes porque no siempre pueden sustituirse por varias relaciones binarias sin perder significado. En ellas, las cardinalidades deben interpretarse teniendo en cuenta la combinación de los otros participantes.
 
-\imagen{er_ternaria}{Ejemplo de interrelación ternaria con tres entidades participantes y cardinalidades.}{0.70}
+También pueden existir relaciones reflexivas, en las que una entidad se relaciona consigo misma. En estos casos los roles permiten distinguir las distintas participaciones de la misma entidad.
+
+La Figura~\ref{fig:er_ternaria} muestra un ejemplo de relación ternaria.
+
+\imagen{er_ternaria}{Ejemplo de interrelación ternaria con tres entidades participantes y cardinalidades.}{0.65}
 
 \subsection{Jerarquías ISA}
 
-Las jerarquías ISA representan relaciones de generalización y especialización entre entidades. Una entidad general recoge características comunes, mientras que las especializaciones representan casos más concretos. Por ejemplo, una entidad persona podría especializarse en alumno y profesor.
+Las jerarquías ISA permiten representar especialización y generalización entre entidades. Una entidad general recoge atributos comunes y las especializaciones representan subconjuntos con características propias. Según la teoría del modelo E/R, estas jerarquías pueden incluir restricciones de totalidad, parcialidad, solapamiento, exclusividad o discriminantes~\cite{tema6}.
 
-En este tipo de jerarquías, las especializaciones heredan la identificación de la entidad general. Además, pueden existir variantes avanzadas, como jerarquías totales o parciales, solapadas o exclusivas, o con discriminantes \cite{tema6}. Sin embargo, no siempre es necesario implementar todas estas posibilidades para que el modelo sea útil.
+En este trabajo se considera un soporte inicial: una entidad general, una o varias especializaciones y herencia de clave. La Figura~\ref{fig:er_isa} muestra un ejemplo de jerarquía ISA sencilla.
 
-En este trabajo se considera un soporte inicial de ISA. La idea principal es permitir representar una generalización con una o varias especializaciones y trasladar esa estructura al modelo relacional de forma controlada.
-
-Como se aprecia en la Figura \ref{fig:er_isa}, una jerarquía ISA separa la entidad general de sus especializaciones, que heredan su identificación.
-
-\imagen{er_isa}{Ejemplo de jerarquía ISA con una entidad general y dos especializaciones.}{0.60}
+\imagen{er_isa}{Ejemplo de jerarquía ISA con una entidad general y dos especializaciones.}{0.65}
 
 \subsection{Agregaciones}
 
@@ -82,38 +76,74 @@ En este trabajo las agregaciones se consideran únicamente como parte del contex
 
 \section{Transformación al modelo relacional}
 
-El modelo Entidad-Relación permite describir un dominio desde un punto de vista conceptual, pero para poder implementarlo en una base de datos relacional es necesario transformarlo a una estructura formada por tablas, columnas y relaciones entre ellas. Esta transformación sirve como paso intermedio entre el diseño conceptual y la generación final de sentencias SQL.
+El modelo Entidad-Relación describe un dominio desde un punto de vista conceptual. Para implementarlo en una base de datos relacional es necesario transformarlo en relaciones, atributos, claves primarias y claves foráneas. Esta transformación actúa como paso intermedio entre el diagrama E/R y la generación final de SQL.
 
-De forma general, las entidades del diagrama suelen convertirse en tablas, sus atributos pasan a ser columnas y los atributos identificadores se utilizan para definir claves primarias. Las interrelaciones entre entidades condicionan la forma en la que se crean claves foráneas o tablas intermedias, dependiendo de la cardinalidad y de la participación de cada entidad en la relación.
+Conviene distinguir esta fase de la generación de SQL. El modelo relacional puede representarse de forma abstracta, indicando tablas, columnas, claves primarias y claves foráneas, sin escribir todavía sentencias \texttt{CREATE TABLE}. Por ejemplo, el diagrama de la Figura~\ref{fig:er_basico} podría expresarse como \texttt{Oficinas(idOficina PK, ciudad)} y \texttt{Empleados(idEmpleado PK, nombre, email, idOficina FK)}.
 
-Las relaciones uno a muchos suelen representarse incorporando una clave foránea en la tabla situada en el lado muchos de la relación. En las relaciones muchos a muchos, normalmente se crea una tabla intermedia que contiene las claves de las entidades participantes y, si existen, los atributos propios de la relación.
+De forma general, las entidades se transforman en tablas, sus atributos en columnas y sus identificadores en claves primarias. Las interrelaciones condicionan la aparición de claves foráneas o tablas intermedias según su cardinalidad.
 
-Algunos elementos requieren reglas específicas. Los atributos multivaluados pueden necesitar tablas propias; las entidades débiles incorporan la clave de su entidad propietaria como parte de su identificación; y las relaciones ternarias suelen transformarse mediante una tabla que referencia a las entidades participantes.
+En las relaciones uno a muchos, la clave primaria de la entidad situada en el lado uno se incorpora como clave foránea en la tabla del lado muchos. En las relaciones uno a uno también se utiliza una clave foránea, pero esta debe declararse como única mediante una restricción \texttt{UNIQUE}, salvo que se integre directamente en la clave primaria.
 
-En el caso de las jerarquías ISA, existen varias estrategias posibles de transformación. En este trabajo, para el soporte inicial implementado, se adopta una estrategia sencilla: la entidad general se transforma como una tabla ordinaria y cada especialización se transforma en una tabla propia que incorpora la clave de la generalización como clave primaria y clave foránea \cite{tema6}. De esta forma, la especialización queda vinculada con la entidad general mediante una relación uno a uno.
+En las relaciones muchos a muchos se crea una tabla intermedia formada por las claves de las entidades participantes. Normalmente, la clave primaria de esta tabla es compuesta y está formada por esas claves foráneas. Si la relación tiene atributos propios, estos se añaden como columnas de la tabla intermedia.
 
-La Figura \ref{fig:isa_transformacion_relacional} recoge la estrategia aplicada en este trabajo para transformar una jerarquía ISA en tablas: una tabla para la generalización y una tabla por cada especialización.
+Las relaciones ternarias se transforman mediante una tabla propia con claves foráneas hacia las tres entidades participantes. La clave primaria depende de las cardinalidades: en el caso más general puede estar formada por las tres claves, mientras que si existe una participación con cardinalidad máxima uno pueden aparecer claves candidatas más reducidas formadas por los otros participantes.
 
-\imagen{isa_transformacion_relacional}{Transformación relacional de una jerarquía ISA mediante tabla de generalización y tabla por especialización.}{0.65}
+Otros elementos requieren reglas específicas. Los atributos multivaluados suelen generar tablas propias; las entidades débiles incorporan la clave de su entidad propietaria como parte de su identificación; y las relaciones identificadoras condicionan tanto claves primarias como claves foráneas.
 
-Esta fase es especialmente importante en el contexto del proyecto porque actúa como puente entre el diagrama visual diseñado por el usuario y la salida SQL generada por la aplicación.
+En el caso de las jerarquías ISA, existen varias estrategias de transformación. En este trabajo se adopta una solución sencilla: la entidad general se transforma en una tabla ordinaria y cada especialización en una tabla propia que incorpora la clave de la generalización como clave primaria y clave foránea~\cite{tema6}.
+
+Esta fase es especialmente importante en el proyecto porque conecta el diagrama visual diseñado por el usuario con la salida SQL generada por la aplicación.
 
 \section{Generación de SQL}
 
-SQL es el lenguaje utilizado habitualmente para definir y manipular bases de datos relacionales. Dentro del contexto de este trabajo, interesa especialmente la parte relacionada con la definición de estructuras, como la creación de tablas, claves primarias y claves foráneas.
+SQL es el lenguaje utilizado habitualmente para definir y manipular bases de datos relacionales. En este trabajo interesa especialmente la parte relacionada con la creación de tablas, claves primarias, claves foráneas y restricciones de unicidad. El SQL generado utiliza una sintaxis sencilla, basada en construcciones habituales del estándar ANSI/ISO SQL y compatible con PostgreSQL~\cite{postgresqlCreateTable}.
 
-Una vez que un diagrama Entidad-Relación se ha transformado en un modelo relacional, es posible generar sentencias SQL que representen esa estructura. En este proceso, las tablas resultantes se convierten en sentencias \texttt{CREATE TABLE}, los atributos se traducen a columnas y las relaciones entre tablas se expresan mediante claves foráneas.
+Una vez transformado el diagrama E/R en un modelo relacional, la aplicación genera sentencias \texttt{CREATE TABLE}. Las tablas se ordenan para que muchas claves foráneas puedan declararse directamente dentro de la tabla correspondiente, evitando recurrir a \texttt{ALTER TABLE} cuando no es necesario.
 
-En el editor desarrollado, la generación de SQL se entiende como una fase posterior al diseño y a la validación del diagrama. Por tanto, el resultado generado depende de que el modelo interno conserve correctamente la información necesaria sobre entidades, atributos, claves, interrelaciones y jerarquías ISA. De esta forma, el SQL no se genera únicamente a partir de la parte visual del diagrama, sino a partir de la interpretación interna que la aplicación mantiene de él.
+Por ejemplo, una relación uno a muchos entre oficinas y empleados podría generarse separando la clave foránea:
 
-En la herramienta, esta generación se realiza intentando mantener un resultado legible y coherente con el modelo relacional obtenido. Por ejemplo, cuando una clave foránea referencia la clave primaria completa de otra tabla, la salida puede expresarse de forma compacta sin repetir información que ya queda definida en la tabla referenciada.
+\begin{verbatim}
+CREATE TABLE Oficinas (
+  idOficina VARCHAR(40),
+  ciudad VARCHAR(40),
+  PRIMARY KEY (idOficina)
+);
 
-El SQL generado debe entenderse como una traducción razonable del modelo diseñado, adecuada para los objetivos del proyecto. No pretende sustituir el trabajo completo de diseño físico de una base de datos real, donde podrían decidirse tipos de datos concretos, índices, restricciones adicionales u optimizaciones específicas.
+CREATE TABLE Empleados (
+  idEmpleado VARCHAR(40),
+  nombre VARCHAR(40),
+  email VARCHAR(40),
+  idOficina VARCHAR(40),
+  PRIMARY KEY (idEmpleado)
+);
+
+ALTER TABLE Empleados
+ADD FOREIGN KEY (idOficina)
+REFERENCES Oficinas(idOficina);
+\end{verbatim}
+
+Si la tabla referenciada se crea antes, la clave foránea puede incluirse directamente en la definición de \texttt{Empleados}:
+
+\begin{verbatim}
+CREATE TABLE Empleados (
+  idEmpleado VARCHAR(40),
+  nombre VARCHAR(40),
+  email VARCHAR(40),
+  idOficina VARCHAR(40),
+  PRIMARY KEY (idEmpleado),
+  FOREIGN KEY (idOficina)
+    REFERENCES Oficinas
+);
+\end{verbatim}
+
+Este segundo enfoque resulta más legible en esquemas con varias tablas, porque las columnas y sus restricciones aparecen juntas. Las sentencias \texttt{ALTER TABLE} se mantienen como mecanismo de respaldo cuando existen dependencias circulares que no pueden resolverse únicamente mediante la ordenación.
+
+El SQL generado debe entenderse como una traducción académica y simplificada del modelo diseñado. Por ejemplo, los atributos se traducen con un tipo general \texttt{VARCHAR(40)}, suficiente para representar la estructura del esquema, pero sin entrar en una configuración detallada de tipos físicos, índices u optimizaciones propias de una base de datos real.
 
 \section{Alcance teórico aplicado en el proyecto}
 
-El modelo Entidad-Relación incluye más posibilidades de las que se han incorporado en la herramienta. Por ello, este capítulo se ha centrado en los conceptos que resultan necesarios para entender la evolución realizada: entidades, atributos, relaciones binarias y ternarias, entidades débiles, atributos compuestos y multivaluados, transformación al modelo relacional, generación de SQL y un soporte inicial para jerarquías ISA.
+El modelo Entidad-Relación incluye más conceptos de los que se implementan en este trabajo. Por ello, el alcance aplicado se centra en aquellos elementos que se han incorporado realmente al editor: entidades fuertes y débiles, atributos simples, compuestos y multivaluados, relaciones binarias, reflexivas y ternarias, cardinalidades, roles, relaciones identificadoras y un soporte inicial para jerarquías ISA.
 
-En el caso de las jerarquías ISA, el alcance aplicado se limita a una generalización con una o varias especializaciones, junto con la herencia de clave hacia las tablas especializadas. No se incluyen variantes más avanzadas como totalidad o parcialidad, especializaciones solapadas o exclusivas, discriminantes ni herencia múltiple real.
+En el caso de ISA, el soporte se limita a una generalización con una o varias especializaciones y herencia de clave hacia las tablas especializadas. No se incluyen restricciones más avanzadas como totalidad o parcialidad, especializaciones solapadas o exclusivas, discriminantes ni herencia múltiple. Las agregaciones también quedan fuera del alcance implementado.
 
-Las agregaciones se han tenido en cuenta como concepto teórico, pero no forman parte del alcance implementado. Esta delimitación permite ajustar el desarrollo al objetivo principal del trabajo: evolucionar el editor heredado manteniendo la coherencia entre el diagrama visual, el modelo interno, la validación, la transformación relacional y la generación de SQL.
+Este alcance permite trabajar con varios elementos relevantes del modelo E/R sin convertir la herramienta en un editor completo de todas las variantes teóricas posibles.
