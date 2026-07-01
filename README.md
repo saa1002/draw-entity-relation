@@ -72,6 +72,35 @@ At the time of submission, the final version was checked with these scripts for 
 
 The application does not require a backend server, external database or additional local services. All editing, validation, transformation, SQL generation and JSON import/export operations are executed in the browser.
 
+## Example diagrams and generated SQL
+
+The repository includes a set of example diagrams in the `examples/video/` directory.
+
+These files are provided as auxiliary material for the demonstration and guide videos. The `json/` subdirectory contains diagrams exported from UBU E-R App, and the `sql/` subdirectory contains reference SQL outputs generated from those diagrams.
+
+The examples cover:
+
+* Basic binary relationships, including 1:N, 1:1 and N:M cases.
+* Relationship attributes.
+* Weak entities and identifying relationships.
+* Composite and multivalued attributes.
+* Reflexive relationships.
+* Ternary relationships.
+* Ternary relationships with repeated participants and roles.
+* Initial ISA/generalisation-specialisation structures.
+* Predefined structures generated from the application.
+
+To use an example:
+
+1. Open UBU E-R App.
+2. Select the JSON import option.
+3. Choose one of the files from `examples/video/json/`.
+4. Import it using replace or merge mode.
+5. Run the diagram validation.
+6. Generate the relational representation or SQL script.
+
+The SQL files are included as generated reference outputs. They should be understood as academic and simplified PostgreSQL-compatible translations and should be reviewed manually before any real use.
+
 ## Current scope and limitations
 
 The application focuses on the creation, validation and transformation of E-R diagrams into relational structures and SQL scripts.

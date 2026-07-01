@@ -1,0 +1,188 @@
+{
+  "entities": [
+    {
+      "idMx": "105",
+      "name": "Jugador",
+      "position": {
+        "x": 151.64772033691406,
+        "y": 370.9090881347656
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "106",
+          "name": "idJugador",
+          "position": {
+            "x": 39.99772033691406,
+            "y": 369.99908813476566
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "106",
+            "107"
+          ],
+          "offsetX": -111.65,
+          "offsetY": -0.9099999999999682
+        },
+        {
+          "idMx": "112",
+          "name": "nombre",
+          "position": {
+            "x": 219.99772033691406,
+            "y": 439.99908813476566
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "112",
+            "113"
+          ],
+          "offsetX": 68.35,
+          "offsetY": 69.09000000000003
+        },
+        {
+          "idMx": "114",
+          "name": "ranking",
+          "position": {
+            "x": 109.99772033691406,
+            "y": 439.99908813476566
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "114",
+            "115"
+          ],
+          "offsetX": -41.650000000000006,
+          "offsetY": 69.09000000000003
+        }
+      ]
+    },
+    {
+      "idMx": "108",
+      "name": "Partido",
+      "position": {
+        "x": 600.0040728759766,
+        "y": 370.00452880859376
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "109",
+          "name": "idPartido",
+          "position": {
+            "x": 720.0040728759766,
+            "y": 330.00452880859376
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "109",
+            "110"
+          ],
+          "offsetX": 120,
+          "offsetY": -40
+        },
+        {
+          "idMx": "116",
+          "name": "fecha",
+          "position": {
+            "x": 630.0040728759766,
+            "y": 310.00452880859376
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "116",
+            "117"
+          ],
+          "offsetX": 30,
+          "offsetY": -60
+        },
+        {
+          "idMx": "118",
+          "name": "ronda",
+          "position": {
+            "x": 620.0040728759766,
+            "y": 440.00452880859376
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "118",
+            "119"
+          ],
+          "offsetX": 20,
+          "offsetY": 70
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "idMx": "111",
+      "name": "Disputa",
+      "position": {
+        "x": 419.9995440673828,
+        "y": 370.00361694335936
+      },
+      "side1": {
+        "idMx": "121",
+        "cardinality": "0:N",
+        "role": "jugador1",
+        "cell": "121",
+        "edgeId": "120",
+        "entity": {
+          "idMx": "105"
+        }
+      },
+      "side2": {
+        "idMx": "123",
+        "cardinality": "0:N",
+        "role": "jugador2",
+        "cell": "123",
+        "edgeId": "122",
+        "entity": {
+          "idMx": "105"
+        }
+      },
+      "canHoldAttributes": true,
+      "isIdentifying": false,
+      "attributes": [
+        {
+          "idMx": "126",
+          "name": "resultado",
+          "position": {
+            "x": 429.9995440673829,
+            "y": 430.00361694335936
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "126",
+            "127"
+          ],
+          "offsetX": 10.000000000000057,
+          "offsetY": 60
+        }
+      ],
+      "arity": 3,
+      "side3": {
+        "idMx": "125",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "125",
+        "edgeId": "124",
+        "entity": {
+          "idMx": "108"
+        }
+      }
+    }
+  ],
+  "isas": []
+}

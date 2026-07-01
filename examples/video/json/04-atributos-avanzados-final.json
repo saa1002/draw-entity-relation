@@ -1,0 +1,118 @@
+{
+  "entities": [
+    {
+      "idMx": "69",
+      "name": "Empleado",
+      "position": {
+        "x": 238.01136779785156,
+        "y": 320.9090881347656
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "70",
+          "name": "idEmpleado",
+          "position": {
+            "x": 110.00136779785157,
+            "y": 329.99908813476566
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "70",
+            "71"
+          ],
+          "offsetX": -128.01,
+          "offsetY": 9.090000000000032
+        },
+        {
+          "idMx": "74",
+          "name": "telefono",
+          "position": {
+            "x": 390.0013677978516,
+            "y": 329.99908813476566
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "74",
+            "75"
+          ],
+          "offsetX": 151.99,
+          "offsetY": 9.090000000000032,
+          "multivalued": true
+        },
+        {
+          "idMx": "109",
+          "name": "nombreCompleto",
+          "position": {
+            "x": 297.1680344645182,
+            "y": 279.99908813476566
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "109",
+            "110"
+          ],
+          "offsetX": 59.15666666666664,
+          "offsetY": -40.90999999999997,
+          "children": [
+            {
+              "idMx": "99",
+              "name": "nombre",
+              "position": {
+                "x": 170.00136779785157,
+                "y": 259.99908813476566
+              },
+              "key": false,
+              "partialKey": false,
+              "cell": [
+                "99",
+                "111"
+              ],
+              "offsetX": -127.16666666666663,
+              "offsetY": -20
+            },
+            {
+              "idMx": "101",
+              "name": "apellido1",
+              "position": {
+                "x": 250.00136779785157,
+                "y": 209.99908813476566
+              },
+              "key": false,
+              "partialKey": false,
+              "cell": [
+                "101",
+                "112"
+              ],
+              "offsetX": -47.16666666666663,
+              "offsetY": -70
+            },
+            {
+              "idMx": "103",
+              "name": "apellido2",
+              "position": {
+                "x": 350.0013677978516,
+                "y": 259.99908813476566
+              },
+              "key": false,
+              "partialKey": false,
+              "cell": [
+                "103",
+                "113"
+              ],
+              "offsetX": 52.83333333333337,
+              "offsetY": -20
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relations": [],
+  "isas": []
+}

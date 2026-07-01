@@ -1,0 +1,201 @@
+{
+  "entities": [
+    {
+      "idMx": "template-ternary-entity-1",
+      "name": "Proveedor",
+      "position": {
+        "x": 170,
+        "y": 320
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "template-ternary-entity-1-attribute-1",
+          "name": "idProveedor",
+          "position": {
+            "x": 145,
+            "y": 260
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "template-ternary-entity-1-attribute-1",
+            "template-ternary-entity-1-attribute-1-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": -60
+        },
+        {
+          "idMx": "99",
+          "name": "nombre",
+          "position": {
+            "x": 145,
+            "y": 390
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "99",
+            "100"
+          ],
+          "offsetX": -25,
+          "offsetY": 70
+        }
+      ]
+    },
+    {
+      "idMx": "template-ternary-entity-2",
+      "name": "Pieza",
+      "position": {
+        "x": 540,
+        "y": 320
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "template-ternary-entity-2-attribute-1",
+          "name": "idPieza",
+          "position": {
+            "x": 595,
+            "y": 260
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "template-ternary-entity-2-attribute-1",
+            "template-ternary-entity-2-attribute-1-edge"
+          ],
+          "offsetX": 55,
+          "offsetY": -60
+        },
+        {
+          "idMx": "101",
+          "name": "descripcion",
+          "position": {
+            "x": 545,
+            "y": 380
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "101",
+            "102"
+          ],
+          "offsetX": 5,
+          "offsetY": 60
+        }
+      ]
+    },
+    {
+      "idMx": "template-ternary-entity-3",
+      "name": "Proyecto",
+      "position": {
+        "x": 340,
+        "y": 540
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "template-ternary-entity-3-attribute-1",
+          "name": "idProyecto",
+          "position": {
+            "x": 270,
+            "y": 600
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "template-ternary-entity-3-attribute-1",
+            "template-ternary-entity-3-attribute-1-edge"
+          ],
+          "offsetX": -70,
+          "offsetY": 60
+        },
+        {
+          "idMx": "103",
+          "name": "nombreProyecto",
+          "position": {
+            "x": 420,
+            "y": 600
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "103",
+            "104"
+          ],
+          "offsetX": 80,
+          "offsetY": 60
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "idMx": "template-ternary-relation-1",
+      "name": "Suministra",
+      "position": {
+        "x": 350,
+        "y": 410
+      },
+      "side1": {
+        "idMx": "template-ternary-relation-1-side1-cardinality",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "template-ternary-relation-1-side1-cardinality",
+        "edgeId": "template-ternary-relation-1-side1-edge",
+        "entity": {
+          "idMx": "template-ternary-entity-1"
+        }
+      },
+      "side2": {
+        "idMx": "template-ternary-relation-1-side2-cardinality",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "template-ternary-relation-1-side2-cardinality",
+        "edgeId": "template-ternary-relation-1-side2-edge",
+        "entity": {
+          "idMx": "template-ternary-entity-2"
+        }
+      },
+      "canHoldAttributes": true,
+      "isIdentifying": false,
+      "attributes": [
+        {
+          "idMx": "template-ternary-relation-1-attribute-1",
+          "name": "cantidad",
+          "position": {
+            "x": 360,
+            "y": 330
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "template-ternary-relation-1-attribute-1",
+            "template-ternary-relation-1-attribute-1-edge"
+          ],
+          "offsetX": 10,
+          "offsetY": -80
+        }
+      ],
+      "arity": 3,
+      "side3": {
+        "idMx": "template-ternary-relation-1-side3-cardinality",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "template-ternary-relation-1-side3-cardinality",
+        "edgeId": "template-ternary-relation-1-side3-edge",
+        "entity": {
+          "idMx": "template-ternary-entity-3"
+        }
+      }
+    }
+  ],
+  "isas": []
+}

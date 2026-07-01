@@ -1,0 +1,203 @@
+{
+  "entities": [
+    {
+      "idMx": "128",
+      "name": "Persona",
+      "position": {
+        "x": 349.9968084716797,
+        "y": 219.99908813476563
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "129",
+          "name": "idPersona",
+          "position": {
+            "x": 499.9968084716797,
+            "y": 219.99908813476563
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "129",
+            "130"
+          ],
+          "offsetX": 150,
+          "offsetY": 0
+        },
+        {
+          "idMx": "137",
+          "name": "nombre",
+          "position": {
+            "x": 369.9968084716797,
+            "y": 159.99908813476563
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "137",
+            "138"
+          ],
+          "offsetX": 20,
+          "offsetY": -60
+        },
+        {
+          "idMx": "139",
+          "name": "fechaNacimiento",
+          "position": {
+            "x": 189.99680847167969,
+            "y": 219.99908813476563
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "139",
+            "140"
+          ],
+          "offsetX": -160,
+          "offsetY": 0
+        }
+      ]
+    },
+    {
+      "idMx": "131",
+      "name": "Empleado",
+      "position": {
+        "x": 219.99954406738283,
+        "y": 400.0017932128906
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "141",
+          "name": "salario",
+          "position": {
+            "x": 239.99954406738283,
+            "y": 340.0017932128906
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "141",
+            "142"
+          ],
+          "offsetX": 20,
+          "offsetY": -60
+        }
+      ]
+    },
+    {
+      "idMx": "134",
+      "name": "Estudiante",
+      "position": {
+        "x": 479.9977203369141,
+        "y": 399.9963525390625
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "135",
+          "name": "expediente",
+          "position": {
+            "x": 499.9977203369141,
+            "y": 459.9963525390625
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "135",
+            "136"
+          ],
+          "offsetX": 20,
+          "offsetY": 60
+        }
+      ]
+    },
+    {
+      "idMx": "144",
+      "name": "Profesor",
+      "position": {
+        "x": 220.0004254150391,
+        "y": 560.0008813476563
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "145",
+          "name": "departamento",
+          "position": {
+            "x": 230.0004254150391,
+            "y": 620.0008813476563
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "145",
+            "146"
+          ],
+          "offsetX": 10,
+          "offsetY": 60
+        }
+      ]
+    }
+  ],
+  "relations": [],
+  "isas": [
+    {
+      "idMx": "143",
+      "position": {
+        "x": 370.0040728759766,
+        "y": 310.0009118652344
+      },
+      "generalization": {
+        "edgeId": "148",
+        "entity": {
+          "idMx": "128"
+        }
+      },
+      "specializations": [
+        {
+          "edgeId": "149",
+          "entity": {
+            "idMx": "131"
+          }
+        },
+        {
+          "edgeId": "150",
+          "entity": {
+            "idMx": "134"
+          }
+        }
+      ]
+    },
+    {
+      "idMx": "147",
+      "position": {
+        "x": 250.003130493164,
+        "y": 479.99817626953126
+      },
+      "generalization": {
+        "edgeId": "151",
+        "entity": {
+          "idMx": "131"
+        }
+      },
+      "specializations": [
+        {
+          "edgeId": "152",
+          "entity": {
+            "idMx": "144"
+          }
+        }
+      ]
+    }
+  ]
+}

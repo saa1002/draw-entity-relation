@@ -1,0 +1,785 @@
+{
+  "entities": [
+    {
+      "idMx": "template-nm-entity-1",
+      "name": "EntidadNM_A",
+      "position": {
+        "x": 45,
+        "y": 110
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "template-nm-entity-1-attribute-1",
+          "name": "id",
+          "position": {
+            "x": 20,
+            "y": 30
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "template-nm-entity-1-attribute-1",
+            "template-nm-entity-1-attribute-1-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": -80
+        },
+        {
+          "idMx": "template-nm-entity-1-attribute-2",
+          "name": "Atributo 1",
+          "position": {
+            "x": 20,
+            "y": 205
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "template-nm-entity-1-attribute-2",
+            "template-nm-entity-1-attribute-2-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": 95
+        }
+      ]
+    },
+    {
+      "idMx": "template-nm-entity-2",
+      "name": "EntidadNM_B",
+      "position": {
+        "x": 505,
+        "y": 110
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "template-nm-entity-2-attribute-1",
+          "name": "id",
+          "position": {
+            "x": 480,
+            "y": 30
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "template-nm-entity-2-attribute-1",
+            "template-nm-entity-2-attribute-1-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": -80
+        },
+        {
+          "idMx": "template-nm-entity-2-attribute-2",
+          "name": "Atributo 1",
+          "position": {
+            "x": 480,
+            "y": 205
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "template-nm-entity-2-attribute-2",
+            "template-nm-entity-2-attribute-2-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": 95
+        }
+      ]
+    },
+    {
+      "idMx": "merged-1-template-1n-entity-1",
+      "name": "Entidad1N_A",
+      "position": {
+        "x": 745,
+        "y": 110
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "merged-2-template-1n-entity-1-attribute-1",
+          "name": "id",
+          "position": {
+            "x": 720,
+            "y": 30
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "merged-2-template-1n-entity-1-attribute-1",
+            "merged-3-template-1n-entity-1-attribute-1-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": -80
+        },
+        {
+          "idMx": "merged-4-template-1n-entity-1-attribute-2",
+          "name": "Atributo 1",
+          "position": {
+            "x": 720,
+            "y": 205
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "merged-4-template-1n-entity-1-attribute-2",
+            "merged-5-template-1n-entity-1-attribute-2-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": 95
+        }
+      ]
+    },
+    {
+      "idMx": "merged-6-template-1n-entity-2",
+      "name": "Entidad1N_B",
+      "position": {
+        "x": 1205,
+        "y": 110
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "merged-7-template-1n-entity-2-attribute-1",
+          "name": "id",
+          "position": {
+            "x": 1180,
+            "y": 30
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "merged-7-template-1n-entity-2-attribute-1",
+            "merged-8-template-1n-entity-2-attribute-1-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": -80
+        },
+        {
+          "idMx": "merged-9-template-1n-entity-2-attribute-2",
+          "name": "Atributo 1",
+          "position": {
+            "x": 1180,
+            "y": 205
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "merged-9-template-1n-entity-2-attribute-2",
+            "merged-10-template-1n-entity-2-attribute-2-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": 95
+        }
+      ]
+    },
+    {
+      "idMx": "merged-1-template-11-entity-1",
+      "name": "Entidad11_A",
+      "position": {
+        "x": 45,
+        "y": 400
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "merged-2-template-11-entity-1-attribute-1",
+          "name": "id",
+          "position": {
+            "x": 20,
+            "y": 320
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "merged-2-template-11-entity-1-attribute-1",
+            "merged-3-template-11-entity-1-attribute-1-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": -80
+        },
+        {
+          "idMx": "merged-4-template-11-entity-1-attribute-2",
+          "name": "Atributo 1",
+          "position": {
+            "x": 20,
+            "y": 495
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "merged-4-template-11-entity-1-attribute-2",
+            "merged-5-template-11-entity-1-attribute-2-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": 95
+        }
+      ]
+    },
+    {
+      "idMx": "merged-6-template-11-entity-2",
+      "name": "Entidad11_B",
+      "position": {
+        "x": 505,
+        "y": 400
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "merged-7-template-11-entity-2-attribute-1",
+          "name": "id",
+          "position": {
+            "x": 480,
+            "y": 320
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "merged-7-template-11-entity-2-attribute-1",
+            "merged-8-template-11-entity-2-attribute-1-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": -80
+        },
+        {
+          "idMx": "merged-9-template-11-entity-2-attribute-2",
+          "name": "Atributo 1",
+          "position": {
+            "x": 480,
+            "y": 495
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "merged-9-template-11-entity-2-attribute-2",
+            "merged-10-template-11-entity-2-attribute-2-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": 95
+        }
+      ]
+    },
+    {
+      "idMx": "merged-1-template-ternary-entity-1",
+      "name": "TernariaA",
+      "position": {
+        "x": 740,
+        "y": 390
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "merged-2-template-ternary-entity-1-attribute-1",
+          "name": "id",
+          "position": {
+            "x": 790,
+            "y": 320
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "merged-2-template-ternary-entity-1-attribute-1",
+            "merged-3-template-ternary-entity-1-attribute-1-edge"
+          ],
+          "offsetX": 50,
+          "offsetY": -70
+        }
+      ]
+    },
+    {
+      "idMx": "merged-4-template-ternary-entity-2",
+      "name": "TernariaB",
+      "position": {
+        "x": 1170,
+        "y": 390
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "merged-5-template-ternary-entity-2-attribute-1",
+          "name": "id",
+          "position": {
+            "x": 1200,
+            "y": 330
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "merged-5-template-ternary-entity-2-attribute-1",
+            "merged-6-template-ternary-entity-2-attribute-1-edge"
+          ],
+          "offsetX": 30,
+          "offsetY": -60
+        }
+      ]
+    },
+    {
+      "idMx": "merged-7-template-ternary-entity-3",
+      "name": "TernariaC",
+      "position": {
+        "x": 970,
+        "y": 480
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "merged-8-template-ternary-entity-3-attribute-1",
+          "name": "id",
+          "position": {
+            "x": 990,
+            "y": 540
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "merged-8-template-ternary-entity-3-attribute-1",
+            "merged-9-template-ternary-entity-3-attribute-1-edge"
+          ],
+          "offsetX": 20,
+          "offsetY": 60
+        }
+      ]
+    },
+    {
+      "idMx": "merged-1-template-weak-entity-1",
+      "name": "EntidadFuerte",
+      "position": {
+        "x": 45,
+        "y": 680
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "merged-2-template-weak-entity-1-attribute-1",
+          "name": "id",
+          "position": {
+            "x": 100,
+            "y": 610
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "merged-2-template-weak-entity-1-attribute-1",
+            "merged-3-template-weak-entity-1-attribute-1-edge"
+          ],
+          "offsetX": 55,
+          "offsetY": -70
+        },
+        {
+          "idMx": "merged-4-template-weak-entity-1-attribute-2",
+          "name": "Atributo 1",
+          "position": {
+            "x": 80,
+            "y": 760
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "merged-4-template-weak-entity-1-attribute-2",
+            "merged-5-template-weak-entity-1-attribute-2-edge"
+          ],
+          "offsetX": 35,
+          "offsetY": 80
+        }
+      ]
+    },
+    {
+      "idMx": "merged-6-template-weak-entity-2",
+      "name": "EntidadDebil",
+      "position": {
+        "x": 505,
+        "y": 680
+      },
+      "weak": true,
+      "ownerEntityId": "merged-1-template-weak-entity-1",
+      "identifyingRelationId": "merged-7-template-weak-relation-1",
+      "attributes": [
+        {
+          "idMx": "merged-8-template-weak-entity-2-attribute-1",
+          "name": "discriminante",
+          "position": {
+            "x": 470,
+            "y": 600
+          },
+          "key": false,
+          "partialKey": true,
+          "cell": [
+            "merged-8-template-weak-entity-2-attribute-1",
+            "merged-9-template-weak-entity-2-attribute-1-edge"
+          ],
+          "offsetX": -35,
+          "offsetY": -80
+        },
+        {
+          "idMx": "merged-10-template-weak-entity-2-attribute-2",
+          "name": "Atributo 1",
+          "position": {
+            "x": 480,
+            "y": 760
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "merged-10-template-weak-entity-2-attribute-2",
+            "merged-11-template-weak-entity-2-attribute-2-edge"
+          ],
+          "offsetX": -25,
+          "offsetY": 80
+        }
+      ]
+    },
+    {
+      "idMx": "merged-1-template-isa-entity-1",
+      "name": "General",
+      "position": {
+        "x": 970,
+        "y": 610
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "merged-2-template-isa-entity-1-attribute-1",
+          "name": "id",
+          "position": {
+            "x": 1150,
+            "y": 610
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "merged-2-template-isa-entity-1-attribute-1",
+            "merged-3-template-isa-entity-1-attribute-1-edge"
+          ],
+          "offsetX": 180,
+          "offsetY": 0
+        },
+        {
+          "idMx": "merged-4-template-isa-entity-1-attribute-2",
+          "name": "Atributo 1",
+          "position": {
+            "x": 830,
+            "y": 610
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "merged-4-template-isa-entity-1-attribute-2",
+            "merged-5-template-isa-entity-1-attribute-2-edge"
+          ],
+          "offsetX": -140,
+          "offsetY": 0
+        }
+      ]
+    },
+    {
+      "idMx": "merged-6-template-isa-entity-2",
+      "name": "EspecializacionA",
+      "position": {
+        "x": 850,
+        "y": 770
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "merged-7-template-isa-entity-2-attribute-1",
+          "name": "Atributo",
+          "position": {
+            "x": 880,
+            "y": 830
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "merged-7-template-isa-entity-2-attribute-1",
+            "merged-8-template-isa-entity-2-attribute-1-edge"
+          ],
+          "offsetX": 30,
+          "offsetY": 60
+        }
+      ]
+    },
+    {
+      "idMx": "merged-9-template-isa-entity-3",
+      "name": "EspecializacionB",
+      "position": {
+        "x": 1100,
+        "y": 770
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "merged-10-template-isa-entity-3-attribute-1",
+          "name": "Atributo",
+          "position": {
+            "x": 1130,
+            "y": 830
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "merged-10-template-isa-entity-3-attribute-1",
+            "merged-11-template-isa-entity-3-attribute-1-edge"
+          ],
+          "offsetX": 30,
+          "offsetY": 60
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "idMx": "template-nm-relation-1",
+      "name": "RelacionNM",
+      "position": {
+        "x": 285,
+        "y": 130
+      },
+      "side1": {
+        "idMx": "template-nm-relation-1-side1-cardinality",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "template-nm-relation-1-side1-cardinality",
+        "edgeId": "template-nm-relation-1-side1-edge",
+        "entity": {
+          "idMx": "template-nm-entity-1"
+        }
+      },
+      "side2": {
+        "idMx": "template-nm-relation-1-side2-cardinality",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "template-nm-relation-1-side2-cardinality",
+        "edgeId": "template-nm-relation-1-side2-edge",
+        "entity": {
+          "idMx": "template-nm-entity-2"
+        }
+      },
+      "canHoldAttributes": true,
+      "isIdentifying": false,
+      "attributes": [
+        {
+          "idMx": "template-nm-relation-1-attribute-1",
+          "name": "Atributo",
+          "position": {
+            "x": 285,
+            "y": 245
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "template-nm-relation-1-attribute-1",
+            "template-nm-relation-1-attribute-1-edge"
+          ],
+          "offsetX": 0,
+          "offsetY": 115
+        }
+      ]
+    },
+    {
+      "idMx": "merged-11-template-1n-relation-1",
+      "name": "Relacion1N",
+      "position": {
+        "x": 985,
+        "y": 130
+      },
+      "side1": {
+        "idMx": "merged-12-template-1n-relation-1-side1-cardinality",
+        "cardinality": "1:1",
+        "role": "",
+        "cell": "merged-12-template-1n-relation-1-side1-cardinality",
+        "edgeId": "merged-13-template-1n-relation-1-side1-edge",
+        "entity": {
+          "idMx": "merged-1-template-1n-entity-1"
+        }
+      },
+      "side2": {
+        "idMx": "merged-14-template-1n-relation-1-side2-cardinality",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "merged-14-template-1n-relation-1-side2-cardinality",
+        "edgeId": "merged-15-template-1n-relation-1-side2-edge",
+        "entity": {
+          "idMx": "merged-6-template-1n-entity-2"
+        }
+      },
+      "canHoldAttributes": false,
+      "isIdentifying": false,
+      "attributes": []
+    },
+    {
+      "idMx": "merged-11-template-11-relation-1",
+      "name": "Relacion11",
+      "position": {
+        "x": 285,
+        "y": 420
+      },
+      "side1": {
+        "idMx": "merged-12-template-11-relation-1-side1-cardinality",
+        "cardinality": "0:1",
+        "role": "",
+        "cell": "merged-12-template-11-relation-1-side1-cardinality",
+        "edgeId": "merged-13-template-11-relation-1-side1-edge",
+        "entity": {
+          "idMx": "merged-1-template-11-entity-1"
+        }
+      },
+      "side2": {
+        "idMx": "merged-14-template-11-relation-1-side2-cardinality",
+        "cardinality": "0:1",
+        "role": "",
+        "cell": "merged-14-template-11-relation-1-side2-cardinality",
+        "edgeId": "merged-15-template-11-relation-1-side2-edge",
+        "entity": {
+          "idMx": "merged-6-template-11-entity-2"
+        }
+      },
+      "canHoldAttributes": false,
+      "isIdentifying": false,
+      "attributes": []
+    },
+    {
+      "idMx": "merged-10-template-ternary-relation-1",
+      "name": "RelacionTernaria",
+      "position": {
+        "x": 950,
+        "y": 390
+      },
+      "side1": {
+        "idMx": "merged-13-template-ternary-relation-1-side1-cardinality",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "merged-13-template-ternary-relation-1-side1-cardinality",
+        "edgeId": "merged-14-template-ternary-relation-1-side1-edge",
+        "entity": {
+          "idMx": "merged-1-template-ternary-entity-1"
+        }
+      },
+      "side2": {
+        "idMx": "merged-15-template-ternary-relation-1-side2-cardinality",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "merged-15-template-ternary-relation-1-side2-cardinality",
+        "edgeId": "merged-16-template-ternary-relation-1-side2-edge",
+        "entity": {
+          "idMx": "merged-4-template-ternary-entity-2"
+        }
+      },
+      "canHoldAttributes": true,
+      "isIdentifying": false,
+      "attributes": [
+        {
+          "idMx": "merged-11-template-ternary-relation-1-attribute-1",
+          "name": "Atributo",
+          "position": {
+            "x": 990,
+            "y": 330
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "merged-11-template-ternary-relation-1-attribute-1",
+            "merged-12-template-ternary-relation-1-attribute-1-edge"
+          ],
+          "offsetX": 40,
+          "offsetY": -60
+        }
+      ],
+      "arity": 3,
+      "side3": {
+        "idMx": "merged-17-template-ternary-relation-1-side3-cardinality",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "merged-17-template-ternary-relation-1-side3-cardinality",
+        "edgeId": "merged-18-template-ternary-relation-1-side3-edge",
+        "entity": {
+          "idMx": "merged-7-template-ternary-entity-3"
+        }
+      }
+    },
+    {
+      "idMx": "merged-7-template-weak-relation-1",
+      "name": "RelacionIdentificadora",
+      "position": {
+        "x": 260,
+        "y": 680
+      },
+      "side1": {
+        "idMx": "merged-12-template-weak-relation-1-side1-cardinality",
+        "cardinality": "1:1",
+        "role": "",
+        "cell": "merged-12-template-weak-relation-1-side1-cardinality",
+        "edgeId": "merged-13-template-weak-relation-1-side1-edge",
+        "entity": {
+          "idMx": "merged-1-template-weak-entity-1"
+        }
+      },
+      "side2": {
+        "idMx": "merged-14-template-weak-relation-1-side2-cardinality",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "merged-14-template-weak-relation-1-side2-cardinality",
+        "edgeId": "merged-15-template-weak-relation-1-side2-edge",
+        "entity": {
+          "idMx": "merged-6-template-weak-entity-2"
+        }
+      },
+      "canHoldAttributes": false,
+      "isIdentifying": true,
+      "attributes": []
+    }
+  ],
+  "isas": [
+    {
+      "idMx": "merged-12-template-isa-1",
+      "position": {
+        "x": 1000,
+        "y": 690
+      },
+      "generalization": {
+        "edgeId": "merged-13-template-isa-1-generalization-edge",
+        "entity": {
+          "idMx": "merged-1-template-isa-entity-1"
+        }
+      },
+      "specializations": [
+        {
+          "edgeId": "merged-14-template-isa-1-specialization-1-edge",
+          "entity": {
+            "idMx": "merged-6-template-isa-entity-2"
+          }
+        },
+        {
+          "edgeId": "merged-15-template-isa-1-specialization-2-edge",
+          "entity": {
+            "idMx": "merged-9-template-isa-entity-3"
+          }
+        }
+      ]
+    }
+  ]
+}

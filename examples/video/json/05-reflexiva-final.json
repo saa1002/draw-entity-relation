@@ -1,0 +1,99 @@
+{
+  "entities": [
+    {
+      "idMx": "87",
+      "name": "Empleado",
+      "position": {
+        "x": 279.9958966064453,
+        "y": 290.00452880859376
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "88",
+          "name": "idEmpleado",
+          "position": {
+            "x": 399.9958966064453,
+            "y": 230.00452880859376
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "88",
+            "89"
+          ],
+          "offsetX": 120,
+          "offsetY": -60
+        },
+        {
+          "idMx": "90",
+          "name": "nombre",
+          "position": {
+            "x": 439.9958966064453,
+            "y": 290.00452880859376
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "90",
+            "91"
+          ],
+          "offsetX": 160,
+          "offsetY": 0
+        },
+        {
+          "idMx": "92",
+          "name": "categoria",
+          "position": {
+            "x": 409.9958966064453,
+            "y": 350.00452880859376
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "92",
+            "93"
+          ],
+          "offsetX": 130,
+          "offsetY": 60
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "idMx": "94",
+      "name": "Supervisa",
+      "position": {
+        "x": 99.99954406738283,
+        "y": 289.9990881347656
+      },
+      "side1": {
+        "idMx": "96",
+        "cardinality": "0:1",
+        "role": "",
+        "cell": "96",
+        "edgeId": "95",
+        "entity": {
+          "idMx": "87"
+        }
+      },
+      "side2": {
+        "idMx": "98",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "98",
+        "edgeId": "97",
+        "entity": {
+          "idMx": "87"
+        }
+      },
+      "canHoldAttributes": false,
+      "isIdentifying": false,
+      "attributes": []
+    }
+  ],
+  "isas": []
+}

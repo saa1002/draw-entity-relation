@@ -1,0 +1,204 @@
+{
+  "entities": [
+    {
+      "idMx": "44",
+      "name": "Dominio",
+      "position": {
+        "x": 178.01136779785156,
+        "y": 245.4545440673828
+      },
+      "weak": false,
+      "ownerEntityId": null,
+      "identifyingRelationId": null,
+      "attributes": [
+        {
+          "idMx": "45",
+          "name": "idDominio",
+          "position": {
+            "x": 180.00136779785157,
+            "y": 190.00454406738282
+          },
+          "key": true,
+          "partialKey": false,
+          "cell": [
+            "45",
+            "46"
+          ],
+          "offsetX": 1.990000000000009,
+          "offsetY": -55.44999999999999
+        },
+        {
+          "idMx": "53",
+          "name": "nombreDominio",
+          "position": {
+            "x": 180.00136779785157,
+            "y": 300.0045440673828
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "53",
+            "54"
+          ],
+          "offsetX": 1.990000000000009,
+          "offsetY": 54.55000000000001
+        }
+      ]
+    },
+    {
+      "idMx": "47",
+      "name": "Maquina",
+      "position": {
+        "x": 600.0013677978516,
+        "y": 239.99726440429686
+      },
+      "weak": true,
+      "ownerEntityId": "44",
+      "identifyingRelationId": "59",
+      "attributes": [
+        {
+          "idMx": "48",
+          "name": "nombreMaquina",
+          "position": {
+            "x": 600.0013677978516,
+            "y": 189.99726440429686
+          },
+          "key": false,
+          "partialKey": true,
+          "cell": [
+            "48",
+            "49"
+          ],
+          "offsetX": 0,
+          "offsetY": -50
+        },
+        {
+          "idMx": "55",
+          "name": "tipoMaquina",
+          "position": {
+            "x": 700.0013677978516,
+            "y": 289.99726440429686
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "55",
+            "56"
+          ],
+          "offsetX": 100,
+          "offsetY": 50
+        }
+      ]
+    },
+    {
+      "idMx": "50",
+      "name": "Usuario",
+      "position": {
+        "x": 299.99680847167974,
+        "y": 399.99817626953126
+      },
+      "weak": true,
+      "ownerEntityId": "47",
+      "identifyingRelationId": "60",
+      "attributes": [
+        {
+          "idMx": "51",
+          "name": "nombreUsuario",
+          "position": {
+            "x": 169.9968084716798,
+            "y": 379.99817626953126
+          },
+          "key": false,
+          "partialKey": true,
+          "cell": [
+            "51",
+            "52"
+          ],
+          "offsetX": -129.99999999999994,
+          "offsetY": -20
+        },
+        {
+          "idMx": "57",
+          "name": "rol",
+          "position": {
+            "x": 209.9968084716798,
+            "y": 429.99817626953137
+          },
+          "key": false,
+          "partialKey": false,
+          "cell": [
+            "57",
+            "58"
+          ],
+          "offsetX": -89.99999999999994,
+          "offsetY": 30.000000000000114
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "idMx": "59",
+      "name": "Tiene_maquina",
+      "position": {
+        "x": 390.0013677978516,
+        "y": 249.9963525390625
+      },
+      "side1": {
+        "idMx": "62",
+        "cardinality": "1:1",
+        "role": "",
+        "cell": "62",
+        "edgeId": "61",
+        "entity": {
+          "idMx": "44"
+        }
+      },
+      "side2": {
+        "idMx": "64",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "64",
+        "edgeId": "63",
+        "entity": {
+          "idMx": "47"
+        }
+      },
+      "canHoldAttributes": false,
+      "isIdentifying": true,
+      "attributes": []
+    },
+    {
+      "idMx": "60",
+      "name": "Tiene_usuario",
+      "position": {
+        "x": 600.0004559326171,
+        "y": 390.002705078125
+      },
+      "side1": {
+        "idMx": "66",
+        "cardinality": "1:1",
+        "role": "",
+        "cell": "66",
+        "edgeId": "65",
+        "entity": {
+          "idMx": "47"
+        }
+      },
+      "side2": {
+        "idMx": "68",
+        "cardinality": "0:N",
+        "role": "",
+        "cell": "68",
+        "edgeId": "67",
+        "entity": {
+          "idMx": "50"
+        }
+      },
+      "canHoldAttributes": false,
+      "isIdentifying": true,
+      "attributes": []
+    }
+  ],
+  "isas": []
+}
